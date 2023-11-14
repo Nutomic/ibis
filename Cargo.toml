@@ -3,6 +3,18 @@ name = "fediwiki"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
+activitypub_federation = { version = "0.4.7", features = ["axum"], default-features = false }
+anyhow = "1.0.75"
+async-trait = "0.1.74"
+axum = "0.6.20"
+axum-macros = "0.3.8"
+chrono = "0.4.31"
+enum_delegate = "0.2.0"
+env_logger = { version = "0.10.1", default-features = false }
+rand = "0.8.5"
+serde = "1.0.192"
+serde_json = "1.0.108"
+tokio = { version = "1.34.0", features = ["full"] }
+tracing = "0.1.40"
+url = "2.4.1"
