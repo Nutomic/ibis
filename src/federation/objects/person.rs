@@ -1,8 +1,7 @@
 use crate::error::Error;
 use crate::{
-    activities::{accept::Accept, create_post::CreatePost, follow::Follow},
+    federation::activities::{accept::Accept, follow::Follow},
     instance::DatabaseHandle,
-    objects::post::DbPost,
     utils::generate_object_id,
 };
 use activitypub_federation::{
@@ -40,7 +39,6 @@ pub struct DbUser {
 pub enum PersonAcceptedActivities {
     Follow(Follow),
     Accept(Accept),
-    CreateNote(CreatePost),
 }
 
 impl DbUser {
@@ -87,18 +85,6 @@ impl DbUser {
         let follow = Follow::new(self.ap_id.clone(), other.ap_id.clone(), id.clone());
         self.send(follow, vec![other.shared_inbox_or_inbox()], data)
             .await?;
-        Ok(())
-    }
-
-    pub async fn post(&self, post: DbPost, data: &Data<DatabaseHandle>) -> Result<(), Error> {
-        let id = generate_object_id(data.domain())?;
-        let create = CreatePost::new(post.into_json(data).await?, id.clone());
-        let mut inboxes = vec![];
-        for f in self.followers.clone() {
-            let user: DbUser = ObjectId::from(f).dereference(data).await?;
-            inboxes.push(user.shared_inbox_or_inbox());
-        }
-        self.send(create, inboxes, data).await?;
         Ok(())
     }
 

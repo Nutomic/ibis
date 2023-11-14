@@ -1,6 +1,6 @@
 use crate::{
-    activities::accept::Accept, generate_object_id, instance::DatabaseHandle,
-    objects::person::DbUser,
+    federation::activities::accept::Accept, federation::objects::person::DbUser,
+    generate_object_id, instance::DatabaseHandle,
 };
 use activitypub_federation::{
     config::Data,

@@ -1,13 +1,21 @@
-use crate::axum::http::listen;
-use crate::{instance::new_instance, objects::post::DbPost, utils::generate_object_id};
+use crate::{instance::federation_config, utils::generate_object_id};
 use error::Error;
 use tracing::log::LevelFilter;
 
-mod activities;
-mod axum;
+use activitypub_federation::config::FederationMiddleware;
+use axum::{
+    routing::{get, post},
+    Router, Server,
+};
+
+use crate::federation::routes::http_get_user;
+use crate::federation::routes::http_post_user_inbox;
+use std::net::ToSocketAddrs;
+use tracing::info;
+
 mod error;
+mod federation;
 mod instance;
-mod objects;
 mod utils;
 
 #[tokio::main]
@@ -18,8 +26,22 @@ async fn main() -> Result<(), Error> {
         .filter_module("fediwiki", LevelFilter::Info)
         .init();
 
-    let alpha = new_instance("localhost:8001", "alpha".to_string()).await?;
-    listen(&alpha)?;
+    let config = federation_config("localhost:8001", "alpha".to_string()).await?;
 
+    let hostname = config.domain();
+    info!("Listening with axum on {hostname}");
+    let config = config.clone();
+    let app = Router::new()
+        .route("/:user/inbox", post(http_post_user_inbox))
+        .route("/:user", get(http_get_user))
+        .layer(FederationMiddleware::new(config));
+
+    let addr = hostname
+        .to_socket_addrs()?
+        .next()
+        .expect("Failed to lookup domain name");
+    let server = Server::bind(&addr).serve(app.into_make_service());
+
+    tokio::spawn(server);
     Ok(())
 }

@@ -1,4 +1,7 @@
-use crate::{activities::follow::Follow, instance::DatabaseHandle, objects::person::DbUser};
+use crate::{
+    federation::activities::follow::Follow, federation::objects::person::DbUser,
+    instance::DatabaseHandle,
+};
 use activitypub_federation::{
     config::Data, fetch::object_id::ObjectId, kinds::activity::AcceptType, traits::ActivityHandler,
 };

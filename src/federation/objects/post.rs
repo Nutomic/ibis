@@ -1,4 +1,6 @@
-use crate::{error::Error, generate_object_id, instance::DatabaseHandle, objects::person::DbUser};
+use crate::{
+    error::Error, federation::objects::person::DbUser, generate_object_id, instance::DatabaseHandle,
+};
 use activitypub_federation::{
     config::Data,
     fetch::object_id::ObjectId,

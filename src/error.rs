@@ -1,3 +1,5 @@
+use axum::http::StatusCode;
+use axum::response::{IntoResponse, Response};
 use std::fmt::{Display, Formatter};
 
 #[derive(Debug)]
@@ -15,5 +17,11 @@ where
 {
     fn from(t: T) -> Self {
         Error(t.into())
+    }
+}
+
+impl IntoResponse for Error {
+    fn into_response(self) -> Response {
+        (StatusCode::INTERNAL_SERVER_ERROR, format!("{}", self.0)).into_response()
     }
 }

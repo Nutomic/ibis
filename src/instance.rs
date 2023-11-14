@@ -1,12 +1,12 @@
 use crate::error::Error;
-use crate::objects::{person::DbUser, post::DbPost};
+use crate::federation::objects::{person::DbUser, post::DbPost};
 use activitypub_federation::config::{FederationConfig, UrlVerifier};
 use anyhow::anyhow;
 use async_trait::async_trait;
 use std::sync::{Arc, Mutex};
 use url::Url;
 
-pub async fn new_instance(
+pub async fn federation_config(
     hostname: &str,
     name: String,
 ) -> Result<FederationConfig<DatabaseHandle>, Error> {
