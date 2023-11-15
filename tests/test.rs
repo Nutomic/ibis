@@ -5,7 +5,7 @@ use fediwiki::start;
 #[tokio::test]
 async fn test_get_article() {
     let hostname = "localhost:8131";
-    let join = tokio::task::spawn(async {
+    let handle = tokio::task::spawn(async {
         start(hostname).await.unwrap();
     });
 
@@ -18,5 +18,20 @@ async fn test_get_article() {
         .unwrap();
     assert_eq!(title, res.title);
     assert!(res.local);
-    join.abort();
+    handle.abort();
+}
+
+#[tokio::test]
+async fn test_follow_instance() {
+    let hostname_alpha = "localhost:8131";
+    let hostname_beta = "localhost:8132";
+    let handle_alpha = tokio::task::spawn(async {
+        start(hostname_alpha).await.unwrap();
+    });
+    let handle_beta = tokio::task::spawn(async {
+        start(hostname_beta).await.unwrap();
+    });
+
+    handle_alpha.abort();
+    handle_beta.abort();
 }
