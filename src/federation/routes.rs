@@ -1,6 +1,6 @@
+use crate::database::DatabaseHandle;
 use crate::error::Error;
 use crate::federation::objects::person::{DbUser, Person, PersonAcceptedActivities};
-use crate::instance::DatabaseHandle;
 use activitypub_federation::axum::inbox::{receive_activity, ActivityData};
 use activitypub_federation::axum::json::FederationJson;
 use activitypub_federation::config::Data;

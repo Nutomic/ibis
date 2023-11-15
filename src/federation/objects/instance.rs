@@ -3,12 +3,13 @@ use crate::{
     database::DatabaseHandle,
     federation::activities::{accept::Accept, follow::Follow},
 };
+use activitypub_federation::kinds::actor::ServiceType;
 use activitypub_federation::{
+    activity_queue::send_activity,
     config::Data,
-    fetch::object_id::ObjectId,
+    fetch::{object_id::ObjectId, webfinger::webfinger_resolve_actor},
     http_signatures::generate_actor_keypair,
-    kinds::actor::PersonType,
-    protocol::{public_key::PublicKey, verification::verify_domains_match},
+    protocol::{context::WithContext, public_key::PublicKey, verification::verify_domains_match},
     traits::{ActivityHandler, Actor, Object},
 };
 use chrono::{Local, NaiveDateTime};
@@ -17,9 +18,8 @@ use std::fmt::Debug;
 use url::Url;
 
 #[derive(Debug, Clone)]
-pub struct DbUser {
-    pub name: String,
-    pub ap_id: ObjectId<DbUser>,
+pub struct DbInstance {
+    pub ap_id: ObjectId<DbInstance>,
     pub inbox: Url,
     public_key: String,
     private_key: Option<String>,
@@ -37,13 +37,12 @@ pub enum PersonAcceptedActivities {
     Accept(Accept),
 }
 
-impl DbUser {
-    pub fn new(hostname: &str, name: String) -> Result<DbUser, Error> {
-        let ap_id = Url::parse(&format!("http://{}/{}", hostname, &name))?.into();
-        let inbox = Url::parse(&format!("http://{}/{}/inbox", hostname, &name))?;
+impl DbInstance {
+    pub fn new(hostname: &str) -> Result<DbInstance, Error> {
+        let ap_id = Url::parse(&format!("http://{}", hostname))?.into();
+        let inbox = Url::parse(&format!("http://{}/inbox", hostname))?;
         let keypair = generate_actor_keypair()?;
-        Ok(DbUser {
-            name,
+        Ok(DbInstance {
             ap_id,
             inbox,
             public_key: keypair.public_key,
@@ -57,19 +56,51 @@ impl DbUser {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct Person {
+pub struct Instance {
     #[serde(rename = "type")]
-    kind: PersonType,
-    preferred_username: String,
-    id: ObjectId<DbUser>,
+    kind: ServiceType,
+    id: ObjectId<DbInstance>,
     inbox: Url,
     public_key: PublicKey,
 }
 
+impl DbInstance {
+    pub fn followers(&self) -> &Vec<Url> {
+        &self.followers
+    }
+
+    pub fn followers_url(&self) -> Result<Url, Error> {
+        Ok(Url::parse(&format!("{}/followers", self.ap_id.inner()))?)
+    }
+
+    pub async fn follow(&self, other: &str, data: &Data<DatabaseHandle>) -> Result<(), Error> {
+        let other: DbInstance = webfinger_resolve_actor(other, data).await?;
+        let follow = Follow::new(self.ap_id.clone(), other.ap_id.clone())?;
+        self.send(follow, vec![other.shared_inbox_or_inbox()], data)
+            .await?;
+        Ok(())
+    }
+
+    pub(crate) async fn send<Activity>(
+        &self,
+        activity: Activity,
+        recipients: Vec<Url>,
+        data: &Data<DatabaseHandle>,
+    ) -> Result<(), <Activity as ActivityHandler>::Error>
+    where
+        Activity: ActivityHandler + Serialize + Debug + Send + Sync,
+        <Activity as ActivityHandler>::Error: From<anyhow::Error> + From<serde_json::Error>,
+    {
+        let activity = WithContext::new_default(activity);
+        send_activity(activity, self, recipients, data).await?;
+        Ok(())
+    }
+}
+
 #[async_trait::async_trait]
-impl Object for DbUser {
+impl Object for DbInstance {
     type DataType = DatabaseHandle;
-    type Kind = Person;
+    type Kind = Instance;
     type Error = Error;
 
     fn last_refreshed_at(&self) -> Option<NaiveDateTime> {
@@ -80,7 +111,7 @@ impl Object for DbUser {
         object_id: Url,
         data: &Data<Self::DataType>,
     ) -> Result<Option<Self>, Self::Error> {
-        let users = data.users.lock().unwrap();
+        let users = data.instances.lock().unwrap();
         let res = users
             .clone()
             .into_iter()
@@ -89,8 +120,7 @@ impl Object for DbUser {
     }
 
     async fn into_json(self, _data: &Data<Self::DataType>) -> Result<Self::Kind, Self::Error> {
-        Ok(Person {
-            preferred_username: self.name.clone(),
+        Ok(Instance {
             kind: Default::default(),
             id: self.ap_id.clone(),
             inbox: self.inbox.clone(),
@@ -108,8 +138,7 @@ impl Object for DbUser {
     }
 
     async fn from_json(json: Self::Kind, data: &Data<Self::DataType>) -> Result<Self, Self::Error> {
-        let user = DbUser {
-            name: json.preferred_username,
+        let instance = DbInstance {
             ap_id: json.id,
             inbox: json.inbox,
             public_key: json.public_key.public_key_pem,
@@ -118,13 +147,13 @@ impl Object for DbUser {
             followers: vec![],
             local: false,
         };
-        let mut mutex = data.users.lock().unwrap();
-        mutex.push(user.clone());
-        Ok(user)
+        let mut mutex = data.instances.lock().unwrap();
+        mutex.push(instance.clone());
+        Ok(instance)
     }
 }
 
-impl Actor for DbUser {
+impl Actor for DbInstance {
     fn id(&self) -> Url {
         self.ap_id.inner().clone()
     }

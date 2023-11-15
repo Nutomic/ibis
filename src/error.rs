@@ -2,6 +2,8 @@ use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use std::fmt::{Display, Formatter};
 
+pub type MyResult<T> = Result<T, Error>;
+
 #[derive(Debug)]
 pub struct Error(pub(crate) anyhow::Error);
 

@@ -1,29 +1,35 @@
-use crate::error::MyResult;
-use crate::federation::objects::instance::DbInstance;
-use crate::utils::generate_object_id;
-use crate::{database::DatabaseHandle, federation::activities::follow::Follow};
-use activitypub_federation::{
-    config::Data, fetch::object_id::ObjectId, kinds::activity::AcceptType, traits::ActivityHandler,
-};
+use crate::federation::objects::article::DbArticle;
+use crate::{database::DatabaseHandle, federation::objects::person::DbUser};
+use activitypub_federation::kinds::activity::UpdateType;
+use activitypub_federation::{config::Data, fetch::object_id::ObjectId, traits::ActivityHandler};
 use serde::{Deserialize, Serialize};
 use url::Url;
 
+use crate::error::MyResult;
+use crate::utils::generate_object_id;
+
+/// represents a diff between two strings
+#[derive(Deserialize, Serialize, Debug)]
+pub struct Diff {}
+
 #[derive(Deserialize, Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct Accept {
-    actor: ObjectId<DbInstance>,
-    object: Follow,
+pub struct Update {
+    actor: ObjectId<DbUser>,
+    object: ObjectId<DbArticle>,
+    result: Diff,
     #[serde(rename = "type")]
-    kind: AcceptType,
+    kind: UpdateType,
     id: Url,
 }
 
-impl Accept {
-    pub fn new(actor: ObjectId<DbInstance>, object: Follow) -> MyResult<Accept> {
+impl Update {
+    pub fn new(actor: ObjectId<DbUser>, object: ObjectId<DbArticle>) -> MyResult<Update> {
         let id = generate_object_id(actor.inner().domain().unwrap())?;
-        Ok(Accept {
+        Ok(Update {
             actor,
             object,
+            result: Diff {},
             kind: Default::default(),
             id,
         })
@@ -31,7 +37,7 @@ impl Accept {
 }
 
 #[async_trait::async_trait]
-impl ActivityHandler for Accept {
+impl ActivityHandler for Update {
     type DataType = DatabaseHandle;
     type Error = crate::error::Error;
 

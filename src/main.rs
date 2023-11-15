@@ -1,4 +1,4 @@
-use crate::{instance::federation_config, utils::generate_object_id};
+use crate::utils::generate_object_id;
 use error::Error;
 use tracing::log::LevelFilter;
 
@@ -10,12 +10,13 @@ use axum::{
 
 use crate::federation::routes::http_get_user;
 use crate::federation::routes::http_post_user_inbox;
+use federation::federation_config;
 use std::net::ToSocketAddrs;
 use tracing::info;
 
+mod database;
 mod error;
 mod federation;
-mod instance;
 mod utils;
 
 #[tokio::main]
@@ -26,7 +27,7 @@ async fn main() -> Result<(), Error> {
         .filter_module("fediwiki", LevelFilter::Info)
         .init();
 
-    let config = federation_config("localhost:8001", "alpha".to_string()).await?;
+    let config = federation_config("localhost:8001").await?;
 
     let hostname = config.domain();
     info!("Listening with axum on {hostname}");

@@ -1,7 +1,6 @@
-use crate::{
-    federation::activities::accept::Accept, federation::objects::person::DbUser,
-    generate_object_id, instance::DatabaseHandle,
-};
+use crate::error::MyResult;
+use crate::federation::objects::instance::DbInstance;
+use crate::{database::DatabaseHandle, federation::activities::accept::Accept, generate_object_id};
 use activitypub_federation::{
     config::Data,
     fetch::object_id::ObjectId,
@@ -14,21 +13,22 @@ use url::Url;
 #[derive(Deserialize, Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Follow {
-    pub(crate) actor: ObjectId<DbUser>,
-    pub(crate) object: ObjectId<DbUser>,
+    pub(crate) actor: ObjectId<DbInstance>,
+    pub(crate) object: ObjectId<DbInstance>,
     #[serde(rename = "type")]
     kind: FollowType,
     id: Url,
 }
 
 impl Follow {
-    pub fn new(actor: ObjectId<DbUser>, object: ObjectId<DbUser>, id: Url) -> Follow {
-        Follow {
+    pub fn new(actor: ObjectId<DbInstance>, object: ObjectId<DbInstance>) -> MyResult<Follow> {
+        let id = generate_object_id(actor.inner().domain().unwrap())?;
+        Ok(Follow {
             actor,
             object,
             kind: Default::default(),
             id,
-        }
+        })
     }
 }
 
@@ -49,22 +49,19 @@ impl ActivityHandler for Follow {
         Ok(())
     }
 
-    // Ignore clippy false positive: https://github.com/rust-lang/rust-clippy/issues/6446
-    #[allow(clippy::await_holding_lock)]
     async fn receive(self, data: &Data<Self::DataType>) -> Result<(), Self::Error> {
         // add to followers
-        let local_user = {
-            let mut users = data.users.lock().unwrap();
-            let local_user = users.first_mut().unwrap();
-            local_user.followers.push(self.actor.inner().clone());
-            local_user.clone()
+        let local_instance = {
+            let mut instances = data.instances.lock().unwrap();
+            let local_instance = instances.first_mut().unwrap();
+            local_instance.followers.push(self.actor.inner().clone());
+            local_instance.clone()
         };
 
         // send back an accept
         let follower = self.actor.dereference(data).await?;
-        let id = generate_object_id(data.domain())?;
-        let accept = Accept::new(local_user.ap_id.clone(), self, id.clone());
-        local_user
+        let accept = Accept::new(local_instance.ap_id.clone(), self)?;
+        local_instance
             .send(accept, vec![follower.shared_inbox_or_inbox()], data)
             .await?;
         Ok(())

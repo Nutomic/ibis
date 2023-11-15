@@ -1,10 +1,10 @@
-use crate::{
-    error::Error, federation::objects::person::DbUser, generate_object_id, instance::DatabaseHandle,
-};
+use crate::federation::objects::instance::DbInstance;
+use crate::{database::DatabaseHandle, error::Error, generate_object_id};
+use activitypub_federation::kinds::object::ArticleType;
 use activitypub_federation::{
     config::Data,
     fetch::object_id::ObjectId,
-    kinds::{object::NoteType, public},
+    kinds::public,
     protocol::{helpers::deserialize_one_or_many, verification::verify_domains_match},
     traits::Object,
 };
@@ -12,20 +12,20 @@ use serde::{Deserialize, Serialize};
 use url::Url;
 
 #[derive(Clone, Debug)]
-pub struct DbPost {
+pub struct DbArticle {
     pub text: String,
-    pub ap_id: ObjectId<DbPost>,
-    pub creator: ObjectId<DbUser>,
+    pub ap_id: ObjectId<DbArticle>,
+    pub instance: ObjectId<DbInstance>,
     pub local: bool,
 }
 
-impl DbPost {
-    pub fn new(text: String, creator: ObjectId<DbUser>) -> Result<DbPost, Error> {
-        let ap_id = generate_object_id(creator.inner().domain().unwrap())?.into();
-        Ok(DbPost {
+impl DbArticle {
+    pub fn new(text: String, attributed_to: ObjectId<DbInstance>) -> Result<DbArticle, Error> {
+        let ap_id = generate_object_id(attributed_to.inner().domain().unwrap())?.into();
+        Ok(DbArticle {
             text,
             ap_id,
-            creator,
+            instance: attributed_to,
             local: true,
         })
     }
@@ -33,20 +33,20 @@ impl DbPost {
 
 #[derive(Deserialize, Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct Note {
+pub struct Article {
     #[serde(rename = "type")]
-    kind: NoteType,
-    id: ObjectId<DbPost>,
-    pub(crate) attributed_to: ObjectId<DbUser>,
+    kind: ArticleType,
+    id: ObjectId<DbArticle>,
+    pub(crate) attributed_to: ObjectId<DbInstance>,
     #[serde(deserialize_with = "deserialize_one_or_many")]
     pub(crate) to: Vec<Url>,
     content: String,
 }
 
 #[async_trait::async_trait]
-impl Object for DbPost {
+impl Object for DbArticle {
     type DataType = DatabaseHandle;
-    type Kind = Note;
+    type Kind = Article;
     type Error = Error;
 
     async fn read_from_id(
@@ -62,12 +62,12 @@ impl Object for DbPost {
     }
 
     async fn into_json(self, data: &Data<Self::DataType>) -> Result<Self::Kind, Self::Error> {
-        let creator = self.creator.dereference_local(data).await?;
-        Ok(Note {
+        let instance = self.instance.dereference_local(data).await?;
+        Ok(Article {
             kind: Default::default(),
             id: self.ap_id,
-            attributed_to: self.creator,
-            to: vec![public(), creator.followers_url()?],
+            attributed_to: self.instance,
+            to: vec![public(), instance.followers_url()?],
             content: self.text,
         })
     }
@@ -82,10 +82,10 @@ impl Object for DbPost {
     }
 
     async fn from_json(json: Self::Kind, data: &Data<Self::DataType>) -> Result<Self, Self::Error> {
-        let post = DbPost {
+        let post = DbArticle {
             text: json.content,
             ap_id: json.id,
-            creator: json.attributed_to,
+            instance: json.attributed_to,
             local: false,
         };
 
