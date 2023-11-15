@@ -464,6 +464,7 @@ dependencies = [
  "enum_delegate",
  "env_logger",
  "rand",
+ "reqwest",
  "serde",
  "serde_json",
  "tokio",

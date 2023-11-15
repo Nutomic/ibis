@@ -11,8 +11,9 @@ use activitypub_federation::{
 use serde::{Deserialize, Serialize};
 use url::Url;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct DbArticle {
+    pub title: String,
     pub text: String,
     pub ap_id: ObjectId<DbArticle>,
     pub instance: ObjectId<DbInstance>,
@@ -20,9 +21,14 @@ pub struct DbArticle {
 }
 
 impl DbArticle {
-    pub fn new(text: String, attributed_to: ObjectId<DbInstance>) -> Result<DbArticle, Error> {
+    pub fn new(
+        title: String,
+        text: String,
+        attributed_to: ObjectId<DbInstance>,
+    ) -> Result<DbArticle, Error> {
         let ap_id = generate_object_id(attributed_to.inner())?.into();
         Ok(DbArticle {
+            title,
             text,
             ap_id,
             instance: attributed_to,
@@ -41,6 +47,7 @@ pub struct Article {
     #[serde(deserialize_with = "deserialize_one_or_many")]
     pub(crate) to: Vec<Url>,
     content: String,
+    name: String,
 }
 
 #[async_trait::async_trait]
@@ -69,6 +76,7 @@ impl Object for DbArticle {
             attributed_to: self.instance,
             to: vec![public(), instance.followers_url()?],
             content: self.text,
+            name: self.title,
         })
     }
 
@@ -83,6 +91,7 @@ impl Object for DbArticle {
 
     async fn from_json(json: Self::Kind, data: &Data<Self::DataType>) -> Result<Self, Self::Error> {
         let post = DbArticle {
+            title: json.name,
             text: json.content,
             ap_id: json.id,
             instance: json.attributed_to,

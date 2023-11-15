@@ -1,5 +1,5 @@
 use crate::database::DatabaseHandle;
-use crate::error::Error;
+use crate::error::MyResult;
 use crate::federation::objects::person::{DbUser, Person, PersonAcceptedActivities};
 use activitypub_federation::axum::inbox::{receive_activity, ActivityData};
 use activitypub_federation::axum::json::FederationJson;
@@ -14,7 +14,7 @@ use axum_macros::debug_handler;
 pub async fn http_get_user(
     Path(name): Path<String>,
     data: Data<DatabaseHandle>,
-) -> Result<FederationJson<WithContext<Person>>, Error> {
+) -> MyResult<FederationJson<WithContext<Person>>> {
     let db_user = data.read_user(&name)?;
     let json_user = db_user.into_json(&data).await?;
     Ok(FederationJson(WithContext::new_default(json_user)))
