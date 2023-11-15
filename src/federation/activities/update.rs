@@ -17,6 +17,7 @@ pub struct Diff {}
 pub struct Update {
     actor: ObjectId<DbUser>,
     object: ObjectId<DbArticle>,
+    /// https://www.w3.org/TR/activitystreams-vocabulary/#dfn-result
     result: Diff,
     #[serde(rename = "type")]
     kind: UpdateType,

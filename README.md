@@ -1,0 +1,7 @@
+fediwiki
+===
+
+
+## License
+
+[AGPL](LICENSE)
