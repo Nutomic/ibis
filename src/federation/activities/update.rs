@@ -25,7 +25,7 @@ pub struct Update {
 
 impl Update {
     pub fn new(actor: ObjectId<DbUser>, object: ObjectId<DbArticle>) -> MyResult<Update> {
-        let id = generate_object_id(actor.inner().domain().unwrap())?;
+        let id = generate_object_id(actor.inner())?;
         Ok(Update {
             actor,
             object,

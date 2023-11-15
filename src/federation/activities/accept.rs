@@ -20,7 +20,7 @@ pub struct Accept {
 
 impl Accept {
     pub fn new(actor: ObjectId<DbInstance>, object: Follow) -> MyResult<Accept> {
-        let id = generate_object_id(actor.inner().domain().unwrap())?;
+        let id = generate_object_id(actor.inner())?;
         Ok(Accept {
             actor,
             object,

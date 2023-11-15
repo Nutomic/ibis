@@ -21,7 +21,7 @@ pub struct DbArticle {
 
 impl DbArticle {
     pub fn new(text: String, attributed_to: ObjectId<DbInstance>) -> Result<DbArticle, Error> {
-        let ap_id = generate_object_id(attributed_to.inner().domain().unwrap())?.into();
+        let ap_id = generate_object_id(attributed_to.inner())?.into();
         Ok(DbArticle {
             text,
             ap_id,

@@ -22,7 +22,7 @@ pub struct Follow {
 
 impl Follow {
     pub fn new(actor: ObjectId<DbInstance>, object: ObjectId<DbInstance>) -> MyResult<Follow> {
-        let id = generate_object_id(actor.inner().domain().unwrap())?;
+        let id = generate_object_id(actor.inner())?;
         Ok(Follow {
             actor,
             object,
