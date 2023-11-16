@@ -50,7 +50,6 @@ impl DbInstance {
         data: &Data<DatabaseHandle>,
     ) -> Result<(), Error> {
         let follow = Follow::new(self.ap_id.clone(), other.ap_id.clone())?;
-        dbg!(&follow);
         self.send(follow, vec![other.shared_inbox_or_inbox()], data)
             .await?;
         Ok(())

@@ -1,5 +1,5 @@
 use crate::federation::objects::instance::DbInstance;
-use crate::{database::DatabaseHandle, error::Error, generate_object_id};
+use crate::{database::DatabaseHandle, error::Error};
 use activitypub_federation::kinds::object::ArticleType;
 use activitypub_federation::{
     config::Data,
@@ -18,23 +18,6 @@ pub struct DbArticle {
     pub ap_id: ObjectId<DbArticle>,
     pub instance: ObjectId<DbInstance>,
     pub local: bool,
-}
-
-impl DbArticle {
-    pub fn new(
-        title: String,
-        text: String,
-        attributed_to: ObjectId<DbInstance>,
-    ) -> Result<DbArticle, Error> {
-        let ap_id = generate_object_id(attributed_to.inner())?.into();
-        Ok(DbArticle {
-            title,
-            text,
-            ap_id,
-            instance: attributed_to,
-            local: true,
-        })
-    }
 }
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -60,7 +43,7 @@ impl Object for DbArticle {
         object_id: Url,
         data: &Data<Self::DataType>,
     ) -> Result<Option<Self>, Self::Error> {
-        let posts = data.posts.lock().unwrap();
+        let posts = data.articles.lock().unwrap();
         let res = posts
             .clone()
             .into_iter()
@@ -98,7 +81,7 @@ impl Object for DbArticle {
             local: false,
         };
 
-        let mut lock = data.posts.lock().unwrap();
+        let mut lock = data.articles.lock().unwrap();
         lock.push(post.clone());
         Ok(post)
     }

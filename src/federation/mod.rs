@@ -30,7 +30,7 @@ pub async fn federation_config(hostname: &str) -> Result<FederationConfig<Databa
     let database = Arc::new(Database {
         instances: Mutex::new(vec![local_instance]),
         users: Mutex::new(vec![]),
-        posts: Mutex::new(vec![]),
+        articles: Mutex::new(vec![]),
     });
     let config = FederationConfig::builder()
         .domain(hostname)

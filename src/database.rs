@@ -9,7 +9,7 @@ pub type DatabaseHandle = Arc<Database>;
 pub struct Database {
     pub instances: Mutex<Vec<DbInstance>>,
     pub users: Mutex<Vec<DbUser>>,
-    pub posts: Mutex<Vec<DbArticle>>,
+    pub articles: Mutex<Vec<DbArticle>>,
 }
 
 impl Database {

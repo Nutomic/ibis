@@ -1,6 +1,6 @@
 extern crate fediwiki;
 
-use fediwiki::api::{FollowInstance, ResolveObject};
+use fediwiki::api::{CreateArticle, FollowInstance, GetArticle, ResolveObject};
 use fediwiki::error::MyResult;
 use fediwiki::federation::objects::article::DbArticle;
 use fediwiki::federation::objects::instance::DbInstance;
@@ -28,17 +28,37 @@ static CLIENT: Lazy<Client> = Lazy::new(|| Client::new());
 
 #[tokio::test]
 #[serial]
-async fn test_get_article() -> MyResult<()> {
+async fn test_create_and_read_article() -> MyResult<()> {
     setup();
     let hostname = "localhost:8131";
     let handle = tokio::task::spawn(async {
         start(hostname).await.unwrap();
     });
 
-    let title = "Manu_Chao";
-    let res: DbArticle = get(hostname, &format!("article/{title}")).await?;
-    assert_eq!(title, res.title);
-    assert!(res.local);
+    // error on nonexistent article
+    let get_article = GetArticle {
+        title: "Manu_Chao".to_string(),
+    };
+    let not_found =
+        get_query::<DbArticle, _>(hostname, &format!("article"), Some(get_article.clone())).await;
+    assert!(not_found.is_err());
+
+    // create article
+    let create_article = CreateArticle {
+        title: get_article.title.to_string(),
+        text: "Lorem ipsum".to_string(),
+    };
+    let create_res: DbArticle = post(hostname, "article", &create_article).await?;
+    assert_eq!(create_article.title, create_res.title);
+    assert!(create_res.local);
+
+    // now article can be read
+    let get_res: DbArticle =
+        get_query(hostname, &format!("article"), Some(get_article.clone())).await?;
+    assert_eq!(create_article.title, get_res.title);
+    assert_eq!(create_article.text, get_res.text);
+    assert!(get_res.local);
+
     handle.abort();
     Ok(())
 }
@@ -73,6 +93,7 @@ async fn test_follow_instance() -> MyResult<()> {
     let follow_instance = FollowInstance {
         instance_id: beta_instance_resolved.ap_id,
     };
+    // cant use post helper because follow doesnt return json
     CLIENT
         .post(format!("http://{hostname_alpha}/api/v1/instance/follow"))
         .form(&follow_instance)
@@ -109,4 +130,17 @@ where
     }
     let alpha_instance: T = res.send().await?.json().await?;
     Ok(alpha_instance)
+}
+
+async fn post<T: Serialize, R>(hostname: &str, endpoint: &str, form: &T) -> MyResult<R>
+where
+    R: for<'de> Deserialize<'de>,
+{
+    Ok(CLIENT
+        .post(format!("http://{}/api/v1/{}", hostname, endpoint))
+        .form(form)
+        .send()
+        .await?
+        .json()
+        .await?)
 }

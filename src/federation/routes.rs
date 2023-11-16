@@ -47,7 +47,6 @@ pub async fn http_post_inbox(
     data: Data<DatabaseHandle>,
     activity_data: ActivityData,
 ) -> impl IntoResponse {
-    dbg!("receive activity");
     receive_activity::<WithContext<InboxActivities>, DbInstance, DatabaseHandle>(
         activity_data,
         &data,
