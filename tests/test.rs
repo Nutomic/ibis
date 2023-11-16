@@ -1,30 +1,16 @@
 extern crate fediwiki;
 
+mod common;
+
+use crate::common::{get_query, post, setup, CLIENT};
+use common::get;
 use fediwiki::api::{CreateArticle, FollowInstance, GetArticle, ResolveObject};
 use fediwiki::error::MyResult;
 use fediwiki::federation::objects::article::DbArticle;
 use fediwiki::federation::objects::instance::DbInstance;
 use fediwiki::start;
-use once_cell::sync::Lazy;
-use reqwest::Client;
-use serde::{Deserialize, Serialize};
 use serial_test::serial;
-use std::sync::Once;
-use tracing::log::LevelFilter;
 use url::Url;
-
-fn setup() {
-    static INIT: Once = Once::new();
-    INIT.call_once(|| {
-        env_logger::builder()
-            .filter_level(LevelFilter::Warn)
-            .filter_module("activitypub_federation", LevelFilter::Info)
-            .filter_module("fediwiki", LevelFilter::Info)
-            .init();
-    });
-}
-
-static CLIENT: Lazy<Client> = Lazy::new(|| Client::new());
 
 #[tokio::test]
 #[serial]
@@ -110,37 +96,4 @@ async fn test_follow_instance() -> MyResult<()> {
     handle_alpha.abort();
     handle_beta.abort();
     Ok(())
-}
-
-async fn get<T>(hostname: &str, endpoint: &str) -> MyResult<T>
-where
-    T: for<'de> Deserialize<'de>,
-{
-    get_query(hostname, endpoint, None::<i32>).await
-}
-
-async fn get_query<T, R>(hostname: &str, endpoint: &str, query: Option<R>) -> MyResult<T>
-where
-    T: for<'de> Deserialize<'de>,
-    R: Serialize,
-{
-    let mut res = CLIENT.get(format!("http://{}/api/v1/{}", hostname, endpoint));
-    if let Some(query) = query {
-        res = res.query(&query);
-    }
-    let alpha_instance: T = res.send().await?.json().await?;
-    Ok(alpha_instance)
-}
-
-async fn post<T: Serialize, R>(hostname: &str, endpoint: &str, form: &T) -> MyResult<R>
-where
-    R: for<'de> Deserialize<'de>,
-{
-    Ok(CLIENT
-        .post(format!("http://{}/api/v1/{}", hostname, endpoint))
-        .form(form)
-        .send()
-        .await?
-        .json()
-        .await?)
 }
