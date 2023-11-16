@@ -1,15 +1,12 @@
+use crate::database::DatabaseHandle;
 use crate::error::Error;
-use crate::{
-    database::DatabaseHandle,
-    federation::activities::{accept::Accept, follow::Follow},
-};
 use activitypub_federation::{
     config::Data,
     fetch::object_id::ObjectId,
     http_signatures::generate_actor_keypair,
     kinds::actor::PersonType,
     protocol::{public_key::PublicKey, verification::verify_domains_match},
-    traits::{ActivityHandler, Actor, Object},
+    traits::{Actor, Object},
 };
 use chrono::{Local, NaiveDateTime};
 use serde::{Deserialize, Serialize};
@@ -26,15 +23,6 @@ pub struct DbUser {
     last_refreshed_at: NaiveDateTime,
     pub followers: Vec<Url>,
     pub local: bool,
-}
-
-/// List of all activities which this actor can receive.
-#[derive(Deserialize, Serialize, Debug)]
-#[serde(untagged)]
-#[enum_delegate::implement(ActivityHandler)]
-pub enum PersonAcceptedActivities {
-    Follow(Follow),
-    Accept(Accept),
 }
 
 impl DbUser {

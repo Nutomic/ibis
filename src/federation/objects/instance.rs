@@ -1,14 +1,10 @@
 use crate::error::Error;
-use crate::{
-    database::DatabaseHandle,
-    federation::activities::{accept::Accept, follow::Follow},
-};
+use crate::{database::DatabaseHandle, federation::activities::follow::Follow};
 use activitypub_federation::kinds::actor::ServiceType;
 use activitypub_federation::{
     activity_queue::send_activity,
     config::Data,
-    fetch::{object_id::ObjectId, webfinger::webfinger_resolve_actor},
-    http_signatures::generate_actor_keypair,
+    fetch::object_id::ObjectId,
     protocol::{context::WithContext, public_key::PublicKey, verification::verify_domains_match},
     traits::{ActivityHandler, Actor, Object},
 };
@@ -17,41 +13,16 @@ use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 use url::Url;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DbInstance {
     pub ap_id: ObjectId<DbInstance>,
     pub inbox: Url,
-    public_key: String,
-    private_key: Option<String>,
-    last_refreshed_at: NaiveDateTime,
+    pub(crate) public_key: String,
+    pub(crate) private_key: Option<String>,
+    pub(crate) last_refreshed_at: NaiveDateTime,
     pub followers: Vec<Url>,
+    pub follows: Vec<Url>,
     pub local: bool,
-}
-
-/// List of all activities which this actor can receive.
-#[derive(Deserialize, Serialize, Debug)]
-#[serde(untagged)]
-#[enum_delegate::implement(ActivityHandler)]
-pub enum PersonAcceptedActivities {
-    Follow(Follow),
-    Accept(Accept),
-}
-
-impl DbInstance {
-    pub fn new(hostname: &str) -> Result<DbInstance, Error> {
-        let ap_id = Url::parse(&format!("http://{}", hostname))?.into();
-        let inbox = Url::parse(&format!("http://{}/inbox", hostname))?;
-        let keypair = generate_actor_keypair()?;
-        Ok(DbInstance {
-            ap_id,
-            inbox,
-            public_key: keypair.public_key,
-            private_key: Some(keypair.private_key),
-            last_refreshed_at: Local::now().naive_local(),
-            followers: vec![],
-            local: true,
-        })
-    }
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -73,9 +44,13 @@ impl DbInstance {
         Ok(Url::parse(&format!("{}/followers", self.ap_id.inner()))?)
     }
 
-    pub async fn follow(&self, other: &str, data: &Data<DatabaseHandle>) -> Result<(), Error> {
-        let other: DbInstance = webfinger_resolve_actor(other, data).await?;
+    pub async fn follow(
+        &self,
+        other: &DbInstance,
+        data: &Data<DatabaseHandle>,
+    ) -> Result<(), Error> {
         let follow = Follow::new(self.ap_id.clone(), other.ap_id.clone())?;
+        dbg!(&follow);
         self.send(follow, vec![other.shared_inbox_or_inbox()], data)
             .await?;
         Ok(())
@@ -145,6 +120,7 @@ impl Object for DbInstance {
             private_key: None,
             last_refreshed_at: Local::now().naive_local(),
             followers: vec![],
+            follows: vec![],
             local: false,
         };
         let mut mutex = data.instances.lock().unwrap();

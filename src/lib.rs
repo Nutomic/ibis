@@ -1,5 +1,4 @@
 use crate::utils::generate_object_id;
-use tracing::log::LevelFilter;
 
 use activitypub_federation::config::FederationMiddleware;
 use axum::{Router, Server};
@@ -11,19 +10,13 @@ use federation::federation_config;
 use std::net::ToSocketAddrs;
 use tracing::info;
 
-mod api;
+pub mod api;
 mod database;
 pub mod error;
 pub mod federation;
 mod utils;
 
 pub async fn start(hostname: &str) -> MyResult<()> {
-    env_logger::builder()
-        .filter_level(LevelFilter::Warn)
-        .filter_module("activitypub_federation", LevelFilter::Info)
-        .filter_module("fediwiki", LevelFilter::Info)
-        .init();
-
     let config = federation_config(hostname).await?;
 
     info!("Listening with axum on {hostname}");
