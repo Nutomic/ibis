@@ -7,6 +7,7 @@ use fediwiki::federation::objects::instance::DbInstance;
 use fediwiki::start;
 use once_cell::sync::Lazy;
 use reqwest::Client;
+use serde::{Deserialize, Serialize};
 use serial_test::serial;
 use std::sync::Once;
 use tracing::log::LevelFilter;
@@ -35,10 +36,7 @@ async fn test_get_article() -> MyResult<()> {
     });
 
     let title = "Manu_Chao";
-    let res: DbArticle = reqwest::get(format!("http://{hostname}/api/v1/article/{title}"))
-        .await?
-        .json()
-        .await?;
+    let res: DbArticle = get(hostname, &format!("article/{title}")).await?;
     assert_eq!(title, res.title);
     assert!(res.local);
     handle.abort();
@@ -59,32 +57,17 @@ async fn test_follow_instance() -> MyResult<()> {
     });
 
     // check initial state
-    let alpha_instance: DbInstance = CLIENT
-        .get(format!("http://{hostname_alpha}/api/v1/instance"))
-        .send()
-        .await?
-        .json()
-        .await?;
+    let alpha_instance: DbInstance = get(hostname_alpha, "instance").await?;
     assert_eq!(0, alpha_instance.follows.len());
-    let beta_instance: DbInstance = CLIENT
-        .get(format!("http://{hostname_beta}/api/v1/instance"))
-        .send()
-        .await?
-        .json()
-        .await?;
+    let beta_instance: DbInstance = get(hostname_beta, "instance").await?;
     assert_eq!(0, beta_instance.followers.len());
 
     // fetch beta instance on alpha
     let resolve_object = ResolveObject {
         id: Url::parse(&format!("http://{hostname_beta}"))?,
     };
-    let beta_instance_resolved: DbInstance = CLIENT
-        .get(format!("http://{hostname_alpha}/api/v1/resolve_object"))
-        .query(&resolve_object)
-        .send()
-        .await?
-        .json()
-        .await?;
+    let beta_instance_resolved: DbInstance =
+        get_query(hostname_beta, "resolve_object", Some(resolve_object)).await?;
 
     // send follow
     let follow_instance = FollowInstance {
@@ -97,23 +80,33 @@ async fn test_follow_instance() -> MyResult<()> {
         .await?;
 
     // check that follow was federated
-    let beta_instance: DbInstance = CLIENT
-        .get(format!("http://{hostname_beta}/api/v1/instance"))
-        .send()
-        .await?
-        .json()
-        .await?;
+    let beta_instance: DbInstance = get(hostname_beta, "instance").await?;
     assert_eq!(1, beta_instance.followers.len());
 
-    let alpha_instance: DbInstance = CLIENT
-        .get(format!("http://{hostname_alpha}/api/v1/instance"))
-        .send()
-        .await?
-        .json()
-        .await?;
+    let alpha_instance: DbInstance = get(hostname_alpha, "instance").await?;
     assert_eq!(1, alpha_instance.follows.len());
 
     handle_alpha.abort();
     handle_beta.abort();
     Ok(())
+}
+
+async fn get<T>(hostname: &str, endpoint: &str) -> MyResult<T>
+where
+    T: for<'de> Deserialize<'de>,
+{
+    get_query(hostname, endpoint, None::<i32>).await
+}
+
+async fn get_query<T, R>(hostname: &str, endpoint: &str, query: Option<R>) -> MyResult<T>
+where
+    T: for<'de> Deserialize<'de>,
+    R: Serialize,
+{
+    let mut res = CLIENT.get(format!("http://{}/api/v1/{}", hostname, endpoint));
+    if let Some(query) = query {
+        res = res.query(&query);
+    }
+    let alpha_instance: T = res.send().await?.json().await?;
+    Ok(alpha_instance)
 }
