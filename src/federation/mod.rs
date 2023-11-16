@@ -1,10 +1,8 @@
 use crate::database::{Database, DatabaseHandle};
 use crate::error::Error;
 use crate::federation::objects::instance::DbInstance;
-
-use activitypub_federation::config::{FederationConfig, UrlVerifier};
+use activitypub_federation::config::FederationConfig;
 use activitypub_federation::http_signatures::generate_actor_keypair;
-use async_trait::async_trait;
 use chrono::Local;
 use std::sync::{Arc, Mutex};
 use url::Url;
@@ -29,7 +27,6 @@ pub async fn federation_config(hostname: &str) -> Result<FederationConfig<Databa
     };
     let database = Arc::new(Database {
         instances: Mutex::new(vec![local_instance]),
-        users: Mutex::new(vec![]),
         articles: Mutex::new(vec![]),
     });
     let config = FederationConfig::builder()
@@ -39,19 +36,4 @@ pub async fn federation_config(hostname: &str) -> Result<FederationConfig<Databa
         .build()
         .await?;
     Ok(config)
-}
-
-/// Use this to store your federation blocklist, or a database connection needed to retrieve it.
-#[derive(Clone)]
-struct MyUrlVerifier();
-
-#[async_trait]
-impl UrlVerifier for MyUrlVerifier {
-    async fn verify(&self, url: &Url) -> Result<(), &'static str> {
-        if url.domain() == Some("malicious.com") {
-            Err("malicious domain")
-        } else {
-            Ok(())
-        }
-    }
 }
