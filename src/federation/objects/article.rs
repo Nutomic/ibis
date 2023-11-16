@@ -20,7 +20,7 @@ pub struct DbArticle {
     pub local: bool,
 }
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Article {
     #[serde(rename = "type")]

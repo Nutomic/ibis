@@ -1,5 +1,7 @@
 use crate::error::Error;
+use crate::federation::objects::articles_collection::{ArticleCollection, DbArticleCollection};
 use crate::{database::DatabaseHandle, federation::activities::follow::Follow};
+use activitypub_federation::fetch::collection_id::CollectionId;
 use activitypub_federation::kinds::actor::ServiceType;
 use activitypub_federation::{
     activity_queue::send_activity,
@@ -16,6 +18,7 @@ use url::Url;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DbInstance {
     pub ap_id: ObjectId<DbInstance>,
+    pub articles_id: CollectionId<DbArticleCollection>,
     pub inbox: Url,
     pub(crate) public_key: String,
     pub(crate) private_key: Option<String>,
@@ -31,6 +34,7 @@ pub struct Instance {
     #[serde(rename = "type")]
     kind: ServiceType,
     id: ObjectId<DbInstance>,
+    articles: CollectionId<DbArticleCollection>,
     inbox: Url,
     public_key: PublicKey,
 }
@@ -97,6 +101,7 @@ impl Object for DbInstance {
         Ok(Instance {
             kind: Default::default(),
             id: self.ap_id.clone(),
+            articles: self.articles_id.clone(),
             inbox: self.inbox.clone(),
             public_key: self.public_key(),
         })
@@ -114,6 +119,7 @@ impl Object for DbInstance {
     async fn from_json(json: Self::Kind, data: &Data<Self::DataType>) -> Result<Self, Self::Error> {
         let instance = DbInstance {
             ap_id: json.id,
+            articles_id: json.articles,
             inbox: json.inbox,
             public_key: json.public_key.public_key_pem,
             private_key: None,
@@ -122,6 +128,8 @@ impl Object for DbInstance {
             follows: vec![],
             local: false,
         };
+        // TODO: very inefficient to sync all articles every time
+        instance.articles_id.dereference(&instance, &data).await?;
         let mut mutex = data.instances.lock().unwrap();
         mutex.push(instance.clone());
         Ok(instance)

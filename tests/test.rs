@@ -97,3 +97,60 @@ async fn test_follow_instance() -> MyResult<()> {
     handle_beta.abort();
     Ok(())
 }
+
+#[tokio::test]
+#[serial]
+async fn test_synchronize_articles() -> MyResult<()> {
+    setup();
+    let hostname_alpha = "localhost:8131";
+    let hostname_beta = "localhost:8132";
+    let handle_alpha = tokio::task::spawn(async {
+        start(hostname_alpha).await.unwrap();
+    });
+    let handle_beta = tokio::task::spawn(async {
+        start(hostname_beta).await.unwrap();
+    });
+
+    // create article on alpha
+    let create_article = CreateArticle {
+        title: "Manu_Chao".to_string(),
+        text: "Lorem ipsum".to_string(),
+    };
+    let create_res: DbArticle = post(hostname_alpha, "article", &create_article).await?;
+    assert_eq!(create_article.title, create_res.title);
+    assert!(create_res.local);
+
+    // article is not yet on beta
+    let get_article = GetArticle {
+        title: "Manu_Chao".to_string(),
+    };
+    let get_res = get_query::<DbArticle, _>(
+        hostname_beta,
+        &format!("article"),
+        Some(get_article.clone()),
+    )
+    .await;
+    assert!(get_res.is_err());
+
+    // fetch alpha instance on beta, articles are also fetched automatically
+    let resolve_object = ResolveObject {
+        id: Url::parse(&format!("http://{hostname_alpha}"))?,
+    };
+    get_query::<DbInstance, _>(hostname_beta, "resolve_object", Some(resolve_object)).await?;
+
+    // get the article and compare
+    let get_res: DbArticle = get_query(
+        hostname_beta,
+        &format!("article"),
+        Some(get_article.clone()),
+    )
+    .await?;
+    assert_eq!(create_res.ap_id, get_res.ap_id);
+    assert_eq!(create_article.title, get_res.title);
+    assert_eq!(create_article.text, get_res.text);
+    assert!(!get_res.local);
+
+    handle_alpha.abort();
+    handle_beta.abort();
+    Ok(())
+}

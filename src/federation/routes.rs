@@ -8,9 +8,10 @@ use activitypub_federation::axum::inbox::{receive_activity, ActivityData};
 use activitypub_federation::axum::json::FederationJson;
 use activitypub_federation::config::Data;
 use activitypub_federation::protocol::context::WithContext;
-use activitypub_federation::traits::ActivityHandler;
 use activitypub_federation::traits::Object;
+use activitypub_federation::traits::{ActivityHandler, Collection};
 
+use crate::federation::objects::articles_collection::{ArticleCollection, DbArticleCollection};
 use axum::response::IntoResponse;
 use axum::routing::{get, post};
 use axum::Router;
@@ -21,6 +22,7 @@ use url::Url;
 pub fn federation_routes() -> Router {
     Router::new()
         .route("/", get(http_get_instance))
+        .route("/articles", get(http_get_articles))
         .route("/inbox", post(http_post_inbox))
 }
 
@@ -31,6 +33,14 @@ async fn http_get_instance(
     let db_instance = data.local_instance();
     let json_instance = db_instance.into_json(&data).await?;
     Ok(FederationJson(WithContext::new_default(json_instance)))
+}
+
+#[debug_handler]
+async fn http_get_articles(
+    data: Data<DatabaseHandle>,
+) -> MyResult<FederationJson<WithContext<ArticleCollection>>> {
+    let collection = DbArticleCollection::read_local(&data.local_instance(), &data).await?;
+    Ok(FederationJson(WithContext::new_default(collection)))
 }
 
 /// List of all activities which this actor can receive.

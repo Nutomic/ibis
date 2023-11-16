@@ -477,6 +477,7 @@ dependencies = [
  "chrono",
  "enum_delegate",
  "env_logger",
+ "futures",
  "once_cell",
  "rand",
  "reqwest",
