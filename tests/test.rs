@@ -1,9 +1,11 @@
 extern crate fediwiki;
+
+use fediwiki::error::MyResult;
 use fediwiki::federation::objects::article::DbArticle;
 use fediwiki::start;
 
 #[tokio::test]
-async fn test_get_article() {
+async fn test_get_article() -> MyResult<()> {
     let hostname = "localhost:8131";
     let handle = tokio::task::spawn(async {
         start(hostname).await.unwrap();
@@ -11,18 +13,17 @@ async fn test_get_article() {
 
     let title = "Manu_Chao";
     let res: DbArticle = reqwest::get(format!("http://{hostname}/api/v1/article/{title}"))
-        .await
-        .unwrap()
+        .await?
         .json()
-        .await
-        .unwrap();
+        .await?;
     assert_eq!(title, res.title);
     assert!(res.local);
     handle.abort();
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_follow_instance() {
+async fn test_follow_instance() -> MyResult<()> {
     let hostname_alpha = "localhost:8131";
     let hostname_beta = "localhost:8132";
     let handle_alpha = tokio::task::spawn(async {
@@ -32,6 +33,9 @@ async fn test_follow_instance() {
         start(hostname_beta).await.unwrap();
     });
 
+    // TODO
+
     handle_alpha.abort();
     handle_beta.abort();
+    Ok(())
 }

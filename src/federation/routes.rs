@@ -8,10 +8,18 @@ use activitypub_federation::protocol::context::WithContext;
 use activitypub_federation::traits::Object;
 use axum::extract::path::Path;
 use axum::response::IntoResponse;
+use axum::routing::{get, post};
+use axum::Router;
 use axum_macros::debug_handler;
 
+pub fn federation_routes() -> Router {
+    Router::new()
+        .route("/:user/inbox", post(http_post_user_inbox))
+        .route("/:user", get(http_get_user))
+}
+
 #[debug_handler]
-pub async fn http_get_user(
+async fn http_get_user(
     Path(name): Path<String>,
     data: Data<DatabaseHandle>,
 ) -> MyResult<FederationJson<WithContext<Person>>> {
