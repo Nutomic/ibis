@@ -43,7 +43,7 @@ async fn create_article(
         local: true,
     };
     let mut articles = data.articles.lock().unwrap();
-    articles.push(article.clone());
+    articles.insert(article.ap_id.inner().clone(), article.clone());
     Ok(Json(article))
 }
 
@@ -60,8 +60,9 @@ async fn get_article(
     let articles = data.articles.lock().unwrap();
     let article = articles
         .iter()
-        .find(|a| a.title == query.title)
+        .find(|a| a.1.title == query.title)
         .ok_or(anyhow!("not found"))?
+        .1
         .clone();
     Ok(Json(article))
 }
@@ -78,7 +79,7 @@ async fn resolve_object(
 ) -> MyResult<Json<DbInstance>> {
     let instance: DbInstance = ObjectId::from(query.id).dereference(&data).await?;
     let mut instances = data.instances.lock().unwrap();
-    instances.push(instance.clone());
+    instances.insert(instance.ap_id.inner().clone(), instance.clone());
     Ok(Json(instance))
 }
 

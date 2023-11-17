@@ -47,7 +47,8 @@ impl Object for DbArticle {
         let res = posts
             .clone()
             .into_iter()
-            .find(|u| u.ap_id.inner() == &object_id);
+            .find(|u| u.1.ap_id.inner() == &object_id)
+            .map(|u| u.1);
         Ok(res)
     }
 
@@ -73,7 +74,7 @@ impl Object for DbArticle {
     }
 
     async fn from_json(json: Self::Kind, data: &Data<Self::DataType>) -> Result<Self, Self::Error> {
-        let post = DbArticle {
+        let article = DbArticle {
             title: json.name,
             text: json.content,
             ap_id: json.id,
@@ -82,7 +83,7 @@ impl Object for DbArticle {
         };
 
         let mut lock = data.articles.lock().unwrap();
-        lock.push(post.clone());
-        Ok(post)
+        lock.insert(article.ap_id.inner().clone(), article.clone());
+        Ok(article)
     }
 }

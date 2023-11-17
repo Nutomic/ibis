@@ -1,18 +1,19 @@
 use crate::federation::objects::article::DbArticle;
 use crate::federation::objects::instance::DbInstance;
-
+use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
+use url::Url;
 
 pub type DatabaseHandle = Arc<Database>;
 
 pub struct Database {
-    pub instances: Mutex<Vec<DbInstance>>,
-    pub articles: Mutex<Vec<DbArticle>>,
+    pub instances: Mutex<HashMap<Url, DbInstance>>,
+    pub articles: Mutex<HashMap<Url, DbArticle>>,
 }
 
 impl Database {
     pub fn local_instance(&self) -> DbInstance {
         let lock = self.instances.lock().unwrap();
-        lock.iter().find(|i| i.local).unwrap().clone()
+        lock.iter().find(|i| i.1.local).unwrap().1.clone()
     }
 }

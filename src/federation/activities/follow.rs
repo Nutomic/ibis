@@ -50,13 +50,15 @@ impl ActivityHandler for Follow {
     }
 
     async fn receive(self, data: &Data<Self::DataType>) -> Result<(), Self::Error> {
+        dbg!(&self);
         // add to followers
         let local_instance = {
-            let mut instances = data.instances.lock().unwrap();
-            let local_instance = instances.first_mut().unwrap();
+            let mut lock = data.instances.lock().unwrap();
+            let local_instance = lock.iter_mut().find(|i| i.1.local).unwrap().1;
             local_instance.followers.push(self.actor.inner().clone());
             local_instance.clone()
         };
+        dbg!(&local_instance.followers.len());
 
         // send back an accept
         let follower = self.actor.dereference(data).await?;

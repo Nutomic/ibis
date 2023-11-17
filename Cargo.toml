@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-activitypub_federation = { version = "0.4.7", features = ["axum"], default-features = false }
+activitypub_federation = { version = "0.5.0-beta.4", features = ["axum"], default-features = false }
 anyhow = "1.0.75"
 async-trait = "0.1.74"
 axum = "0.6.20"

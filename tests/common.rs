@@ -6,7 +6,7 @@ use serde::ser::Serialize;
 use std::sync::Once;
 use tracing::log::LevelFilter;
 
-pub static CLIENT: Lazy<Client> = Lazy::new(|| Client::new());
+pub static CLIENT: Lazy<Client> = Lazy::new(Client::new);
 
 pub fn setup() {
     static INIT: Once = Once::new();

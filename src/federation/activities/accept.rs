@@ -49,8 +49,8 @@ impl ActivityHandler for Accept {
 
     async fn receive(self, data: &Data<Self::DataType>) -> Result<(), Self::Error> {
         // add to follows
-        let mut instances = data.instances.lock().unwrap();
-        let local_instance = instances.first_mut().unwrap();
+        let mut lock = data.instances.lock().unwrap();
+        let local_instance = lock.iter_mut().find(|i| i.1.local).unwrap().1;
         local_instance.follows.push(self.actor.inner().clone());
         Ok(())
     }

@@ -1,16 +1,16 @@
 use crate::error::Error;
-use crate::federation::objects::articles_collection::{ArticleCollection, DbArticleCollection};
+use crate::federation::objects::articles_collection::DbArticleCollection;
 use crate::{database::DatabaseHandle, federation::activities::follow::Follow};
+use activitypub_federation::activity_sending::SendActivityTask;
 use activitypub_federation::fetch::collection_id::CollectionId;
 use activitypub_federation::kinds::actor::ServiceType;
 use activitypub_federation::{
-    activity_queue::send_activity,
     config::Data,
     fetch::object_id::ObjectId,
     protocol::{context::WithContext, public_key::PublicKey, verification::verify_domains_match},
     traits::{ActivityHandler, Actor, Object},
 };
-use chrono::{Local, NaiveDateTime};
+use chrono::{DateTime, Local, Utc};
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 use url::Url;
@@ -22,7 +22,7 @@ pub struct DbInstance {
     pub inbox: Url,
     pub(crate) public_key: String,
     pub(crate) private_key: Option<String>,
-    pub(crate) last_refreshed_at: NaiveDateTime,
+    pub(crate) last_refreshed_at: DateTime<Utc>,
     pub followers: Vec<Url>,
     pub follows: Vec<Url>,
     pub local: bool,
@@ -70,7 +70,10 @@ impl DbInstance {
         <Activity as ActivityHandler>::Error: From<anyhow::Error> + From<serde_json::Error>,
     {
         let activity = WithContext::new_default(activity);
-        send_activity(activity, self, recipients, data).await?;
+        let sends = SendActivityTask::prepare(&activity, self, recipients, data).await?;
+        for send in sends {
+            send.sign_and_send(data).await?;
+        }
         Ok(())
     }
 }
@@ -81,7 +84,7 @@ impl Object for DbInstance {
     type Kind = Instance;
     type Error = Error;
 
-    fn last_refreshed_at(&self) -> Option<NaiveDateTime> {
+    fn last_refreshed_at(&self) -> Option<DateTime<Utc>> {
         Some(self.last_refreshed_at)
     }
 
@@ -93,6 +96,7 @@ impl Object for DbInstance {
         let res = users
             .clone()
             .into_iter()
+            .map(|u| u.1)
             .find(|u| u.ap_id.inner() == &object_id);
         Ok(res)
     }
@@ -123,15 +127,15 @@ impl Object for DbInstance {
             inbox: json.inbox,
             public_key: json.public_key.public_key_pem,
             private_key: None,
-            last_refreshed_at: Local::now().naive_local(),
+            last_refreshed_at: Local::now().into(),
             followers: vec![],
             follows: vec![],
             local: false,
         };
         // TODO: very inefficient to sync all articles every time
-        instance.articles_id.dereference(&instance, &data).await?;
+        instance.articles_id.dereference(&instance, data).await?;
         let mut mutex = data.instances.lock().unwrap();
-        mutex.push(instance.clone());
+        mutex.insert(instance.ap_id.inner().clone(), instance.clone());
         Ok(instance)
     }
 }

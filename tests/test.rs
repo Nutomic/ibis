@@ -26,7 +26,8 @@ async fn test_create_and_read_article() -> MyResult<()> {
         title: "Manu_Chao".to_string(),
     };
     let not_found =
-        get_query::<DbArticle, _>(hostname, &format!("article"), Some(get_article.clone())).await;
+        get_query::<DbArticle, _>(hostname, &"article".to_string(), Some(get_article.clone()))
+            .await;
     assert!(not_found.is_err());
 
     // create article
@@ -40,7 +41,7 @@ async fn test_create_and_read_article() -> MyResult<()> {
 
     // now article can be read
     let get_res: DbArticle =
-        get_query(hostname, &format!("article"), Some(get_article.clone())).await?;
+        get_query(hostname, &"article".to_string(), Some(get_article.clone())).await?;
     assert_eq!(create_article.title, get_res.title);
     assert_eq!(create_article.text, get_res.text);
     assert!(get_res.local);
@@ -126,7 +127,7 @@ async fn test_synchronize_articles() -> MyResult<()> {
     };
     let get_res = get_query::<DbArticle, _>(
         hostname_beta,
-        &format!("article"),
+        &"article".to_string(),
         Some(get_article.clone()),
     )
     .await;
@@ -141,7 +142,7 @@ async fn test_synchronize_articles() -> MyResult<()> {
     // get the article and compare
     let get_res: DbArticle = get_query(
         hostname_beta,
-        &format!("article"),
+        &"article".to_string(),
         Some(get_article.clone()),
     )
     .await?;

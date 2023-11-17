@@ -40,6 +40,7 @@ impl Collection for DbArticleCollection {
             let articles = data.articles.lock().unwrap();
             articles
                 .iter()
+                .map(|a| a.1)
                 .filter(|a| a.local)
                 .clone()
                 .cloned()
@@ -52,7 +53,7 @@ impl Collection for DbArticleCollection {
                 .collect::<Vec<_>>(),
         )
         .await?;
-        let ap_id = generate_object_id(data.local_instance().ap_id.inner())?.into();
+        let ap_id = generate_object_id(data.local_instance().ap_id.inner())?;
         let collection = ArticleCollection {
             r#type: Default::default(),
             id: ap_id,
@@ -78,15 +79,16 @@ impl Collection for DbArticleCollection {
     where
         Self: Sized,
     {
-        let mut articles = try_join_all(
+        let articles = try_join_all(
             apub.items
                 .into_iter()
                 .map(|i| DbArticle::from_json(i, data)),
         )
         .await?;
         let mut lock = data.articles.lock().unwrap();
-        // TODO: need to overwrite existing items
-        lock.append(&mut articles);
+        for a in &articles {
+            lock.insert(a.ap_id.inner().clone(), a.clone());
+        }
         // TODO: return value propably not needed
         Ok(DbArticleCollection(articles))
     }
