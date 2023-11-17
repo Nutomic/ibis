@@ -2,31 +2,26 @@ extern crate fediwiki;
 
 mod common;
 
-use crate::common::{follow_instance, get_query, patch, post, setup};
+use crate::common::{follow_instance, get_query, patch, post, TestData};
 use common::get;
 use fediwiki::api::{CreateArticle, EditArticle, GetArticle, ResolveObject};
 use fediwiki::error::MyResult;
 use fediwiki::federation::objects::article::DbArticle;
 use fediwiki::federation::objects::instance::DbInstance;
-use fediwiki::start;
 use serial_test::serial;
 use url::Url;
 
 #[tokio::test]
 #[serial]
 async fn test_create_and_read_article() -> MyResult<()> {
-    setup();
-    let hostname = "localhost:8131";
-    let handle = tokio::task::spawn(async {
-        start(hostname).await.unwrap();
-    });
+    let data = TestData::start();
 
     // error on nonexistent article
     let get_article = GetArticle {
         title: "Manu_Chao".to_string(),
     };
     let not_found =
-        get_query::<DbArticle, _>(hostname, &"article".to_string(), Some(get_article.clone()))
+        get_query::<DbArticle, _>(data.hostname_alpha, &"article".to_string(), Some(get_article.clone()))
             .await;
     assert!(not_found.is_err());
 
@@ -35,73 +30,54 @@ async fn test_create_and_read_article() -> MyResult<()> {
         title: get_article.title.to_string(),
         text: "Lorem ipsum".to_string(),
     };
-    let create_res: DbArticle = post(hostname, "article", &create_article).await?;
+    let create_res: DbArticle = post(data.hostname_alpha, "article", &create_article).await?;
     assert_eq!(create_article.title, create_res.title);
     assert!(create_res.local);
 
     // now article can be read
     let get_res: DbArticle =
-        get_query(hostname, &"article".to_string(), Some(get_article.clone())).await?;
+        get_query(data.hostname_alpha, &"article".to_string(), Some(get_article.clone())).await?;
     assert_eq!(create_article.title, get_res.title);
     assert_eq!(create_article.text, get_res.text);
     assert!(get_res.local);
 
-    handle.abort();
-    Ok(())
+    data.stop()
 }
 
 #[tokio::test]
 #[serial]
 async fn test_follow_instance() -> MyResult<()> {
-    setup();
-    let hostname_alpha = "localhost:8131";
-    let hostname_beta = "localhost:8132";
-    let handle_alpha = tokio::task::spawn(async {
-        start(hostname_alpha).await.unwrap();
-    });
-    let handle_beta = tokio::task::spawn(async {
-        start(hostname_beta).await.unwrap();
-    });
+    let data = TestData::start();
 
     // check initial state
-    let alpha_instance: DbInstance = get(hostname_alpha, "instance").await?;
+    let alpha_instance: DbInstance = get(data.hostname_alpha, "instance").await?;
     assert_eq!(0, alpha_instance.follows.len());
-    let beta_instance: DbInstance = get(hostname_beta, "instance").await?;
+    let beta_instance: DbInstance = get(data.hostname_beta, "instance").await?;
     assert_eq!(0, beta_instance.followers.len());
 
-    common::follow_instance(hostname_alpha, &hostname_beta).await?;
+    follow_instance(data.hostname_alpha, &data.hostname_beta).await?;
 
     // check that follow was federated
-    let beta_instance: DbInstance = get(hostname_beta, "instance").await?;
+    let beta_instance: DbInstance = get(data.hostname_beta, "instance").await?;
     assert_eq!(1, beta_instance.followers.len());
 
-    let alpha_instance: DbInstance = get(hostname_alpha, "instance").await?;
+    let alpha_instance: DbInstance = get(data.hostname_alpha, "instance").await?;
     assert_eq!(1, alpha_instance.follows.len());
 
-    handle_alpha.abort();
-    handle_beta.abort();
-    Ok(())
+    data.stop()
 }
 
 #[tokio::test]
 #[serial]
 async fn test_synchronize_articles() -> MyResult<()> {
-    setup();
-    let hostname_alpha = "localhost:8131";
-    let hostname_beta = "localhost:8132";
-    let handle_alpha = tokio::task::spawn(async {
-        start(hostname_alpha).await.unwrap();
-    });
-    let handle_beta = tokio::task::spawn(async {
-        start(hostname_beta).await.unwrap();
-    });
+    let data = TestData::start();
 
     // create article on alpha
     let create_article = CreateArticle {
         title: "Manu_Chao".to_string(),
         text: "Lorem ipsum".to_string(),
     };
-    let create_res: DbArticle = post(hostname_alpha, "article", &create_article).await?;
+    let create_res: DbArticle = post(data.hostname_alpha, "article", &create_article).await?;
     assert_eq!(create_article.title, create_res.title);
     assert!(create_res.local);
 
@@ -110,7 +86,7 @@ async fn test_synchronize_articles() -> MyResult<()> {
         title: "Manu_Chao".to_string(),
     };
     let get_res = get_query::<DbArticle, _>(
-        hostname_beta,
+        data.hostname_beta,
         &"article".to_string(),
         Some(get_article.clone()),
     )
@@ -119,13 +95,13 @@ async fn test_synchronize_articles() -> MyResult<()> {
 
     // fetch alpha instance on beta, articles are also fetched automatically
     let resolve_object = ResolveObject {
-        id: Url::parse(&format!("http://{hostname_alpha}"))?,
+        id: Url::parse(&format!("http://{}", data.hostname_alpha))?,
     };
-    get_query::<DbInstance, _>(hostname_beta, "resolve_object", Some(resolve_object)).await?;
+    get_query::<DbInstance, _>(data.hostname_beta, "resolve_object", Some(resolve_object)).await?;
 
     // get the article and compare
     let get_res: DbArticle = get_query(
-        hostname_beta,
+        data.hostname_beta,
         &"article".to_string(),
         Some(get_article.clone()),
     )
@@ -135,32 +111,22 @@ async fn test_synchronize_articles() -> MyResult<()> {
     assert_eq!(create_article.text, get_res.text);
     assert!(!get_res.local);
 
-    handle_alpha.abort();
-    handle_beta.abort();
-    Ok(())
+    data.stop()
 }
 
 #[tokio::test]
 #[serial]
 async fn test_federate_article_changes() -> MyResult<()> {
-    setup();
-    let hostname_alpha = "localhost:8131";
-    let hostname_beta = "localhost:8132";
-    let handle_alpha = tokio::task::spawn(async {
-        start(hostname_alpha).await.unwrap();
-    });
-    let handle_beta = tokio::task::spawn(async {
-        start(hostname_beta).await.unwrap();
-    });
+    let data = TestData::start();
 
-    follow_instance(hostname_alpha, hostname_beta).await?;
+    follow_instance(data.hostname_alpha, data.hostname_beta).await?;
 
     // create new article
     let create_form = CreateArticle {
         title: "Manu_Chao".to_string(),
         text: "Lorem ipsum".to_string(),
     };
-    let create_res: DbArticle = post(hostname_beta, "article", &create_form).await?;
+    let create_res: DbArticle = post(data.hostname_beta, "article", &create_form).await?;
     assert_eq!(create_res.title, create_form.title);
 
     // article should be federated to alpha
@@ -168,7 +134,7 @@ async fn test_federate_article_changes() -> MyResult<()> {
         title: create_res.title.clone(),
     };
     let get_res =
-        get_query::<DbArticle, _>(hostname_alpha, "article", Some(get_article.clone())).await?;
+        get_query::<DbArticle, _>(data.hostname_alpha, "article", Some(get_article.clone())).await?;
     assert_eq!(create_res.title, get_res.title);
     assert_eq!(create_res.text, get_res.text);
 
@@ -177,7 +143,7 @@ async fn test_federate_article_changes() -> MyResult<()> {
         ap_id: create_res.ap_id,
         new_text: "Lorem Ipsum 2".to_string(),
     };
-    let edit_res: DbArticle = patch(hostname_beta, "article", &edit_form).await?;
+    let edit_res: DbArticle = patch(data.hostname_beta, "article", &edit_form).await?;
     assert_eq!(edit_res.text, edit_form.new_text);
 
     // edit should be federated to alpha
@@ -185,11 +151,9 @@ async fn test_federate_article_changes() -> MyResult<()> {
         title: edit_res.title.clone(),
     };
     let get_res =
-        get_query::<DbArticle, _>(hostname_alpha, "article", Some(get_article.clone())).await?;
+        get_query::<DbArticle, _>(data.hostname_alpha, "article", Some(get_article.clone())).await?;
     assert_eq!(edit_res.title, get_res.title);
     assert_eq!(edit_res.text, get_res.text);
 
-    handle_alpha.abort();
-    handle_beta.abort();
-    Ok(())
+    data.stop()
 }
