@@ -1,6 +1,9 @@
 use crate::database::DatabaseHandle;
 
 use crate::error::MyResult;
+use crate::federation::activities::create_or_update_article::{
+    CreateOrUpdateArticle, CreateOrUpdateType,
+};
 use crate::federation::objects::article::DbArticle;
 use crate::federation::objects::instance::DbInstance;
 use crate::utils::generate_object_id;
@@ -16,7 +19,10 @@ use url::Url;
 
 pub fn api_routes() -> Router {
     Router::new()
-        .route("/article", get(get_article).post(create_article))
+        .route(
+            "/article",
+            get(get_article).post(create_article).patch(edit_article),
+        )
         .route("/resolve_object", get(resolve_object))
         .route("/instance", get(get_local_instance))
         .route("/instance/follow", post(follow_instance))
@@ -42,8 +48,46 @@ async fn create_article(
         instance: local_instance_id,
         local: true,
     };
-    let mut articles = data.articles.lock().unwrap();
-    articles.insert(article.ap_id.inner().clone(), article.clone());
+    {
+        let mut articles = data.articles.lock().unwrap();
+        articles.insert(article.ap_id.inner().clone(), article.clone());
+    }
+
+    CreateOrUpdateArticle::send_to_local_followers(
+        article.clone(),
+        CreateOrUpdateType::Create,
+        &data,
+    )
+    .await?;
+
+    Ok(Json(article))
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct EditArticle {
+    pub ap_id: ObjectId<DbArticle>,
+    pub new_text: String,
+}
+
+#[debug_handler]
+async fn edit_article(
+    data: Data<DatabaseHandle>,
+    Form(edit_article): Form<EditArticle>,
+) -> MyResult<Json<DbArticle>> {
+    let article = {
+        let mut lock = data.articles.lock().unwrap();
+        let article = lock.get_mut(edit_article.ap_id.inner()).unwrap();
+        article.text = edit_article.new_text;
+        article.clone()
+    };
+
+    CreateOrUpdateArticle::send_to_local_followers(
+        article.clone(),
+        CreateOrUpdateType::Update,
+        &data,
+    )
+    .await?;
+
     Ok(Json(article))
 }
 

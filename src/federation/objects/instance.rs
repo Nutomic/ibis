@@ -23,7 +23,7 @@ pub struct DbInstance {
     pub(crate) public_key: String,
     pub(crate) private_key: Option<String>,
     pub(crate) last_refreshed_at: DateTime<Utc>,
-    pub followers: Vec<Url>,
+    pub followers: Vec<DbInstance>,
     pub follows: Vec<Url>,
     pub local: bool,
 }
@@ -40,10 +40,6 @@ pub struct Instance {
 }
 
 impl DbInstance {
-    pub fn followers(&self) -> &Vec<Url> {
-        &self.followers
-    }
-
     pub fn followers_url(&self) -> Result<Url, Error> {
         Ok(Url::parse(&format!("{}/followers", self.ap_id.inner()))?)
     }

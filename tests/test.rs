@@ -2,9 +2,9 @@ extern crate fediwiki;
 
 mod common;
 
-use crate::common::{get_query, post, setup, CLIENT};
+use crate::common::{follow_instance, get_query, patch, post, setup};
 use common::get;
-use fediwiki::api::{CreateArticle, FollowInstance, GetArticle, ResolveObject};
+use fediwiki::api::{CreateArticle, EditArticle, GetArticle, ResolveObject};
 use fediwiki::error::MyResult;
 use fediwiki::federation::objects::article::DbArticle;
 use fediwiki::federation::objects::instance::DbInstance;
@@ -69,23 +69,7 @@ async fn test_follow_instance() -> MyResult<()> {
     let beta_instance: DbInstance = get(hostname_beta, "instance").await?;
     assert_eq!(0, beta_instance.followers.len());
 
-    // fetch beta instance on alpha
-    let resolve_object = ResolveObject {
-        id: Url::parse(&format!("http://{hostname_beta}"))?,
-    };
-    let beta_instance_resolved: DbInstance =
-        get_query(hostname_beta, "resolve_object", Some(resolve_object)).await?;
-
-    // send follow
-    let follow_instance = FollowInstance {
-        instance_id: beta_instance_resolved.ap_id,
-    };
-    // cant use post helper because follow doesnt return json
-    CLIENT
-        .post(format!("http://{hostname_alpha}/api/v1/instance/follow"))
-        .form(&follow_instance)
-        .send()
-        .await?;
+    common::follow_instance(hostname_alpha, &hostname_beta).await?;
 
     // check that follow was federated
     let beta_instance: DbInstance = get(hostname_beta, "instance").await?;
@@ -150,6 +134,60 @@ async fn test_synchronize_articles() -> MyResult<()> {
     assert_eq!(create_article.title, get_res.title);
     assert_eq!(create_article.text, get_res.text);
     assert!(!get_res.local);
+
+    handle_alpha.abort();
+    handle_beta.abort();
+    Ok(())
+}
+
+#[tokio::test]
+#[serial]
+async fn test_federate_article_changes() -> MyResult<()> {
+    setup();
+    let hostname_alpha = "localhost:8131";
+    let hostname_beta = "localhost:8132";
+    let handle_alpha = tokio::task::spawn(async {
+        start(hostname_alpha).await.unwrap();
+    });
+    let handle_beta = tokio::task::spawn(async {
+        start(hostname_beta).await.unwrap();
+    });
+
+    follow_instance(hostname_alpha, hostname_beta).await?;
+
+    // create new article
+    let create_form = CreateArticle {
+        title: "Manu_Chao".to_string(),
+        text: "Lorem ipsum".to_string(),
+    };
+    let create_res: DbArticle = post(hostname_beta, "article", &create_form).await?;
+    assert_eq!(create_res.title, create_form.title);
+
+    // article should be federated to alpha
+    let get_article = GetArticle {
+        title: create_res.title.clone(),
+    };
+    let get_res =
+        get_query::<DbArticle, _>(hostname_alpha, "article", Some(get_article.clone())).await?;
+    assert_eq!(create_res.title, get_res.title);
+    assert_eq!(create_res.text, get_res.text);
+
+    // edit the article
+    let edit_form = EditArticle {
+        ap_id: create_res.ap_id,
+        new_text: "Lorem Ipsum 2".to_string(),
+    };
+    let edit_res: DbArticle = patch(hostname_beta, "article", &edit_form).await?;
+    assert_eq!(edit_res.text, edit_form.new_text);
+
+    // edit should be federated to alpha
+    let get_article = GetArticle {
+        title: edit_res.title.clone(),
+    };
+    let get_res =
+        get_query::<DbArticle, _>(hostname_alpha, "article", Some(get_article.clone())).await?;
+    assert_eq!(edit_res.title, get_res.title);
+    assert_eq!(edit_res.text, get_res.text);
 
     handle_alpha.abort();
     handle_beta.abort();

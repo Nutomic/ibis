@@ -11,6 +11,7 @@ use activitypub_federation::protocol::context::WithContext;
 use activitypub_federation::traits::Object;
 use activitypub_federation::traits::{ActivityHandler, Collection};
 
+use crate::federation::activities::create_or_update_article::CreateOrUpdateArticle;
 use crate::federation::objects::articles_collection::{ArticleCollection, DbArticleCollection};
 use axum::response::IntoResponse;
 use axum::routing::{get, post};
@@ -50,6 +51,7 @@ async fn http_get_articles(
 pub enum InboxActivities {
     Follow(Follow),
     Accept(Accept),
+    CreateOrUpdateArticle(CreateOrUpdateArticle),
 }
 
 #[debug_handler]
