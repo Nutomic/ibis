@@ -6,7 +6,6 @@ use crate::federation::activities::create_or_update_article::{
 };
 use crate::federation::objects::article::DbArticle;
 use crate::federation::objects::instance::DbInstance;
-use crate::utils::generate_object_id;
 use activitypub_federation::config::Data;
 use activitypub_federation::fetch::object_id::ObjectId;
 use anyhow::anyhow;
@@ -41,7 +40,13 @@ async fn create_article(
     Form(create_article): Form<CreateArticle>,
 ) -> MyResult<Json<DbArticle>> {
     let local_instance_id = data.local_instance().ap_id;
-    let ap_id = generate_object_id(local_instance_id.inner())?.into();
+    let ap_id = Url::parse(&format!(
+        "http://{}:{}/article/{}",
+        local_instance_id.inner().domain().unwrap(),
+        local_instance_id.inner().port().unwrap(),
+        create_article.title
+    ))?
+    .into();
     let article = DbArticle {
         title: create_article.title,
         text: create_article.text,

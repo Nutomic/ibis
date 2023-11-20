@@ -1,4 +1,4 @@
-use crate::error::{Error, MyResult};
+use crate::error::Error;
 use crate::federation::objects::articles_collection::DbArticleCollection;
 use crate::{database::DatabaseHandle, federation::activities::follow::Follow};
 use activitypub_federation::activity_sending::SendActivityTask;

@@ -1,10 +1,9 @@
 use crate::database::DatabaseHandle;
 use crate::error::Error;
-use crate::federation::objects::article::{ApubArticle, DbArticle};
+use crate::federation::objects::article::DbArticle;
 use crate::federation::objects::edit::{ApubEdit, DbEdit};
-use crate::federation::objects::instance::DbInstance;
-use crate::utils::generate_object_id;
-use activitypub_federation::kinds::collection::{CollectionType, OrderedCollectionType};
+
+use activitypub_federation::kinds::collection::OrderedCollectionType;
 use activitypub_federation::{
     config::Data,
     traits::{Collection, Object},
@@ -75,7 +74,7 @@ impl Collection for DbEditCollection {
         let edits =
             try_join_all(apub.items.into_iter().map(|i| DbEdit::from_json(i, data))).await?;
         let mut articles = data.articles.lock().unwrap();
-        let mut article = articles.get_mut(owner.ap_id.inner()).unwrap();
+        let article = articles.get_mut(owner.ap_id.inner()).unwrap();
         for e in edits.clone() {
             // TODO: edits need a unique id to avoid pushing duplicates
             article.edits.push(e);

@@ -1,6 +1,6 @@
 use crate::error::MyResult;
 use crate::federation::objects::edit::DbEdit;
-use crate::federation::objects::edits_collection::{ApubEditCollection, DbEditCollection};
+use crate::federation::objects::edits_collection::DbEditCollection;
 use crate::federation::objects::instance::DbInstance;
 use crate::{database::DatabaseHandle, error::Error};
 use activitypub_federation::fetch::collection_id::CollectionId;

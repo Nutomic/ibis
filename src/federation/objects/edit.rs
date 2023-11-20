@@ -37,25 +37,28 @@ impl Object for DbEdit {
     type Error = Error;
 
     async fn read_from_id(
-        object_id: Url,
-        data: &Data<Self::DataType>,
+        _object_id: Url,
+        _data: &Data<Self::DataType>,
     ) -> Result<Option<Self>, Self::Error> {
         todo!()
     }
 
-    async fn into_json(self, data: &Data<Self::DataType>) -> Result<Self::Kind, Self::Error> {
+    async fn into_json(self, _data: &Data<Self::DataType>) -> Result<Self::Kind, Self::Error> {
         todo!()
     }
 
     async fn verify(
-        json: &Self::Kind,
-        expected_domain: &Url,
-        data: &Data<Self::DataType>,
+        _json: &Self::Kind,
+        _expected_domain: &Url,
+        _data: &Data<Self::DataType>,
     ) -> Result<(), Self::Error> {
         todo!()
     }
 
-    async fn from_json(json: Self::Kind, data: &Data<Self::DataType>) -> Result<Self, Self::Error> {
+    async fn from_json(
+        _json: Self::Kind,
+        _data: &Data<Self::DataType>,
+    ) -> Result<Self, Self::Error> {
         todo!()
     }
 }

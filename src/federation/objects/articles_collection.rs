@@ -2,7 +2,7 @@ use crate::database::DatabaseHandle;
 use crate::error::Error;
 use crate::federation::objects::article::{ApubArticle, DbArticle};
 use crate::federation::objects::instance::DbInstance;
-use crate::utils::generate_object_id;
+
 use activitypub_federation::kinds::collection::CollectionType;
 use activitypub_federation::{
     config::Data,

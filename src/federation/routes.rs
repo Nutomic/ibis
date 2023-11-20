@@ -10,9 +10,12 @@ use activitypub_federation::config::Data;
 use activitypub_federation::protocol::context::WithContext;
 use activitypub_federation::traits::Object;
 use activitypub_federation::traits::{ActivityHandler, Collection};
+use axum::extract::Path;
 
 use crate::federation::activities::create_or_update_article::CreateOrUpdateArticle;
+use crate::federation::objects::article::ApubArticle;
 use crate::federation::objects::articles_collection::{ArticleCollection, DbArticleCollection};
+use crate::federation::objects::edits_collection::{ApubEditCollection, DbEditCollection};
 use axum::response::IntoResponse;
 use axum::routing::{get, post};
 use axum::Router;
@@ -23,7 +26,9 @@ use url::Url;
 pub fn federation_routes() -> Router {
     Router::new()
         .route("/", get(http_get_instance))
-        .route("/articles", get(http_get_articles))
+        .route("/all_articles", get(http_get_all_articles))
+        .route("/article/:title", get(http_get_article))
+        .route("/article/:title/edits", get(http_get_article_edits))
         .route("/inbox", post(http_post_inbox))
 }
 
@@ -37,11 +42,37 @@ async fn http_get_instance(
 }
 
 #[debug_handler]
-async fn http_get_articles(
+async fn http_get_all_articles(
     data: Data<DatabaseHandle>,
 ) -> MyResult<FederationJson<WithContext<ArticleCollection>>> {
     let collection = DbArticleCollection::read_local(&data.local_instance(), &data).await?;
     Ok(FederationJson(WithContext::new_default(collection)))
+}
+
+#[debug_handler]
+async fn http_get_article(
+    Path(title): Path<String>,
+    data: Data<DatabaseHandle>,
+) -> MyResult<FederationJson<WithContext<ApubArticle>>> {
+    let article = {
+        let lock = data.articles.lock().unwrap();
+        lock.values().find(|a| a.title == title).unwrap().clone()
+    };
+    let json = article.into_json(&data).await?;
+    Ok(FederationJson(WithContext::new_default(json)))
+}
+
+#[debug_handler]
+async fn http_get_article_edits(
+    Path(title): Path<String>,
+    data: Data<DatabaseHandle>,
+) -> MyResult<FederationJson<WithContext<ApubEditCollection>>> {
+    let article = {
+        let lock = data.articles.lock().unwrap();
+        lock.values().find(|a| a.title == title).unwrap().clone()
+    };
+    let json = DbEditCollection::read_local(&article, &data).await?;
+    Ok(FederationJson(WithContext::new_default(json)))
 }
 
 /// List of all activities which this actor can receive.

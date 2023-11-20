@@ -15,7 +15,7 @@ pub mod routes;
 
 pub async fn federation_config(hostname: &str) -> Result<FederationConfig<DatabaseHandle>, Error> {
     let ap_id = Url::parse(&format!("http://{}", hostname))?.into();
-    let articles_id = Url::parse(&format!("http://{}/articles", hostname))?.into();
+    let articles_id = Url::parse(&format!("http://{}/all_articles", hostname))?.into();
     let inbox = Url::parse(&format!("http://{}/inbox", hostname))?;
     let keypair = generate_actor_keypair()?;
     let local_instance = DbInstance {
