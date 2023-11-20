@@ -1,6 +1,7 @@
 use fediwiki::api::{FollowInstance, ResolveObject};
 use fediwiki::error::MyResult;
 use fediwiki::federation::objects::instance::DbInstance;
+use fediwiki::start;
 use once_cell::sync::Lazy;
 use reqwest::Client;
 use serde::de::Deserialize;
@@ -9,13 +10,12 @@ use std::sync::Once;
 use tokio::task::JoinHandle;
 use tracing::log::LevelFilter;
 use url::Url;
-use fediwiki::start;
 
 pub static CLIENT: Lazy<Client> = Lazy::new(Client::new);
 
 pub struct TestData {
     pub hostname_alpha: &'static str,
-    pub hostname_beta:&'static str,
+    pub hostname_beta: &'static str,
     handle_alpha: JoinHandle<()>,
     handle_beta: JoinHandle<()>,
 }
@@ -47,7 +47,7 @@ impl TestData {
         }
     }
 
-    pub fn stop(self) -> MyResult<()>{
+    pub fn stop(self) -> MyResult<()> {
         self.handle_alpha.abort();
         self.handle_beta.abort();
         Ok(())

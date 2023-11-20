@@ -4,12 +4,10 @@ version = 3
 
 [[package]]
 name = "activitypub_federation"
-version = "0.5.0-beta.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9a122cf2c2adf45b164134946bc069659cd93083fab294839a3f1d794b707c17"
+version = "0.5.0-beta.5"
+source = "git+https://github.com/LemmyNet/activitypub-federation-rust.git?branch=parse-impl#b80408d80619ac014a5cedf5079967c20058532d"
 dependencies = [
  "activitystreams-kinds",
- "anyhow",
  "async-trait",
  "axum",
  "base64 0.21.5",
@@ -489,6 +487,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "diffy"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e616e59155c92257e84970156f506287853355f58cd4a6eb167385722c32b790"
+dependencies = [
+ "nu-ansi-term",
+]
+
+[[package]]
 name = "digest"
 version = "0.10.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -608,6 +615,7 @@ dependencies = [
  "axum",
  "axum-macros",
  "chrono",
+ "diffy",
  "enum_delegate",
  "env_logger",
  "futures",
@@ -1211,6 +1219,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "nu-ansi-term"
+version = "0.46.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "77a8165726e8236064dbb45459242600304b42a5ea24ee2948e18e023bf7ba84"
+dependencies = [
+ "overload",
+ "winapi",
+]
+
+[[package]]
 name = "num-traits"
 version = "0.2.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1287,6 +1305,12 @@ dependencies = [
  "pkg-config",
  "vcpkg",
 ]
+
+[[package]]
+name = "overload"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b15813163c1d831bf4a13c3610c05c0d03b39feb07f7e09fa234dac9b15aaf39"
 
 [[package]]
 name = "parking"

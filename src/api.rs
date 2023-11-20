@@ -34,6 +34,7 @@ pub struct CreateArticle {
     pub text: String,
 }
 
+// TODO: new article should be created with empty content
 #[debug_handler]
 async fn create_article(
     data: Data<DatabaseHandle>,
@@ -45,6 +46,7 @@ async fn create_article(
         title: create_article.title,
         text: create_article.text,
         ap_id,
+        edits: vec![],
         instance: local_instance_id,
         local: true,
     };
@@ -69,6 +71,7 @@ pub struct EditArticle {
     pub new_text: String,
 }
 
+// TODO: this should create an edit object
 #[debug_handler]
 async fn edit_article(
     data: Data<DatabaseHandle>,

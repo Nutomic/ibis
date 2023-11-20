@@ -1,6 +1,6 @@
 use crate::database::DatabaseHandle;
 use crate::error::MyResult;
-use crate::federation::objects::article::{Article, DbArticle};
+use crate::federation::objects::article::{ApubArticle, DbArticle};
 use crate::federation::objects::instance::DbInstance;
 use crate::utils::generate_object_id;
 use activitypub_federation::{
@@ -25,7 +25,7 @@ pub struct CreateOrUpdateArticle {
     pub actor: ObjectId<DbInstance>,
     #[serde(deserialize_with = "deserialize_one_or_many")]
     pub to: Vec<Url>,
-    pub object: Article,
+    pub object: ApubArticle,
     #[serde(rename = "type")]
     pub kind: CreateOrUpdateType,
     pub id: Url,

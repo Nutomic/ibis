@@ -1,4 +1,4 @@
-use crate::error::Error;
+use crate::error::{Error, MyResult};
 use crate::federation::objects::articles_collection::DbArticleCollection;
 use crate::{database::DatabaseHandle, federation::activities::follow::Follow};
 use activitypub_federation::activity_sending::SendActivityTask;
@@ -63,7 +63,7 @@ impl DbInstance {
     ) -> Result<(), <Activity as ActivityHandler>::Error>
     where
         Activity: ActivityHandler + Serialize + Debug + Send + Sync,
-        <Activity as ActivityHandler>::Error: From<anyhow::Error> + From<serde_json::Error>,
+        <Activity as ActivityHandler>::Error: From<activitypub_federation::error::Error>,
     {
         let activity = WithContext::new_default(activity);
         let sends = SendActivityTask::prepare(&activity, self, recipients, data).await?;

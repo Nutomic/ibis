@@ -1,5 +1,9 @@
+use crate::error::MyResult;
+use crate::federation::objects::edit::DbEdit;
+use crate::federation::objects::edits_collection::{ApubEditCollection, DbEditCollection};
 use crate::federation::objects::instance::DbInstance;
 use crate::{database::DatabaseHandle, error::Error};
+use activitypub_federation::fetch::collection_id::CollectionId;
 use activitypub_federation::kinds::object::ArticleType;
 use activitypub_federation::{
     config::Data,
@@ -17,18 +21,29 @@ pub struct DbArticle {
     pub text: String,
     pub ap_id: ObjectId<DbArticle>,
     pub instance: ObjectId<DbInstance>,
+    /// List of all edits which make up this article, oldest first.
+    pub edits: Vec<DbEdit>,
     pub local: bool,
+}
+
+impl DbArticle {
+    fn edits_id(&self) -> MyResult<CollectionId<DbEditCollection>> {
+        Ok(CollectionId::parse(&format!("{}/edits", self.ap_id))
+            .unwrap()
+            .into())
+    }
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct Article {
+pub struct ApubArticle {
     #[serde(rename = "type")]
     kind: ArticleType,
     id: ObjectId<DbArticle>,
     pub(crate) attributed_to: ObjectId<DbInstance>,
     #[serde(deserialize_with = "deserialize_one_or_many")]
     pub(crate) to: Vec<Url>,
+    edits: CollectionId<DbEditCollection>,
     content: String,
     name: String,
 }
@@ -36,7 +51,7 @@ pub struct Article {
 #[async_trait::async_trait]
 impl Object for DbArticle {
     type DataType = DatabaseHandle;
-    type Kind = Article;
+    type Kind = ApubArticle;
     type Error = Error;
 
     async fn read_from_id(
@@ -54,11 +69,12 @@ impl Object for DbArticle {
 
     async fn into_json(self, data: &Data<Self::DataType>) -> Result<Self::Kind, Self::Error> {
         let instance = self.instance.dereference_local(data).await?;
-        Ok(Article {
+        Ok(ApubArticle {
             kind: Default::default(),
-            id: self.ap_id,
-            attributed_to: self.instance,
+            id: self.ap_id.clone(),
+            attributed_to: self.instance.clone(),
             to: vec![public(), instance.followers_url()?],
+            edits: self.edits_id()?,
             content: self.text,
             name: self.title,
         })
@@ -79,11 +95,18 @@ impl Object for DbArticle {
             text: json.content,
             ap_id: json.id,
             instance: json.attributed_to,
+            // TODO: shouldnt overwrite existing edits
+            edits: vec![],
             local: false,
         };
 
-        let mut lock = data.articles.lock().unwrap();
-        lock.insert(article.ap_id.inner().clone(), article.clone());
+        {
+            let mut lock = data.articles.lock().unwrap();
+            lock.insert(article.ap_id.inner().clone(), article.clone());
+        }
+
+        json.edits.dereference(&article, &data).await?;
+
         Ok(article)
     }
 }

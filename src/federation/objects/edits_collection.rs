@@ -1,9 +1,10 @@
 use crate::database::DatabaseHandle;
 use crate::error::Error;
 use crate::federation::objects::article::{ApubArticle, DbArticle};
+use crate::federation::objects::edit::{ApubEdit, DbEdit};
 use crate::federation::objects::instance::DbInstance;
 use crate::utils::generate_object_id;
-use activitypub_federation::kinds::collection::CollectionType;
+use activitypub_federation::kinds::collection::{CollectionType, OrderedCollectionType};
 use activitypub_federation::{
     config::Data,
     traits::{Collection, Object},
@@ -15,49 +16,45 @@ use url::Url;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct ArticleCollection {
-    pub(crate) r#type: CollectionType,
+pub struct ApubEditCollection {
+    pub(crate) r#type: OrderedCollectionType,
     pub(crate) id: Url,
     pub(crate) total_items: i32,
-    pub(crate) items: Vec<ApubArticle>,
+    pub(crate) items: Vec<ApubEdit>,
 }
 
 #[derive(Clone, Debug)]
-pub struct DbArticleCollection(Vec<DbArticle>);
+pub struct DbEditCollection(Vec<DbEdit>);
 
 #[async_trait::async_trait]
-impl Collection for DbArticleCollection {
-    type Owner = DbInstance;
+impl Collection for DbEditCollection {
+    type Owner = DbArticle;
     type DataType = DatabaseHandle;
-    type Kind = ArticleCollection;
+    type Kind = ApubEditCollection;
     type Error = Error;
 
     async fn read_local(
-        _owner: &Self::Owner,
+        owner: &Self::Owner,
         data: &Data<Self::DataType>,
     ) -> Result<Self::Kind, Self::Error> {
-        let local_articles = {
-            let articles = data.articles.lock().unwrap();
-            articles
-                .iter()
-                .map(|a| a.1)
-                .filter(|a| a.local)
-                .clone()
-                .cloned()
-                .collect::<Vec<_>>()
+        let edits = {
+            let lock = data.articles.lock().unwrap();
+            DbEditCollection(lock.get(owner.ap_id.inner()).unwrap().edits.clone())
         };
-        let articles = future::try_join_all(
-            local_articles
+
+        let edits = future::try_join_all(
+            edits
+                .0
                 .into_iter()
                 .map(|a| a.into_json(data))
                 .collect::<Vec<_>>(),
         )
         .await?;
-        let collection = ArticleCollection {
+        let collection = ApubEditCollection {
             r#type: Default::default(),
-            id: data.local_instance().articles_id.into(),
-            total_items: articles.len() as i32,
-            items: articles,
+            id: Url::from(data.local_instance().articles_id),
+            total_items: edits.len() as i32,
+            items: edits,
         };
         Ok(collection)
     }
@@ -72,20 +69,18 @@ impl Collection for DbArticleCollection {
 
     async fn from_json(
         apub: Self::Kind,
-        _owner: &Self::Owner,
+        owner: &Self::Owner,
         data: &Data<Self::DataType>,
     ) -> Result<Self, Self::Error> {
-        let articles = try_join_all(
-            apub.items
-                .into_iter()
-                .map(|i| DbArticle::from_json(i, data)),
-        )
-        .await?;
-        let mut lock = data.articles.lock().unwrap();
-        for a in &articles {
-            lock.insert(a.ap_id.inner().clone(), a.clone());
+        let edits =
+            try_join_all(apub.items.into_iter().map(|i| DbEdit::from_json(i, data))).await?;
+        let mut articles = data.articles.lock().unwrap();
+        let mut article = articles.get_mut(owner.ap_id.inner()).unwrap();
+        for e in edits.clone() {
+            // TODO: edits need a unique id to avoid pushing duplicates
+            article.edits.push(e);
         }
         // TODO: return value propably not needed
-        Ok(DbArticleCollection(articles))
+        Ok(DbEditCollection(edits))
     }
 }

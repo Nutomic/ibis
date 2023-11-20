@@ -20,9 +20,12 @@ async fn test_create_and_read_article() -> MyResult<()> {
     let get_article = GetArticle {
         title: "Manu_Chao".to_string(),
     };
-    let not_found =
-        get_query::<DbArticle, _>(data.hostname_alpha, &"article".to_string(), Some(get_article.clone()))
-            .await;
+    let not_found = get_query::<DbArticle, _>(
+        data.hostname_alpha,
+        &"article".to_string(),
+        Some(get_article.clone()),
+    )
+    .await;
     assert!(not_found.is_err());
 
     // create article
@@ -35,8 +38,12 @@ async fn test_create_and_read_article() -> MyResult<()> {
     assert!(create_res.local);
 
     // now article can be read
-    let get_res: DbArticle =
-        get_query(data.hostname_alpha, &"article".to_string(), Some(get_article.clone())).await?;
+    let get_res: DbArticle = get_query(
+        data.hostname_alpha,
+        &"article".to_string(),
+        Some(get_article.clone()),
+    )
+    .await?;
     assert_eq!(create_article.title, get_res.title);
     assert_eq!(create_article.text, get_res.text);
     assert!(get_res.local);
@@ -134,7 +141,8 @@ async fn test_federate_article_changes() -> MyResult<()> {
         title: create_res.title.clone(),
     };
     let get_res =
-        get_query::<DbArticle, _>(data.hostname_alpha, "article", Some(get_article.clone())).await?;
+        get_query::<DbArticle, _>(data.hostname_alpha, "article", Some(get_article.clone()))
+            .await?;
     assert_eq!(create_res.title, get_res.title);
     assert_eq!(create_res.text, get_res.text);
 
@@ -151,7 +159,8 @@ async fn test_federate_article_changes() -> MyResult<()> {
         title: edit_res.title.clone(),
     };
     let get_res =
-        get_query::<DbArticle, _>(data.hostname_alpha, "article", Some(get_article.clone())).await?;
+        get_query::<DbArticle, _>(data.hostname_alpha, "article", Some(get_article.clone()))
+            .await?;
     assert_eq!(edit_res.title, get_res.title);
     assert_eq!(edit_res.text, get_res.text);
 
