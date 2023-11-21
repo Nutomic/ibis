@@ -15,6 +15,7 @@ use axum::{Form, Json, Router};
 use axum_macros::debug_handler;
 use serde::{Deserialize, Serialize};
 use url::Url;
+use crate::federation::objects::edit::DbEdit;
 
 pub fn api_routes() -> Router {
     Router::new()
@@ -82,21 +83,28 @@ async fn edit_article(
     data: Data<DatabaseHandle>,
     Form(edit_article): Form<EditArticle>,
 ) -> MyResult<Json<DbArticle>> {
-    let article = {
+    let original_article = {
+        let mut lock = data.articles.lock().unwrap();
+        let article = lock.get_mut(edit_article.ap_id.inner()).unwrap();
+        article.clone()
+    };
+    let edit = DbEdit::new(&original_article, &edit_article.new_text)?;
+    let updated_article = {
         let mut lock = data.articles.lock().unwrap();
         let article = lock.get_mut(edit_article.ap_id.inner()).unwrap();
         article.text = edit_article.new_text;
+        article.edits.push(edit);
         article.clone()
     };
 
     CreateOrUpdateArticle::send_to_local_followers(
-        article.clone(),
+        updated_article.clone(),
         CreateOrUpdateType::Update,
         &data,
     )
     .await?;
 
-    Ok(Json(article))
+    Ok(Json(updated_article))
 }
 
 #[derive(Deserialize, Serialize, Clone)]

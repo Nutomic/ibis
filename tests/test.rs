@@ -153,6 +153,8 @@ async fn test_federate_article_changes() -> MyResult<()> {
     };
     let edit_res: DbArticle = patch(data.hostname_beta, "article", &edit_form).await?;
     assert_eq!(edit_res.text, edit_form.new_text);
+    assert_eq!(edit_res.edits.len(), 1);
+    assert!(edit_res.edits[0].id.to_string().starts_with(&edit_res.ap_id.to_string()));
 
     // edit should be federated to alpha
     let get_article = GetArticle {

@@ -75,9 +75,11 @@ impl Collection for DbEditCollection {
             try_join_all(apub.items.into_iter().map(|i| DbEdit::from_json(i, data))).await?;
         let mut articles = data.articles.lock().unwrap();
         let article = articles.get_mut(owner.ap_id.inner()).unwrap();
+        let edit_ids = article.edits.iter().map(|e| e.id.clone()).collect::<Vec<_>>();
         for e in edits.clone() {
-            // TODO: edits need a unique id to avoid pushing duplicates
-            article.edits.push(e);
+            if !edit_ids.contains(&&e.id) {
+                article.edits.push(e);
+            }
         }
         // TODO: return value propably not needed
         Ok(DbEditCollection(edits))
