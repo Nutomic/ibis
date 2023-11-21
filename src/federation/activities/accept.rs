@@ -1,6 +1,6 @@
 use crate::error::MyResult;
 use crate::federation::objects::instance::DbInstance;
-use crate::utils::generate_object_id;
+use crate::utils::generate_activity_id;
 use crate::{database::DatabaseHandle, federation::activities::follow::Follow};
 use activitypub_federation::{
     config::Data, fetch::object_id::ObjectId, kinds::activity::AcceptType, traits::ActivityHandler,
@@ -20,7 +20,7 @@ pub struct Accept {
 
 impl Accept {
     pub fn new(actor: ObjectId<DbInstance>, object: Follow) -> MyResult<Accept> {
-        let id = generate_object_id(actor.inner())?;
+        let id = generate_activity_id(actor.inner())?;
         Ok(Accept {
             actor,
             object,

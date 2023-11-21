@@ -2,7 +2,8 @@ use crate::database::DatabaseHandle;
 use crate::error::MyResult;
 use crate::federation::objects::article::{ApubArticle, DbArticle};
 use crate::federation::objects::instance::DbInstance;
-use crate::utils::generate_object_id;
+use crate::utils::generate_activity_id;
+use activitypub_federation::kinds::activity::CreateType;
 use activitypub_federation::{
     config::Data,
     fetch::object_id::ObjectId,
@@ -12,57 +13,41 @@ use activitypub_federation::{
 use serde::{Deserialize, Serialize};
 use url::Url;
 
-#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
-pub enum CreateOrUpdateType {
-    Create,
-    Update,
-}
-
-// TODO: temporary placeholder, later rework this to send diffs
 #[derive(Deserialize, Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct CreateOrUpdateArticle {
+pub struct CreateArticle {
     pub actor: ObjectId<DbInstance>,
     #[serde(deserialize_with = "deserialize_one_or_many")]
     pub to: Vec<Url>,
     pub object: ApubArticle,
     #[serde(rename = "type")]
-    pub kind: CreateOrUpdateType,
+    pub kind: CreateType,
     pub id: Url,
 }
 
-impl CreateOrUpdateArticle {
-    pub async fn send_to_local_followers(
+impl CreateArticle {
+    pub async fn send_to_followers(
         article: DbArticle,
-        kind: CreateOrUpdateType,
         data: &Data<DatabaseHandle>,
     ) -> MyResult<()> {
         let local_instance = data.local_instance();
-        let to = local_instance
-            .followers
-            .iter()
-            .map(|f| f.ap_id.inner().clone())
-            .collect();
         let object = article.clone().into_json(data).await?;
-        let id = generate_object_id(local_instance.ap_id.inner())?;
-        let create_or_update = CreateOrUpdateArticle {
+        let id = generate_activity_id(local_instance.ap_id.inner())?;
+        let create_or_update = CreateArticle {
             actor: local_instance.ap_id.clone(),
-            to,
+            to: local_instance.follower_ids(),
             object,
-            kind,
+            kind: Default::default(),
             id,
         };
-        let inboxes = local_instance
-            .followers
-            .iter()
-            .map(|f| f.inbox.clone())
-            .collect();
-        local_instance.send(create_or_update, inboxes, data).await?;
+        local_instance
+            .send_to_followers(create_or_update, data)
+            .await?;
         Ok(())
     }
 }
 #[async_trait::async_trait]
-impl ActivityHandler for CreateOrUpdateArticle {
+impl ActivityHandler for CreateArticle {
     type DataType = DatabaseHandle;
     type Error = crate::error::Error;
 

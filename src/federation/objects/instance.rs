@@ -1,4 +1,4 @@
-use crate::error::Error;
+use crate::error::{Error, MyResult};
 use crate::federation::objects::articles_collection::DbArticleCollection;
 use crate::{database::DatabaseHandle, federation::activities::follow::Follow};
 use activitypub_federation::activity_sending::SendActivityTask;
@@ -40,8 +40,15 @@ pub struct Instance {
 }
 
 impl DbInstance {
-    pub fn followers_url(&self) -> Result<Url, Error> {
+    pub fn followers_url(&self) -> MyResult<Url> {
         Ok(Url::parse(&format!("{}/followers", self.ap_id.inner()))?)
+    }
+
+    pub fn follower_ids(&self) -> Vec<Url> {
+        self.followers
+            .iter()
+            .map(|f| f.ap_id.inner().clone())
+            .collect()
     }
 
     pub async fn follow(
@@ -55,7 +62,26 @@ impl DbInstance {
         Ok(())
     }
 
-    pub(crate) async fn send<Activity>(
+    pub async fn send_to_followers<Activity>(
+        &self,
+        activity: Activity,
+        data: &Data<DatabaseHandle>,
+    ) -> Result<(), <Activity as ActivityHandler>::Error>
+    where
+        Activity: ActivityHandler + Serialize + Debug + Send + Sync,
+        <Activity as ActivityHandler>::Error: From<activitypub_federation::error::Error>,
+    {
+        let local_instance = data.local_instance();
+        let inboxes = local_instance
+            .followers
+            .iter()
+            .map(|f| f.inbox.clone())
+            .collect();
+        local_instance.send(activity, inboxes, data).await?;
+        Ok(())
+    }
+
+    pub async fn send<Activity>(
         &self,
         activity: Activity,
         recipients: Vec<Url>,

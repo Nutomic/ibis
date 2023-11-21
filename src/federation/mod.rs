@@ -9,7 +9,6 @@ use std::sync::{Arc, Mutex};
 use url::Url;
 
 pub mod activities;
-mod diff;
 pub mod objects;
 pub mod routes;
 

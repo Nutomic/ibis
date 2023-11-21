@@ -1,4 +1,4 @@
-use crate::utils::generate_object_id;
+use crate::utils::generate_activity_id;
 
 use activitypub_federation::config::FederationMiddleware;
 use axum::{Router, Server};

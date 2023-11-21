@@ -1,6 +1,8 @@
 use crate::error::MyResult;
 use crate::federation::objects::instance::DbInstance;
-use crate::{database::DatabaseHandle, federation::activities::accept::Accept, generate_object_id};
+use crate::{
+    database::DatabaseHandle, federation::activities::accept::Accept, generate_activity_id,
+};
 use activitypub_federation::{
     config::Data,
     fetch::object_id::ObjectId,
@@ -22,7 +24,7 @@ pub struct Follow {
 
 impl Follow {
     pub fn new(actor: ObjectId<DbInstance>, object: ObjectId<DbInstance>) -> MyResult<Follow> {
-        let id = generate_object_id(actor.inner())?;
+        let id = generate_activity_id(actor.inner())?;
         Ok(Follow {
             actor,
             object,

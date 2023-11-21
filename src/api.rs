@@ -1,10 +1,9 @@
 use crate::database::DatabaseHandle;
-
 use crate::error::MyResult;
-use crate::federation::activities::create_or_update_article::{
-    CreateOrUpdateArticle, CreateOrUpdateType,
-};
+use crate::federation::activities::create_article::CreateArticle;
+use crate::federation::activities::update_article::UpdateArticle;
 use crate::federation::objects::article::DbArticle;
+use crate::federation::objects::edit::DbEdit;
 use crate::federation::objects::instance::DbInstance;
 use activitypub_federation::config::Data;
 use activitypub_federation::fetch::object_id::ObjectId;
@@ -15,7 +14,6 @@ use axum::{Form, Json, Router};
 use axum_macros::debug_handler;
 use serde::{Deserialize, Serialize};
 use url::Url;
-use crate::federation::objects::edit::DbEdit;
 
 pub fn api_routes() -> Router {
     Router::new()
@@ -29,7 +27,7 @@ pub fn api_routes() -> Router {
 }
 
 #[derive(Deserialize, Serialize)]
-pub struct CreateArticle {
+pub struct CreateArticleData {
     pub title: String,
     pub text: String,
 }
@@ -38,7 +36,7 @@ pub struct CreateArticle {
 #[debug_handler]
 async fn create_article(
     data: Data<DatabaseHandle>,
-    Form(create_article): Form<CreateArticle>,
+    Form(create_article): Form<CreateArticleData>,
 ) -> MyResult<Json<DbArticle>> {
     let local_instance_id = data.local_instance().ap_id;
     let ap_id = Url::parse(&format!(
@@ -61,27 +59,21 @@ async fn create_article(
         articles.insert(article.ap_id.inner().clone(), article.clone());
     }
 
-    CreateOrUpdateArticle::send_to_local_followers(
-        article.clone(),
-        CreateOrUpdateType::Create,
-        &data,
-    )
-    .await?;
+    CreateArticle::send_to_followers(article.clone(), &data).await?;
 
     Ok(Json(article))
 }
 
 #[derive(Deserialize, Serialize)]
-pub struct EditArticle {
+pub struct EditArticleData {
     pub ap_id: ObjectId<DbArticle>,
     pub new_text: String,
 }
 
-// TODO: this should create an edit object
 #[debug_handler]
 async fn edit_article(
     data: Data<DatabaseHandle>,
-    Form(edit_article): Form<EditArticle>,
+    Form(edit_article): Form<EditArticleData>,
 ) -> MyResult<Json<DbArticle>> {
     let original_article = {
         let mut lock = data.articles.lock().unwrap();
@@ -93,28 +85,23 @@ async fn edit_article(
         let mut lock = data.articles.lock().unwrap();
         let article = lock.get_mut(edit_article.ap_id.inner()).unwrap();
         article.text = edit_article.new_text;
-        article.edits.push(edit);
+        article.edits.push(edit.clone());
         article.clone()
     };
 
-    CreateOrUpdateArticle::send_to_local_followers(
-        updated_article.clone(),
-        CreateOrUpdateType::Update,
-        &data,
-    )
-    .await?;
+    UpdateArticle::send_to_followers(updated_article.clone(), edit, &data).await?;
 
     Ok(Json(updated_article))
 }
 
 #[derive(Deserialize, Serialize, Clone)]
-pub struct GetArticle {
+pub struct GetArticleData {
     pub title: String,
 }
 
 #[debug_handler]
 async fn get_article(
-    Query(query): Query<GetArticle>,
+    Query(query): Query<GetArticleData>,
     data: Data<DatabaseHandle>,
 ) -> MyResult<Json<DbArticle>> {
     let articles = data.articles.lock().unwrap();

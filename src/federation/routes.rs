@@ -12,7 +12,8 @@ use activitypub_federation::traits::Object;
 use activitypub_federation::traits::{ActivityHandler, Collection};
 use axum::extract::Path;
 
-use crate::federation::activities::create_or_update_article::CreateOrUpdateArticle;
+use crate::federation::activities::create_article::CreateArticle;
+use crate::federation::activities::update_article::UpdateArticle;
 use crate::federation::objects::article::ApubArticle;
 use crate::federation::objects::articles_collection::{ArticleCollection, DbArticleCollection};
 use crate::federation::objects::edits_collection::{ApubEditCollection, DbEditCollection};
@@ -82,7 +83,8 @@ async fn http_get_article_edits(
 pub enum InboxActivities {
     Follow(Follow),
     Accept(Accept),
-    CreateOrUpdateArticle(CreateOrUpdateArticle),
+    CreateArticle(CreateArticle),
+    UpdateArticle(UpdateArticle),
 }
 
 #[debug_handler]

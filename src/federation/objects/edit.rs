@@ -6,8 +6,8 @@ use activitypub_federation::fetch::object_id::ObjectId;
 use activitypub_federation::traits::Object;
 use diffy::create_patch;
 use serde::{Deserialize, Serialize};
+use sha2::Digest;
 use sha2::Sha224;
-use sha2::{Digest};
 use url::Url;
 
 /// Represents a single change to the article.
@@ -28,7 +28,7 @@ impl DbEdit {
         Ok(DbEdit {
             id: edit_id,
             diff: diff.to_string(),
-            local: true
+            local: true,
         })
     }
 }
@@ -44,7 +44,7 @@ pub struct ApubEdit {
     #[serde(rename = "type")]
     kind: EditType,
     id: ObjectId<DbEdit>,
-    diff: String,
+    pub(crate) diff: String,
 }
 
 #[async_trait::async_trait]
