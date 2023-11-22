@@ -33,16 +33,14 @@ impl CreateArticle {
         let local_instance = data.local_instance();
         let object = article.clone().into_json(data).await?;
         let id = generate_activity_id(local_instance.ap_id.inner())?;
-        let create_or_update = CreateArticle {
+        let create = CreateArticle {
             actor: local_instance.ap_id.clone(),
             to: local_instance.follower_ids(),
             object,
             kind: Default::default(),
             id,
         };
-        local_instance
-            .send_to_followers(create_or_update, data)
-            .await?;
+        local_instance.send_to_followers(create, data).await?;
         Ok(())
     }
 }
@@ -64,7 +62,10 @@ impl ActivityHandler for CreateArticle {
     }
 
     async fn receive(self, data: &Data<Self::DataType>) -> Result<(), Self::Error> {
-        DbArticle::from_json(self.object, data).await?;
+        let article = DbArticle::from_json(self.object.clone(), data).await?;
+        if article.local {
+            data.local_instance().send_to_followers(self, data).await?;
+        }
         Ok(())
     }
 }

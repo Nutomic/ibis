@@ -29,10 +29,8 @@ pub fn api_routes() -> Router {
 #[derive(Deserialize, Serialize)]
 pub struct CreateArticleData {
     pub title: String,
-    pub text: String,
 }
 
-// TODO: new article should be created with empty content
 #[debug_handler]
 async fn create_article(
     data: Data<DatabaseHandle>,
@@ -48,7 +46,7 @@ async fn create_article(
     .into();
     let article = DbArticle {
         title: create_article.title,
-        text: create_article.text,
+        text: String::new(),
         ap_id,
         edits: vec![],
         instance: local_instance_id,

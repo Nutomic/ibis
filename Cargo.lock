@@ -5,7 +5,7 @@ version = 3
 [[package]]
 name = "activitypub_federation"
 version = "0.5.0-beta.5"
-source = "git+https://github.com/LemmyNet/activitypub-federation-rust.git?branch=parse-impl#b80408d80619ac014a5cedf5079967c20058532d"
+source = "git+https://github.com/LemmyNet/activitypub-federation-rust.git?branch=parse-impl#2aa64ad1de7943840677f4b96a20a11d38e2be56"
 dependencies = [
  "activitystreams-kinds",
  "async-trait",

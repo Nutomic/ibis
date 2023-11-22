@@ -81,10 +81,7 @@ impl Collection for DbArticleCollection {
                 .map(|i| DbArticle::from_json(i, data)),
         )
         .await?;
-        let mut lock = data.articles.lock().unwrap();
-        for a in &articles {
-            lock.insert(a.ap_id.inner().clone(), a.clone());
-        }
+
         // TODO: return value propably not needed
         Ok(DbArticleCollection(articles))
     }

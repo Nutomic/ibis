@@ -16,8 +16,10 @@ pub static CLIENT: Lazy<Client> = Lazy::new(Client::new);
 pub struct TestData {
     pub hostname_alpha: &'static str,
     pub hostname_beta: &'static str,
+    pub hostname_gamma: &'static str,
     handle_alpha: JoinHandle<()>,
     handle_beta: JoinHandle<()>,
+    handle_gamma: JoinHandle<()>,
 }
 
 impl TestData {
@@ -33,23 +35,30 @@ impl TestData {
 
         let hostname_alpha = "localhost:8131";
         let hostname_beta = "localhost:8132";
+        let hostname_gamma = "localhost:8133";
         let handle_alpha = tokio::task::spawn(async {
             start(hostname_alpha).await.unwrap();
         });
         let handle_beta = tokio::task::spawn(async {
             start(hostname_beta).await.unwrap();
         });
+        let handle_gamma = tokio::task::spawn(async {
+            start(hostname_gamma).await.unwrap();
+        });
         Self {
             hostname_alpha,
             hostname_beta,
+            hostname_gamma,
             handle_alpha,
             handle_beta,
+            handle_gamma,
         }
     }
 
     pub fn stop(self) -> MyResult<()> {
         self.handle_alpha.abort();
         self.handle_beta.abort();
+        self.handle_gamma.abort();
         Ok(())
     }
 }

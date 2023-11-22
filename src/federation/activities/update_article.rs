@@ -36,17 +36,30 @@ impl UpdateArticle {
     ) -> MyResult<()> {
         let local_instance = data.local_instance();
         let id = generate_activity_id(local_instance.ap_id.inner())?;
-        let create_or_update = UpdateArticle {
-            actor: local_instance.ap_id.clone(),
-            to: local_instance.follower_ids(),
-            object: article.ap_id,
-            result: edit.into_json(data).await?,
-            kind: Default::default(),
-            id,
-        };
-        local_instance
-            .send_to_followers(create_or_update, data)
-            .await?;
+        if article.local {
+            let update = UpdateArticle {
+                actor: local_instance.ap_id.clone(),
+                to: local_instance.follower_ids(),
+                object: article.ap_id,
+                result: edit.into_json(data).await?,
+                kind: Default::default(),
+                id,
+            };
+            local_instance.send_to_followers(update, data).await?;
+        } else {
+            let article_instance = article.instance.dereference(data).await?;
+            let update = UpdateArticle {
+                actor: local_instance.ap_id.clone(),
+                to: vec![article_instance.ap_id.into_inner()],
+                object: article.ap_id,
+                result: edit.into_json(data).await?,
+                kind: Default::default(),
+                id,
+            };
+            local_instance
+                .send(update, vec![article_instance.inbox], data)
+                .await?;
+        }
         Ok(())
     }
 }
@@ -68,13 +81,35 @@ impl ActivityHandler for UpdateArticle {
     }
 
     async fn receive(self, data: &Data<Self::DataType>) -> Result<(), Self::Error> {
-        let edit = DbEdit::from_json(self.result.clone(), data).await?;
-        let mut lock = data.articles.lock().unwrap();
-        let article = lock.get_mut(self.object.inner()).unwrap();
-        article.edits.push(edit);
-        // TODO: probably better to apply patch inside DbEdit::from_json()
-        let patch = Patch::from_str(&self.result.diff)?;
-        article.text = apply(&article.text, &patch)?;
+        let article_local = {
+            let edit = DbEdit::from_json(self.result.clone(), data).await?;
+            let mut lock = data.articles.lock().unwrap();
+            let article = lock.get_mut(self.object.inner()).unwrap();
+            article.edits.push(edit);
+            // TODO: probably better to apply patch inside DbEdit::from_json()
+            let patch = Patch::from_str(&self.result.diff)?;
+            article.text = apply(&article.text, &patch)?;
+            article.local
+        };
+
+        if article_local {
+            // No need to wrap in announce, we can construct a new activity as all important info
+            // is in the object and result fields.
+            let local_instance = data.local_instance();
+            let id = generate_activity_id(local_instance.ap_id.inner())?;
+            let update = UpdateArticle {
+                actor: local_instance.ap_id.clone(),
+                to: local_instance.follower_ids(),
+                object: self.object,
+                result: self.result,
+                kind: Default::default(),
+                id,
+            };
+            data.local_instance()
+                .send_to_followers(update, data)
+                .await?;
+        }
+
         Ok(())
     }
 }
