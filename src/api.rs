@@ -1,13 +1,15 @@
 use crate::database::DatabaseHandle;
-use crate::error::MyResult;
+use crate::error::{Error, MyResult};
 use crate::federation::activities::create_article::CreateArticle;
 use crate::federation::activities::update_article::UpdateArticle;
-use crate::federation::objects::article::DbArticle;
+use crate::federation::objects::article::{ApubArticle, DbArticle};
 use crate::federation::objects::edit::DbEdit;
-use crate::federation::objects::instance::DbInstance;
+use crate::federation::objects::instance::{ApubInstance, DbInstance};
 use activitypub_federation::config::Data;
 use activitypub_federation::fetch::object_id::ObjectId;
+use activitypub_federation::traits::Object;
 use anyhow::anyhow;
+use async_trait::async_trait;
 use axum::extract::Query;
 use axum::routing::{get, post};
 use axum::{Form, Json, Router};
@@ -21,7 +23,8 @@ pub fn api_routes() -> Router {
             "/article",
             get(get_article).post(create_article).patch(edit_article),
         )
-        .route("/resolve_object", get(resolve_object))
+        .route("/resolve_instance", get(resolve_instance))
+        .route("/resolve_article", get(resolve_article))
         .route("/instance", get(get_local_instance))
         .route("/instance/follow", post(follow_instance))
 }
@@ -118,14 +121,21 @@ pub struct ResolveObject {
 }
 
 #[debug_handler]
-async fn resolve_object(
+async fn resolve_instance(
     Query(query): Query<ResolveObject>,
     data: Data<DatabaseHandle>,
 ) -> MyResult<Json<DbInstance>> {
     let instance: DbInstance = ObjectId::from(query.id).dereference(&data).await?;
-    let mut instances = data.instances.lock().unwrap();
-    instances.insert(instance.ap_id.inner().clone(), instance.clone());
     Ok(Json(instance))
+}
+
+#[debug_handler]
+async fn resolve_article(
+    Query(query): Query<ResolveObject>,
+    data: Data<DatabaseHandle>,
+) -> MyResult<Json<DbArticle>> {
+    let article: DbArticle = ObjectId::from(query.id).dereference(&data).await?;
+    Ok(Json(article))
 }
 
 #[debug_handler]

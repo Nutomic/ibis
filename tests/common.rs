@@ -114,12 +114,12 @@ pub async fn follow_instance(follow_instance: &str, followed_instance: &str) -> 
     let resolve_form = ResolveObject {
         id: Url::parse(&format!("http://{}", followed_instance))?,
     };
-    let beta_instance_resolved: DbInstance =
-        get_query(followed_instance, "resolve_object", Some(resolve_form)).await?;
+    let instance_resolved: DbInstance =
+        get_query(followed_instance, "resolve_instance", Some(resolve_form)).await?;
 
     // send follow
     let follow_form = FollowInstance {
-        instance_id: beta_instance_resolved.ap_id,
+        instance_id: instance_resolved.ap_id,
     };
     // cant use post helper because follow doesnt return json
     CLIENT

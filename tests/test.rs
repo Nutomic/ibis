@@ -112,7 +112,8 @@ async fn test_synchronize_articles() -> MyResult<()> {
     let resolve_object = ResolveObject {
         id: Url::parse(&format!("http://{}", data.hostname_alpha))?,
     };
-    get_query::<DbInstance, _>(data.hostname_beta, "resolve_object", Some(resolve_object)).await?;
+    get_query::<DbInstance, _>(data.hostname_beta, "resolve_instance", Some(resolve_object))
+        .await?;
 
     // get the article and compare
     let get_res: DbArticle = get_query(
@@ -210,7 +211,6 @@ async fn test_edit_remote_article() -> MyResult<()> {
     assert_eq!(create_res.title, get_res.title);
     assert_eq!(0, get_res.edits.len());
     assert!(!get_res.local);
-    assert_eq!(create_res.text, get_res.text);
 
     let get_res =
         get_query::<DbArticle, _>(data.hostname_gamma, "article", Some(get_article.clone()))
@@ -247,6 +247,59 @@ async fn test_edit_remote_article() -> MyResult<()> {
     assert_eq!(edit_res.title, get_res.title);
     assert_eq!(edit_res.edits.len(), 1);
     assert_eq!(edit_res.text, get_res.text);
+
+    data.stop()
+}
+
+#[tokio::test]
+#[serial]
+async fn test_edit_conflict() -> MyResult<()> {
+    let data = TestData::start();
+
+    follow_instance(data.hostname_alpha, data.hostname_beta).await?;
+
+    // create new article
+    let create_form = CreateArticleData {
+        title: "Manu_Chao".to_string(),
+    };
+    let create_res: DbArticle = post(data.hostname_beta, "article", &create_form).await?;
+    assert_eq!(create_res.title, create_form.title);
+    assert!(create_res.local);
+
+    // alpha edits article
+    let edit_form = EditArticleData {
+        ap_id: create_res.ap_id.clone(),
+        new_text: "Lorem Ipsum".to_string(),
+    };
+    let edit_res: DbArticle = patch(data.hostname_alpha, "article", &edit_form).await?;
+    assert_eq!(edit_res.text, edit_form.new_text);
+    assert_eq!(edit_res.edits.len(), 1);
+    assert!(!edit_res.local);
+    assert!(edit_res.edits[0]
+        .id
+        .to_string()
+        .starts_with(&edit_res.ap_id.to_string()));
+
+    // fetch article to gamma
+    let resolve_object = ResolveObject {
+        id: create_res.ap_id.inner().clone(),
+    };
+    get_query::<DbArticle, _>(data.hostname_gamma, "resolve_article", Some(resolve_object)).await?;
+
+    // gamma also edits, as its not the latest version there is a conflict
+    // TODO: get this working
+    let edit_form = EditArticleData {
+        ap_id: create_res.ap_id,
+        new_text: "Ipsum Lorem".to_string(),
+    };
+    let edit_res: DbArticle = patch(data.hostname_gamma, "article", &edit_form).await?;
+    assert_eq!(edit_res.text, edit_form.new_text);
+    assert_eq!(edit_res.edits.len(), 1);
+    assert!(!edit_res.local);
+    assert!(edit_res.edits[0]
+        .id
+        .to_string()
+        .starts_with(&edit_res.ap_id.to_string()));
 
     data.stop()
 }

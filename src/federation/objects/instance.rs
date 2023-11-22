@@ -30,7 +30,7 @@ pub struct DbInstance {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct Instance {
+pub struct ApubInstance {
     #[serde(rename = "type")]
     kind: ServiceType,
     id: ObjectId<DbInstance>,
@@ -103,7 +103,7 @@ impl DbInstance {
 #[async_trait::async_trait]
 impl Object for DbInstance {
     type DataType = DatabaseHandle;
-    type Kind = Instance;
+    type Kind = ApubInstance;
     type Error = Error;
 
     fn last_refreshed_at(&self) -> Option<DateTime<Utc>> {
@@ -124,7 +124,7 @@ impl Object for DbInstance {
     }
 
     async fn into_json(self, _data: &Data<Self::DataType>) -> Result<Self::Kind, Self::Error> {
-        Ok(Instance {
+        Ok(ApubInstance {
             kind: Default::default(),
             id: self.ap_id.clone(),
             articles: self.articles_id.clone(),

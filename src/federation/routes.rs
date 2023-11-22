@@ -2,7 +2,7 @@ use crate::database::DatabaseHandle;
 use crate::error::MyResult;
 use crate::federation::activities::accept::Accept;
 use crate::federation::activities::follow::Follow;
-use crate::federation::objects::instance::{DbInstance, Instance};
+use crate::federation::objects::instance::{ApubInstance, DbInstance};
 
 use activitypub_federation::axum::inbox::{receive_activity, ActivityData};
 use activitypub_federation::axum::json::FederationJson;
@@ -36,7 +36,7 @@ pub fn federation_routes() -> Router {
 #[debug_handler]
 async fn http_get_instance(
     data: Data<DatabaseHandle>,
-) -> MyResult<FederationJson<WithContext<Instance>>> {
+) -> MyResult<FederationJson<WithContext<ApubInstance>>> {
     let db_instance = data.local_instance();
     let json_instance = db_instance.into_json(&data).await?;
     Ok(FederationJson(WithContext::new_default(json_instance)))
