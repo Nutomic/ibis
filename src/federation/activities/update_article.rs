@@ -11,7 +11,7 @@ use activitypub_federation::{
     protocol::helpers::deserialize_one_or_many,
     traits::{ActivityHandler, Object},
 };
-use diffy::{apply, Patch};
+
 use serde::{Deserialize, Serialize};
 use url::Url;
 
@@ -21,8 +21,7 @@ pub struct UpdateArticle {
     pub actor: ObjectId<DbInstance>,
     #[serde(deserialize_with = "deserialize_one_or_many")]
     pub to: Vec<Url>,
-    pub object: ObjectId<DbArticle>,
-    pub result: ApubEdit,
+    pub object: ApubEdit,
     #[serde(rename = "type")]
     pub kind: CreateType,
     pub id: Url,
@@ -40,8 +39,7 @@ impl UpdateArticle {
             let update = UpdateArticle {
                 actor: local_instance.ap_id.clone(),
                 to: local_instance.follower_ids(),
-                object: article.ap_id,
-                result: edit.into_json(data).await?,
+                object: edit.into_json(data).await?,
                 kind: Default::default(),
                 id,
             };
@@ -51,8 +49,7 @@ impl UpdateArticle {
             let update = UpdateArticle {
                 actor: local_instance.ap_id.clone(),
                 to: vec![article_instance.ap_id.into_inner()],
-                object: article.ap_id,
-                result: edit.into_json(data).await?,
+                object: edit.into_json(data).await?,
                 kind: Default::default(),
                 id,
             };
@@ -82,13 +79,9 @@ impl ActivityHandler for UpdateArticle {
 
     async fn receive(self, data: &Data<Self::DataType>) -> Result<(), Self::Error> {
         let article_local = {
-            let edit = DbEdit::from_json(self.result.clone(), data).await?;
-            let mut lock = data.articles.lock().unwrap();
-            let article = lock.get_mut(self.object.inner()).unwrap();
-            article.edits.push(edit);
-            // TODO: probably better to apply patch inside DbEdit::from_json()
-            let patch = Patch::from_str(&self.result.diff)?;
-            article.text = apply(&article.text, &patch)?;
+            DbEdit::from_json(self.object.clone(), data).await?;
+            let lock = data.articles.lock().unwrap();
+            let article = lock.get(self.object.object.inner()).unwrap();
             article.local
         };
 
@@ -101,7 +94,6 @@ impl ActivityHandler for UpdateArticle {
                 actor: local_instance.ap_id.clone(),
                 to: local_instance.follower_ids(),
                 object: self.object,
-                result: self.result,
                 kind: Default::default(),
                 id,
             };

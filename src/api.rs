@@ -1,15 +1,15 @@
 use crate::database::DatabaseHandle;
-use crate::error::{Error, MyResult};
+use crate::error::{MyResult};
 use crate::federation::activities::create_article::CreateArticle;
 use crate::federation::activities::update_article::UpdateArticle;
-use crate::federation::objects::article::{ApubArticle, DbArticle};
+use crate::federation::objects::article::{DbArticle};
 use crate::federation::objects::edit::DbEdit;
-use crate::federation::objects::instance::{ApubInstance, DbInstance};
+use crate::federation::objects::instance::{DbInstance};
 use activitypub_federation::config::Data;
 use activitypub_federation::fetch::object_id::ObjectId;
-use activitypub_federation::traits::Object;
+
 use anyhow::anyhow;
-use async_trait::async_trait;
+
 use axum::extract::Query;
 use axum::routing::{get, post};
 use axum::{Form, Json, Router};
@@ -65,7 +65,7 @@ async fn create_article(
     Ok(Json(article))
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct EditArticleData {
     pub ap_id: ObjectId<DbArticle>,
     pub new_text: String,

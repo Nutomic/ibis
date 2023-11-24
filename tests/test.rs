@@ -292,7 +292,9 @@ async fn test_edit_conflict() -> MyResult<()> {
         ap_id: create_res.ap_id,
         new_text: "Ipsum Lorem".to_string(),
     };
-    let edit_res: DbArticle = patch(data.hostname_gamma, "article", &edit_form).await?;
+    dbg!(&edit_form);
+    let edit_res: DbArticle = dbg!(patch(data.hostname_gamma, "article", &edit_form).await)?;
+    dbg!(&edit_res);
     assert_eq!(edit_res.text, edit_form.new_text);
     assert_eq!(edit_res.edits.len(), 1);
     assert!(!edit_res.local);

@@ -4,7 +4,7 @@ use crate::federation::objects::article::DbArticle;
 use activitypub_federation::config::Data;
 use activitypub_federation::fetch::object_id::ObjectId;
 use activitypub_federation::traits::Object;
-use diffy::create_patch;
+use diffy::{apply, create_patch, Patch};
 use serde::{Deserialize, Serialize};
 use sha2::Digest;
 use sha2::Sha224;
@@ -15,6 +15,7 @@ use url::Url;
 pub struct DbEdit {
     pub id: ObjectId<DbEdit>,
     pub diff: String,
+    pub article_id: ObjectId<DbArticle>,
     pub local: bool,
 }
 
@@ -28,6 +29,7 @@ impl DbEdit {
         Ok(DbEdit {
             id: edit_id,
             diff: diff.to_string(),
+            article_id: original_article.ap_id.clone(),
             local: true,
         })
     }
@@ -44,7 +46,8 @@ pub struct ApubEdit {
     #[serde(rename = "type")]
     kind: EditType,
     id: ObjectId<DbEdit>,
-    pub(crate) diff: String,
+    pub(crate) content: String,
+    pub object: ObjectId<DbArticle>,
 }
 
 #[async_trait::async_trait]
@@ -64,7 +67,8 @@ impl Object for DbEdit {
         Ok(ApubEdit {
             kind: EditType::Edit,
             id: self.id,
-            diff: self.diff,
+            content: self.diff,
+            object: self.article_id,
         })
     }
 
@@ -76,14 +80,19 @@ impl Object for DbEdit {
         Ok(())
     }
 
-    async fn from_json(
-        json: Self::Kind,
-        _data: &Data<Self::DataType>,
-    ) -> Result<Self, Self::Error> {
-        Ok(Self {
+    async fn from_json(json: Self::Kind, data: &Data<Self::DataType>) -> Result<Self, Self::Error> {
+        let edit = Self {
             id: json.id,
-            diff: json.diff,
+            diff: json.content,
+            article_id: json.object,
             local: false,
-        })
+        };
+        let mut lock = data.articles.lock().unwrap();
+        let article = lock.get_mut(edit.article_id.inner()).unwrap();
+        article.edits.push(edit.clone());
+        let patch = Patch::from_str(&edit.diff)?;
+        article.text = apply(&article.text, &patch)?;
+
+        Ok(edit)
     }
 }
