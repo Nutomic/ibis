@@ -1,4 +1,6 @@
-use fediwiki::api::{EditArticleData, FollowInstance, GetArticleData, ResolveObject};
+use fediwiki::api::{
+    CreateArticleData, EditArticleData, FollowInstance, GetArticleData, ResolveObject,
+};
 use fediwiki::error::MyResult;
 use fediwiki::federation::objects::article::DbArticle;
 use fediwiki::federation::objects::instance::DbInstance;
@@ -64,6 +66,18 @@ impl TestData {
     }
 }
 
+pub async fn create_article(hostname: &str, title: String) -> MyResult<DbArticle> {
+    let create_form = CreateArticleData { title };
+    post(hostname, "article", &create_form).await
+}
+
+pub async fn get_article(hostname: &str, title: &str) -> MyResult<DbArticle> {
+    let get_article = GetArticleData {
+        title: title.to_string(),
+    };
+    get_query::<DbArticle, _>(hostname, "article", Some(get_article.clone())).await
+}
+
 pub async fn edit_article(
     hostname: &str,
     title: &str,
@@ -102,7 +116,7 @@ where
     Ok(alpha_instance)
 }
 
-pub async fn post<T: Serialize, R>(hostname: &str, endpoint: &str, form: &T) -> MyResult<R>
+async fn post<T: Serialize, R>(hostname: &str, endpoint: &str, form: &T) -> MyResult<R>
 where
     R: for<'de> Deserialize<'de>,
 {
