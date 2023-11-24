@@ -2,7 +2,7 @@ extern crate fediwiki;
 
 mod common;
 
-use crate::common::{follow_instance, get_query, patch, post, TestData};
+use crate::common::{edit_article, follow_instance, get_query, post, TestData};
 use common::get;
 use fediwiki::api::{CreateArticleData, EditArticleData, GetArticleData, ResolveObject};
 use fediwiki::error::MyResult;
@@ -52,7 +52,7 @@ async fn test_create_read_and_edit_article() -> MyResult<()> {
         ap_id: create_res.ap_id.clone(),
         new_text: "Lorem Ipsum 2".to_string(),
     };
-    let edit_res: DbArticle = patch(data.hostname_alpha, "article", &edit_form).await?;
+    let edit_res = edit_article(data.hostname_alpha, &create_res.title, &edit_form).await?;
     assert_eq!(edit_form.new_text, edit_res.text);
     assert_eq!(1, edit_res.edits.len());
 
@@ -163,7 +163,7 @@ async fn test_edit_local_article() -> MyResult<()> {
         ap_id: create_res.ap_id,
         new_text: "Lorem Ipsum 2".to_string(),
     };
-    let edit_res: DbArticle = patch(data.hostname_beta, "article", &edit_form).await?;
+    let edit_res = edit_article(data.hostname_beta, &create_res.title, &edit_form).await?;
     assert_eq!(edit_res.text, edit_form.new_text);
     assert_eq!(edit_res.edits.len(), 1);
     assert!(edit_res.edits[0]
@@ -222,7 +222,7 @@ async fn test_edit_remote_article() -> MyResult<()> {
         ap_id: create_res.ap_id,
         new_text: "Lorem Ipsum 2".to_string(),
     };
-    let edit_res: DbArticle = patch(data.hostname_alpha, "article", &edit_form).await?;
+    let edit_res = edit_article(data.hostname_alpha, &create_res.title, &edit_form).await?;
     assert_eq!(edit_res.text, edit_form.new_text);
     assert_eq!(edit_res.edits.len(), 1);
     assert!(!edit_res.local);
@@ -266,12 +266,20 @@ async fn test_edit_conflict() -> MyResult<()> {
     assert_eq!(create_res.title, create_form.title);
     assert!(create_res.local);
 
+    // fetch article to gamma
+    let resolve_object = ResolveObject {
+        id: create_res.ap_id.inner().clone(),
+    };
+    let resolve_res: DbArticle =
+        get_query(data.hostname_gamma, "resolve_article", Some(resolve_object)).await?;
+    assert_eq!(create_res.text, resolve_res.text);
+
     // alpha edits article
     let edit_form = EditArticleData {
         ap_id: create_res.ap_id.clone(),
         new_text: "Lorem Ipsum".to_string(),
     };
-    let edit_res: DbArticle = patch(data.hostname_alpha, "article", &edit_form).await?;
+    let edit_res = edit_article(data.hostname_alpha, &create_res.title, &edit_form).await?;
     assert_eq!(edit_res.text, edit_form.new_text);
     assert_eq!(edit_res.edits.len(), 1);
     assert!(!edit_res.local);
@@ -279,29 +287,16 @@ async fn test_edit_conflict() -> MyResult<()> {
         .id
         .to_string()
         .starts_with(&edit_res.ap_id.to_string()));
-
-    // fetch article to gamma
-    let resolve_object = ResolveObject {
-        id: create_res.ap_id.inner().clone(),
-    };
-    get_query::<DbArticle, _>(data.hostname_gamma, "resolve_article", Some(resolve_object)).await?;
 
     // gamma also edits, as its not the latest version there is a conflict
-    // TODO: get this working
     let edit_form = EditArticleData {
         ap_id: create_res.ap_id,
-        new_text: "Ipsum Lorem".to_string(),
+        new_text: "aaaa".to_string(),
     };
-    dbg!(&edit_form);
-    let edit_res: DbArticle = dbg!(patch(data.hostname_gamma, "article", &edit_form).await)?;
-    dbg!(&edit_res);
-    assert_eq!(edit_res.text, edit_form.new_text);
-    assert_eq!(edit_res.edits.len(), 1);
+    let edit_res = edit_article(data.hostname_gamma, &create_res.title, &edit_form).await?;
+    assert_eq!(create_res.text, edit_res.text);
+    assert_eq!(0, edit_res.edits.len());
     assert!(!edit_res.local);
-    assert!(edit_res.edits[0]
-        .id
-        .to_string()
-        .starts_with(&edit_res.ap_id.to_string()));
 
     data.stop()
 }

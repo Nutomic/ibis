@@ -1,5 +1,6 @@
-use fediwiki::api::{FollowInstance, ResolveObject};
+use fediwiki::api::{EditArticleData, FollowInstance, GetArticleData, ResolveObject};
 use fediwiki::error::MyResult;
+use fediwiki::federation::objects::article::DbArticle;
 use fediwiki::federation::objects::instance::DbInstance;
 use fediwiki::start;
 use once_cell::sync::Lazy;
@@ -63,6 +64,24 @@ impl TestData {
     }
 }
 
+pub async fn edit_article(
+    hostname: &str,
+    title: &str,
+    edit_form: &EditArticleData,
+) -> MyResult<DbArticle> {
+    CLIENT
+        .patch(format!("http://{}/api/v1/article", hostname))
+        .form(edit_form)
+        .send()
+        .await?;
+    let get_article = GetArticleData {
+        title: title.to_string(),
+    };
+    let updated_article: DbArticle =
+        get_query(hostname, &"article".to_string(), Some(get_article)).await?;
+    Ok(updated_article)
+}
+
 pub async fn get<T>(hostname: &str, endpoint: &str) -> MyResult<T>
 where
     T: for<'de> Deserialize<'de>,
@@ -89,19 +108,6 @@ where
 {
     Ok(CLIENT
         .post(format!("http://{}/api/v1/{}", hostname, endpoint))
-        .form(form)
-        .send()
-        .await?
-        .json()
-        .await?)
-}
-
-pub async fn patch<T: Serialize, R>(hostname: &str, endpoint: &str, form: &T) -> MyResult<R>
-where
-    R: for<'de> Deserialize<'de>,
-{
-    Ok(CLIENT
-        .patch(format!("http://{}/api/v1/{}", hostname, endpoint))
         .form(form)
         .send()
         .await?

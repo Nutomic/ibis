@@ -29,34 +29,41 @@ pub struct UpdateArticle {
 
 impl UpdateArticle {
     pub async fn send_to_followers(
-        article: DbArticle,
         edit: DbEdit,
+        article: DbArticle,
+        data: &Data<DatabaseHandle>,
+    ) -> MyResult<()> {
+        debug_assert!(article.local);
+        let local_instance = data.local_instance();
+        let id = generate_activity_id(local_instance.ap_id.inner())?;
+        let update = UpdateArticle {
+            actor: local_instance.ap_id.clone(),
+            to: local_instance.follower_ids(),
+            object: edit.into_json(data).await?,
+            kind: Default::default(),
+            id,
+        };
+        local_instance.send_to_followers(update, data).await?;
+        Ok(())
+    }
+
+    pub async fn send_to_origin(
+        edit: DbEdit,
+        article_instance: DbInstance,
         data: &Data<DatabaseHandle>,
     ) -> MyResult<()> {
         let local_instance = data.local_instance();
         let id = generate_activity_id(local_instance.ap_id.inner())?;
-        if article.local {
-            let update = UpdateArticle {
-                actor: local_instance.ap_id.clone(),
-                to: local_instance.follower_ids(),
-                object: edit.into_json(data).await?,
-                kind: Default::default(),
-                id,
-            };
-            local_instance.send_to_followers(update, data).await?;
-        } else {
-            let article_instance = article.instance.dereference(data).await?;
-            let update = UpdateArticle {
-                actor: local_instance.ap_id.clone(),
-                to: vec![article_instance.ap_id.into_inner()],
-                object: edit.into_json(data).await?,
-                kind: Default::default(),
-                id,
-            };
-            local_instance
-                .send(update, vec![article_instance.inbox], data)
-                .await?;
-        }
+        let update = UpdateArticle {
+            actor: local_instance.ap_id.clone(),
+            to: vec![article_instance.ap_id.into_inner()],
+            object: edit.into_json(data).await?,
+            kind: Default::default(),
+            id,
+        };
+        local_instance
+            .send(update, vec![article_instance.inbox], data)
+            .await?;
         Ok(())
     }
 }

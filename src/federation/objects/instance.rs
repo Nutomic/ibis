@@ -13,6 +13,7 @@ use activitypub_federation::{
 use chrono::{DateTime, Local, Utc};
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
+use tracing::warn;
 use url::Url;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -94,7 +95,10 @@ impl DbInstance {
         let activity = WithContext::new_default(activity);
         let sends = SendActivityTask::prepare(&activity, self, recipients, data).await?;
         for send in sends {
-            send.sign_and_send(data).await?;
+            let send = send.sign_and_send(data).await;
+            if let Err(e) = send {
+                warn!("Failed to send activity {:?}: {e}", activity);
+            }
         }
         Ok(())
     }

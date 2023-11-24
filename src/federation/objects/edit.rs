@@ -91,6 +91,8 @@ impl Object for DbEdit {
         let article = lock.get_mut(edit.article_id.inner()).unwrap();
         article.edits.push(edit.clone());
         let patch = Patch::from_str(&edit.diff)?;
+        // TODO: this will give wrong result if new article text is federated, and then also new
+        //       edit is applied. probably need to keep track of versions
         article.text = apply(&article.text, &patch)?;
 
         Ok(edit)

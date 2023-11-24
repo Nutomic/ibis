@@ -1,10 +1,10 @@
 use crate::database::DatabaseHandle;
-use crate::error::{MyResult};
+use crate::error::MyResult;
 use crate::federation::activities::create_article::CreateArticle;
 use crate::federation::activities::update_article::UpdateArticle;
-use crate::federation::objects::article::{DbArticle};
+use crate::federation::objects::article::DbArticle;
 use crate::federation::objects::edit::DbEdit;
-use crate::federation::objects::instance::{DbInstance};
+use crate::federation::objects::instance::DbInstance;
 use activitypub_federation::config::Data;
 use activitypub_federation::fetch::object_id::ObjectId;
 
@@ -75,24 +75,34 @@ pub struct EditArticleData {
 async fn edit_article(
     data: Data<DatabaseHandle>,
     Form(edit_article): Form<EditArticleData>,
-) -> MyResult<Json<DbArticle>> {
+) -> MyResult<()> {
     let original_article = {
         let mut lock = data.articles.lock().unwrap();
         let article = lock.get_mut(edit_article.ap_id.inner()).unwrap();
         article.clone()
     };
     let edit = DbEdit::new(&original_article, &edit_article.new_text)?;
-    let updated_article = {
-        let mut lock = data.articles.lock().unwrap();
-        let article = lock.get_mut(edit_article.ap_id.inner()).unwrap();
-        article.text = edit_article.new_text;
-        article.edits.push(edit.clone());
-        article.clone()
-    };
+    if original_article.local {
+        let updated_article = {
+            let mut lock = data.articles.lock().unwrap();
+            let article = lock.get_mut(edit_article.ap_id.inner()).unwrap();
+            article.text = edit_article.new_text;
+            article.edits.push(edit.clone());
+            article.clone()
+        };
 
-    UpdateArticle::send_to_followers(updated_article.clone(), edit, &data).await?;
+        UpdateArticle::send_to_followers(edit, updated_article.clone(), &data).await?;
+    } else {
+        UpdateArticle::send_to_origin(
+            edit,
+            // TODO: should be dereference(), but then article is refetched which breaks test_edit_conflict()
+            original_article.instance.dereference_local(&data).await?,
+            &data,
+        )
+        .await?;
+    }
 
-    Ok(Json(updated_article))
+    Ok(())
 }
 
 #[derive(Deserialize, Serialize, Clone)]
