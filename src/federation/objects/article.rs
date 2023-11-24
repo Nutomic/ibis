@@ -1,5 +1,5 @@
 use crate::error::MyResult;
-use crate::federation::objects::edit::DbEdit;
+use crate::federation::objects::edit::{DbEdit, EditVersion};
 use crate::federation::objects::edits_collection::DbEditCollection;
 use crate::federation::objects::instance::DbInstance;
 use crate::{database::DatabaseHandle, error::Error};
@@ -23,14 +23,13 @@ pub struct DbArticle {
     pub instance: ObjectId<DbInstance>,
     /// List of all edits which make up this article, oldest first.
     pub edits: Vec<DbEdit>,
+    pub latest_version: EditVersion,
     pub local: bool,
 }
 
 impl DbArticle {
     fn edits_id(&self) -> MyResult<CollectionId<DbEditCollection>> {
-        Ok(CollectionId::parse(&format!("{}/edits", self.ap_id))
-            .unwrap()
-            .into())
+        Ok(CollectionId::parse(&format!("{}/edits", self.ap_id))?)
     }
 }
 
@@ -44,6 +43,7 @@ pub struct ApubArticle {
     #[serde(deserialize_with = "deserialize_one_or_many")]
     pub(crate) to: Vec<Url>,
     edits: CollectionId<DbEditCollection>,
+    latest_version: EditVersion,
     content: String,
     name: String,
 }
@@ -75,6 +75,7 @@ impl Object for DbArticle {
             attributed_to: self.instance.clone(),
             to: vec![public(), instance.followers_url()?],
             edits: self.edits_id()?,
+            latest_version: self.latest_version,
             content: self.text,
             name: self.title,
         })
@@ -97,6 +98,7 @@ impl Object for DbArticle {
             instance: json.attributed_to,
             // TODO: shouldnt overwrite existing edits
             edits: vec![],
+            latest_version: json.latest_version,
             local: false,
         };
 
@@ -105,7 +107,7 @@ impl Object for DbArticle {
             lock.insert(article.ap_id.inner().clone(), article.clone());
         }
 
-        json.edits.dereference(&article, &data).await?;
+        json.edits.dereference(&article, data).await?;
 
         Ok(article)
     }

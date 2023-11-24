@@ -2,6 +2,7 @@ use crate::database::{Database, DatabaseHandle};
 use crate::error::Error;
 use crate::federation::objects::instance::DbInstance;
 use activitypub_federation::config::FederationConfig;
+use activitypub_federation::fetch::collection_id::CollectionId;
 use activitypub_federation::http_signatures::generate_actor_keypair;
 use chrono::Local;
 use std::collections::HashMap;
@@ -14,7 +15,7 @@ pub mod routes;
 
 pub async fn federation_config(hostname: &str) -> Result<FederationConfig<DatabaseHandle>, Error> {
     let ap_id = Url::parse(&format!("http://{}", hostname))?.into();
-    let articles_id = Url::parse(&format!("http://{}/all_articles", hostname))?.into();
+    let articles_id = CollectionId::parse(&format!("http://{}/all_articles", hostname))?;
     let inbox = Url::parse(&format!("http://{}/inbox", hostname))?;
     let keypair = generate_actor_keypair()?;
     let local_instance = DbInstance {

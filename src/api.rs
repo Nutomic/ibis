@@ -3,7 +3,7 @@ use crate::error::MyResult;
 use crate::federation::activities::create_article::CreateArticle;
 use crate::federation::activities::update_article::UpdateArticle;
 use crate::federation::objects::article::DbArticle;
-use crate::federation::objects::edit::DbEdit;
+use crate::federation::objects::edit::{DbEdit, EditVersion};
 use crate::federation::objects::instance::DbInstance;
 use activitypub_federation::config::Data;
 use activitypub_federation::fetch::object_id::ObjectId;
@@ -40,17 +40,17 @@ async fn create_article(
     Form(create_article): Form<CreateArticleData>,
 ) -> MyResult<Json<DbArticle>> {
     let local_instance_id = data.local_instance().ap_id;
-    let ap_id = Url::parse(&format!(
+    let ap_id = ObjectId::parse(&format!(
         "http://{}:{}/article/{}",
         local_instance_id.inner().domain().unwrap(),
         local_instance_id.inner().port().unwrap(),
         create_article.title
-    ))?
-    .into();
+    ))?;
     let article = DbArticle {
         title: create_article.title,
         text: String::new(),
         ap_id,
+        latest_version: EditVersion::default(),
         edits: vec![],
         instance: local_instance_id,
         local: true,
@@ -87,6 +87,7 @@ async fn edit_article(
             let mut lock = data.articles.lock().unwrap();
             let article = lock.get_mut(edit_article.ap_id.inner()).unwrap();
             article.text = edit_article.new_text;
+            article.latest_version = edit.version.clone();
             article.edits.push(edit.clone());
             article.clone()
         };

@@ -10,12 +10,24 @@ use sha2::Digest;
 use sha2::Sha224;
 use url::Url;
 
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct EditVersion(String);
+
+impl Default for EditVersion {
+    fn default() -> Self {
+        let sha224 = Sha224::new();
+        let hash = format!("{:X}", sha224.finalize());
+        EditVersion(hash)
+    }
+}
+
 /// Represents a single change to the article.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct DbEdit {
     pub id: ObjectId<DbEdit>,
     pub diff: String,
     pub article_id: ObjectId<DbArticle>,
+    pub version: EditVersion,
     pub local: bool,
 }
 
@@ -30,6 +42,7 @@ impl DbEdit {
             id: edit_id,
             diff: diff.to_string(),
             article_id: original_article.ap_id.clone(),
+            version: EditVersion(hash),
             local: true,
         })
     }
@@ -46,7 +59,8 @@ pub struct ApubEdit {
     #[serde(rename = "type")]
     kind: EditType,
     id: ObjectId<DbEdit>,
-    pub(crate) content: String,
+    pub content: String,
+    pub version: EditVersion,
     pub object: ObjectId<DbArticle>,
 }
 
@@ -68,6 +82,7 @@ impl Object for DbEdit {
             kind: EditType::Edit,
             id: self.id,
             content: self.diff,
+            version: self.version,
             object: self.article_id,
         })
     }
@@ -85,15 +100,19 @@ impl Object for DbEdit {
             id: json.id,
             diff: json.content,
             article_id: json.object,
+            version: json.version,
             local: false,
         };
         let mut lock = data.articles.lock().unwrap();
         let article = lock.get_mut(edit.article_id.inner()).unwrap();
         article.edits.push(edit.clone());
         let patch = Patch::from_str(&edit.diff)?;
-        // TODO: this will give wrong result if new article text is federated, and then also new
-        //       edit is applied. probably need to keep track of versions
-        article.text = apply(&article.text, &patch)?;
+        // Dont apply the edit if we already fetched an update Article version.
+        // TODO: this assumes that we always receive edits in the correct order, probably need to
+        //       include the parent for each edit
+        if article.latest_version != edit.version {
+            article.text = apply(&article.text, &patch)?;
+        }
 
         Ok(edit)
     }

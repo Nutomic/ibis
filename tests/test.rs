@@ -81,6 +81,13 @@ async fn test_synchronize_articles() -> MyResult<()> {
     assert_eq!(0, create_res.edits.len());
     assert!(create_res.local);
 
+    // edit the article
+    let edit_form = EditArticleData {
+        ap_id: create_res.ap_id.clone(),
+        new_text: "Lorem Ipsum 2".to_string(),
+    };
+    edit_article(data.hostname_alpha, &title, &edit_form).await?;
+
     // article is not yet on beta
     let get_res = get_article(data.hostname_beta, &create_res.title).await;
     assert!(get_res.is_err());
@@ -96,8 +103,8 @@ async fn test_synchronize_articles() -> MyResult<()> {
     let get_res = get_article(data.hostname_beta, &create_res.title).await?;
     assert_eq!(create_res.ap_id, get_res.ap_id);
     assert_eq!(title, get_res.title);
-    assert_eq!(0, get_res.edits.len());
-    assert!(get_res.text.is_empty());
+    assert_eq!(1, get_res.edits.len());
+    assert_eq!(edit_form.new_text, get_res.text);
     assert!(!get_res.local);
 
     data.stop()
@@ -231,7 +238,8 @@ async fn test_edit_conflict() -> MyResult<()> {
         .to_string()
         .starts_with(&edit_res.ap_id.to_string()));
 
-    // gamma also edits, as its not the latest version there is a conflict
+    // gamma also edits, as its not the latest version there is a conflict. local version should
+    // not be updated with this conflicting version, instead user needs to handle the conflict
     let edit_form = EditArticleData {
         ap_id: create_res.ap_id,
         new_text: "aaaa".to_string(),
@@ -240,6 +248,8 @@ async fn test_edit_conflict() -> MyResult<()> {
     assert_eq!(create_res.text, edit_res.text);
     assert_eq!(0, edit_res.edits.len());
     assert!(!edit_res.local);
+
+    // TODO: need to federate the conflict as `Reject` and then resolve it
 
     data.stop()
 }
