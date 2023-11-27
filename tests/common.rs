@@ -66,9 +66,19 @@ impl TestData {
     }
 }
 
+pub const TEST_ARTICLE_DEFAULT_TEXT: &str = "empty\n";
+
 pub async fn create_article(hostname: &str, title: String) -> MyResult<DbArticle> {
-    let create_form = CreateArticleData { title };
-    post(hostname, "article", &create_form).await
+    let create_form = CreateArticleData {
+        title: title.clone(),
+    };
+    let article: DbArticle = post(hostname, "article", &create_form).await?;
+    // create initial edit to ensure that conflicts are generated (there are no conflicts on empty file)
+    let edit_form = EditArticleData {
+        ap_id: article.ap_id,
+        new_text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
+    };
+    edit_article(hostname, &title, &edit_form).await
 }
 
 pub async fn get_article(hostname: &str, title: &str) -> MyResult<DbArticle> {
@@ -91,8 +101,7 @@ pub async fn edit_article(
     let get_article = GetArticleData {
         title: title.to_string(),
     };
-    let updated_article: DbArticle =
-        get_query(hostname, &"article".to_string(), Some(get_article)).await?;
+    let updated_article: DbArticle = get_query(hostname, "article", Some(get_article)).await?;
     Ok(updated_article)
 }
 

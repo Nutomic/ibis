@@ -13,6 +13,7 @@ use activitypub_federation::traits::{ActivityHandler, Collection};
 use axum::extract::Path;
 
 use crate::federation::activities::create_article::CreateArticle;
+use crate::federation::activities::reject::RejectEdit;
 use crate::federation::activities::update_article::UpdateArticle;
 use crate::federation::objects::article::ApubArticle;
 use crate::federation::objects::articles_collection::{ArticleCollection, DbArticleCollection};
@@ -85,6 +86,7 @@ pub enum InboxActivities {
     Accept(Accept),
     CreateArticle(CreateArticle),
     UpdateArticle(UpdateArticle),
+    RejectEdit(RejectEdit),
 }
 
 #[debug_handler]

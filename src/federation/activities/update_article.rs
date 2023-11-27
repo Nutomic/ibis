@@ -12,6 +12,7 @@ use activitypub_federation::{
     traits::{ActivityHandler, Object},
 };
 
+use crate::federation::activities::reject::RejectEdit;
 use serde::{Deserialize, Serialize};
 use url::Url;
 
@@ -85,28 +86,32 @@ impl ActivityHandler for UpdateArticle {
     }
 
     async fn receive(self, data: &Data<Self::DataType>) -> Result<(), Self::Error> {
-        let article_local = {
-            DbEdit::from_json(self.object.clone(), data).await?;
-            let lock = data.articles.lock().unwrap();
-            let article = lock.get(self.object.object.inner()).unwrap();
-            article.local
-        };
-
-        if article_local {
-            // No need to wrap in announce, we can construct a new activity as all important info
-            // is in the object and result fields.
-            let local_instance = data.local_instance();
-            let id = generate_activity_id(local_instance.ap_id.inner())?;
-            let update = UpdateArticle {
-                actor: local_instance.ap_id.clone(),
-                to: local_instance.follower_ids(),
-                object: self.object,
-                kind: Default::default(),
-                id,
+        if DbEdit::from_json(self.object.clone(), data).await.is_ok() {
+            let article_local = {
+                let lock = data.articles.lock().unwrap();
+                let article = lock.get(self.object.object.inner()).unwrap();
+                article.local
             };
-            data.local_instance()
-                .send_to_followers(update, data)
-                .await?;
+
+            if article_local {
+                // No need to wrap in announce, we can construct a new activity as all important info
+                // is in the object and result fields.
+                let local_instance = data.local_instance();
+                let id = generate_activity_id(local_instance.ap_id.inner())?;
+                let update = UpdateArticle {
+                    actor: local_instance.ap_id.clone(),
+                    to: local_instance.follower_ids(),
+                    object: self.object,
+                    kind: Default::default(),
+                    id,
+                };
+                data.local_instance()
+                    .send_to_followers(update, data)
+                    .await?;
+            }
+        } else {
+            let user_instance = self.actor.dereference(data).await?;
+            RejectEdit::send(self.object.clone(), user_instance, data).await?;
         }
 
         Ok(())

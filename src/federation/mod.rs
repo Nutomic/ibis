@@ -35,6 +35,7 @@ pub async fn federation_config(hostname: &str) -> Result<FederationConfig<Databa
             local_instance,
         )])),
         articles: Mutex::new(HashMap::new()),
+        conflicts: Mutex::new(vec![]),
     });
     let config = FederationConfig::builder()
         .domain(hostname)

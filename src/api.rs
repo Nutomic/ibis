@@ -3,7 +3,7 @@ use crate::error::MyResult;
 use crate::federation::activities::create_article::CreateArticle;
 use crate::federation::activities::update_article::UpdateArticle;
 use crate::federation::objects::article::DbArticle;
-use crate::federation::objects::edit::{DbEdit, EditVersion};
+use crate::federation::objects::edit::{ApubEdit, DbEdit, EditVersion};
 use crate::federation::objects::instance::DbInstance;
 use activitypub_federation::config::Data;
 use activitypub_federation::fetch::object_id::ObjectId;
@@ -23,6 +23,7 @@ pub fn api_routes() -> Router {
             "/article",
             get(get_article).post(create_article).patch(edit_article),
         )
+        .route("/edit_conflicts", get(edit_conflicts))
         .route("/resolve_instance", get(resolve_instance))
         .route("/resolve_article", get(resolve_article))
         .route("/instance", get(get_local_instance))
@@ -96,8 +97,7 @@ async fn edit_article(
     } else {
         UpdateArticle::send_to_origin(
             edit,
-            // TODO: should be dereference(), but then article is refetched which breaks test_edit_conflict()
-            original_article.instance.dereference_local(&data).await?,
+            original_article.instance.dereference(&data).await?,
             &data,
         )
         .await?;
@@ -167,4 +167,11 @@ async fn follow_instance(
     let instance = query.instance_id.dereference(&data).await?;
     data.local_instance().follow(&instance, &data).await?;
     Ok(())
+}
+
+#[debug_handler]
+async fn edit_conflicts(data: Data<DatabaseHandle>) -> MyResult<Json<Vec<ApubEdit>>> {
+    let lock = data.conflicts.lock().unwrap();
+    let conflicts = lock.clone();
+    Ok(Json(conflicts))
 }

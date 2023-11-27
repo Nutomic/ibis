@@ -1,5 +1,6 @@
 use crate::database::DatabaseHandle;
 use crate::error::{Error, MyResult};
+
 use crate::federation::objects::article::DbArticle;
 use activitypub_federation::config::Data;
 use activitypub_federation::fetch::object_id::ObjectId;
@@ -103,17 +104,21 @@ impl Object for DbEdit {
             version: json.version,
             local: false,
         };
-        let mut lock = data.articles.lock().unwrap();
-        let article = lock.get_mut(edit.article_id.inner()).unwrap();
-        article.edits.push(edit.clone());
+        let article_read = {
+            let lock = data.articles.lock().unwrap();
+            lock.get(edit.article_id.inner()).unwrap().clone()
+        };
         let patch = Patch::from_str(&edit.diff)?;
         // Dont apply the edit if we already fetched an update Article version.
         // TODO: this assumes that we always receive edits in the correct order, probably need to
         //       include the parent for each edit
-        if article.latest_version != edit.version {
-            article.text = apply(&article.text, &patch)?;
-        }
-
+        //if article_read.latest_version != edit.version {
+        let applied = apply(&article_read.text, &patch)?;
+        let mut lock = data.articles.lock().unwrap();
+        let article = lock.get_mut(edit.article_id.inner()).unwrap();
+        article.edits.push(edit.clone());
+        article.text = applied;
         Ok(edit)
+        //}
     }
 }
