@@ -1,61 +1,45 @@
 use crate::database::DatabaseHandle;
 use crate::error::MyResult;
-use crate::federation::objects::article::DbArticle;
+
 use crate::federation::objects::edit::{ApubEdit, DbEdit};
 use crate::federation::objects::instance::DbInstance;
 use crate::utils::generate_activity_id;
-use activitypub_federation::kinds::activity::CreateType;
+use activitypub_federation::kinds::activity::UpdateType;
 use activitypub_federation::{
     config::Data,
     fetch::object_id::ObjectId,
     protocol::helpers::deserialize_one_or_many,
     traits::{ActivityHandler, Object},
 };
+use diffy::{apply, Patch};
 
 use crate::federation::activities::reject::RejectEdit;
+use crate::federation::activities::update_local_article::UpdateLocalArticle;
 use serde::{Deserialize, Serialize};
 use url::Url;
 
 #[derive(Deserialize, Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct UpdateArticle {
+pub struct UpdateRemoteArticle {
     pub actor: ObjectId<DbInstance>,
     #[serde(deserialize_with = "deserialize_one_or_many")]
     pub to: Vec<Url>,
     pub object: ApubEdit,
     #[serde(rename = "type")]
-    pub kind: CreateType,
+    pub kind: UpdateType,
     pub id: Url,
 }
 
-impl UpdateArticle {
-    pub async fn send_to_followers(
-        edit: DbEdit,
-        article: DbArticle,
-        data: &Data<DatabaseHandle>,
-    ) -> MyResult<()> {
-        debug_assert!(article.local);
-        let local_instance = data.local_instance();
-        let id = generate_activity_id(local_instance.ap_id.inner())?;
-        let update = UpdateArticle {
-            actor: local_instance.ap_id.clone(),
-            to: local_instance.follower_ids(),
-            object: edit.into_json(data).await?,
-            kind: Default::default(),
-            id,
-        };
-        local_instance.send_to_followers(update, data).await?;
-        Ok(())
-    }
-
-    pub async fn send_to_origin(
+impl UpdateRemoteArticle {
+    /// Sent by a follower instance
+    pub async fn send(
         edit: DbEdit,
         article_instance: DbInstance,
         data: &Data<DatabaseHandle>,
     ) -> MyResult<()> {
         let local_instance = data.local_instance();
         let id = generate_activity_id(local_instance.ap_id.inner())?;
-        let update = UpdateArticle {
+        let update = UpdateRemoteArticle {
             actor: local_instance.ap_id.clone(),
             to: vec![article_instance.ap_id.into_inner()],
             object: edit.into_json(data).await?,
@@ -68,8 +52,9 @@ impl UpdateArticle {
         Ok(())
     }
 }
+
 #[async_trait::async_trait]
-impl ActivityHandler for UpdateArticle {
+impl ActivityHandler for UpdateRemoteArticle {
     type DataType = DatabaseHandle;
     type Error = crate::error::Error;
 
@@ -85,23 +70,30 @@ impl ActivityHandler for UpdateArticle {
         Ok(())
     }
 
+    /// Received on article origin instances
     async fn receive(self, data: &Data<Self::DataType>) -> Result<(), Self::Error> {
-        if DbEdit::from_json(self.object.clone(), data).await.is_ok() {
-            let article_local = {
-                let lock = data.articles.lock().unwrap();
-                let article = lock.get(self.object.object.inner()).unwrap();
-                article.local
-            };
+        match DbEdit::from_json(self.object.clone(), data).await {
+            Ok(edit) => {
+                let article = {
+                    let lock = data.articles.lock().unwrap();
+                    let article = lock.get(self.object.object.inner()).unwrap();
+                    article.clone()
+                };
+                {
+                    let patch = Patch::from_str(&edit.diff)?;
+                    let applied = apply(&article.text, &patch)?;
+                    let mut lock = data.articles.lock().unwrap();
+                    let article = lock.get_mut(edit.article_id.inner()).unwrap();
+                    article.edits.push(edit.clone());
+                    article.text = applied;
+                }
 
-            if article_local {
-                // No need to wrap in announce, we can construct a new activity as all important info
-                // is in the object and result fields.
                 let local_instance = data.local_instance();
                 let id = generate_activity_id(local_instance.ap_id.inner())?;
-                let update = UpdateArticle {
+                let update = UpdateLocalArticle {
                     actor: local_instance.ap_id.clone(),
                     to: local_instance.follower_ids(),
-                    object: self.object,
+                    object: article.clone().into_json(data).await?,
                     kind: Default::default(),
                     id,
                 };
@@ -109,9 +101,10 @@ impl ActivityHandler for UpdateArticle {
                     .send_to_followers(update, data)
                     .await?;
             }
-        } else {
-            let user_instance = self.actor.dereference(data).await?;
-            RejectEdit::send(self.object.clone(), user_instance, data).await?;
+            Err(_e) => {
+                let user_instance = self.actor.dereference(data).await?;
+                RejectEdit::send(self.object.clone(), user_instance, data).await?;
+            }
         }
 
         Ok(())

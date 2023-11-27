@@ -14,7 +14,8 @@ use axum::extract::Path;
 
 use crate::federation::activities::create_article::CreateArticle;
 use crate::federation::activities::reject::RejectEdit;
-use crate::federation::activities::update_article::UpdateArticle;
+use crate::federation::activities::update_local_article::UpdateLocalArticle;
+use crate::federation::activities::update_remote_article::UpdateRemoteArticle;
 use crate::federation::objects::article::ApubArticle;
 use crate::federation::objects::articles_collection::{ArticleCollection, DbArticleCollection};
 use crate::federation::objects::edits_collection::{ApubEditCollection, DbEditCollection};
@@ -85,7 +86,8 @@ pub enum InboxActivities {
     Follow(Follow),
     Accept(Accept),
     CreateArticle(CreateArticle),
-    UpdateArticle(UpdateArticle),
+    UpdateLocalArticle(UpdateLocalArticle),
+    UpdateRemoteArticle(UpdateRemoteArticle),
     RejectEdit(RejectEdit),
 }
 

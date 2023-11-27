@@ -1,7 +1,7 @@
 use crate::database::DatabaseHandle;
 use crate::error::MyResult;
 use crate::federation::activities::create_article::CreateArticle;
-use crate::federation::activities::update_article::UpdateArticle;
+use crate::federation::activities::update_remote_article::UpdateRemoteArticle;
 use crate::federation::objects::article::DbArticle;
 use crate::federation::objects::edit::{ApubEdit, DbEdit, EditVersion};
 use crate::federation::objects::instance::DbInstance;
@@ -10,6 +10,7 @@ use activitypub_federation::fetch::object_id::ObjectId;
 
 use anyhow::anyhow;
 
+use crate::federation::activities::update_local_article::UpdateLocalArticle;
 use axum::extract::Query;
 use axum::routing::{get, post};
 use axum::{Form, Json, Router};
@@ -93,9 +94,9 @@ async fn edit_article(
             article.clone()
         };
 
-        UpdateArticle::send_to_followers(edit, updated_article.clone(), &data).await?;
+        UpdateLocalArticle::send(updated_article, &data).await?;
     } else {
-        UpdateArticle::send_to_origin(
+        UpdateRemoteArticle::send(
             edit,
             original_article.instance.dereference(&data).await?,
             &data,

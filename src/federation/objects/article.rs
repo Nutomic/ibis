@@ -42,7 +42,7 @@ pub struct ApubArticle {
     pub(crate) attributed_to: ObjectId<DbInstance>,
     #[serde(deserialize_with = "deserialize_one_or_many")]
     pub(crate) to: Vec<Url>,
-    edits: CollectionId<DbEditCollection>,
+    pub edits: CollectionId<DbEditCollection>,
     latest_version: EditVersion,
     content: String,
     name: String,
