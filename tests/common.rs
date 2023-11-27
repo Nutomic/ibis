@@ -1,5 +1,5 @@
 use fediwiki::api::{
-    CreateArticleData, EditArticleData, FollowInstance, GetArticleData, ResolveObject,
+    Conflict, CreateArticleData, EditArticleData, FollowInstance, GetArticleData, ResolveObject,
 };
 use fediwiki::error::MyResult;
 use fediwiki::federation::objects::article::DbArticle;
@@ -77,6 +77,8 @@ pub async fn create_article(hostname: &str, title: String) -> MyResult<DbArticle
     let edit_form = EditArticleData {
         ap_id: article.ap_id,
         new_text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
+        previous_version: article.latest_version,
+        resolve_conflict_id: None,
     };
     edit_article(hostname, &title, &edit_form).await
 }
@@ -88,16 +90,32 @@ pub async fn get_article(hostname: &str, title: &str) -> MyResult<DbArticle> {
     get_query::<DbArticle, _>(hostname, "article", Some(get_article.clone())).await
 }
 
+pub async fn edit_article_with_conflict(
+    hostname: &str,
+    edit_form: &EditArticleData,
+) -> MyResult<Option<Conflict>> {
+    Ok(CLIENT
+        .patch(format!("http://{}/api/v1/article", hostname))
+        .form(edit_form)
+        .send()
+        .await?
+        .json()
+        .await?)
+}
+
 pub async fn edit_article(
     hostname: &str,
     title: &str,
     edit_form: &EditArticleData,
 ) -> MyResult<DbArticle> {
-    CLIENT
+    let edit_res: Option<Conflict> = CLIENT
         .patch(format!("http://{}/api/v1/article", hostname))
         .form(edit_form)
         .send()
+        .await?
+        .json()
         .await?;
+    assert!(edit_res.is_none());
     let get_article = GetArticleData {
         title: title.to_string(),
     };

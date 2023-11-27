@@ -59,7 +59,7 @@ pub enum EditType {
 pub struct ApubEdit {
     #[serde(rename = "type")]
     kind: EditType,
-    id: ObjectId<DbEdit>,
+    pub id: ObjectId<DbEdit>,
     pub content: String,
     pub version: EditVersion,
     pub object: ObjectId<DbArticle>,

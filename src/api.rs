@@ -1,20 +1,21 @@
 use crate::database::DatabaseHandle;
-use crate::error::MyResult;
+use crate::error::{Error, MyResult};
 use crate::federation::activities::create_article::CreateArticle;
+use crate::federation::activities::update_local_article::UpdateLocalArticle;
 use crate::federation::activities::update_remote_article::UpdateRemoteArticle;
 use crate::federation::objects::article::DbArticle;
-use crate::federation::objects::edit::{ApubEdit, DbEdit, EditVersion};
+use crate::federation::objects::edit::{DbEdit, EditVersion};
 use crate::federation::objects::instance::DbInstance;
+use crate::utils::generate_article_version;
 use activitypub_federation::config::Data;
 use activitypub_federation::fetch::object_id::ObjectId;
-
 use anyhow::anyhow;
-
-use crate::federation::activities::update_local_article::UpdateLocalArticle;
 use axum::extract::Query;
 use axum::routing::{get, post};
 use axum::{Form, Json, Router};
 use axum_macros::debug_handler;
+use diffy::{apply, create_patch, merge};
+use rand::random;
 use serde::{Deserialize, Serialize};
 use url::Url;
 
@@ -71,24 +72,82 @@ async fn create_article(
 pub struct EditArticleData {
     pub ap_id: ObjectId<DbArticle>,
     pub new_text: String,
+    pub previous_version: EditVersion,
+    pub resolve_conflict_id: Option<i32>,
+}
+
+// TODO: how to store conflict in db? with three-way-merge doesnt
+//       necessarily make sense (might be outdated)
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct Conflict {
+    pub id: i32,
+    pub three_way_merge: String,
+    pub article_id: ObjectId<DbArticle>,
+    pub latest_version: EditVersion,
 }
 
 #[debug_handler]
 async fn edit_article(
     data: Data<DatabaseHandle>,
-    Form(edit_article): Form<EditArticleData>,
-) -> MyResult<()> {
+    Form(edit_form): Form<EditArticleData>,
+) -> MyResult<Json<Option<Conflict>>> {
+    // resolve conflict if any
+    if let Some(resolve_conflict_id) = &edit_form.resolve_conflict_id {
+        let mut lock = data.conflicts.lock().unwrap();
+        if lock.iter().find(|c| &c.id == resolve_conflict_id).is_none() {
+            return Err(anyhow!("invalid resolve conflict"))?;
+        }
+        lock.retain(|c| &c.id != resolve_conflict_id);
+    }
     let original_article = {
         let mut lock = data.articles.lock().unwrap();
-        let article = lock.get_mut(edit_article.ap_id.inner()).unwrap();
+        let article = lock.get_mut(edit_form.ap_id.inner()).unwrap();
         article.clone()
     };
-    let edit = DbEdit::new(&original_article, &edit_article.new_text)?;
+
+    if edit_form.previous_version == original_article.latest_version {
+        // no intermediate changes, simply submit new version
+        submit_article_update(&data, &edit_form, &original_article).await?;
+        Ok(Json(None))
+    } else {
+        // create a patch from the differences of previous version and new version
+        let ancestor =
+            generate_article_version(&original_article.edits, Some(&edit_form.previous_version))?;
+        let patch = create_patch(&ancestor, &edit_form.new_text);
+        if apply(&original_article.text, &patch).is_ok() {
+            // patch applies cleanly so we are done
+            submit_article_update(&data, &edit_form, &original_article).await?;
+            Ok(Json(None))
+        } else {
+            // there is a merge conflict, do three-way-merge
+            let merge = merge(&ancestor, &edit_form.new_text, &original_article.text)
+                .err()
+                .unwrap();
+
+            let conflict = Conflict {
+                id: random(),
+                three_way_merge: merge,
+                article_id: original_article.ap_id,
+                latest_version: original_article.latest_version,
+            };
+            let mut lock = data.conflicts.lock().unwrap();
+            lock.push(conflict.clone());
+            return Ok(Json(Some(conflict)));
+        }
+    }
+}
+
+async fn submit_article_update(
+    data: &Data<DatabaseHandle>,
+    edit_form: &EditArticleData,
+    original_article: &DbArticle,
+) -> Result<(), Error> {
+    let edit = DbEdit::new(&original_article, &edit_form.new_text)?;
     if original_article.local {
         let updated_article = {
             let mut lock = data.articles.lock().unwrap();
-            let article = lock.get_mut(edit_article.ap_id.inner()).unwrap();
-            article.text = edit_article.new_text;
+            let article = lock.get_mut(edit_form.ap_id.inner()).unwrap();
+            article.text = edit_form.new_text.clone();
             article.latest_version = edit.version.clone();
             article.edits.push(edit.clone());
             article.clone()
@@ -103,7 +162,6 @@ async fn edit_article(
         )
         .await?;
     }
-
     Ok(())
 }
 
@@ -171,7 +229,7 @@ async fn follow_instance(
 }
 
 #[debug_handler]
-async fn edit_conflicts(data: Data<DatabaseHandle>) -> MyResult<Json<Vec<ApubEdit>>> {
+async fn edit_conflicts(data: Data<DatabaseHandle>) -> MyResult<Json<Vec<Conflict>>> {
     let lock = data.conflicts.lock().unwrap();
     let conflicts = lock.clone();
     Ok(Json(conflicts))

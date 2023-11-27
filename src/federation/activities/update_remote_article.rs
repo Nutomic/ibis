@@ -46,7 +46,6 @@ impl UpdateRemoteArticle {
             kind: Default::default(),
             id,
         };
-        dbg!(&update);
         local_instance
             .send(update, vec![article_instance.inbox], data)
             .await?;

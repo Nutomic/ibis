@@ -3,11 +3,11 @@ extern crate fediwiki;
 mod common;
 
 use crate::common::{
-    create_article, edit_article, follow_instance, get_article, get_query, TestData,
-    TEST_ARTICLE_DEFAULT_TEXT,
+    create_article, edit_article, edit_article_with_conflict, follow_instance, get_article,
+    get_query, TestData, TEST_ARTICLE_DEFAULT_TEXT,
 };
 use common::get;
-use fediwiki::api::{EditArticleData, ResolveObject};
+use fediwiki::api::{Conflict, EditArticleData, ResolveObject};
 use fediwiki::error::MyResult;
 use fediwiki::federation::objects::article::DbArticle;
 use fediwiki::federation::objects::edit::ApubEdit;
@@ -41,6 +41,8 @@ async fn test_create_read_and_edit_article() -> MyResult<()> {
     let edit_form = EditArticleData {
         ap_id: create_res.ap_id.clone(),
         new_text: "Lorem Ipsum 2".to_string(),
+        previous_version: get_res.latest_version,
+        resolve_conflict_id: None,
     };
     let edit_res = edit_article(data.hostname_alpha, &create_res.title, &edit_form).await?;
     assert_eq!(edit_form.new_text, edit_res.text);
@@ -88,6 +90,8 @@ async fn test_synchronize_articles() -> MyResult<()> {
     let edit_form = EditArticleData {
         ap_id: create_res.ap_id.clone(),
         new_text: "Lorem Ipsum 2\n".to_string(),
+        previous_version: create_res.latest_version,
+        resolve_conflict_id: None,
     };
     edit_article(data.hostname_alpha, &title, &edit_form).await?;
 
@@ -137,6 +141,8 @@ async fn test_edit_local_article() -> MyResult<()> {
     let edit_form = EditArticleData {
         ap_id: create_res.ap_id,
         new_text: "Lorem Ipsum 2".to_string(),
+        previous_version: get_res.latest_version,
+        resolve_conflict_id: None,
     };
     let edit_res = edit_article(data.hostname_beta, &create_res.title, &edit_form).await?;
     assert_eq!(edit_res.text, edit_form.new_text);
@@ -182,6 +188,8 @@ async fn test_edit_remote_article() -> MyResult<()> {
     let edit_form = EditArticleData {
         ap_id: create_res.ap_id,
         new_text: "Lorem Ipsum 2".to_string(),
+        previous_version: get_res.latest_version,
+        resolve_conflict_id: None,
     };
     let edit_res = edit_article(data.hostname_alpha, &title, &edit_form).await?;
     assert_eq!(edit_form.new_text, edit_res.text);
@@ -208,7 +216,62 @@ async fn test_edit_remote_article() -> MyResult<()> {
 
 #[tokio::test]
 #[serial]
-async fn test_edit_conflict() -> MyResult<()> {
+async fn test_local_edit_conflict() -> MyResult<()> {
+    let data = TestData::start();
+
+    // create new article
+    let title = "Manu_Chao".to_string();
+    let create_res = create_article(data.hostname_alpha, title.clone()).await?;
+    assert_eq!(title, create_res.title);
+    assert!(create_res.local);
+
+    // one user edits article
+    let edit_form = EditArticleData {
+        ap_id: create_res.ap_id.clone(),
+        new_text: "Lorem Ipsum\n".to_string(),
+        previous_version: create_res.latest_version.clone(),
+        resolve_conflict_id: None,
+    };
+    let edit_res = edit_article(data.hostname_alpha, &create_res.title, &edit_form).await?;
+    assert_eq!(edit_res.text, edit_form.new_text);
+    assert_eq!(2, edit_res.edits.len());
+
+    // another user edits article, without being aware of previous edit
+    let edit_form = EditArticleData {
+        ap_id: create_res.ap_id.clone(),
+        new_text: "Ipsum Lorem\n".to_string(),
+        previous_version: create_res.latest_version,
+        resolve_conflict_id: None,
+    };
+    let edit_res = edit_article_with_conflict(data.hostname_alpha, &edit_form)
+        .await?
+        .unwrap();
+    assert_eq!("<<<<<<< ours\nIpsum Lorem\n||||||| original\nempty\n=======\nLorem Ipsum\n>>>>>>> theirs\n", edit_res.three_way_merge);
+
+    let conflicts: Vec<Conflict> =
+        get_query(data.hostname_alpha, "edit_conflicts", None::<()>).await?;
+    assert_eq!(1, conflicts.len());
+    assert_eq!(conflicts[0], edit_res);
+
+    let edit_form = EditArticleData {
+        ap_id: create_res.ap_id.clone(),
+        new_text: "Lorem Ipsum and Ipsum Lorem\n".to_string(),
+        previous_version: edit_res.latest_version,
+        resolve_conflict_id: Some(edit_res.id),
+    };
+    let edit_res = edit_article(data.hostname_alpha, &create_res.title, &edit_form).await?;
+    assert_eq!(edit_form.new_text, edit_res.text);
+
+    let conflicts: Vec<Conflict> =
+        get_query(data.hostname_alpha, "edit_conflicts", None::<()>).await?;
+    assert_eq!(0, conflicts.len());
+
+    data.stop()
+}
+
+#[tokio::test]
+#[serial]
+async fn test_federated_edit_conflict() -> MyResult<()> {
     let data = TestData::start();
 
     follow_instance(data.hostname_alpha, data.hostname_beta).await?;
@@ -231,6 +294,8 @@ async fn test_edit_conflict() -> MyResult<()> {
     let edit_form = EditArticleData {
         ap_id: create_res.ap_id.clone(),
         new_text: "Lorem Ipsum\n".to_string(),
+        previous_version: create_res.latest_version.clone(),
+        resolve_conflict_id: None,
     };
     let edit_res = edit_article(data.hostname_alpha, &create_res.title, &edit_form).await?;
     assert_eq!(edit_res.text, edit_form.new_text);
@@ -244,8 +309,10 @@ async fn test_edit_conflict() -> MyResult<()> {
     // gamma also edits, as its not the latest version there is a conflict. local version should
     // not be updated with this conflicting version, instead user needs to handle the conflict
     let edit_form = EditArticleData {
-        ap_id: create_res.ap_id,
+        ap_id: create_res.ap_id.clone(),
         new_text: "aaaa\n".to_string(),
+        previous_version: create_res.latest_version,
+        resolve_conflict_id: None,
     };
     let edit_res = edit_article(data.hostname_gamma, &create_res.title, &edit_form).await?;
     assert_ne!(edit_form.new_text, edit_res.text);
@@ -254,9 +321,24 @@ async fn test_edit_conflict() -> MyResult<()> {
 
     let conflicts: Vec<ApubEdit> =
         get_query(data.hostname_gamma, "edit_conflicts", None::<()>).await?;
+    // TODO: this should also return string for three-way-merge
+    dbg!(&conflicts);
     assert_eq!(1, conflicts.len());
 
-    // TODO: need a way to mark conflict as resolved, maybe opt param on edit endpoint
+    // resolve the conflict
+    let edit_form = EditArticleData {
+        ap_id: create_res.ap_id,
+        new_text: "aaaa\n".to_string(),
+        previous_version: conflicts[0].version.clone(),
+        resolve_conflict_id: todo!(), //Some(conflicts[0].id.clone()),
+    };
+    let edit_res = edit_article(data.hostname_gamma, &create_res.title, &edit_form).await?;
+    assert_eq!(edit_form.new_text, edit_res.text);
+    assert_eq!(3, edit_res.edits.len());
+
+    let conflicts: Vec<ApubEdit> =
+        get_query(data.hostname_gamma, "edit_conflicts", None::<()>).await?;
+    assert_eq!(0, conflicts.len());
 
     data.stop()
 }
