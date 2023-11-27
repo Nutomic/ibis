@@ -46,6 +46,7 @@ impl UpdateRemoteArticle {
             kind: Default::default(),
             id,
         };
+        dbg!(&update);
         local_instance
             .send(update, vec![article_instance.inbox], data)
             .await?;
@@ -72,34 +73,22 @@ impl ActivityHandler for UpdateRemoteArticle {
 
     /// Received on article origin instances
     async fn receive(self, data: &Data<Self::DataType>) -> Result<(), Self::Error> {
-        match DbEdit::from_json(self.object.clone(), data).await {
-            Ok(edit) => {
+        let edit = DbEdit::from_json(self.object.clone(), data).await?;
+        let article_text = {
+            let lock = data.articles.lock().unwrap();
+            lock.get(self.object.object.inner()).unwrap().text.clone()
+        };
+        let patch = Patch::from_str(&edit.diff)?;
+
+        match apply(&article_text, &patch) {
+            Ok(applied) => {
                 let article = {
-                    let lock = data.articles.lock().unwrap();
-                    let article = lock.get(self.object.object.inner()).unwrap();
-                    article.clone()
-                };
-                {
-                    let patch = Patch::from_str(&edit.diff)?;
-                    let applied = apply(&article.text, &patch)?;
                     let mut lock = data.articles.lock().unwrap();
                     let article = lock.get_mut(edit.article_id.inner()).unwrap();
-                    article.edits.push(edit.clone());
                     article.text = applied;
-                }
-
-                let local_instance = data.local_instance();
-                let id = generate_activity_id(local_instance.ap_id.inner())?;
-                let update = UpdateLocalArticle {
-                    actor: local_instance.ap_id.clone(),
-                    to: local_instance.follower_ids(),
-                    object: article.clone().into_json(data).await?,
-                    kind: Default::default(),
-                    id,
+                    article.clone()
                 };
-                data.local_instance()
-                    .send_to_followers(update, data)
-                    .await?;
+                UpdateLocalArticle::send(article, data).await?;
             }
             Err(_e) => {
                 let user_instance = self.actor.dereference(data).await?;
