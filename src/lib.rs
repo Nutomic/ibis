@@ -11,7 +11,7 @@ use std::net::ToSocketAddrs;
 use tracing::info;
 
 pub mod api;
-mod database;
+pub mod database;
 pub mod error;
 pub mod federation;
 mod utils;

@@ -10,7 +10,7 @@ use activitypub_federation::{
 };
 use rand::random;
 
-use crate::api::DbConflict;
+use crate::database::DbConflict;
 use serde::{Deserialize, Serialize};
 use url::Url;
 
