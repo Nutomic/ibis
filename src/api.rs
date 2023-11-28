@@ -25,11 +25,13 @@ pub fn api_routes() -> Router {
             "/article",
             get(get_article).post(create_article).patch(edit_article),
         )
+        .route("/article/fork", post(fork_article))
         .route("/edit_conflicts", get(edit_conflicts))
         .route("/resolve_instance", get(resolve_instance))
         .route("/resolve_article", get(resolve_article))
         .route("/instance", get(get_local_instance))
         .route("/instance/follow", post(follow_instance))
+        .route("/search", get(search_article))
 }
 
 #[derive(Deserialize, Serialize)]
@@ -42,6 +44,16 @@ async fn create_article(
     data: Data<DatabaseHandle>,
     Form(create_article): Form<CreateArticleData>,
 ) -> MyResult<Json<DbArticle>> {
+    {
+        let articles = data.articles.lock().unwrap();
+        let title_exists = articles
+            .iter()
+            .any(|a| a.1.local && a.1.title == create_article.title);
+        if title_exists {
+            return Err(anyhow!("A local article with this title already exists").into());
+        }
+    }
+
     let local_instance_id = data.local_instance().ap_id;
     let ap_id = ObjectId::parse(&format!(
         "http://{}:{}/article/{}",
@@ -203,4 +215,78 @@ async fn edit_conflicts(data: Data<DatabaseHandle>) -> MyResult<Json<Vec<ApiConf
     .flatten()
     .collect();
     Ok(Json(conflicts))
+}
+
+#[derive(Deserialize, Serialize, Clone)]
+pub struct SearchArticleData {
+    pub title: String,
+}
+
+#[debug_handler]
+async fn search_article(
+    Query(query): Query<SearchArticleData>,
+    data: Data<DatabaseHandle>,
+) -> MyResult<Json<Vec<DbArticle>>> {
+    let articles = data.articles.lock().unwrap();
+    let article = articles
+        .iter()
+        .filter(|a| a.1.title == query.title)
+        .map(|a| a.1)
+        .cloned()
+        .collect();
+    Ok(Json(article))
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct ForkArticleData {
+    // TODO: could add optional param new_title so there is no problem with title collision
+    //       in case local article with same title exists
+    pub ap_id: ObjectId<DbArticle>,
+}
+
+#[debug_handler]
+async fn fork_article(
+    data: Data<DatabaseHandle>,
+    Form(fork_form): Form<ForkArticleData>,
+) -> MyResult<Json<DbArticle>> {
+    let article = {
+        let lock = data.articles.lock().unwrap();
+        let article = lock.get(fork_form.ap_id.inner()).unwrap();
+        article.clone()
+    };
+    if article.local {
+        return Err(anyhow!("Cannot fork local article because there cant be multiple local articles with same title").into());
+    }
+
+    let original_article = {
+        let lock = data.articles.lock().unwrap();
+        lock.get(fork_form.ap_id.inner())
+            .expect("article exists")
+            .clone()
+    };
+
+    let local_instance_id = data.local_instance().ap_id;
+    let ap_id = ObjectId::parse(&format!(
+        "http://{}:{}/article/{}",
+        local_instance_id.inner().domain().unwrap(),
+        local_instance_id.inner().port().unwrap(),
+        original_article.title
+    ))?;
+    let forked_article = DbArticle {
+        title: original_article.title.clone(),
+        text: original_article.text.clone(),
+        ap_id,
+        latest_version: original_article.latest_version.clone(),
+        edits: original_article.edits.clone(),
+        instance: local_instance_id,
+        local: true,
+    };
+    {
+        let mut articles = data.articles.lock().unwrap();
+        articles.insert(forked_article.ap_id.inner().clone(), forked_article.clone());
+    }
+
+    CreateArticle::send_to_followers(forked_article.clone(), &data).await?;
+
+    Ok(Json(forked_article))
 }

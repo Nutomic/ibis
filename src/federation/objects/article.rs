@@ -15,7 +15,7 @@ use activitypub_federation::{
 use serde::{Deserialize, Serialize};
 use url::Url;
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct DbArticle {
     pub title: String,
     pub text: String,
@@ -91,7 +91,7 @@ impl Object for DbArticle {
     }
 
     async fn from_json(json: Self::Kind, data: &Data<Self::DataType>) -> Result<Self, Self::Error> {
-        let article = DbArticle {
+        let mut article = DbArticle {
             title: json.name,
             text: json.content,
             ap_id: json.id,
@@ -107,7 +107,10 @@ impl Object for DbArticle {
             lock.insert(article.ap_id.inner().clone(), article.clone());
         }
 
-        json.edits.dereference(&article, data).await?;
+        let edits = json.edits.dereference(&article, data).await?;
+
+        // include edits in return value (they are already written to db, no need to do that here)
+        article.edits = edits.0;
 
         Ok(article)
     }

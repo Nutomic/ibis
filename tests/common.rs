@@ -140,7 +140,7 @@ where
     Ok(alpha_instance)
 }
 
-async fn post<T: Serialize, R>(hostname: &str, endpoint: &str, form: &T) -> MyResult<R>
+pub async fn post<T: Serialize, R>(hostname: &str, endpoint: &str, form: &T) -> MyResult<R>
 where
     R: for<'de> Deserialize<'de>,
 {

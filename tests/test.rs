@@ -4,16 +4,17 @@ mod common;
 
 use crate::common::{
     create_article, edit_article, edit_article_with_conflict, follow_instance, get_article,
-    get_query, TestData, TEST_ARTICLE_DEFAULT_TEXT,
+    get_query, post, TestData, TEST_ARTICLE_DEFAULT_TEXT,
 };
 use common::get;
-use fediwiki::api::{ApiConflict, EditArticleData, ResolveObject};
+use fediwiki::api::{
+    ApiConflict, EditArticleData, ForkArticleData, ResolveObject, SearchArticleData,
+};
 use fediwiki::error::MyResult;
 use fediwiki::federation::objects::article::DbArticle;
 use fediwiki::federation::objects::edit::ApubEdit;
 use fediwiki::federation::objects::instance::DbInstance;
 use serial_test::serial;
-
 use url::Url;
 
 #[tokio::test]
@@ -47,6 +48,31 @@ async fn test_create_read_and_edit_article() -> MyResult<()> {
     let edit_res = edit_article(data.hostname_alpha, &edit_form).await?;
     assert_eq!(edit_form.new_text, edit_res.text);
     assert_eq!(2, edit_res.edits.len());
+
+    let search_form = SearchArticleData {
+        title: title.clone(),
+    };
+    let search_res: Vec<DbArticle> =
+        get_query(data.hostname_alpha, "search", Some(search_form)).await?;
+    assert_eq!(1, search_res.len());
+    assert_eq!(edit_res, search_res[0]);
+
+    data.stop()
+}
+
+#[tokio::test]
+#[serial]
+async fn test_create_duplicate_article() -> MyResult<()> {
+    let data = TestData::start();
+
+    // create article
+    let title = "Manu_Chao".to_string();
+    let create_res = create_article(data.hostname_alpha, title.clone()).await?;
+    assert_eq!(title, create_res.title);
+    assert!(create_res.local);
+
+    let create_res = create_article(data.hostname_alpha, title.clone()).await;
+    assert!(create_res.is_err());
 
     data.stop()
 }
@@ -375,6 +401,52 @@ async fn test_overlapping_edits_no_conflict() -> MyResult<()> {
     assert_eq!(0, conflicts.len());
     assert_eq!(3, edit_res.edits.len());
     assert_eq!("my\nexample\narticle\n", edit_res.text);
+
+    data.stop()
+}
+
+#[tokio::test]
+#[serial]
+async fn test_fork_article() -> MyResult<()> {
+    let data = TestData::start();
+
+    // create article
+    let title = "Manu_Chao".to_string();
+    let create_res = create_article(data.hostname_alpha, title.clone()).await?;
+    assert_eq!(title, create_res.title);
+    assert!(create_res.local);
+
+    // fetch on beta
+    let resolve_object = ResolveObject {
+        id: create_res.ap_id.into_inner(),
+    };
+    let resolved_article =
+        get_query::<DbArticle, _>(data.hostname_beta, "resolve_article", Some(resolve_object))
+            .await?;
+    assert_eq!(create_res.edits.len(), resolved_article.edits.len());
+
+    // fork the article to local instance
+    let fork_form = ForkArticleData {
+        ap_id: resolved_article.ap_id.clone(),
+    };
+    let fork_res: DbArticle = post(data.hostname_beta, "article/fork", &fork_form).await?;
+    assert_eq!(resolved_article.title, fork_res.title);
+    assert_eq!(resolved_article.text, fork_res.text);
+    assert_eq!(resolved_article.edits, fork_res.edits);
+    assert_eq!(resolved_article.latest_version, fork_res.latest_version);
+    assert_ne!(resolved_article.ap_id, fork_res.ap_id);
+    assert!(fork_res.local);
+
+    let beta_instance: DbInstance = get(data.hostname_beta, "instance").await?;
+    assert_eq!(fork_res.instance, beta_instance.ap_id);
+
+    // now search returns two articles for this title (original and forked)
+    let search_form = SearchArticleData {
+        title: title.clone(),
+    };
+    let search_res: Vec<DbArticle> =
+        get_query(data.hostname_beta, "search", Some(search_form)).await?;
+    assert_eq!(2, search_res.len());
 
     data.stop()
 }

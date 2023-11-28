@@ -23,7 +23,7 @@ impl Default for EditVersion {
 }
 
 /// Represents a single change to the article.
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct DbEdit {
     pub id: ObjectId<DbEdit>,
     pub diff: String,

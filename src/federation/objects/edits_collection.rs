@@ -23,7 +23,7 @@ pub struct ApubEditCollection {
 }
 
 #[derive(Clone, Debug)]
-pub struct DbEditCollection(Vec<DbEdit>);
+pub struct DbEditCollection(pub Vec<DbEdit>);
 
 #[async_trait::async_trait]
 impl Collection for DbEditCollection {
