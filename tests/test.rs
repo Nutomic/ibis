@@ -246,7 +246,7 @@ async fn test_local_edit_conflict() -> MyResult<()> {
     let edit_res = edit_article_with_conflict(data.hostname_alpha, &edit_form)
         .await?
         .unwrap();
-    assert_eq!("<<<<<<< ours\nIpsum Lorem\n||||||| original\nempty\n=======\nLorem Ipsum\n>>>>>>> theirs\n", edit_res.three_way_merge);
+    assert_eq!("<<<<<<< ours\nIpsum Lorem\n||||||| original\nsome\nexample\ntext\n=======\nLorem Ipsum\n>>>>>>> theirs\n", edit_res.three_way_merge);
 
     let conflicts: Vec<ApiConflict> =
         get_query(data.hostname_alpha, "edit_conflicts", None::<()>).await?;
@@ -337,6 +337,45 @@ async fn test_federated_edit_conflict() -> MyResult<()> {
     let conflicts: Vec<ApubEdit> =
         get_query(data.hostname_gamma, "edit_conflicts", None::<()>).await?;
     assert_eq!(0, conflicts.len());
+
+    data.stop()
+}
+
+#[tokio::test]
+#[serial]
+async fn test_overlapping_edits_no_conflict() -> MyResult<()> {
+    let data = TestData::start();
+
+    // create new article
+    let title = "Manu_Chao".to_string();
+    let create_res = create_article(data.hostname_alpha, title.clone()).await?;
+    assert_eq!(title, create_res.title);
+    assert!(create_res.local);
+
+    // one user edits article
+    let edit_form = EditArticleData {
+        ap_id: create_res.ap_id.clone(),
+        new_text: "my\nexample\ntext\n".to_string(),
+        previous_version: create_res.latest_version.clone(),
+        resolve_conflict_id: None,
+    };
+    let edit_res = edit_article(data.hostname_alpha, &create_res.title, &edit_form).await?;
+    assert_eq!(edit_res.text, edit_form.new_text);
+    assert_eq!(2, edit_res.edits.len());
+
+    // another user edits article, without being aware of previous edit
+    let edit_form = EditArticleData {
+        ap_id: create_res.ap_id.clone(),
+        new_text: "some\nexample\narticle\n".to_string(),
+        previous_version: create_res.latest_version,
+        resolve_conflict_id: None,
+    };
+    let edit_res = edit_article(data.hostname_alpha, &title, &edit_form).await?;
+    let conflicts: Vec<ApiConflict> =
+        get_query(data.hostname_alpha, "edit_conflicts", None::<()>).await?;
+    assert_eq!(0, conflicts.len());
+    assert_eq!(3, edit_res.edits.len());
+    assert_eq!("my\nexample\narticle\n", edit_res.text);
 
     data.stop()
 }

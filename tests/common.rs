@@ -66,7 +66,7 @@ impl TestData {
     }
 }
 
-pub const TEST_ARTICLE_DEFAULT_TEXT: &str = "empty\n";
+pub const TEST_ARTICLE_DEFAULT_TEXT: &str = "some\nexample\ntext\n";
 
 pub async fn create_article(hostname: &str, title: String) -> MyResult<DbArticle> {
     let create_form = CreateArticleData {

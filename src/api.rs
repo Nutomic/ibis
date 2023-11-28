@@ -108,30 +108,27 @@ impl DbConflict {
         let ancestor = generate_article_version(&original_article.edits, &self.previous_version)?;
 
         let patch = Patch::from_str(&self.diff)?;
-        if let Ok(new_text) = apply(&original_article.text, &patch) {
-            // patch applies cleanly so we are done
-            // federate the change
-            submit_article_update(data, new_text, &original_article).await?;
-            // remove conflict from db
-            let mut lock = data.conflicts.lock().unwrap();
-            lock.retain(|c| c.id != self.id);
-            Ok(None)
-        } else {
-            // there is a merge conflict, do three-way-merge
-            // apply self.diff to ancestor to get `ours`
-            let ours = apply(&ancestor, &patch)?;
-            // if it returns ok the merge was successful, which is impossible based on apply failing
-            // above. so we unconditionally read the three-way-merge string from err field
-            let merge = merge(&ancestor, &ours, &original_article.text)
-                .err()
-                .unwrap();
-
-            Ok(Some(ApiConflict {
-                id: self.id,
-                three_way_merge: merge,
-                article_id: original_article.ap_id.clone(),
-                previous_version: original_article.latest_version,
-            }))
+        // apply self.diff to ancestor to get `ours`
+        let ours = apply(&ancestor, &patch)?;
+        match merge(&ancestor, &ours, &original_article.text) {
+            Ok(new_text) => {
+                // patch applies cleanly so we are done
+                // federate the change
+                submit_article_update(data, new_text, &original_article).await?;
+                // remove conflict from db
+                let mut lock = data.conflicts.lock().unwrap();
+                lock.retain(|c| c.id != self.id);
+                Ok(None)
+            }
+            Err(three_way_merge) => {
+                // there is a merge conflict, user needs to do three-way-merge
+                Ok(Some(ApiConflict {
+                    id: self.id,
+                    three_way_merge,
+                    article_id: original_article.ap_id.clone(),
+                    previous_version: original_article.latest_version,
+                }))
+            }
         }
     }
 }
