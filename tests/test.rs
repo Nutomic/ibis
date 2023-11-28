@@ -7,7 +7,7 @@ use crate::common::{
     get_query, TestData, TEST_ARTICLE_DEFAULT_TEXT,
 };
 use common::get;
-use fediwiki::api::{Conflict, EditArticleData, ResolveObject};
+use fediwiki::api::{ApiConflict, EditArticleData, ResolveObject};
 use fediwiki::error::MyResult;
 use fediwiki::federation::objects::article::DbArticle;
 use fediwiki::federation::objects::edit::ApubEdit;
@@ -248,7 +248,7 @@ async fn test_local_edit_conflict() -> MyResult<()> {
         .unwrap();
     assert_eq!("<<<<<<< ours\nIpsum Lorem\n||||||| original\nempty\n=======\nLorem Ipsum\n>>>>>>> theirs\n", edit_res.three_way_merge);
 
-    let conflicts: Vec<Conflict> =
+    let conflicts: Vec<ApiConflict> =
         get_query(data.hostname_alpha, "edit_conflicts", None::<()>).await?;
     assert_eq!(1, conflicts.len());
     assert_eq!(conflicts[0], edit_res);
@@ -256,13 +256,13 @@ async fn test_local_edit_conflict() -> MyResult<()> {
     let edit_form = EditArticleData {
         ap_id: create_res.ap_id.clone(),
         new_text: "Lorem Ipsum and Ipsum Lorem\n".to_string(),
-        previous_version: edit_res.latest_version,
+        previous_version: edit_res.previous_version,
         resolve_conflict_id: Some(edit_res.id),
     };
     let edit_res = edit_article(data.hostname_alpha, &create_res.title, &edit_form).await?;
     assert_eq!(edit_form.new_text, edit_res.text);
 
-    let conflicts: Vec<Conflict> =
+    let conflicts: Vec<ApiConflict> =
         get_query(data.hostname_alpha, "edit_conflicts", None::<()>).await?;
     assert_eq!(0, conflicts.len());
 
@@ -314,25 +314,23 @@ async fn test_federated_edit_conflict() -> MyResult<()> {
         previous_version: create_res.latest_version,
         resolve_conflict_id: None,
     };
-    let edit_res = edit_article(data.hostname_gamma, &create_res.title, &edit_form).await?;
+    let edit_res = edit_article(data.hostname_gamma, &title, &edit_form).await?;
     assert_ne!(edit_form.new_text, edit_res.text);
     assert_eq!(2, edit_res.edits.len());
     assert!(!edit_res.local);
 
-    let conflicts: Vec<ApubEdit> =
+    let conflicts: Vec<ApiConflict> =
         get_query(data.hostname_gamma, "edit_conflicts", None::<()>).await?;
-    // TODO: this should also return string for three-way-merge
-    dbg!(&conflicts);
     assert_eq!(1, conflicts.len());
 
     // resolve the conflict
     let edit_form = EditArticleData {
         ap_id: create_res.ap_id,
         new_text: "aaaa\n".to_string(),
-        previous_version: conflicts[0].version.clone(),
-        resolve_conflict_id: todo!(), //Some(conflicts[0].id.clone()),
+        previous_version: conflicts[0].previous_version.clone(),
+        resolve_conflict_id: Some(conflicts[0].id),
     };
-    let edit_res = edit_article(data.hostname_gamma, &create_res.title, &edit_form).await?;
+    let edit_res = edit_article(data.hostname_gamma, &title, &edit_form).await?;
     assert_eq!(edit_form.new_text, edit_res.text);
     assert_eq!(3, edit_res.edits.len());
 

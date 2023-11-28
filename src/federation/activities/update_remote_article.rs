@@ -72,22 +72,23 @@ impl ActivityHandler for UpdateRemoteArticle {
 
     /// Received on article origin instances
     async fn receive(self, data: &Data<Self::DataType>) -> Result<(), Self::Error> {
-        let edit = DbEdit::from_json(self.object.clone(), data).await?;
         let article_text = {
             let lock = data.articles.lock().unwrap();
             lock.get(self.object.object.inner()).unwrap().text.clone()
         };
-        let patch = Patch::from_str(&edit.diff)?;
+        let patch = Patch::from_str(&self.object.content)?;
 
         match apply(&article_text, &patch) {
             Ok(applied) => {
                 let article = {
+                    let edit = DbEdit::from_json(self.object.clone(), data).await?;
                     let mut lock = data.articles.lock().unwrap();
                     let article = lock.get_mut(edit.article_id.inner()).unwrap();
                     article.text = applied;
                     article.clone()
                 };
-                UpdateLocalArticle::send(article, data).await?;
+                UpdateLocalArticle::send(article, vec![self.actor.dereference(data).await?], data)
+                    .await?;
             }
             Err(_e) => {
                 let user_instance = self.actor.dereference(data).await?;

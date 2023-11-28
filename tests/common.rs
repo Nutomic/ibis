@@ -1,5 +1,5 @@
 use fediwiki::api::{
-    Conflict, CreateArticleData, EditArticleData, FollowInstance, GetArticleData, ResolveObject,
+    ApiConflict, CreateArticleData, EditArticleData, FollowInstance, GetArticleData, ResolveObject,
 };
 use fediwiki::error::MyResult;
 use fediwiki::federation::objects::article::DbArticle;
@@ -93,7 +93,7 @@ pub async fn get_article(hostname: &str, title: &str) -> MyResult<DbArticle> {
 pub async fn edit_article_with_conflict(
     hostname: &str,
     edit_form: &EditArticleData,
-) -> MyResult<Option<Conflict>> {
+) -> MyResult<Option<ApiConflict>> {
     Ok(CLIENT
         .patch(format!("http://{}/api/v1/article", hostname))
         .form(edit_form)
@@ -108,7 +108,7 @@ pub async fn edit_article(
     title: &str,
     edit_form: &EditArticleData,
 ) -> MyResult<DbArticle> {
-    let edit_res: Option<Conflict> = CLIENT
+    let edit_res: Option<ApiConflict> = CLIENT
         .patch(format!("http://{}/api/v1/article", hostname))
         .form(edit_form)
         .send()

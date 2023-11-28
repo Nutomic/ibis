@@ -66,6 +66,7 @@ impl DbInstance {
     pub async fn send_to_followers<Activity>(
         &self,
         activity: Activity,
+        extra_recipients: Vec<DbInstance>,
         data: &Data<DatabaseHandle>,
     ) -> Result<(), <Activity as ActivityHandler>::Error>
     where
@@ -73,11 +74,12 @@ impl DbInstance {
         <Activity as ActivityHandler>::Error: From<activitypub_federation::error::Error>,
     {
         let local_instance = data.local_instance();
-        let inboxes = local_instance
+        let mut inboxes: Vec<_> = local_instance
             .followers
             .iter()
             .map(|f| f.inbox.clone())
             .collect();
+        inboxes.extend(extra_recipients.into_iter().map(|i| i.inbox));
         local_instance.send(activity, inboxes, data).await?;
         Ok(())
     }

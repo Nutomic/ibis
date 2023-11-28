@@ -29,18 +29,26 @@ pub struct UpdateLocalArticle {
 
 impl UpdateLocalArticle {
     /// Sent from article origin instance
-    pub async fn send(article: DbArticle, data: &Data<DatabaseHandle>) -> MyResult<()> {
+    pub async fn send(
+        article: DbArticle,
+        extra_recipients: Vec<DbInstance>,
+        data: &Data<DatabaseHandle>,
+    ) -> MyResult<()> {
         debug_assert!(article.local);
         let local_instance = data.local_instance();
         let id = generate_activity_id(local_instance.ap_id.inner())?;
+        let mut to = local_instance.follower_ids();
+        to.extend(extra_recipients.iter().map(|i| i.ap_id.inner().clone()));
         let update = UpdateLocalArticle {
             actor: local_instance.ap_id.clone(),
-            to: local_instance.follower_ids(),
+            to,
             object: article.into_json(data).await?,
             kind: Default::default(),
             id,
         };
-        local_instance.send_to_followers(update, data).await?;
+        local_instance
+            .send_to_followers(update, extra_recipients, data)
+            .await?;
         Ok(())
     }
 }

@@ -62,6 +62,7 @@ pub struct ApubEdit {
     pub id: ObjectId<DbEdit>,
     pub content: String,
     pub version: EditVersion,
+    pub previous_version: EditVersion,
     pub object: ObjectId<DbArticle>,
 }
 
@@ -78,12 +79,18 @@ impl Object for DbEdit {
         todo!()
     }
 
-    async fn into_json(self, _data: &Data<Self::DataType>) -> Result<Self::Kind, Self::Error> {
+    async fn into_json(self, data: &Data<Self::DataType>) -> Result<Self::Kind, Self::Error> {
+        let article_version = {
+            let mut lock = data.articles.lock().unwrap();
+            let article = lock.get_mut(self.article_id.inner()).unwrap();
+            article.latest_version.clone()
+        };
         Ok(ApubEdit {
             kind: EditType::Edit,
             id: self.id,
             content: self.diff,
             version: self.version,
+            previous_version: article_version,
             object: self.article_id,
         })
     }

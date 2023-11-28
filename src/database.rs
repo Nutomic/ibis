@@ -1,4 +1,4 @@
-use crate::api::Conflict;
+use crate::api::DbConflict;
 use crate::federation::objects::article::DbArticle;
 
 use crate::federation::objects::instance::DbInstance;
@@ -11,7 +11,7 @@ pub type DatabaseHandle = Arc<Database>;
 pub struct Database {
     pub instances: Mutex<HashMap<Url, DbInstance>>,
     pub articles: Mutex<HashMap<Url, DbArticle>>,
-    pub conflicts: Mutex<Vec<Conflict>>,
+    pub conflicts: Mutex<Vec<DbConflict>>,
 }
 
 impl Database {

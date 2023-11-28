@@ -14,7 +14,8 @@ use axum::extract::Query;
 use axum::routing::{get, post};
 use axum::{Form, Json, Router};
 use axum_macros::debug_handler;
-use diffy::{apply, create_patch, merge};
+use diffy::{apply, create_patch, merge, Patch};
+use futures::future::try_join_all;
 use rand::random;
 use serde::{Deserialize, Serialize};
 use url::Url;
@@ -76,21 +77,70 @@ pub struct EditArticleData {
     pub resolve_conflict_id: Option<i32>,
 }
 
-// TODO: how to store conflict in db? with three-way-merge doesnt
-//       necessarily make sense (might be outdated)
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
-pub struct Conflict {
+pub struct ApiConflict {
     pub id: i32,
     pub three_way_merge: String,
     pub article_id: ObjectId<DbArticle>,
-    pub latest_version: EditVersion,
+    pub previous_version: EditVersion,
+}
+
+#[derive(Clone, Debug)]
+pub struct DbConflict {
+    pub id: i32,
+    pub diff: String,
+    pub article_id: ObjectId<DbArticle>,
+    pub previous_version: EditVersion,
+}
+
+impl DbConflict {
+    pub async fn to_api_conflict(
+        &self,
+        data: &Data<DatabaseHandle>,
+    ) -> MyResult<Option<ApiConflict>> {
+        let original_article = {
+            let mut lock = data.articles.lock().unwrap();
+            let article = lock.get_mut(self.article_id.inner()).unwrap();
+            article.clone()
+        };
+
+        // create common ancestor version
+        let ancestor = generate_article_version(&original_article.edits, &self.previous_version)?;
+
+        let patch = Patch::from_str(&self.diff)?;
+        if let Ok(new_text) = apply(&original_article.text, &patch) {
+            // patch applies cleanly so we are done
+            // federate the change
+            submit_article_update(data, new_text, &original_article).await?;
+            // remove conflict from db
+            let mut lock = data.conflicts.lock().unwrap();
+            lock.retain(|c| c.id != self.id);
+            Ok(None)
+        } else {
+            // there is a merge conflict, do three-way-merge
+            // apply self.diff to ancestor to get `ours`
+            let ours = apply(&ancestor, &patch)?;
+            // if it returns ok the merge was successful, which is impossible based on apply failing
+            // above. so we unconditionally read the three-way-merge string from err field
+            let merge = merge(&ancestor, &ours, &original_article.text)
+                .err()
+                .unwrap();
+
+            Ok(Some(ApiConflict {
+                id: self.id,
+                three_way_merge: merge,
+                article_id: original_article.ap_id.clone(),
+                previous_version: original_article.latest_version,
+            }))
+        }
+    }
 }
 
 #[debug_handler]
 async fn edit_article(
     data: Data<DatabaseHandle>,
     Form(edit_form): Form<EditArticleData>,
-) -> MyResult<Json<Option<Conflict>>> {
+) -> MyResult<Json<Option<ApiConflict>>> {
     // resolve conflict if any
     if let Some(resolve_conflict_id) = &edit_form.resolve_conflict_id {
         let mut lock = data.conflicts.lock().unwrap();
@@ -100,60 +150,53 @@ async fn edit_article(
         lock.retain(|c| &c.id != resolve_conflict_id);
     }
     let original_article = {
-        let mut lock = data.articles.lock().unwrap();
-        let article = lock.get_mut(edit_form.ap_id.inner()).unwrap();
+        let lock = data.articles.lock().unwrap();
+        let article = lock.get(edit_form.ap_id.inner()).unwrap();
         article.clone()
     };
 
     if edit_form.previous_version == original_article.latest_version {
-        // no intermediate changes, simply submit new version
-        submit_article_update(&data, &edit_form, &original_article).await?;
+        // No intermediate changes, simply submit new version
+        submit_article_update(&data, edit_form.new_text.clone(), &original_article).await?;
         Ok(Json(None))
     } else {
-        // create a patch from the differences of previous version and new version
+        // There have been other changes since this edit was initiated. Get the common ancestor
+        // version and generate a diff to find out what exactly has changed.
         let ancestor =
-            generate_article_version(&original_article.edits, Some(&edit_form.previous_version))?;
+            generate_article_version(&original_article.edits, &edit_form.previous_version)?;
         let patch = create_patch(&ancestor, &edit_form.new_text);
-        if apply(&original_article.text, &patch).is_ok() {
-            // patch applies cleanly so we are done
-            submit_article_update(&data, &edit_form, &original_article).await?;
-            Ok(Json(None))
-        } else {
-            // there is a merge conflict, do three-way-merge
-            let merge = merge(&ancestor, &edit_form.new_text, &original_article.text)
-                .err()
-                .unwrap();
 
-            let conflict = Conflict {
-                id: random(),
-                three_way_merge: merge,
-                article_id: original_article.ap_id,
-                latest_version: original_article.latest_version,
-            };
+        let db_conflict = DbConflict {
+            id: random(),
+            diff: patch.to_string(),
+            article_id: original_article.ap_id.clone(),
+            previous_version: edit_form.previous_version,
+        };
+        {
             let mut lock = data.conflicts.lock().unwrap();
-            lock.push(conflict.clone());
-            Ok(Json(Some(conflict)))
+            lock.push(db_conflict.clone());
         }
+        Ok(Json(db_conflict.to_api_conflict(&data).await?))
     }
 }
 
 async fn submit_article_update(
     data: &Data<DatabaseHandle>,
-    edit_form: &EditArticleData,
+    new_text: String,
     original_article: &DbArticle,
 ) -> Result<(), Error> {
-    let edit = DbEdit::new(original_article, &edit_form.new_text)?;
+    let edit = DbEdit::new(original_article, &new_text)?;
     if original_article.local {
         let updated_article = {
             let mut lock = data.articles.lock().unwrap();
-            let article = lock.get_mut(edit_form.ap_id.inner()).unwrap();
-            article.text = edit_form.new_text.clone();
+            let article = lock.get_mut(original_article.ap_id.inner()).unwrap();
+            article.text = new_text;
             article.latest_version = edit.version.clone();
             article.edits.push(edit.clone());
             article.clone()
         };
 
-        UpdateLocalArticle::send(updated_article, data).await?;
+        UpdateLocalArticle::send(updated_article, vec![], data).await?;
     } else {
         UpdateRemoteArticle::send(
             edit,
@@ -229,8 +272,15 @@ async fn follow_instance(
 }
 
 #[debug_handler]
-async fn edit_conflicts(data: Data<DatabaseHandle>) -> MyResult<Json<Vec<Conflict>>> {
-    let lock = data.conflicts.lock().unwrap();
-    let conflicts = lock.clone();
+async fn edit_conflicts(data: Data<DatabaseHandle>) -> MyResult<Json<Vec<ApiConflict>>> {
+    let conflicts = { data.conflicts.lock().unwrap().to_vec() };
+    let conflicts: Vec<ApiConflict> = try_join_all(conflicts.into_iter().map(|c| {
+        let data = data.reset_request_count();
+        async move { c.to_api_conflict(&data).await }
+    }))
+    .await?
+    .into_iter()
+    .flatten()
+    .collect();
     Ok(Json(conflicts))
 }

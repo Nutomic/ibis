@@ -21,23 +21,14 @@ pub fn generate_activity_id(domain: &Url) -> Result<Url, ParseError> {
 ///
 /// TODO: testing
 /// TODO: should cache all these generated versions
-pub fn generate_article_version(
-    edits: &Vec<DbEdit>,
-    version: Option<&EditVersion>,
-) -> MyResult<String> {
+pub fn generate_article_version(edits: &Vec<DbEdit>, version: &EditVersion) -> MyResult<String> {
     let mut generated = String::new();
-    if let Some(version) = version {
-        let exists = edits.iter().any(|e| &e.version == version);
-        if !exists {
-            Err(anyhow!("Attempting to generate invalid article version"))?;
-        }
-    }
     for e in edits {
         let patch = Patch::from_str(&e.diff)?;
         generated = apply(&generated, &patch)?;
-        if Some(&e.version) == version {
+        if &e.version == version {
             return Ok(generated);
         }
     }
-    Ok(generated)
+    Err(anyhow!("failed to generate article version").into())
 }

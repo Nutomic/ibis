@@ -40,7 +40,9 @@ impl CreateArticle {
             kind: Default::default(),
             id,
         };
-        local_instance.send_to_followers(create, data).await?;
+        local_instance
+            .send_to_followers(create, vec![], data)
+            .await?;
         Ok(())
     }
 }
@@ -64,7 +66,9 @@ impl ActivityHandler for CreateArticle {
     async fn receive(self, data: &Data<Self::DataType>) -> Result<(), Self::Error> {
         let article = DbArticle::from_json(self.object.clone(), data).await?;
         if article.local {
-            data.local_instance().send_to_followers(self, data).await?;
+            data.local_instance()
+                .send_to_followers(self, vec![], data)
+                .await?;
         }
         Ok(())
     }
