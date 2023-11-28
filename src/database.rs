@@ -1,6 +1,6 @@
 use crate::api::Conflict;
 use crate::federation::objects::article::DbArticle;
-use crate::federation::objects::edit::ApubEdit;
+
 use crate::federation::objects::instance::DbInstance;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};

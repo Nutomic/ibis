@@ -94,7 +94,7 @@ async fn edit_article(
     // resolve conflict if any
     if let Some(resolve_conflict_id) = &edit_form.resolve_conflict_id {
         let mut lock = data.conflicts.lock().unwrap();
-        if lock.iter().find(|c| &c.id == resolve_conflict_id).is_none() {
+        if !lock.iter().any(|c| &c.id == resolve_conflict_id) {
             return Err(anyhow!("invalid resolve conflict"))?;
         }
         lock.retain(|c| &c.id != resolve_conflict_id);
@@ -132,7 +132,7 @@ async fn edit_article(
             };
             let mut lock = data.conflicts.lock().unwrap();
             lock.push(conflict.clone());
-            return Ok(Json(Some(conflict)));
+            Ok(Json(Some(conflict)))
         }
     }
 }
@@ -142,7 +142,7 @@ async fn submit_article_update(
     edit_form: &EditArticleData,
     original_article: &DbArticle,
 ) -> Result<(), Error> {
-    let edit = DbEdit::new(&original_article, &edit_form.new_text)?;
+    let edit = DbEdit::new(original_article, &edit_form.new_text)?;
     if original_article.local {
         let updated_article = {
             let mut lock = data.articles.lock().unwrap();
@@ -153,12 +153,12 @@ async fn submit_article_update(
             article.clone()
         };
 
-        UpdateLocalArticle::send(updated_article, &data).await?;
+        UpdateLocalArticle::send(updated_article, data).await?;
     } else {
         UpdateRemoteArticle::send(
             edit,
-            original_article.instance.dereference(&data).await?,
-            &data,
+            original_article.instance.dereference(data).await?,
+            data,
         )
         .await?;
     }

@@ -29,7 +29,7 @@ pub fn generate_article_version(
     if let Some(version) = version {
         let exists = edits.iter().any(|e| &e.version == version);
         if !exists {
-            return Err(anyhow!("Attempting to generate invalid article version"))?;
+            Err(anyhow!("Attempting to generate invalid article version"))?;
         }
     }
     for e in edits {

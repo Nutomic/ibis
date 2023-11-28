@@ -65,7 +65,7 @@ impl ActivityHandler for RejectEdit {
 
     async fn receive(self, data: &Data<Self::DataType>) -> Result<(), Self::Error> {
         // cant convert this to DbEdit as it tries to apply patch and fails
-        let mut lock = data.conflicts.lock().unwrap();
+        let lock = data.conflicts.lock().unwrap();
         todo!();
         //lock.push(self.object);
         Ok(())
