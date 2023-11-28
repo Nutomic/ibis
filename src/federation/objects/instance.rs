@@ -21,8 +21,11 @@ pub struct DbInstance {
     pub ap_id: ObjectId<DbInstance>,
     pub articles_id: CollectionId<DbArticleCollection>,
     pub inbox: Url,
+    #[serde(skip)]
     pub(crate) public_key: String,
+    #[serde(skip)]
     pub(crate) private_key: Option<String>,
+    #[serde(skip)]
     pub(crate) last_refreshed_at: DateTime<Utc>,
     pub followers: Vec<DbInstance>,
     pub follows: Vec<Url>,

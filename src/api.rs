@@ -39,6 +39,7 @@ pub struct CreateArticleData {
     pub title: String,
 }
 
+/// Create a new article with empty text, and federate it to followers.
 #[debug_handler]
 async fn create_article(
     data: Data<DatabaseHandle>,
@@ -82,9 +83,15 @@ async fn create_article(
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct EditArticleData {
+    /// Id of the article to edit
     pub ap_id: ObjectId<DbArticle>,
+    /// Full, new text of the article. A diff against `previous_version` is generated on the server
+    /// side to handle conflicts.
     pub new_text: String,
+    /// The version that this edit is based on, ie [DbArticle.latest_version] or
+    /// [ApiConflict.previous_version]
     pub previous_version: EditVersion,
+    /// If you are resolving a conflict, pass the id to delete conflict from the database
     pub resolve_conflict_id: Option<i32>,
 }
 
@@ -96,6 +103,15 @@ pub struct ApiConflict {
     pub previous_version: EditVersion,
 }
 
+/// Edit an existing article (local or remote).
+///
+/// It gracefully handles the case where multiple users edit an article at the same time, by
+/// generating diffs against the most recent common ancestor version, and resolving conflicts
+/// automatically if possible. If not, an [ApiConflict] is returned which contains data for a three-
+/// way-merge (similar to git). After the conflict is resolved, resubmit the edit with
+/// `resolve_conflict_id` and uppdated `previous_version`.
+///
+/// Conflicts are stored in the database so they can be retrieved later from `/api/v3/edit_conflicts`.
 #[debug_handler]
 async fn edit_article(
     data: Data<DatabaseHandle>,
@@ -145,6 +161,7 @@ pub struct GetArticleData {
     pub ap_id: ObjectId<DbArticle>,
 }
 
+/// Retrieve an article by ID. It must already be stored in the local database.
 #[debug_handler]
 async fn get_article(
     Query(query): Query<GetArticleData>,
@@ -165,6 +182,8 @@ pub struct ResolveObject {
     pub id: Url,
 }
 
+/// Fetch a remote instance actor. This automatically synchronizes the remote articles collection to
+/// the local instance, and allows for interactions such as following.
 #[debug_handler]
 async fn resolve_instance(
     Query(query): Query<ResolveObject>,
@@ -174,6 +193,8 @@ async fn resolve_instance(
     Ok(Json(instance))
 }
 
+/// Fetch a remote article, including edits collection. Allows viewing and editing. Note that new
+/// article changes can only be received if we follow the instance, or if it is refetched manually.
 #[debug_handler]
 async fn resolve_article(
     Query(query): Query<ResolveObject>,
@@ -183,6 +204,7 @@ async fn resolve_article(
     Ok(Json(article))
 }
 
+/// Retrieve the local instance info.
 #[debug_handler]
 async fn get_local_instance(data: Data<DatabaseHandle>) -> MyResult<Json<DbInstance>> {
     Ok(Json(data.local_instance()))
@@ -193,6 +215,8 @@ pub struct FollowInstance {
     pub instance_id: ObjectId<DbInstance>,
 }
 
+/// Make the local instance follow a given remote instance, to receive activities about new and
+/// updated articles.
 #[debug_handler]
 async fn follow_instance(
     data: Data<DatabaseHandle>,
@@ -203,6 +227,7 @@ async fn follow_instance(
     Ok(())
 }
 
+/// Get a list of all unresolved edit conflicts.
 #[debug_handler]
 async fn edit_conflicts(data: Data<DatabaseHandle>) -> MyResult<Json<Vec<ApiConflict>>> {
     let conflicts = { data.conflicts.lock().unwrap().to_vec() };
@@ -222,6 +247,9 @@ pub struct SearchArticleData {
     pub title: String,
 }
 
+/// Search articles by title. For now only checks exact match.
+///
+/// Later include partial title match and body search.
 #[debug_handler]
 async fn search_article(
     Query(query): Query<SearchArticleData>,
@@ -240,10 +268,13 @@ async fn search_article(
 #[derive(Deserialize, Serialize)]
 pub struct ForkArticleData {
     // TODO: could add optional param new_title so there is no problem with title collision
-    //       in case local article with same title exists
+    //       in case local article with same title exists. however that makes it harder to discover
+    //       variants of same article.
     pub ap_id: ObjectId<DbArticle>,
 }
 
+/// Fork a remote article to local instance. This is useful if there are disagreements about
+/// how an article should be edited.
 #[debug_handler]
 async fn fork_article(
     data: Data<DatabaseHandle>,
