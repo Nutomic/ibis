@@ -1,3 +1,4 @@
+use activitypub_federation::fetch::object_id::ObjectId;
 use fediwiki::api::{
     ApiConflict, CreateArticleData, EditArticleData, FollowInstance, GetArticleData, ResolveObject,
 };
@@ -80,12 +81,12 @@ pub async fn create_article(hostname: &str, title: String) -> MyResult<DbArticle
         previous_version: article.latest_version,
         resolve_conflict_id: None,
     };
-    edit_article(hostname, &title, &edit_form).await
+    edit_article(hostname, &edit_form).await
 }
 
-pub async fn get_article(hostname: &str, title: &str) -> MyResult<DbArticle> {
+pub async fn get_article(hostname: &str, ap_id: &ObjectId<DbArticle>) -> MyResult<DbArticle> {
     let get_article = GetArticleData {
-        title: title.to_string(),
+        ap_id: ap_id.clone(),
     };
     get_query::<DbArticle, _>(hostname, "article", Some(get_article.clone())).await
 }
@@ -103,21 +104,17 @@ pub async fn edit_article_with_conflict(
         .await?)
 }
 
-pub async fn edit_article(
-    hostname: &str,
-    title: &str,
-    edit_form: &EditArticleData,
-) -> MyResult<DbArticle> {
+pub async fn edit_article(hostname: &str, edit_form: &EditArticleData) -> MyResult<DbArticle> {
     let edit_res: Option<ApiConflict> = CLIENT
         .patch(format!("http://{}/api/v1/article", hostname))
-        .form(edit_form)
+        .form(&edit_form)
         .send()
         .await?
         .json()
         .await?;
     assert!(edit_res.is_none());
     let get_article = GetArticleData {
-        title: title.to_string(),
+        ap_id: edit_form.ap_id.clone(),
     };
     let updated_article: DbArticle = get_query(hostname, "article", Some(get_article)).await?;
     Ok(updated_article)

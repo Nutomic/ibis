@@ -21,21 +21,21 @@ use url::Url;
 async fn test_create_read_and_edit_article() -> MyResult<()> {
     let data = TestData::start();
 
-    // error on nonexistent article
-    let title = "Manu_Chao".to_string();
-    let not_found = get_article(data.hostname_alpha, &title).await;
-    assert!(not_found.is_err());
-
     // create article
+    let title = "Manu_Chao".to_string();
     let create_res = create_article(data.hostname_alpha, title.clone()).await?;
     assert_eq!(title, create_res.title);
     assert!(create_res.local);
 
     // now article can be read
-    let get_res = get_article(data.hostname_alpha, &create_res.title).await?;
+    let get_res = get_article(data.hostname_alpha, &create_res.ap_id).await?;
     assert_eq!(title, get_res.title);
     assert_eq!(TEST_ARTICLE_DEFAULT_TEXT, get_res.text);
     assert!(get_res.local);
+
+    // error on article which wasnt federated
+    let not_found = get_article(data.hostname_beta, &create_res.ap_id).await;
+    assert!(not_found.is_err());
 
     // edit article
     let edit_form = EditArticleData {
@@ -44,7 +44,7 @@ async fn test_create_read_and_edit_article() -> MyResult<()> {
         previous_version: get_res.latest_version,
         resolve_conflict_id: None,
     };
-    let edit_res = edit_article(data.hostname_alpha, &create_res.title, &edit_form).await?;
+    let edit_res = edit_article(data.hostname_alpha, &edit_form).await?;
     assert_eq!(edit_form.new_text, edit_res.text);
     assert_eq!(2, edit_res.edits.len());
 
@@ -73,7 +73,6 @@ async fn test_follow_instance() -> MyResult<()> {
 
     data.stop()
 }
-
 #[tokio::test]
 #[serial]
 async fn test_synchronize_articles() -> MyResult<()> {
@@ -93,10 +92,10 @@ async fn test_synchronize_articles() -> MyResult<()> {
         previous_version: create_res.latest_version,
         resolve_conflict_id: None,
     };
-    edit_article(data.hostname_alpha, &title, &edit_form).await?;
+    edit_article(data.hostname_alpha, &edit_form).await?;
 
     // article is not yet on beta
-    let get_res = get_article(data.hostname_beta, &create_res.title).await;
+    let get_res = get_article(data.hostname_beta, &create_res.ap_id).await;
     assert!(get_res.is_err());
 
     // fetch alpha instance on beta, articles are also fetched automatically
@@ -107,7 +106,7 @@ async fn test_synchronize_articles() -> MyResult<()> {
         .await?;
 
     // get the article and compare
-    let get_res = get_article(data.hostname_beta, &create_res.title).await?;
+    let get_res = get_article(data.hostname_beta, &create_res.ap_id).await?;
     assert_eq!(create_res.ap_id, get_res.ap_id);
     assert_eq!(title, get_res.title);
     assert_eq!(2, get_res.edits.len());
@@ -131,7 +130,7 @@ async fn test_edit_local_article() -> MyResult<()> {
     assert!(create_res.local);
 
     // article should be federated to alpha
-    let get_res = get_article(data.hostname_alpha, &create_res.title).await?;
+    let get_res = get_article(data.hostname_alpha, &create_res.ap_id).await?;
     assert_eq!(create_res.title, get_res.title);
     assert_eq!(1, get_res.edits.len());
     assert!(!get_res.local);
@@ -144,7 +143,7 @@ async fn test_edit_local_article() -> MyResult<()> {
         previous_version: get_res.latest_version,
         resolve_conflict_id: None,
     };
-    let edit_res = edit_article(data.hostname_beta, &create_res.title, &edit_form).await?;
+    let edit_res = edit_article(data.hostname_beta, &edit_form).await?;
     assert_eq!(edit_res.text, edit_form.new_text);
     assert_eq!(edit_res.edits.len(), 2);
     assert!(edit_res.edits[0]
@@ -153,7 +152,7 @@ async fn test_edit_local_article() -> MyResult<()> {
         .starts_with(&edit_res.ap_id.to_string()));
 
     // edit should be federated to alpha
-    let get_res = get_article(data.hostname_alpha, &edit_res.title).await?;
+    let get_res = get_article(data.hostname_alpha, &edit_res.ap_id).await?;
     assert_eq!(edit_res.title, get_res.title);
     assert_eq!(edit_res.edits.len(), 2);
     assert_eq!(edit_res.text, get_res.text);
@@ -176,22 +175,22 @@ async fn test_edit_remote_article() -> MyResult<()> {
     assert!(create_res.local);
 
     // article should be federated to alpha and gamma
-    let get_res = get_article(data.hostname_alpha, &title).await?;
+    let get_res = get_article(data.hostname_alpha, &create_res.ap_id).await?;
     assert_eq!(create_res.title, get_res.title);
     assert_eq!(1, get_res.edits.len());
     assert!(!get_res.local);
 
-    let get_res = get_article(data.hostname_gamma, &title).await?;
+    let get_res = get_article(data.hostname_gamma, &create_res.ap_id).await?;
     assert_eq!(create_res.title, get_res.title);
     assert_eq!(create_res.text, get_res.text);
 
     let edit_form = EditArticleData {
-        ap_id: create_res.ap_id,
+        ap_id: create_res.ap_id.clone(),
         new_text: "Lorem Ipsum 2".to_string(),
         previous_version: get_res.latest_version,
         resolve_conflict_id: None,
     };
-    let edit_res = edit_article(data.hostname_alpha, &title, &edit_form).await?;
+    let edit_res = edit_article(data.hostname_alpha, &edit_form).await?;
     assert_eq!(edit_form.new_text, edit_res.text);
     assert_eq!(2, edit_res.edits.len());
     assert!(!edit_res.local);
@@ -201,12 +200,12 @@ async fn test_edit_remote_article() -> MyResult<()> {
         .starts_with(&edit_res.ap_id.to_string()));
 
     // edit should be federated to beta and gamma
-    let get_res = get_article(data.hostname_alpha, &title).await?;
+    let get_res = get_article(data.hostname_alpha, &create_res.ap_id).await?;
     assert_eq!(edit_res.title, get_res.title);
     assert_eq!(edit_res.edits.len(), 2);
     assert_eq!(edit_res.text, get_res.text);
 
-    let get_res = get_article(data.hostname_gamma, &title).await?;
+    let get_res = get_article(data.hostname_gamma, &create_res.ap_id).await?;
     assert_eq!(edit_res.title, get_res.title);
     assert_eq!(edit_res.edits.len(), 2);
     assert_eq!(edit_res.text, get_res.text);
@@ -232,7 +231,7 @@ async fn test_local_edit_conflict() -> MyResult<()> {
         previous_version: create_res.latest_version.clone(),
         resolve_conflict_id: None,
     };
-    let edit_res = edit_article(data.hostname_alpha, &create_res.title, &edit_form).await?;
+    let edit_res = edit_article(data.hostname_alpha, &edit_form).await?;
     assert_eq!(edit_res.text, edit_form.new_text);
     assert_eq!(2, edit_res.edits.len());
 
@@ -259,7 +258,7 @@ async fn test_local_edit_conflict() -> MyResult<()> {
         previous_version: edit_res.previous_version,
         resolve_conflict_id: Some(edit_res.id),
     };
-    let edit_res = edit_article(data.hostname_alpha, &create_res.title, &edit_form).await?;
+    let edit_res = edit_article(data.hostname_alpha, &edit_form).await?;
     assert_eq!(edit_form.new_text, edit_res.text);
 
     let conflicts: Vec<ApiConflict> =
@@ -297,7 +296,7 @@ async fn test_federated_edit_conflict() -> MyResult<()> {
         previous_version: create_res.latest_version.clone(),
         resolve_conflict_id: None,
     };
-    let edit_res = edit_article(data.hostname_alpha, &create_res.title, &edit_form).await?;
+    let edit_res = edit_article(data.hostname_alpha, &edit_form).await?;
     assert_eq!(edit_res.text, edit_form.new_text);
     assert_eq!(2, edit_res.edits.len());
     assert!(!edit_res.local);
@@ -314,7 +313,7 @@ async fn test_federated_edit_conflict() -> MyResult<()> {
         previous_version: create_res.latest_version,
         resolve_conflict_id: None,
     };
-    let edit_res = edit_article(data.hostname_gamma, &title, &edit_form).await?;
+    let edit_res = edit_article(data.hostname_gamma, &edit_form).await?;
     assert_ne!(edit_form.new_text, edit_res.text);
     assert_eq!(2, edit_res.edits.len());
     assert!(!edit_res.local);
@@ -330,7 +329,7 @@ async fn test_federated_edit_conflict() -> MyResult<()> {
         previous_version: conflicts[0].previous_version.clone(),
         resolve_conflict_id: Some(conflicts[0].id),
     };
-    let edit_res = edit_article(data.hostname_gamma, &title, &edit_form).await?;
+    let edit_res = edit_article(data.hostname_gamma, &edit_form).await?;
     assert_eq!(edit_form.new_text, edit_res.text);
     assert_eq!(3, edit_res.edits.len());
 
@@ -359,7 +358,7 @@ async fn test_overlapping_edits_no_conflict() -> MyResult<()> {
         previous_version: create_res.latest_version.clone(),
         resolve_conflict_id: None,
     };
-    let edit_res = edit_article(data.hostname_alpha, &create_res.title, &edit_form).await?;
+    let edit_res = edit_article(data.hostname_alpha, &edit_form).await?;
     assert_eq!(edit_res.text, edit_form.new_text);
     assert_eq!(2, edit_res.edits.len());
 
@@ -370,7 +369,7 @@ async fn test_overlapping_edits_no_conflict() -> MyResult<()> {
         previous_version: create_res.latest_version,
         resolve_conflict_id: None,
     };
-    let edit_res = edit_article(data.hostname_alpha, &title, &edit_form).await?;
+    let edit_res = edit_article(data.hostname_alpha, &edit_form).await?;
     let conflicts: Vec<ApiConflict> =
         get_query(data.hostname_alpha, "edit_conflicts", None::<()>).await?;
     assert_eq!(0, conflicts.len());

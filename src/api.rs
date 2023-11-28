@@ -130,7 +130,7 @@ async fn edit_article(
 
 #[derive(Deserialize, Serialize, Clone)]
 pub struct GetArticleData {
-    pub title: String,
+    pub ap_id: ObjectId<DbArticle>,
 }
 
 #[debug_handler]
@@ -141,7 +141,7 @@ async fn get_article(
     let articles = data.articles.lock().unwrap();
     let article = articles
         .iter()
-        .find(|a| a.1.title == query.title)
+        .find(|a| a.1.ap_id == query.ap_id)
         .ok_or(anyhow!("not found"))?
         .1
         .clone();
