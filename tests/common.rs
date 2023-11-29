@@ -2,8 +2,8 @@ use activitypub_federation::fetch::object_id::ObjectId;
 use fediwiki::api::{
     ApiConflict, CreateArticleData, EditArticleData, FollowInstance, GetArticleData, ResolveObject,
 };
+use fediwiki::database::DbArticle;
 use fediwiki::error::MyResult;
-use fediwiki::federation::objects::article::DbArticle;
 use fediwiki::federation::objects::instance::DbInstance;
 use fediwiki::start;
 use once_cell::sync::Lazy;

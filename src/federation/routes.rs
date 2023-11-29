@@ -1,4 +1,4 @@
-use crate::database::DatabaseHandle;
+use crate::database::MyDataHandle;
 use crate::error::MyResult;
 use crate::federation::activities::accept::Accept;
 use crate::federation::activities::follow::Follow;
@@ -37,7 +37,7 @@ pub fn federation_routes() -> Router {
 
 #[debug_handler]
 async fn http_get_instance(
-    data: Data<DatabaseHandle>,
+    data: Data<MyDataHandle>,
 ) -> MyResult<FederationJson<WithContext<ApubInstance>>> {
     let db_instance = data.local_instance();
     let json_instance = db_instance.into_json(&data).await?;
@@ -46,7 +46,7 @@ async fn http_get_instance(
 
 #[debug_handler]
 async fn http_get_all_articles(
-    data: Data<DatabaseHandle>,
+    data: Data<MyDataHandle>,
 ) -> MyResult<FederationJson<WithContext<ArticleCollection>>> {
     let collection = DbArticleCollection::read_local(&data.local_instance(), &data).await?;
     Ok(FederationJson(WithContext::new_default(collection)))
@@ -55,7 +55,7 @@ async fn http_get_all_articles(
 #[debug_handler]
 async fn http_get_article(
     Path(title): Path<String>,
-    data: Data<DatabaseHandle>,
+    data: Data<MyDataHandle>,
 ) -> MyResult<FederationJson<WithContext<ApubArticle>>> {
     let article = {
         let lock = data.articles.lock().unwrap();
@@ -68,7 +68,7 @@ async fn http_get_article(
 #[debug_handler]
 async fn http_get_article_edits(
     Path(title): Path<String>,
-    data: Data<DatabaseHandle>,
+    data: Data<MyDataHandle>,
 ) -> MyResult<FederationJson<WithContext<ApubEditCollection>>> {
     let article = {
         let lock = data.articles.lock().unwrap();
@@ -93,12 +93,9 @@ pub enum InboxActivities {
 
 #[debug_handler]
 pub async fn http_post_inbox(
-    data: Data<DatabaseHandle>,
+    data: Data<MyDataHandle>,
     activity_data: ActivityData,
 ) -> impl IntoResponse {
-    receive_activity::<WithContext<InboxActivities>, DbInstance, DatabaseHandle>(
-        activity_data,
-        &data,
-    )
-    .await
+    receive_activity::<WithContext<InboxActivities>, DbInstance, MyDataHandle>(activity_data, &data)
+        .await
 }

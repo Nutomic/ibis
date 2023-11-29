@@ -1,6 +1,6 @@
 use crate::error::{Error, MyResult};
 use crate::federation::objects::articles_collection::DbArticleCollection;
-use crate::{database::DatabaseHandle, federation::activities::follow::Follow};
+use crate::{database::MyDataHandle, federation::activities::follow::Follow};
 use activitypub_federation::activity_sending::SendActivityTask;
 use activitypub_federation::fetch::collection_id::CollectionId;
 use activitypub_federation::kinds::actor::ServiceType;
@@ -55,11 +55,7 @@ impl DbInstance {
             .collect()
     }
 
-    pub async fn follow(
-        &self,
-        other: &DbInstance,
-        data: &Data<DatabaseHandle>,
-    ) -> Result<(), Error> {
+    pub async fn follow(&self, other: &DbInstance, data: &Data<MyDataHandle>) -> Result<(), Error> {
         let follow = Follow::new(self.ap_id.clone(), other.ap_id.clone())?;
         self.send(follow, vec![other.shared_inbox_or_inbox()], data)
             .await?;
@@ -70,7 +66,7 @@ impl DbInstance {
         &self,
         activity: Activity,
         extra_recipients: Vec<DbInstance>,
-        data: &Data<DatabaseHandle>,
+        data: &Data<MyDataHandle>,
     ) -> Result<(), <Activity as ActivityHandler>::Error>
     where
         Activity: ActivityHandler + Serialize + Debug + Send + Sync,
@@ -91,7 +87,7 @@ impl DbInstance {
         &self,
         activity: Activity,
         recipients: Vec<Url>,
-        data: &Data<DatabaseHandle>,
+        data: &Data<MyDataHandle>,
     ) -> Result<(), <Activity as ActivityHandler>::Error>
     where
         Activity: ActivityHandler + Serialize + Debug + Send + Sync,
@@ -111,7 +107,7 @@ impl DbInstance {
 
 #[async_trait::async_trait]
 impl Object for DbInstance {
-    type DataType = DatabaseHandle;
+    type DataType = MyDataHandle;
     type Kind = ApubInstance;
     type Error = Error;
 

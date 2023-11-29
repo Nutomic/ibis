@@ -1,6 +1,6 @@
-use crate::database::DatabaseHandle;
+use crate::database::{article::DbArticle, MyDataHandle};
 use crate::error::MyResult;
-use crate::federation::objects::article::{ApubArticle, DbArticle};
+use crate::federation::objects::article::ApubArticle;
 
 use crate::federation::objects::instance::DbInstance;
 use crate::utils::generate_activity_id;
@@ -32,7 +32,7 @@ impl UpdateLocalArticle {
     pub async fn send(
         article: DbArticle,
         extra_recipients: Vec<DbInstance>,
-        data: &Data<DatabaseHandle>,
+        data: &Data<MyDataHandle>,
     ) -> MyResult<()> {
         debug_assert!(article.local);
         let local_instance = data.local_instance();
@@ -55,7 +55,7 @@ impl UpdateLocalArticle {
 
 #[async_trait::async_trait]
 impl ActivityHandler for UpdateLocalArticle {
-    type DataType = DatabaseHandle;
+    type DataType = MyDataHandle;
     type Error = crate::error::Error;
 
     fn id(&self) -> &Url {

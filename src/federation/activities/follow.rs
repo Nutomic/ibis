@@ -1,8 +1,6 @@
 use crate::error::MyResult;
 use crate::federation::objects::instance::DbInstance;
-use crate::{
-    database::DatabaseHandle, federation::activities::accept::Accept, generate_activity_id,
-};
+use crate::{database::MyDataHandle, federation::activities::accept::Accept, generate_activity_id};
 use activitypub_federation::{
     config::Data,
     fetch::object_id::ObjectId,
@@ -36,7 +34,7 @@ impl Follow {
 
 #[async_trait::async_trait]
 impl ActivityHandler for Follow {
-    type DataType = DatabaseHandle;
+    type DataType = MyDataHandle;
     type Error = crate::error::Error;
 
     fn id(&self) -> &Url {

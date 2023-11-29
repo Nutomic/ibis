@@ -1,4 +1,4 @@
-use crate::database::DatabaseHandle;
+use crate::database::MyDataHandle;
 use crate::error::MyResult;
 use crate::federation::objects::edit::ApubEdit;
 use crate::federation::objects::instance::DbInstance;
@@ -30,7 +30,7 @@ impl RejectEdit {
     pub async fn send(
         edit: ApubEdit,
         user_instance: DbInstance,
-        data: &Data<DatabaseHandle>,
+        data: &Data<MyDataHandle>,
     ) -> MyResult<()> {
         let local_instance = data.local_instance();
         let id = generate_activity_id(local_instance.ap_id.inner())?;
@@ -50,7 +50,7 @@ impl RejectEdit {
 
 #[async_trait::async_trait]
 impl ActivityHandler for RejectEdit {
-    type DataType = DatabaseHandle;
+    type DataType = MyDataHandle;
     type Error = crate::error::Error;
 
     fn id(&self) -> &Url {

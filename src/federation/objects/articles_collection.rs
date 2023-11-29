@@ -1,6 +1,6 @@
-use crate::database::DatabaseHandle;
+use crate::database::{article::DbArticle, MyDataHandle};
 use crate::error::Error;
-use crate::federation::objects::article::{ApubArticle, DbArticle};
+use crate::federation::objects::article::ApubArticle;
 use crate::federation::objects::instance::DbInstance;
 
 use activitypub_federation::kinds::collection::CollectionType;
@@ -28,7 +28,7 @@ pub struct DbArticleCollection(Vec<DbArticle>);
 #[async_trait::async_trait]
 impl Collection for DbArticleCollection {
     type Owner = DbInstance;
-    type DataType = DatabaseHandle;
+    type DataType = MyDataHandle;
     type Kind = ArticleCollection;
     type Error = Error;
 

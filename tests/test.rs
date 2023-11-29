@@ -10,8 +10,8 @@ use common::get;
 use fediwiki::api::{
     ApiConflict, EditArticleData, ForkArticleData, ResolveObject, SearchArticleData,
 };
+use fediwiki::database::DbArticle;
 use fediwiki::error::MyResult;
-use fediwiki::federation::objects::article::DbArticle;
 use fediwiki::federation::objects::edit::ApubEdit;
 use fediwiki::federation::objects::instance::DbInstance;
 use serial_test::serial;
@@ -438,7 +438,7 @@ async fn test_fork_article() -> MyResult<()> {
     assert!(fork_res.local);
 
     let beta_instance: DbInstance = get(data.hostname_beta, "instance").await?;
-    assert_eq!(fork_res.instance, beta_instance.ap_id);
+    assert_eq!(fork_res.instance_id, beta_instance.ap_id);
 
     // now search returns two articles for this title (original and forked)
     let search_form = SearchArticleData {

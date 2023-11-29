@@ -1,5 +1,6 @@
+use crate::database::edit::DbEdit;
+use crate::database::edit::EditVersion;
 use crate::error::MyResult;
-use crate::federation::objects::edit::{DbEdit, EditVersion};
 use anyhow::anyhow;
 use diffy::{apply, Patch};
 use rand::{distributions::Alphanumeric, thread_rng, Rng};

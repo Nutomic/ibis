@@ -1,7 +1,7 @@
-use crate::database::DatabaseHandle;
+use crate::database::MyDataHandle;
 use crate::error::MyResult;
 
-use crate::federation::objects::edit::{ApubEdit, DbEdit};
+use crate::federation::objects::edit::ApubEdit;
 use crate::federation::objects::instance::DbInstance;
 use crate::utils::generate_activity_id;
 use activitypub_federation::kinds::activity::UpdateType;
@@ -13,6 +13,8 @@ use activitypub_federation::{
 };
 use diffy::{apply, Patch};
 
+use crate::database::article::DbArticle;
+use crate::database::edit::DbEdit;
 use crate::federation::activities::reject::RejectEdit;
 use crate::federation::activities::update_local_article::UpdateLocalArticle;
 use serde::{Deserialize, Serialize};
@@ -35,7 +37,7 @@ impl UpdateRemoteArticle {
     pub async fn send(
         edit: DbEdit,
         article_instance: DbInstance,
-        data: &Data<DatabaseHandle>,
+        data: &Data<MyDataHandle>,
     ) -> MyResult<()> {
         let local_instance = data.local_instance();
         let id = generate_activity_id(local_instance.ap_id.inner())?;
@@ -55,7 +57,7 @@ impl UpdateRemoteArticle {
 
 #[async_trait::async_trait]
 impl ActivityHandler for UpdateRemoteArticle {
-    type DataType = DatabaseHandle;
+    type DataType = MyDataHandle;
     type Error = crate::error::Error;
 
     fn id(&self) -> &Url {
@@ -80,13 +82,9 @@ impl ActivityHandler for UpdateRemoteArticle {
 
         match apply(&article_text, &patch) {
             Ok(applied) => {
-                let article = {
-                    let edit = DbEdit::from_json(self.object.clone(), data).await?;
-                    let mut lock = data.articles.lock().unwrap();
-                    let article = lock.get_mut(edit.article_id.inner()).unwrap();
-                    article.text = applied;
-                    article.clone()
-                };
+                let edit = DbEdit::from_json(self.object.clone(), data).await?;
+                let article =
+                    DbArticle::update_text(edit.article_id, &applied, &mut data.db_connection)?;
                 UpdateLocalArticle::send(article, vec![self.actor.dereference(data).await?], data)
                     .await?;
             }

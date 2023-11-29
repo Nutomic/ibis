@@ -1,8 +1,9 @@
-use crate::database::DatabaseHandle;
+use crate::database::article::DbArticle;
+use crate::database::MyDataHandle;
 use crate::error::Error;
-use crate::federation::objects::article::DbArticle;
-use crate::federation::objects::edit::{ApubEdit, DbEdit};
+use crate::federation::objects::edit::ApubEdit;
 
+use crate::database::edit::DbEdit;
 use activitypub_federation::kinds::collection::OrderedCollectionType;
 use activitypub_federation::{
     config::Data,
@@ -28,7 +29,7 @@ pub struct DbEditCollection(pub Vec<DbEdit>);
 #[async_trait::async_trait]
 impl Collection for DbEditCollection {
     type Owner = DbArticle;
-    type DataType = DatabaseHandle;
+    type DataType = MyDataHandle;
     type Kind = ApubEditCollection;
     type Error = Error;
 
@@ -36,10 +37,7 @@ impl Collection for DbEditCollection {
         owner: &Self::Owner,
         data: &Data<Self::DataType>,
     ) -> Result<Self::Kind, Self::Error> {
-        let edits = {
-            let lock = data.articles.lock().unwrap();
-            DbEditCollection(lock.get(owner.ap_id.inner()).unwrap().edits.clone())
-        };
+        let edits = DbEditCollection(DbEdit::for_article(owner.id, &mut data.db_connection)?);
 
         let edits = future::try_join_all(
             edits

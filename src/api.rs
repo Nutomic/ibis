@@ -1,9 +1,10 @@
-use crate::database::{DatabaseHandle, DbConflict};
+use crate::database::article::{DbArticle, DbArticleForm};
+use crate::database::dburl::DbUrl;
+use crate::database::edit::{DbEdit, EditVersion};
+use crate::database::{DbConflict, MyDataHandle};
 use crate::error::MyResult;
 use crate::federation::activities::create_article::CreateArticle;
 use crate::federation::activities::submit_article_update;
-use crate::federation::objects::article::DbArticle;
-use crate::federation::objects::edit::EditVersion;
 use crate::federation::objects::instance::DbInstance;
 use crate::utils::generate_article_version;
 use activitypub_federation::config::Data;
@@ -42,7 +43,7 @@ pub struct CreateArticleData {
 /// Create a new article with empty text, and federate it to followers.
 #[debug_handler]
 async fn create_article(
-    data: Data<DatabaseHandle>,
+    data: Data<MyDataHandle>,
     Form(create_article): Form<CreateArticleData>,
 ) -> MyResult<Json<DbArticle>> {
     {
@@ -55,26 +56,23 @@ async fn create_article(
         }
     }
 
-    let local_instance_id = data.local_instance().ap_id;
-    let ap_id = ObjectId::parse(&format!(
+    let instance_id: DbUrl = data.local_instance().ap_id.into();
+    let ap_id = Url::parse(&format!(
         "http://{}:{}/article/{}",
-        local_instance_id.inner().domain().unwrap(),
-        local_instance_id.inner().port().unwrap(),
+        instance_id.domain().unwrap(),
+        instance_id.port().unwrap(),
         create_article.title
-    ))?;
-    let article = DbArticle {
+    ))?
+    .into();
+    let form = DbArticleForm {
         title: create_article.title,
         text: String::new(),
         ap_id,
-        latest_version: EditVersion::default(),
-        edits: vec![],
-        instance: local_instance_id,
+        latest_version: Default::default(),
+        instance_id,
         local: true,
     };
-    {
-        let mut articles = data.articles.lock().unwrap();
-        articles.insert(article.ap_id.inner().clone(), article.clone());
-    }
+    let article = DbArticle::create(&form, &data.db_connection)?;
 
     CreateArticle::send_to_followers(article.clone(), &data).await?;
 
@@ -114,7 +112,7 @@ pub struct ApiConflict {
 /// Conflicts are stored in the database so they can be retrieved later from `/api/v3/edit_conflicts`.
 #[debug_handler]
 async fn edit_article(
-    data: Data<DatabaseHandle>,
+    data: Data<MyDataHandle>,
     Form(edit_form): Form<EditArticleData>,
 ) -> MyResult<Json<Option<ApiConflict>>> {
     // resolve conflict if any
@@ -138,14 +136,14 @@ async fn edit_article(
     } else {
         // There have been other changes since this edit was initiated. Get the common ancestor
         // version and generate a diff to find out what exactly has changed.
-        let ancestor =
-            generate_article_version(&original_article.edits, &edit_form.previous_version)?;
+        let edits = DbEdit::for_article(original_article.id, &data.db_connection)?;
+        let ancestor = generate_article_version(&edits, &edit_form.previous_version)?;
         let patch = create_patch(&ancestor, &edit_form.new_text);
 
         let db_conflict = DbConflict {
             id: random(),
             diff: patch.to_string(),
-            article_id: original_article.ap_id.clone(),
+            article_id: original_article.ap_id.clone().into(),
             previous_version: edit_form.previous_version,
         };
         {
@@ -158,23 +156,16 @@ async fn edit_article(
 
 #[derive(Deserialize, Serialize, Clone)]
 pub struct GetArticleData {
-    pub ap_id: ObjectId<DbArticle>,
+    pub id: i32,
 }
 
 /// Retrieve an article by ID. It must already be stored in the local database.
 #[debug_handler]
 async fn get_article(
     Query(query): Query<GetArticleData>,
-    data: Data<DatabaseHandle>,
+    data: Data<MyDataHandle>,
 ) -> MyResult<Json<DbArticle>> {
-    let articles = data.articles.lock().unwrap();
-    let article = articles
-        .iter()
-        .find(|a| a.1.ap_id == query.ap_id)
-        .ok_or(anyhow!("not found"))?
-        .1
-        .clone();
-    Ok(Json(article))
+    Ok(Json(DbArticle::read(query.id, &data.db_connection)?))
 }
 
 #[derive(Deserialize, Serialize)]
@@ -187,7 +178,7 @@ pub struct ResolveObject {
 #[debug_handler]
 async fn resolve_instance(
     Query(query): Query<ResolveObject>,
-    data: Data<DatabaseHandle>,
+    data: Data<MyDataHandle>,
 ) -> MyResult<Json<DbInstance>> {
     let instance: DbInstance = ObjectId::from(query.id).dereference(&data).await?;
     Ok(Json(instance))
@@ -198,7 +189,7 @@ async fn resolve_instance(
 #[debug_handler]
 async fn resolve_article(
     Query(query): Query<ResolveObject>,
-    data: Data<DatabaseHandle>,
+    data: Data<MyDataHandle>,
 ) -> MyResult<Json<DbArticle>> {
     let article: DbArticle = ObjectId::from(query.id).dereference(&data).await?;
     Ok(Json(article))
@@ -206,7 +197,7 @@ async fn resolve_article(
 
 /// Retrieve the local instance info.
 #[debug_handler]
-async fn get_local_instance(data: Data<DatabaseHandle>) -> MyResult<Json<DbInstance>> {
+async fn get_local_instance(data: Data<MyDataHandle>) -> MyResult<Json<DbInstance>> {
     Ok(Json(data.local_instance()))
 }
 
@@ -219,7 +210,7 @@ pub struct FollowInstance {
 /// updated articles.
 #[debug_handler]
 async fn follow_instance(
-    data: Data<DatabaseHandle>,
+    data: Data<MyDataHandle>,
     Form(query): Form<FollowInstance>,
 ) -> MyResult<()> {
     let instance = query.instance_id.dereference(&data).await?;
@@ -229,7 +220,7 @@ async fn follow_instance(
 
 /// Get a list of all unresolved edit conflicts.
 #[debug_handler]
-async fn edit_conflicts(data: Data<DatabaseHandle>) -> MyResult<Json<Vec<ApiConflict>>> {
+async fn edit_conflicts(data: Data<MyDataHandle>) -> MyResult<Json<Vec<ApiConflict>>> {
     let conflicts = { data.conflicts.lock().unwrap().to_vec() };
     let conflicts: Vec<ApiConflict> = try_join_all(conflicts.into_iter().map(|c| {
         let data = data.reset_request_count();
@@ -253,7 +244,7 @@ pub struct SearchArticleData {
 #[debug_handler]
 async fn search_article(
     Query(query): Query<SearchArticleData>,
-    data: Data<DatabaseHandle>,
+    data: Data<MyDataHandle>,
 ) -> MyResult<Json<Vec<DbArticle>>> {
     let articles = data.articles.lock().unwrap();
     let article = articles
@@ -277,7 +268,7 @@ pub struct ForkArticleData {
 /// how an article should be edited.
 #[debug_handler]
 async fn fork_article(
-    data: Data<DatabaseHandle>,
+    data: Data<MyDataHandle>,
     Form(fork_form): Form<ForkArticleData>,
 ) -> MyResult<Json<DbArticle>> {
     let article = {
@@ -296,28 +287,27 @@ async fn fork_article(
             .clone()
     };
 
-    let local_instance_id = data.local_instance().ap_id;
-    let ap_id = ObjectId::parse(&format!(
+    let instance_id: DbUrl = data.local_instance().ap_id.into();
+    let ap_id = Url::parse(&format!(
         "http://{}:{}/article/{}",
-        local_instance_id.inner().domain().unwrap(),
-        local_instance_id.inner().port().unwrap(),
+        instance_id.domain().unwrap(),
+        instance_id.port().unwrap(),
         original_article.title
-    ))?;
-    let forked_article = DbArticle {
+    ))?
+    .into();
+    let form = DbArticleForm {
         title: original_article.title.clone(),
         text: original_article.text.clone(),
         ap_id,
-        latest_version: original_article.latest_version.clone(),
-        edits: original_article.edits.clone(),
-        instance: local_instance_id,
+        latest_version: original_article.latest_version.0.clone(),
+        instance_id,
         local: true,
     };
-    {
-        let mut articles = data.articles.lock().unwrap();
-        articles.insert(forked_article.ap_id.inner().clone(), forked_article.clone());
-    }
+    let article = DbArticle::create(&form, &data.db_connection)?;
 
-    CreateArticle::send_to_followers(forked_article.clone(), &data).await?;
+    // TODO: need to copy edits separately with db query
 
-    Ok(Json(forked_article))
+    CreateArticle::send_to_followers(article.clone(), &data).await?;
+
+    Ok(Json(article))
 }

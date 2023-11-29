@@ -1,6 +1,6 @@
-use crate::database::DatabaseHandle;
+use crate::database::{article::DbArticle, MyDataHandle};
 use crate::error::MyResult;
-use crate::federation::objects::article::{ApubArticle, DbArticle};
+use crate::federation::objects::article::ApubArticle;
 use crate::federation::objects::instance::DbInstance;
 use crate::utils::generate_activity_id;
 use activitypub_federation::kinds::activity::CreateType;
@@ -26,10 +26,7 @@ pub struct CreateArticle {
 }
 
 impl CreateArticle {
-    pub async fn send_to_followers(
-        article: DbArticle,
-        data: &Data<DatabaseHandle>,
-    ) -> MyResult<()> {
+    pub async fn send_to_followers(article: DbArticle, data: &Data<MyDataHandle>) -> MyResult<()> {
         let local_instance = data.local_instance();
         let object = article.clone().into_json(data).await?;
         let id = generate_activity_id(local_instance.ap_id.inner())?;
@@ -48,7 +45,7 @@ impl CreateArticle {
 }
 #[async_trait::async_trait]
 impl ActivityHandler for CreateArticle {
-    type DataType = DatabaseHandle;
+    type DataType = MyDataHandle;
     type Error = crate::error::Error;
 
     fn id(&self) -> &Url {

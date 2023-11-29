@@ -10,6 +10,8 @@ async-trait = "0.1.74"
 axum = "0.6.20"
 axum-macros = "0.3.8"
 chrono = { version = "0.4.31", features = ["serde"] }
+diesel = {version = "2.1.4", features = ["postgres"] }
+diesel-derive-newtype = "2.1.0"
 diffy = "0.3.0"
 enum_delegate = "0.2.0"
 env_logger = { version = "0.10.1", default-features = false }
