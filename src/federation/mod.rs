@@ -35,7 +35,6 @@ pub async fn federation_config(hostname: &str) -> Result<FederationConfig<MyData
             local_instance.ap_id.inner().clone(),
             local_instance,
         )])),
-        articles: Mutex::new(HashMap::new()),
         conflicts: Mutex::new(vec![]),
     });
     let db_connection = Arc::new(Mutex::new(establish_db_connection()?));

@@ -1,8 +1,7 @@
-use activitypub_federation::fetch::object_id::ObjectId;
 use fediwiki::api::{
     ApiConflict, CreateArticleData, EditArticleData, FollowInstance, GetArticleData, ResolveObject,
 };
-use fediwiki::database::DbArticle;
+use fediwiki::database::article::DbArticle;
 use fediwiki::error::MyResult;
 use fediwiki::federation::objects::instance::DbInstance;
 use fediwiki::start;
@@ -76,7 +75,7 @@ pub async fn create_article(hostname: &str, title: String) -> MyResult<DbArticle
     let article: DbArticle = post(hostname, "article", &create_form).await?;
     // create initial edit to ensure that conflicts are generated (there are no conflicts on empty file)
     let edit_form = EditArticleData {
-        ap_id: article.ap_id,
+        article_id: article.id,
         new_text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
         previous_version: article.latest_version,
         resolve_conflict_id: None,
@@ -84,10 +83,8 @@ pub async fn create_article(hostname: &str, title: String) -> MyResult<DbArticle
     edit_article(hostname, &edit_form).await
 }
 
-pub async fn get_article(hostname: &str, ap_id: &ObjectId<DbArticle>) -> MyResult<DbArticle> {
-    let get_article = GetArticleData {
-        ap_id: ap_id.clone(),
-    };
+pub async fn get_article(hostname: &str, article_id: i32) -> MyResult<DbArticle> {
+    let get_article = GetArticleData { article_id };
     get_query::<DbArticle, _>(hostname, "article", Some(get_article.clone())).await
 }
 
@@ -114,7 +111,7 @@ pub async fn edit_article(hostname: &str, edit_form: &EditArticleData) -> MyResu
         .await?;
     assert!(edit_res.is_none());
     let get_article = GetArticleData {
-        ap_id: edit_form.ap_id.clone(),
+        article_id: edit_form.article_id,
     };
     let updated_article: DbArticle = get_query(hostname, "article", Some(get_article)).await?;
     Ok(updated_article)

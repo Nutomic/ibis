@@ -36,16 +36,7 @@ impl Collection for DbArticleCollection {
         _owner: &Self::Owner,
         data: &Data<Self::DataType>,
     ) -> Result<Self::Kind, Self::Error> {
-        let local_articles = {
-            let articles = data.articles.lock().unwrap();
-            articles
-                .iter()
-                .map(|a| a.1)
-                .filter(|a| a.local)
-                .clone()
-                .cloned()
-                .collect::<Vec<_>>()
-        };
+        let local_articles = DbArticle::read_all_local(&data.db_connection)?;
         let articles = future::try_join_all(
             local_articles
                 .into_iter()

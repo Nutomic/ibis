@@ -23,13 +23,8 @@ pub async fn submit_article_update(
     let form = DbEditForm::new(original_article, &new_text)?;
     let edit = DbEdit::create(&form, &data.db_connection)?;
     if original_article.local {
-        let updated_article = {
-            let mut lock = data.articles.lock().unwrap();
-            let article = lock.get_mut(original_article.ap_id.inner()).unwrap();
-            article.text = new_text;
-            article.latest_version = edit.version.clone();
-            article.clone()
-        };
+        let updated_article =
+            DbArticle::update_text(edit.article_id, &new_text, &data.db_connection)?;
 
         UpdateLocalArticle::send(updated_article, vec![], data).await?;
     } else {

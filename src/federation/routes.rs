@@ -12,6 +12,7 @@ use activitypub_federation::traits::Object;
 use activitypub_federation::traits::{ActivityHandler, Collection};
 use axum::extract::Path;
 
+use crate::database::article::DbArticle;
 use crate::federation::activities::create_article::CreateArticle;
 use crate::federation::activities::reject::RejectEdit;
 use crate::federation::activities::update_local_article::UpdateLocalArticle;
@@ -57,10 +58,7 @@ async fn http_get_article(
     Path(title): Path<String>,
     data: Data<MyDataHandle>,
 ) -> MyResult<FederationJson<WithContext<ApubArticle>>> {
-    let article = {
-        let lock = data.articles.lock().unwrap();
-        lock.values().find(|a| a.title == title).unwrap().clone()
-    };
+    let article = DbArticle::read_local_title(&title, &data.db_connection)?;
     let json = article.into_json(&data).await?;
     Ok(FederationJson(WithContext::new_default(json)))
 }
@@ -70,10 +68,7 @@ async fn http_get_article_edits(
     Path(title): Path<String>,
     data: Data<MyDataHandle>,
 ) -> MyResult<FederationJson<WithContext<ApubEditCollection>>> {
-    let article = {
-        let lock = data.articles.lock().unwrap();
-        lock.values().find(|a| a.title == title).unwrap().clone()
-    };
+    let article = DbArticle::read_local_title(&title, &data.db_connection)?;
     let json = DbEditCollection::read_local(&article, &data).await?;
     Ok(FederationJson(WithContext::new_default(json)))
 }

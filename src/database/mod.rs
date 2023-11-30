@@ -36,8 +36,6 @@ pub type MyDataHandle = MyData;
 
 pub struct FakeDatabase {
     pub instances: Mutex<HashMap<Url, DbInstance>>,
-    // TODO: remove this
-    pub articles: Mutex<HashMap<Url, DbArticle>>,
     pub conflicts: Mutex<Vec<DbConflict>>,
 }
 

@@ -80,11 +80,6 @@ impl Object for DbArticle {
         };
         let article = DbArticle::create(&form, &data.db_connection)?;
 
-        {
-            let mut lock = data.articles.lock().unwrap();
-            lock.insert(article.ap_id.clone().into(), article.clone());
-        }
-
         json.edits.dereference(&article, data).await?;
 
         Ok(article)

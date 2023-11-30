@@ -8,8 +8,8 @@ use activitypub_federation::fetch::object_id::ObjectId;
 use diesel::pg::PgConnection;
 use diesel::ExpressionMethods;
 use diesel::{
-    insert_into, AsChangeset, Identifiable, Insertable, QueryDsl, Queryable, RunQueryDsl,
-    Selectable,
+    insert_into, AsChangeset, BoolExpressionMethods, Identifiable, Insertable,
+    PgTextExpressionMethods, QueryDsl, Queryable, RunQueryDsl, Selectable,
 };
 use serde::{Deserialize, Serialize};
 use std::ops::DerefMut;
@@ -23,9 +23,6 @@ pub struct DbArticle {
     pub text: String,
     pub ap_id: ObjectId<DbArticle>,
     pub instance_id: ObjectId<DbInstance>,
-    /// List of all edits which make up this article, oldest first.
-    // TODO
-    //pub edits: Vec<DbEdit>,
     pub latest_version: EditVersion,
     pub local: bool,
 }
@@ -78,5 +75,35 @@ impl DbArticle {
         Ok(article::table
             .filter(article::dsl::ap_id.eq(ap_id))
             .get_result(conn.deref_mut())?)
+    }
+
+    pub fn read_local_title(title: &str, conn: &Mutex<PgConnection>) -> MyResult<DbArticle> {
+        let mut conn = conn.lock().unwrap();
+        Ok(article::table
+            .filter(article::dsl::title.eq(title))
+            .filter(article::dsl::local.eq(true))
+            .get_result(conn.deref_mut())?)
+    }
+
+    pub fn read_all_local(conn: &Mutex<PgConnection>) -> MyResult<Vec<DbArticle>> {
+        let mut conn = conn.lock().unwrap();
+        Ok(article::table
+            .filter(article::dsl::local.eq(true))
+            .get_results(conn.deref_mut())?)
+    }
+
+    pub fn search(query: &str, conn: &Mutex<PgConnection>) -> MyResult<Vec<DbArticle>> {
+        let mut conn = conn.lock().unwrap();
+        let replaced = query
+            .replace('%', "\\%")
+            .replace('_', "\\_")
+            .replace(' ', "%");
+        Ok(article::table
+            .filter(
+                article::dsl::title
+                    .ilike(&replaced)
+                    .or(article::dsl::text.ilike(&replaced)),
+            )
+            .get_results(conn.deref_mut())?)
     }
 }

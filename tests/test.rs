@@ -10,7 +10,7 @@ use common::get;
 use fediwiki::api::{
     ApiConflict, EditArticleData, ForkArticleData, ResolveObject, SearchArticleData,
 };
-use fediwiki::database::DbArticle;
+use fediwiki::database::article::DbArticle;
 use fediwiki::error::MyResult;
 use fediwiki::federation::objects::edit::ApubEdit;
 use fediwiki::federation::objects::instance::DbInstance;
@@ -29,18 +29,18 @@ async fn test_create_read_and_edit_article() -> MyResult<()> {
     assert!(create_res.local);
 
     // now article can be read
-    let get_res = get_article(data.hostname_alpha, &create_res.ap_id).await?;
+    let get_res = get_article(data.hostname_alpha, create_res.id).await?;
     assert_eq!(title, get_res.title);
     assert_eq!(TEST_ARTICLE_DEFAULT_TEXT, get_res.text);
     assert!(get_res.local);
 
     // error on article which wasnt federated
-    let not_found = get_article(data.hostname_beta, &create_res.ap_id).await;
+    let not_found = get_article(data.hostname_beta, create_res.id).await;
     assert!(not_found.is_err());
 
     // edit article
     let edit_form = EditArticleData {
-        ap_id: create_res.ap_id.clone(),
+        article_id: create_res.id,
         new_text: "Lorem Ipsum 2".to_string(),
         previous_version: get_res.latest_version,
         resolve_conflict_id: None,
@@ -50,7 +50,7 @@ async fn test_create_read_and_edit_article() -> MyResult<()> {
     assert_eq!(2, edit_res.edits.len());
 
     let search_form = SearchArticleData {
-        title: title.clone(),
+        query: title.clone(),
     };
     let search_res: Vec<DbArticle> =
         get_query(data.hostname_alpha, "search", Some(search_form)).await?;
@@ -113,7 +113,7 @@ async fn test_synchronize_articles() -> MyResult<()> {
 
     // edit the article
     let edit_form = EditArticleData {
-        ap_id: create_res.ap_id.clone(),
+        article_id: create_res.id,
         new_text: "Lorem Ipsum 2\n".to_string(),
         previous_version: create_res.latest_version,
         resolve_conflict_id: None,
@@ -121,7 +121,7 @@ async fn test_synchronize_articles() -> MyResult<()> {
     edit_article(data.hostname_alpha, &edit_form).await?;
 
     // article is not yet on beta
-    let get_res = get_article(data.hostname_beta, &create_res.ap_id).await;
+    let get_res = get_article(data.hostname_beta, create_res.id).await;
     assert!(get_res.is_err());
 
     // fetch alpha instance on beta, articles are also fetched automatically
@@ -132,7 +132,7 @@ async fn test_synchronize_articles() -> MyResult<()> {
         .await?;
 
     // get the article and compare
-    let get_res = get_article(data.hostname_beta, &create_res.ap_id).await?;
+    let get_res = get_article(data.hostname_beta, create_res.id).await?;
     assert_eq!(create_res.ap_id, get_res.ap_id);
     assert_eq!(title, get_res.title);
     assert_eq!(2, get_res.edits.len());
@@ -156,7 +156,7 @@ async fn test_edit_local_article() -> MyResult<()> {
     assert!(create_res.local);
 
     // article should be federated to alpha
-    let get_res = get_article(data.hostname_alpha, &create_res.ap_id).await?;
+    let get_res = get_article(data.hostname_alpha, create_res.id).await?;
     assert_eq!(create_res.title, get_res.title);
     assert_eq!(1, get_res.edits.len());
     assert!(!get_res.local);
@@ -164,7 +164,7 @@ async fn test_edit_local_article() -> MyResult<()> {
 
     // edit the article
     let edit_form = EditArticleData {
-        ap_id: create_res.ap_id,
+        article_id: create_res.id,
         new_text: "Lorem Ipsum 2".to_string(),
         previous_version: get_res.latest_version,
         resolve_conflict_id: None,
@@ -178,7 +178,7 @@ async fn test_edit_local_article() -> MyResult<()> {
         .starts_with(&edit_res.ap_id.to_string()));
 
     // edit should be federated to alpha
-    let get_res = get_article(data.hostname_alpha, &edit_res.ap_id).await?;
+    let get_res = get_article(data.hostname_alpha, edit_res.id).await?;
     assert_eq!(edit_res.title, get_res.title);
     assert_eq!(edit_res.edits.len(), 2);
     assert_eq!(edit_res.text, get_res.text);
@@ -201,17 +201,17 @@ async fn test_edit_remote_article() -> MyResult<()> {
     assert!(create_res.local);
 
     // article should be federated to alpha and gamma
-    let get_res = get_article(data.hostname_alpha, &create_res.ap_id).await?;
+    let get_res = get_article(data.hostname_alpha, create_res.id).await?;
     assert_eq!(create_res.title, get_res.title);
     assert_eq!(1, get_res.edits.len());
     assert!(!get_res.local);
 
-    let get_res = get_article(data.hostname_gamma, &create_res.ap_id).await?;
+    let get_res = get_article(data.hostname_gamma, create_res.id).await?;
     assert_eq!(create_res.title, get_res.title);
     assert_eq!(create_res.text, get_res.text);
 
     let edit_form = EditArticleData {
-        ap_id: create_res.ap_id.clone(),
+        article_id: create_res.id,
         new_text: "Lorem Ipsum 2".to_string(),
         previous_version: get_res.latest_version,
         resolve_conflict_id: None,
@@ -226,12 +226,12 @@ async fn test_edit_remote_article() -> MyResult<()> {
         .starts_with(&edit_res.ap_id.to_string()));
 
     // edit should be federated to beta and gamma
-    let get_res = get_article(data.hostname_alpha, &create_res.ap_id).await?;
+    let get_res = get_article(data.hostname_alpha, create_res.id).await?;
     assert_eq!(edit_res.title, get_res.title);
     assert_eq!(edit_res.edits.len(), 2);
     assert_eq!(edit_res.text, get_res.text);
 
-    let get_res = get_article(data.hostname_gamma, &create_res.ap_id).await?;
+    let get_res = get_article(data.hostname_gamma, create_res.id).await?;
     assert_eq!(edit_res.title, get_res.title);
     assert_eq!(edit_res.edits.len(), 2);
     assert_eq!(edit_res.text, get_res.text);
@@ -252,7 +252,7 @@ async fn test_local_edit_conflict() -> MyResult<()> {
 
     // one user edits article
     let edit_form = EditArticleData {
-        ap_id: create_res.ap_id.clone(),
+        article_id: create_res.id,
         new_text: "Lorem Ipsum\n".to_string(),
         previous_version: create_res.latest_version.clone(),
         resolve_conflict_id: None,
@@ -263,7 +263,7 @@ async fn test_local_edit_conflict() -> MyResult<()> {
 
     // another user edits article, without being aware of previous edit
     let edit_form = EditArticleData {
-        ap_id: create_res.ap_id.clone(),
+        article_id: create_res.id,
         new_text: "Ipsum Lorem\n".to_string(),
         previous_version: create_res.latest_version,
         resolve_conflict_id: None,
@@ -279,7 +279,7 @@ async fn test_local_edit_conflict() -> MyResult<()> {
     assert_eq!(conflicts[0], edit_res);
 
     let edit_form = EditArticleData {
-        ap_id: create_res.ap_id.clone(),
+        article_id: create_res.id,
         new_text: "Lorem Ipsum and Ipsum Lorem\n".to_string(),
         previous_version: edit_res.previous_version,
         resolve_conflict_id: Some(edit_res.id),
@@ -317,7 +317,7 @@ async fn test_federated_edit_conflict() -> MyResult<()> {
 
     // alpha edits article
     let edit_form = EditArticleData {
-        ap_id: create_res.ap_id.clone(),
+        article_id: create_res.id,
         new_text: "Lorem Ipsum\n".to_string(),
         previous_version: create_res.latest_version.clone(),
         resolve_conflict_id: None,
@@ -334,7 +334,7 @@ async fn test_federated_edit_conflict() -> MyResult<()> {
     // gamma also edits, as its not the latest version there is a conflict. local version should
     // not be updated with this conflicting version, instead user needs to handle the conflict
     let edit_form = EditArticleData {
-        ap_id: create_res.ap_id.clone(),
+        article_id: create_res.id,
         new_text: "aaaa\n".to_string(),
         previous_version: create_res.latest_version,
         resolve_conflict_id: None,
@@ -350,7 +350,7 @@ async fn test_federated_edit_conflict() -> MyResult<()> {
 
     // resolve the conflict
     let edit_form = EditArticleData {
-        ap_id: create_res.ap_id,
+        article_id: create_res.id,
         new_text: "aaaa\n".to_string(),
         previous_version: conflicts[0].previous_version.clone(),
         resolve_conflict_id: Some(conflicts[0].id),
@@ -379,7 +379,7 @@ async fn test_overlapping_edits_no_conflict() -> MyResult<()> {
 
     // one user edits article
     let edit_form = EditArticleData {
-        ap_id: create_res.ap_id.clone(),
+        article_id: create_res.id,
         new_text: "my\nexample\ntext\n".to_string(),
         previous_version: create_res.latest_version.clone(),
         resolve_conflict_id: None,
@@ -390,7 +390,7 @@ async fn test_overlapping_edits_no_conflict() -> MyResult<()> {
 
     // another user edits article, without being aware of previous edit
     let edit_form = EditArticleData {
-        ap_id: create_res.ap_id.clone(),
+        article_id: create_res.id,
         new_text: "some\nexample\narticle\n".to_string(),
         previous_version: create_res.latest_version,
         resolve_conflict_id: None,
@@ -427,7 +427,7 @@ async fn test_fork_article() -> MyResult<()> {
 
     // fork the article to local instance
     let fork_form = ForkArticleData {
-        ap_id: resolved_article.ap_id.clone(),
+        article_id: resolved_article.id,
     };
     let fork_res: DbArticle = post(data.hostname_beta, "article/fork", &fork_form).await?;
     assert_eq!(resolved_article.title, fork_res.title);
@@ -442,7 +442,7 @@ async fn test_fork_article() -> MyResult<()> {
 
     // now search returns two articles for this title (original and forked)
     let search_form = SearchArticleData {
-        title: title.clone(),
+        query: title.clone(),
     };
     let search_res: Vec<DbArticle> =
         get_query(data.hostname_beta, "search", Some(search_form)).await?;

@@ -45,14 +45,9 @@ async fn create_article(
     data: Data<MyDataHandle>,
     Form(create_article): Form<CreateArticleData>,
 ) -> MyResult<Json<DbArticle>> {
-    {
-        let articles = data.articles.lock().unwrap();
-        let title_exists = articles
-            .iter()
-            .any(|a| a.1.local && a.1.title == create_article.title);
-        if title_exists {
-            return Err(anyhow!("A local article with this title already exists").into());
-        }
+    let existing_article = DbArticle::read_local_title(&create_article.title, &data.db_connection);
+    if existing_article.is_ok() {
+        return Err(anyhow!("A local article with this title already exists").into());
     }
 
     let instance_id = data.local_instance().ap_id;
@@ -81,7 +76,7 @@ async fn create_article(
 #[derive(Deserialize, Serialize, Debug)]
 pub struct EditArticleData {
     /// Id of the article to edit
-    pub ap_id: ObjectId<DbArticle>,
+    pub article_id: i32,
     /// Full, new text of the article. A diff against `previous_version` is generated on the server
     /// side to handle conflicts.
     pub new_text: String,
@@ -122,11 +117,7 @@ async fn edit_article(
         }
         lock.retain(|c| &c.id != resolve_conflict_id);
     }
-    let original_article = {
-        let lock = data.articles.lock().unwrap();
-        let article = lock.get(edit_form.ap_id.inner()).unwrap();
-        article.clone()
-    };
+    let original_article = DbArticle::read(edit_form.article_id, &data.db_connection)?;
 
     if edit_form.previous_version == original_article.latest_version {
         // No intermediate changes, simply submit new version
@@ -155,7 +146,7 @@ async fn edit_article(
 
 #[derive(Deserialize, Serialize, Clone)]
 pub struct GetArticleData {
-    pub id: i32,
+    pub article_id: i32,
 }
 
 /// Retrieve an article by ID. It must already be stored in the local database.
@@ -164,7 +155,10 @@ async fn get_article(
     Query(query): Query<GetArticleData>,
     data: Data<MyDataHandle>,
 ) -> MyResult<Json<DbArticle>> {
-    Ok(Json(DbArticle::read(query.id, &data.db_connection)?))
+    Ok(Json(DbArticle::read(
+        query.article_id,
+        &data.db_connection,
+    )?))
 }
 
 #[derive(Deserialize, Serialize)]
@@ -234,24 +228,16 @@ async fn edit_conflicts(data: Data<MyDataHandle>) -> MyResult<Json<Vec<ApiConfli
 
 #[derive(Deserialize, Serialize, Clone)]
 pub struct SearchArticleData {
-    pub title: String,
+    pub query: String,
 }
 
-/// Search articles by title. For now only checks exact match.
-///
-/// Later include partial title match and body search.
+/// Search articles for matching title or body text.
 #[debug_handler]
 async fn search_article(
     Query(query): Query<SearchArticleData>,
     data: Data<MyDataHandle>,
 ) -> MyResult<Json<Vec<DbArticle>>> {
-    let articles = data.articles.lock().unwrap();
-    let article = articles
-        .iter()
-        .filter(|a| a.1.title == query.title)
-        .map(|a| a.1)
-        .cloned()
-        .collect();
+    let article = DbArticle::search(&query.query, &data.db_connection)?;
     Ok(Json(article))
 }
 
@@ -260,7 +246,7 @@ pub struct ForkArticleData {
     // TODO: could add optional param new_title so there is no problem with title collision
     //       in case local article with same title exists. however that makes it harder to discover
     //       variants of same article.
-    pub ap_id: ObjectId<DbArticle>,
+    pub article_id: i32,
 }
 
 /// Fork a remote article to local instance. This is useful if there are disagreements about
@@ -270,21 +256,13 @@ async fn fork_article(
     data: Data<MyDataHandle>,
     Form(fork_form): Form<ForkArticleData>,
 ) -> MyResult<Json<DbArticle>> {
-    let article = {
-        let lock = data.articles.lock().unwrap();
-        let article = lock.get(fork_form.ap_id.inner()).unwrap();
-        article.clone()
-    };
-    if article.local {
-        return Err(anyhow!("Cannot fork local article because there cant be multiple local articles with same title").into());
+    // TODO: lots of code duplicated from create_article(), can move it into helper
+    let original_article = DbArticle::read(fork_form.article_id, &data.db_connection)?;
+    let existing_article =
+        DbArticle::read_local_title(&original_article.title, &data.db_connection);
+    if existing_article.is_ok() {
+        return Err(anyhow!("A local article with this title already exists").into());
     }
-
-    let original_article = {
-        let lock = data.articles.lock().unwrap();
-        lock.get(fork_form.ap_id.inner())
-            .expect("article exists")
-            .clone()
-    };
 
     let instance_id = data.local_instance().ap_id;
     let ap_id = ObjectId::parse(&format!(
