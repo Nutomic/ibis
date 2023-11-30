@@ -5,7 +5,7 @@ version = 3
 [[package]]
 name = "activitypub_federation"
 version = "0.5.0-beta.5"
-source = "git+https://github.com/LemmyNet/activitypub-federation-rust.git?branch=parse-impl#2aa64ad1de7943840677f4b96a20a11d38e2be56"
+source = "git+https://github.com/LemmyNet/activitypub-federation-rust.git?branch=diesel-feature#ca42d891b10888c0dcc666140385d380c664a978"
 dependencies = [
  "activitystreams-kinds",
  "async-trait",
@@ -14,6 +14,7 @@ dependencies = [
  "bytes",
  "chrono",
  "derive_builder",
+ "diesel",
  "dyn-clone",
  "enum_delegate",
  "futures",

@@ -40,18 +40,18 @@ impl Object for DbArticle {
         object_id: Url,
         data: &Data<Self::DataType>,
     ) -> Result<Option<Self>, Self::Error> {
-        let article = DbArticle::read_from_ap_id(&object_id.into(), &mut data.db_connection).ok();
+        let article = DbArticle::read_from_ap_id(&object_id.into(), &data.db_connection).ok();
         Ok(article)
     }
 
     async fn into_json(self, data: &Data<Self::DataType>) -> Result<Self::Kind, Self::Error> {
-        let instance: DbInstance = ObjectId::from(self.instance_id)
+        let instance: DbInstance = ObjectId::from(self.instance_id.clone())
             .dereference_local(data)
             .await?;
         Ok(ApubArticle {
             kind: Default::default(),
             id: self.ap_id.clone().into(),
-            attributed_to: self.instance_id.clone().into(),
+            attributed_to: instance.ap_id.clone().into(),
             to: vec![public(), instance.followers_url()?],
             edits: self.edits_id()?,
             latest_version: self.latest_version,
@@ -78,7 +78,7 @@ impl Object for DbArticle {
             local: false,
             instance_id: json.attributed_to.into(),
         };
-        let mut article = DbArticle::create(&form, &data.db_connection)?;
+        let article = DbArticle::create(&form, &data.db_connection)?;
 
         {
             let mut lock = data.articles.lock().unwrap();

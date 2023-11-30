@@ -1,5 +1,4 @@
 use crate::database::article::DbArticle;
-use crate::database::dburl::DbUrl;
 use crate::database::schema::edit;
 use crate::error::MyResult;
 use activitypub_federation::fetch::object_id::ObjectId;
@@ -12,14 +11,16 @@ use diesel_derive_newtype::DieselNewType;
 use diffy::create_patch;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha224};
+use std::ops::DerefMut;
 use std::sync::Mutex;
+use url::Url;
 
 /// Represents a single change to the article.
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Queryable, Selectable, Identifiable)]
 #[diesel(table_name = edit, check_for_backend(diesel::pg::Pg))]
 pub struct DbEdit {
     pub id: i32,
-    pub ap_id: DbUrl,
+    pub ap_id: ObjectId<DbEdit>,
     pub diff: String,
     pub article_id: i32,
     pub version: EditVersion,
@@ -30,7 +31,7 @@ pub struct DbEdit {
 #[derive(Debug, Clone, Insertable, AsChangeset)]
 #[diesel(table_name = edit, check_for_backend(diesel::pg::Pg))]
 pub struct DbEditForm {
-    pub ap_id: DbUrl,
+    pub ap_id: ObjectId<DbEdit>,
     pub diff: String,
     pub article_id: i32,
     pub version: EditVersion,
@@ -43,11 +44,11 @@ impl DbEditForm {
         let mut sha224 = Sha224::new();
         sha224.update(diff.to_bytes());
         let hash = format!("{:X}", sha224.finalize());
-        let edit_id = ObjectId::parse(&format!("{}/{}", original_article.ap_id, hash))?;
+        let edit_id = Url::parse(&format!("{}/{}", original_article.ap_id, hash))?;
         Ok(DbEditForm {
             ap_id: edit_id.into(),
             diff: diff.to_string(),
-            article_id: original_article.ap_id.clone(),
+            article_id: original_article.id,
             version: EditVersion(hash),
             local: true,
         })
@@ -62,7 +63,7 @@ impl DbEdit {
             .on_conflict(edit::dsl::ap_id)
             .do_update()
             .set(form)
-            .get_result(&mut conn)?)
+            .get_result(conn.deref_mut())?)
     }
 
     pub fn for_article(id: i32, conn: &Mutex<PgConnection>) -> MyResult<Vec<Self>> {
@@ -70,7 +71,7 @@ impl DbEdit {
         Ok(edit::table
             .filter(edit::dsl::id.eq(id))
             .order_by(edit::dsl::id.asc())
-            .get_results(&mut conn)?)
+            .get_results(conn.deref_mut())?)
     }
 }
 

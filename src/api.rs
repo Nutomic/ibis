@@ -1,5 +1,4 @@
 use crate::database::article::{DbArticle, DbArticleForm};
-use crate::database::dburl::DbUrl;
 use crate::database::edit::{DbEdit, EditVersion};
 use crate::database::{DbConflict, MyDataHandle};
 use crate::error::MyResult;
@@ -56,11 +55,11 @@ async fn create_article(
         }
     }
 
-    let instance_id: DbUrl = data.local_instance().ap_id.into();
-    let ap_id = Url::parse(&format!(
+    let instance_id = data.local_instance().ap_id;
+    let ap_id = ObjectId::parse(&format!(
         "http://{}:{}/article/{}",
-        instance_id.domain().unwrap(),
-        instance_id.port().unwrap(),
+        instance_id.inner().domain().unwrap(),
+        instance_id.inner().port().unwrap(),
         create_article.title
     ))?
     .into();
@@ -287,11 +286,11 @@ async fn fork_article(
             .clone()
     };
 
-    let instance_id: DbUrl = data.local_instance().ap_id.into();
-    let ap_id = Url::parse(&format!(
+    let instance_id = data.local_instance().ap_id;
+    let ap_id = ObjectId::parse(&format!(
         "http://{}:{}/article/{}",
-        instance_id.domain().unwrap(),
-        instance_id.port().unwrap(),
+        instance_id.inner().domain().unwrap(),
+        instance_id.inner().port().unwrap(),
         original_article.title
     ))?
     .into();

@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-activitypub_federation = { git = "https://github.com/LemmyNet/activitypub-federation-rust.git", branch = "parse-impl", features = ["axum"], default-features = false }
+activitypub_federation = { git = "https://github.com/LemmyNet/activitypub-federation-rust.git", branch = "diesel-feature", features = ["axum", "diesel"], default-features = false }
 anyhow = "1.0.75"
 async-trait = "0.1.74"
 axum = "0.6.20"

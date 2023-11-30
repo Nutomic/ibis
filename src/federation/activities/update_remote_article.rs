@@ -84,7 +84,7 @@ impl ActivityHandler for UpdateRemoteArticle {
             Ok(applied) => {
                 let edit = DbEdit::from_json(self.object.clone(), data).await?;
                 let article =
-                    DbArticle::update_text(edit.article_id, &applied, &mut data.db_connection)?;
+                    DbArticle::update_text(edit.article_id, &applied, &data.db_connection)?;
                 UpdateLocalArticle::send(article, vec![self.actor.dereference(data).await?], data)
                     .await?;
             }

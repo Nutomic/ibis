@@ -39,7 +39,7 @@ impl Object for DbEdit {
     }
 
     async fn into_json(self, data: &Data<Self::DataType>) -> Result<Self::Kind, Self::Error> {
-        let article = DbArticle::read(self.article_id, &mut data.db_connection)?;
+        let article = DbArticle::read(self.article_id, &data.db_connection)?;
         Ok(ApubEdit {
             kind: EditType::Edit,
             id: self.ap_id.into(),
@@ -68,7 +68,7 @@ impl Object for DbEdit {
             version: json.version,
             local: false,
         };
-        let edit = DbEdit::create(&form, &mut data.db_connection)?;
+        let edit = DbEdit::create(&form, &data.db_connection)?;
         Ok(edit)
     }
 }

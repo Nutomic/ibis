@@ -1,9 +1,10 @@
-use crate::database::dburl::DbUrl;
 use crate::database::edit::EditVersion;
 use crate::database::schema::article;
 use crate::error::MyResult;
 use crate::federation::objects::edits_collection::DbEditCollection;
+use crate::federation::objects::instance::DbInstance;
 use activitypub_federation::fetch::collection_id::CollectionId;
+use activitypub_federation::fetch::object_id::ObjectId;
 use diesel::pg::PgConnection;
 use diesel::ExpressionMethods;
 use diesel::{
@@ -20,8 +21,8 @@ pub struct DbArticle {
     pub id: i32,
     pub title: String,
     pub text: String,
-    pub ap_id: DbUrl,
-    pub instance_id: DbUrl,
+    pub ap_id: ObjectId<DbArticle>,
+    pub instance_id: ObjectId<DbInstance>,
     /// List of all edits which make up this article, oldest first.
     // TODO
     //pub edits: Vec<DbEdit>,
@@ -34,9 +35,9 @@ pub struct DbArticle {
 pub struct DbArticleForm {
     pub title: String,
     pub text: String,
-    pub ap_id: DbUrl,
+    pub ap_id: ObjectId<DbArticle>,
     // TODO: change to foreign key
-    pub instance_id: DbUrl,
+    pub instance_id: ObjectId<DbInstance>,
     // TODO: instead of this we can use latest entry in edits table
     pub latest_version: String,
     pub local: bool,
@@ -47,32 +48,35 @@ impl DbArticle {
         Ok(CollectionId::parse(&format!("{}/edits", self.ap_id))?)
     }
 
-    pub fn create(form: &DbArticleForm, conn: &Mutex<PgConnection>) -> MyResult<DbArticle> {
-        let mut conn = conn.lock().unwrap().deref_mut();
+    pub fn create(form: &DbArticleForm, conn: &Mutex<PgConnection>) -> MyResult<Self> {
+        let mut conn = conn.lock().unwrap();
         Ok(insert_into(article::table)
             .values(form)
             .on_conflict(article::dsl::ap_id)
             .do_update()
             .set(form)
-            .get_result(conn)?)
+            .get_result(conn.deref_mut())?)
     }
 
     pub fn update_text(id: i32, text: &str, conn: &Mutex<PgConnection>) -> MyResult<Self> {
         let mut conn = conn.lock().unwrap();
         Ok(diesel::update(article::dsl::article.find(id))
             .set(article::dsl::text.eq(text))
-            .get_result::<Self>(&mut conn)?)
+            .get_result::<Self>(conn.deref_mut())?)
     }
 
     pub fn read(id: i32, conn: &Mutex<PgConnection>) -> MyResult<DbArticle> {
         let mut conn = conn.lock().unwrap();
-        Ok(article::table.find(id).get_result(&mut conn)?)
+        Ok(article::table.find(id).get_result(conn.deref_mut())?)
     }
 
-    pub fn read_from_ap_id(ap_id: &DbUrl, conn: &Mutex<PgConnection>) -> MyResult<DbArticle> {
+    pub fn read_from_ap_id(
+        ap_id: &ObjectId<DbArticle>,
+        conn: &Mutex<PgConnection>,
+    ) -> MyResult<DbArticle> {
         let mut conn = conn.lock().unwrap();
         Ok(article::table
             .filter(article::dsl::ap_id.eq(ap_id))
-            .get_result(&mut conn)?)
+            .get_result(conn.deref_mut())?)
     }
 }

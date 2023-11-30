@@ -25,7 +25,7 @@ pub async fn submit_article_update(
     if original_article.local {
         let updated_article = {
             let mut lock = data.articles.lock().unwrap();
-            let article = lock.get_mut(&original_article.ap_id).unwrap();
+            let article = lock.get_mut(original_article.ap_id.inner()).unwrap();
             article.text = new_text;
             article.latest_version = edit.version.clone();
             article.clone()

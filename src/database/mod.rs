@@ -7,7 +7,7 @@ use crate::federation::objects::instance::DbInstance;
 use crate::utils::generate_article_version;
 use activitypub_federation::config::Data;
 use activitypub_federation::fetch::object_id::ObjectId;
-use diesel::{Identifiable, PgConnection, QueryDsl};
+use diesel::PgConnection;
 use diffy::{apply, merge, Patch};
 use edit::EditVersion;
 use std::collections::HashMap;
@@ -16,7 +16,6 @@ use std::sync::{Arc, Mutex};
 use url::Url;
 
 pub mod article;
-pub mod dburl;
 pub mod edit;
 mod schema;
 
@@ -62,11 +61,8 @@ impl DbConflict {
         &self,
         data: &Data<MyDataHandle>,
     ) -> MyResult<Option<ApiConflict>> {
-        let original_article = {
-            let mut lock = data.articles.lock().unwrap();
-            let article = lock.get_mut(self.article_id.inner()).unwrap();
-            article.clone()
-        };
+        let original_article =
+            DbArticle::read_from_ap_id(&self.article_id.clone().into(), &data.db_connection)?;
 
         // create common ancestor version
         let edits = DbEdit::for_article(original_article.id, &data.db_connection)?;
