@@ -37,7 +37,7 @@ impl Collection for DbEditCollection {
         owner: &Self::Owner,
         data: &Data<Self::DataType>,
     ) -> Result<Self::Kind, Self::Error> {
-        let edits = DbEditCollection(DbEdit::for_article(owner.id, &data.db_connection)?);
+        let edits = DbEditCollection(DbEdit::for_article(owner, &data.db_connection)?);
 
         let edits = future::try_join_all(
             edits

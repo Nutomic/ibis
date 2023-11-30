@@ -1,12 +1,12 @@
-use crate::database::article::DbArticle;
 use crate::database::schema::edit;
+use crate::database::DbArticle;
 use crate::error::MyResult;
 use activitypub_federation::fetch::object_id::ObjectId;
-use diesel::ExpressionMethods;
 use diesel::{
-    insert_into, AsChangeset, Identifiable, Insertable, PgConnection, QueryDsl, Queryable,
-    RunQueryDsl, Selectable,
+    insert_into, AsChangeset, Identifiable, Insertable, PgConnection, Queryable, RunQueryDsl,
+    Selectable,
 };
+use diesel::{Associations, BelongingToDsl};
 use diesel_derive_newtype::DieselNewType;
 use diffy::create_patch;
 use serde::{Deserialize, Serialize};
@@ -16,8 +16,18 @@ use std::sync::Mutex;
 use url::Url;
 
 /// Represents a single change to the article.
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Queryable, Selectable, Identifiable)]
-#[diesel(table_name = edit, check_for_backend(diesel::pg::Pg))]
+#[derive(
+    Clone,
+    Debug,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Queryable,
+    Selectable,
+    Identifiable,
+    Associations,
+)]
+#[diesel(table_name = edit, check_for_backend(diesel::pg::Pg), belongs_to(DbArticle, foreign_key = article_id))]
 pub struct DbEdit {
     pub id: i32,
     pub ap_id: ObjectId<DbEdit>,
@@ -66,12 +76,9 @@ impl DbEdit {
             .get_result(conn.deref_mut())?)
     }
 
-    pub fn for_article(id: i32, conn: &Mutex<PgConnection>) -> MyResult<Vec<Self>> {
+    pub fn for_article(article: &DbArticle, conn: &Mutex<PgConnection>) -> MyResult<Vec<Self>> {
         let mut conn = conn.lock().unwrap();
-        Ok(edit::table
-            .filter(edit::dsl::id.eq(id))
-            .order_by(edit::dsl::id.asc())
-            .get_results(conn.deref_mut())?)
+        Ok(DbEdit::belonging_to(&article).get_results(conn.deref_mut())?)
     }
 }
 

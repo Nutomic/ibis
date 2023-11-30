@@ -1,4 +1,4 @@
-use crate::database::edit::EditVersion;
+use crate::database::edit::{DbEdit, EditVersion};
 use crate::database::schema::article;
 use crate::error::MyResult;
 use crate::federation::objects::edits_collection::DbEditCollection;
@@ -6,6 +6,7 @@ use crate::federation::objects::instance::DbInstance;
 use activitypub_federation::fetch::collection_id::CollectionId;
 use activitypub_federation::fetch::object_id::ObjectId;
 use diesel::pg::PgConnection;
+use diesel::BelongingToDsl;
 use diesel::ExpressionMethods;
 use diesel::{
     insert_into, AsChangeset, BoolExpressionMethods, Identifiable, Insertable,
@@ -23,8 +24,16 @@ pub struct DbArticle {
     pub text: String,
     pub ap_id: ObjectId<DbArticle>,
     pub instance_id: ObjectId<DbInstance>,
+    // TODO: should read this from edits table instead of separate db field
     pub latest_version: EditVersion,
     pub local: bool,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Queryable)]
+#[diesel(table_name = article, check_for_backend(diesel::pg::Pg))]
+pub struct ArticleView {
+    pub article: DbArticle,
+    pub edits: Vec<DbEdit>,
 }
 
 #[derive(Debug, Clone, Insertable, AsChangeset)]
@@ -65,6 +74,13 @@ impl DbArticle {
     pub fn read(id: i32, conn: &Mutex<PgConnection>) -> MyResult<DbArticle> {
         let mut conn = conn.lock().unwrap();
         Ok(article::table.find(id).get_result(conn.deref_mut())?)
+    }
+
+    pub fn read_view(id: i32, conn: &Mutex<PgConnection>) -> MyResult<ArticleView> {
+        let mut conn = conn.lock().unwrap();
+        let article: DbArticle = article::table.find(id).get_result(conn.deref_mut())?;
+        let edits = DbEdit::belonging_to(&article).get_results(conn.deref_mut())?;
+        Ok(ArticleView { article, edits })
     }
 
     pub fn read_from_ap_id(

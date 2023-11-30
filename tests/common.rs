@@ -1,7 +1,7 @@
 use fediwiki::api::{
     ApiConflict, CreateArticleData, EditArticleData, FollowInstance, GetArticleData, ResolveObject,
 };
-use fediwiki::database::article::DbArticle;
+use fediwiki::database::article::{ArticleView, DbArticle};
 use fediwiki::error::MyResult;
 use fediwiki::federation::objects::instance::DbInstance;
 use fediwiki::start;
@@ -68,7 +68,7 @@ impl TestData {
 
 pub const TEST_ARTICLE_DEFAULT_TEXT: &str = "some\nexample\ntext\n";
 
-pub async fn create_article(hostname: &str, title: String) -> MyResult<DbArticle> {
+pub async fn create_article(hostname: &str, title: String) -> MyResult<ArticleView> {
     let create_form = CreateArticleData {
         title: title.clone(),
     };
@@ -83,9 +83,9 @@ pub async fn create_article(hostname: &str, title: String) -> MyResult<DbArticle
     edit_article(hostname, &edit_form).await
 }
 
-pub async fn get_article(hostname: &str, article_id: i32) -> MyResult<DbArticle> {
+pub async fn get_article(hostname: &str, article_id: i32) -> MyResult<ArticleView> {
     let get_article = GetArticleData { article_id };
-    get_query::<DbArticle, _>(hostname, "article", Some(get_article.clone())).await
+    get_query::<ArticleView, _>(hostname, "article", Some(get_article.clone())).await
 }
 
 pub async fn edit_article_with_conflict(
@@ -101,7 +101,7 @@ pub async fn edit_article_with_conflict(
         .await?)
 }
 
-pub async fn edit_article(hostname: &str, edit_form: &EditArticleData) -> MyResult<DbArticle> {
+pub async fn edit_article(hostname: &str, edit_form: &EditArticleData) -> MyResult<ArticleView> {
     let edit_res: Option<ApiConflict> = CLIENT
         .patch(format!("http://{}/api/v1/article", hostname))
         .form(&edit_form)
@@ -110,11 +110,7 @@ pub async fn edit_article(hostname: &str, edit_form: &EditArticleData) -> MyResu
         .json()
         .await?;
     assert!(edit_res.is_none());
-    let get_article = GetArticleData {
-        article_id: edit_form.article_id,
-    };
-    let updated_article: DbArticle = get_query(hostname, "article", Some(get_article)).await?;
-    Ok(updated_article)
+    get_article(hostname, edit_form.article_id).await
 }
 
 pub async fn get<T>(hostname: &str, endpoint: &str) -> MyResult<T>

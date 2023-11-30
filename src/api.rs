@@ -1,4 +1,4 @@
-use crate::database::article::{DbArticle, DbArticleForm};
+use crate::database::article::{ArticleView, DbArticle, DbArticleForm};
 use crate::database::edit::{DbEdit, EditVersion};
 use crate::database::{DbConflict, MyDataHandle};
 use crate::error::MyResult;
@@ -126,7 +126,7 @@ async fn edit_article(
     } else {
         // There have been other changes since this edit was initiated. Get the common ancestor
         // version and generate a diff to find out what exactly has changed.
-        let edits = DbEdit::for_article(original_article.id, &data.db_connection)?;
+        let edits = DbEdit::for_article(&original_article, &data.db_connection)?;
         let ancestor = generate_article_version(&edits, &edit_form.previous_version)?;
         let patch = create_patch(&ancestor, &edit_form.new_text);
 
@@ -154,8 +154,8 @@ pub struct GetArticleData {
 async fn get_article(
     Query(query): Query<GetArticleData>,
     data: Data<MyDataHandle>,
-) -> MyResult<Json<DbArticle>> {
-    Ok(Json(DbArticle::read(
+) -> MyResult<Json<ArticleView>> {
+    Ok(Json(DbArticle::read_view(
         query.article_id,
         &data.db_connection,
     )?))
@@ -183,9 +183,10 @@ async fn resolve_instance(
 async fn resolve_article(
     Query(query): Query<ResolveObject>,
     data: Data<MyDataHandle>,
-) -> MyResult<Json<DbArticle>> {
+) -> MyResult<Json<ArticleView>> {
     let article: DbArticle = ObjectId::from(query.id).dereference(&data).await?;
-    Ok(Json(article))
+    let edits = DbEdit::for_article(&article, &data.db_connection)?;
+    Ok(Json(ArticleView { article, edits }))
 }
 
 /// Retrieve the local instance info.
@@ -255,7 +256,7 @@ pub struct ForkArticleData {
 async fn fork_article(
     data: Data<MyDataHandle>,
     Form(fork_form): Form<ForkArticleData>,
-) -> MyResult<Json<DbArticle>> {
+) -> MyResult<Json<ArticleView>> {
     // TODO: lots of code duplicated from create_article(), can move it into helper
     let original_article = DbArticle::read(fork_form.article_id, &data.db_connection)?;
     let existing_article =
@@ -286,5 +287,5 @@ async fn fork_article(
 
     CreateArticle::send_to_followers(article.clone(), &data).await?;
 
-    Ok(Json(article))
+    Ok(Json(DbArticle::read_view(article.id, &data.db_connection)?))
 }

@@ -63,7 +63,7 @@ impl DbConflict {
             DbArticle::read_from_ap_id(&self.article_id.clone().into(), &data.db_connection)?;
 
         // create common ancestor version
-        let edits = DbEdit::for_article(original_article.id, &data.db_connection)?;
+        let edits = DbEdit::for_article(&original_article, &data.db_connection)?;
         let ancestor = generate_article_version(&edits, &self.previous_version)?;
 
         let patch = Patch::from_str(&self.diff)?;
