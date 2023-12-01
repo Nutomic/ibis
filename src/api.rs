@@ -45,10 +45,12 @@ async fn create_article(
     data: Data<MyDataHandle>,
     Form(create_article): Form<CreateArticleData>,
 ) -> MyResult<Json<DbArticle>> {
+    dbg!(1);
     let existing_article = DbArticle::read_local_title(&create_article.title, &data.db_connection);
     if existing_article.is_ok() {
         return Err(anyhow!("A local article with this title already exists").into());
     }
+    dbg!(2);
 
     let instance_id = data.local_instance().ap_id;
     let ap_id = ObjectId::parse(&format!(
@@ -66,9 +68,12 @@ async fn create_article(
         instance_id,
         local: true,
     };
-    let article = DbArticle::create(&form, &data.db_connection)?;
+    dbg!(3);
+    let article = dbg!(DbArticle::create(&form, &data.db_connection))?;
 
+    dbg!(4);
     CreateArticle::send_to_followers(article.clone(), &data).await?;
+    dbg!(5);
 
     Ok(Json(article))
 }

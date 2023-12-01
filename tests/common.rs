@@ -9,6 +9,8 @@ use once_cell::sync::Lazy;
 use reqwest::Client;
 use serde::de::Deserialize;
 use serde::ser::Serialize;
+use std::env::current_dir;
+use std::process::{Command, Stdio};
 use std::sync::Once;
 use tokio::task::JoinHandle;
 use tracing::log::LevelFilter;
@@ -17,12 +19,9 @@ use url::Url;
 pub static CLIENT: Lazy<Client> = Lazy::new(Client::new);
 
 pub struct TestData {
-    pub hostname_alpha: &'static str,
-    pub hostname_beta: &'static str,
-    pub hostname_gamma: &'static str,
-    handle_alpha: JoinHandle<()>,
-    handle_beta: JoinHandle<()>,
-    handle_gamma: JoinHandle<()>,
+    pub alpha: Instance,
+    pub beta: Instance,
+    pub gamma: Instance,
 }
 
 impl TestData {
@@ -36,33 +35,58 @@ impl TestData {
                 .init();
         });
 
-        let hostname_alpha = "localhost:8131";
-        let hostname_beta = "localhost:8132";
-        let hostname_gamma = "localhost:8133";
-        let handle_alpha = tokio::task::spawn(async {
-            start(hostname_alpha).await.unwrap();
-        });
-        let handle_beta = tokio::task::spawn(async {
-            start(hostname_beta).await.unwrap();
-        });
-        let handle_gamma = tokio::task::spawn(async {
-            start(hostname_gamma).await.unwrap();
-        });
         Self {
-            hostname_alpha,
-            hostname_beta,
-            hostname_gamma,
-            handle_alpha,
-            handle_beta,
-            handle_gamma,
+            alpha: Instance::start("alpha", 8131),
+            beta: Instance::start("beta", 8132),
+            gamma: Instance::start("gamma", 8133),
         }
     }
 
     pub fn stop(self) -> MyResult<()> {
-        self.handle_alpha.abort();
-        self.handle_beta.abort();
-        self.handle_gamma.abort();
+        self.alpha.stop();
+        self.beta.stop();
+        self.gamma.stop();
         Ok(())
+    }
+}
+
+pub struct Instance {
+    db_path: String,
+    pub hostname: String,
+    handle: JoinHandle<()>,
+}
+
+impl Instance {
+    fn start(name: &'static str, port: i32) -> Self {
+        let db_path = format!("{}/target/test_db/{name}", current_dir().unwrap().display());
+        // TODO: would be faster to use async Command from tokio and run in parallel
+        Command::new("./tests/scripts/start_dev_db.sh")
+            .arg(&db_path)
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .output()
+            .unwrap();
+        let db_url = format!("postgresql://lemmy:password@/lemmy?host={db_path}");
+        let hostname = format!("localhost:{port}");
+        let hostname_ = hostname.clone();
+        let handle = tokio::task::spawn(async move {
+            start(&hostname_, &db_url).await.unwrap();
+        });
+        Self {
+            db_path,
+            hostname,
+            handle,
+        }
+    }
+
+    fn stop(self) {
+        self.handle.abort();
+        Command::new("./tests/scripts/stop_dev_db.sh")
+            .arg(&self.db_path)
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .output()
+            .unwrap();
     }
 }
 
