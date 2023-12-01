@@ -9,7 +9,6 @@ diesel::table! {
         ap_id -> Varchar,
         #[max_length = 255]
         instance_id -> Varchar,
-        latest_version -> Text,
         local -> Bool,
     }
 }
@@ -22,6 +21,7 @@ diesel::table! {
         diff -> Text,
         article_id -> Int4,
         version -> Text,
+        previous_version -> Text,
         local -> Bool,
     }
 }

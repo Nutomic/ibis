@@ -1,6 +1,10 @@
 use crate::database::MyDataHandle;
 use crate::error::MyResult;
 
+use crate::database::article::DbArticle;
+use crate::database::edit::DbEdit;
+use crate::federation::activities::reject::RejectEdit;
+use crate::federation::activities::update_local_article::UpdateLocalArticle;
 use crate::federation::objects::edit::ApubEdit;
 use crate::federation::objects::instance::DbInstance;
 use crate::utils::generate_activity_id;
@@ -12,11 +16,6 @@ use activitypub_federation::{
     traits::{ActivityHandler, Object},
 };
 use diffy::{apply, Patch};
-
-use crate::database::article::DbArticle;
-use crate::database::edit::DbEdit;
-use crate::federation::activities::reject::RejectEdit;
-use crate::federation::activities::update_local_article::UpdateLocalArticle;
 use serde::{Deserialize, Serialize};
 use url::Url;
 
@@ -48,6 +47,9 @@ impl UpdateRemoteArticle {
             kind: Default::default(),
             id,
         };
+        // TODO: this is wrong and causes test failure. need to take previous_version from api param,
+        //       or put previous_version in DbEdit
+        dbg!(&update.object.previous_version);
         local_instance
             .send(update, vec![article_instance.inbox], data)
             .await?;

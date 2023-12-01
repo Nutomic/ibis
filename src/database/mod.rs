@@ -60,20 +60,28 @@ impl DbConflict {
         data: &Data<MyDataHandle>,
     ) -> MyResult<Option<ApiConflict>> {
         let original_article =
-            DbArticle::read_from_ap_id(&self.article_id.clone().into(), &data.db_connection)?;
+            DbArticle::read_from_ap_id(&self.article_id.clone(), &data.db_connection)?;
 
         // create common ancestor version
         let edits = DbEdit::for_article(&original_article, &data.db_connection)?;
         let ancestor = generate_article_version(&edits, &self.previous_version)?;
+        dbg!(&ancestor, &self.previous_version);
 
+        dbg!(&self.diff);
         let patch = Patch::from_str(&self.diff)?;
         // apply self.diff to ancestor to get `ours`
-        let ours = apply(&ancestor, &patch)?;
+        let ours = dbg!(apply(&ancestor, &patch))?;
         match merge(&ancestor, &ours, &original_article.text) {
             Ok(new_text) => {
                 // patch applies cleanly so we are done
                 // federate the change
-                submit_article_update(data, new_text, &original_article).await?;
+                submit_article_update(
+                    data,
+                    new_text,
+                    self.previous_version.clone(),
+                    &original_article,
+                )
+                .await?;
                 // remove conflict from db
                 let mut lock = data.conflicts.lock().unwrap();
                 lock.retain(|c| c.id != self.id);
@@ -84,8 +92,8 @@ impl DbConflict {
                 Ok(Some(ApiConflict {
                     id: self.id,
                     three_way_merge,
-                    article_id: original_article.ap_id.into(),
-                    previous_version: original_article.latest_version,
+                    article_id: original_article.ap_id.clone(),
+                    previous_version: original_article.latest_edit_version(&data.db_connection)?,
                 }))
             }
         }

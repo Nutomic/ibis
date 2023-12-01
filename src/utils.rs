@@ -4,6 +4,7 @@ use crate::error::MyResult;
 use anyhow::anyhow;
 use diffy::{apply, Patch};
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
+
 use url::{ParseError, Url};
 
 pub fn generate_activity_id(domain: &Url) -> Result<Url, ParseError> {
@@ -24,7 +25,11 @@ pub fn generate_activity_id(domain: &Url) -> Result<Url, ParseError> {
 /// TODO: should cache all these generated versions
 pub fn generate_article_version(edits: &Vec<DbEdit>, version: &EditVersion) -> MyResult<String> {
     let mut generated = String::new();
+    if version == &EditVersion::default() {
+        return Ok(generated);
+    }
     for e in edits {
+        dbg!(&e);
         let patch = Patch::from_str(&e.diff)?;
         generated = apply(&generated, &patch)?;
         if &e.version == version {

@@ -1,7 +1,7 @@
 use fediwiki::api::{
     ApiConflict, CreateArticleData, EditArticleData, FollowInstance, GetArticleData, ResolveObject,
 };
-use fediwiki::database::article::{ArticleView, DbArticle};
+use fediwiki::database::article::ArticleView;
 use fediwiki::error::MyResult;
 use fediwiki::federation::objects::instance::DbInstance;
 use fediwiki::start;
@@ -96,10 +96,10 @@ pub async fn create_article(hostname: &str, title: String) -> MyResult<ArticleVi
     let create_form = CreateArticleData {
         title: title.clone(),
     };
-    let article: DbArticle = post(hostname, "article", &create_form).await?;
+    let article: ArticleView = post(hostname, "article", &create_form).await?;
     // create initial edit to ensure that conflicts are generated (there are no conflicts on empty file)
     let edit_form = EditArticleData {
-        article_id: article.id,
+        article_id: article.article.id,
         new_text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
         previous_version: article.latest_version,
         resolve_conflict_id: None,

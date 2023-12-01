@@ -45,16 +45,14 @@ impl Object for DbArticle {
     }
 
     async fn into_json(self, data: &Data<Self::DataType>) -> Result<Self::Kind, Self::Error> {
-        let instance: DbInstance = ObjectId::from(self.instance_id.clone())
-            .dereference_local(data)
-            .await?;
+        let instance: DbInstance = self.instance_id.clone().dereference_local(data).await?;
         Ok(ApubArticle {
             kind: Default::default(),
-            id: self.ap_id.clone().into(),
-            attributed_to: instance.ap_id.clone().into(),
+            id: self.ap_id.clone(),
+            attributed_to: instance.ap_id.clone(),
             to: vec![public(), instance.followers_url()?],
             edits: self.edits_id()?,
-            latest_version: self.latest_version,
+            latest_version: self.latest_edit_version(&data.db_connection)?,
             content: self.text,
             name: self.title,
         })
@@ -73,10 +71,9 @@ impl Object for DbArticle {
         let form = DbArticleForm {
             title: json.name,
             text: json.content,
-            ap_id: json.id.into(),
-            latest_version: json.latest_version.0,
+            ap_id: json.id,
             local: false,
-            instance_id: json.attributed_to.into(),
+            instance_id: json.attributed_to,
         };
         let article = DbArticle::create(&form, &data.db_connection)?;
 

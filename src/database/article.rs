@@ -13,6 +13,7 @@ use diesel::{
     PgTextExpressionMethods, QueryDsl, Queryable, RunQueryDsl, Selectable,
 };
 use serde::{Deserialize, Serialize};
+
 use std::ops::DerefMut;
 use std::sync::Mutex;
 
@@ -24,8 +25,6 @@ pub struct DbArticle {
     pub text: String,
     pub ap_id: ObjectId<DbArticle>,
     pub instance_id: ObjectId<DbInstance>,
-    // TODO: should read this from edits table instead of separate db field
-    pub latest_version: EditVersion,
     pub local: bool,
 }
 
@@ -33,6 +32,7 @@ pub struct DbArticle {
 #[diesel(table_name = article, check_for_backend(diesel::pg::Pg))]
 pub struct ArticleView {
     pub article: DbArticle,
+    pub latest_version: EditVersion,
     pub edits: Vec<DbEdit>,
 }
 
@@ -44,8 +44,6 @@ pub struct DbArticleForm {
     pub ap_id: ObjectId<DbArticle>,
     // TODO: change to foreign key
     pub instance_id: ObjectId<DbInstance>,
-    // TODO: instead of this we can use latest entry in edits table
-    pub latest_version: String,
     pub local: bool,
 }
 
@@ -77,10 +75,18 @@ impl DbArticle {
     }
 
     pub fn read_view(id: i32, conn: &Mutex<PgConnection>) -> MyResult<ArticleView> {
+        let article: DbArticle = {
+            let mut conn = conn.lock().unwrap();
+            article::table.find(id).get_result(conn.deref_mut())?
+        };
+        let latest_version = article.latest_edit_version(conn)?;
         let mut conn = conn.lock().unwrap();
-        let article: DbArticle = article::table.find(id).get_result(conn.deref_mut())?;
-        let edits = DbEdit::belonging_to(&article).get_results(conn.deref_mut())?;
-        Ok(ArticleView { article, edits })
+        let edits: Vec<DbEdit> = DbEdit::belonging_to(&article).get_results(conn.deref_mut())?;
+        Ok(ArticleView {
+            article,
+            edits,
+            latest_version,
+        })
     }
 
     pub fn read_from_ap_id(
@@ -121,5 +127,15 @@ impl DbArticle {
                     .or(article::dsl::text.ilike(&replaced)),
             )
             .get_results(conn.deref_mut())?)
+    }
+
+    // TODO: shouldnt have to read all edits from db
+    pub fn latest_edit_version(&self, conn: &Mutex<PgConnection>) -> MyResult<EditVersion> {
+        let mut conn = conn.lock().unwrap();
+        let edits: Vec<DbEdit> = DbEdit::belonging_to(&self).get_results(conn.deref_mut())?;
+        match edits.last().map(|e| e.version.clone()) {
+            Some(latest_version) => Ok(latest_version),
+            None => Ok(EditVersion::default()),
+        }
     }
 }

@@ -26,7 +26,6 @@ const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
 pub async fn start(hostname: &str, database_url: &str) -> MyResult<()> {
     let fake_db = create_fake_db(hostname).await?;
 
-    dbg!(database_url);
     let db_connection = Arc::new(Mutex::new(PgConnection::establish(database_url)?));
     db_connection
         .lock()

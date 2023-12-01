@@ -12,8 +12,9 @@ use fediwiki::api::{
 };
 use fediwiki::database::article::{ArticleView, DbArticle};
 use fediwiki::error::MyResult;
-use fediwiki::federation::objects::edit::ApubEdit;
+
 use fediwiki::federation::objects::instance::DbInstance;
+use pretty_assertions::{assert_eq, assert_ne};
 use serial_test::serial;
 use url::Url;
 
@@ -42,7 +43,7 @@ async fn test_create_read_and_edit_article() -> MyResult<()> {
     let edit_form = EditArticleData {
         article_id: create_res.article.id,
         new_text: "Lorem Ipsum 2".to_string(),
-        previous_version: get_res.article.latest_version,
+        previous_version: get_res.latest_version,
         resolve_conflict_id: None,
     };
     let edit_res = edit_article(&data.alpha.hostname, &edit_form).await?;
@@ -116,7 +117,7 @@ async fn test_synchronize_articles() -> MyResult<()> {
     let edit_form = EditArticleData {
         article_id: create_res.article.id,
         new_text: "Lorem Ipsum 2\n".to_string(),
-        previous_version: create_res.article.latest_version,
+        previous_version: create_res.latest_version,
         resolve_conflict_id: None,
     };
     edit_article(&data.alpha.hostname, &edit_form).await?;
@@ -171,7 +172,7 @@ async fn test_edit_local_article() -> MyResult<()> {
     let edit_form = EditArticleData {
         article_id: create_res.article.id,
         new_text: "Lorem Ipsum 2".to_string(),
-        previous_version: get_res.article.latest_version,
+        previous_version: get_res.latest_version,
         resolve_conflict_id: None,
     };
     let edit_res = edit_article(&data.beta.hostname, &edit_form).await?;
@@ -218,7 +219,7 @@ async fn test_edit_remote_article() -> MyResult<()> {
     let edit_form = EditArticleData {
         article_id: create_res.article.id,
         new_text: "Lorem Ipsum 2".to_string(),
-        previous_version: get_res.article.latest_version,
+        previous_version: get_res.latest_version,
         resolve_conflict_id: None,
     };
     let edit_res = edit_article(&data.alpha.hostname, &edit_form).await?;
@@ -259,7 +260,7 @@ async fn test_local_edit_conflict() -> MyResult<()> {
     let edit_form = EditArticleData {
         article_id: create_res.article.id,
         new_text: "Lorem Ipsum\n".to_string(),
-        previous_version: create_res.article.latest_version.clone(),
+        previous_version: create_res.latest_version.clone(),
         resolve_conflict_id: None,
     };
     let edit_res = edit_article(&data.alpha.hostname, &edit_form).await?;
@@ -270,7 +271,7 @@ async fn test_local_edit_conflict() -> MyResult<()> {
     let edit_form = EditArticleData {
         article_id: create_res.article.id,
         new_text: "Ipsum Lorem\n".to_string(),
-        previous_version: create_res.article.latest_version,
+        previous_version: create_res.latest_version,
         resolve_conflict_id: None,
     };
     let edit_res = edit_article_with_conflict(&data.alpha.hostname, &edit_form)
@@ -316,19 +317,19 @@ async fn test_federated_edit_conflict() -> MyResult<()> {
     let resolve_object = ResolveObject {
         id: create_res.article.ap_id.inner().clone(),
     };
-    let resolve_res: DbArticle = get_query(
+    let resolve_res: ArticleView = get_query(
         &data.gamma.hostname,
         "resolve_article",
         Some(resolve_object),
     )
     .await?;
-    assert_eq!(create_res.article.text, resolve_res.text);
+    assert_eq!(create_res.article.text, resolve_res.article.text);
 
     // alpha edits article
     let edit_form = EditArticleData {
         article_id: create_res.article.id,
         new_text: "Lorem Ipsum\n".to_string(),
-        previous_version: create_res.article.latest_version.clone(),
+        previous_version: create_res.latest_version.clone(),
         resolve_conflict_id: None,
     };
     let edit_res = edit_article(&data.alpha.hostname, &edit_form).await?;
@@ -342,17 +343,20 @@ async fn test_federated_edit_conflict() -> MyResult<()> {
 
     // gamma also edits, as its not the latest version there is a conflict. local version should
     // not be updated with this conflicting version, instead user needs to handle the conflict
+    dbg!(&create_res.article.text, &create_res.latest_version);
     let edit_form = EditArticleData {
         article_id: create_res.article.id,
         new_text: "aaaa\n".to_string(),
-        previous_version: create_res.article.latest_version,
+        previous_version: create_res.latest_version,
         resolve_conflict_id: None,
     };
+    dbg!(1);
     let edit_res = edit_article(&data.gamma.hostname, &edit_form).await?;
     assert_ne!(edit_form.new_text, edit_res.article.text);
     assert_eq!(2, edit_res.edits.len());
     assert!(!edit_res.article.local);
 
+    dbg!(2);
     let conflicts: Vec<ApiConflict> =
         get_query(&data.gamma.hostname, "edit_conflicts", None::<()>).await?;
     assert_eq!(1, conflicts.len());
@@ -364,13 +368,16 @@ async fn test_federated_edit_conflict() -> MyResult<()> {
         previous_version: conflicts[0].previous_version.clone(),
         resolve_conflict_id: Some(conflicts[0].id),
     };
+    dbg!(3);
     let edit_res = edit_article(&data.gamma.hostname, &edit_form).await?;
     assert_eq!(edit_form.new_text, edit_res.article.text);
     assert_eq!(3, edit_res.edits.len());
 
-    let conflicts: Vec<ApubEdit> =
+    dbg!(4);
+    let conflicts: Vec<ApiConflict> =
         get_query(&data.gamma.hostname, "edit_conflicts", None::<()>).await?;
     assert_eq!(0, conflicts.len());
+    dbg!(5);
 
     data.stop()
 }
@@ -390,7 +397,7 @@ async fn test_overlapping_edits_no_conflict() -> MyResult<()> {
     let edit_form = EditArticleData {
         article_id: create_res.article.id,
         new_text: "my\nexample\ntext\n".to_string(),
-        previous_version: create_res.article.latest_version.clone(),
+        previous_version: create_res.latest_version.clone(),
         resolve_conflict_id: None,
     };
     let edit_res = edit_article(&data.alpha.hostname, &edit_form).await?;
@@ -401,7 +408,7 @@ async fn test_overlapping_edits_no_conflict() -> MyResult<()> {
     let edit_form = EditArticleData {
         article_id: create_res.article.id,
         new_text: "some\nexample\narticle\n".to_string(),
-        previous_version: create_res.article.latest_version,
+        previous_version: create_res.latest_version,
         resolve_conflict_id: None,
     };
     let edit_res = edit_article(&data.alpha.hostname, &edit_form).await?;
@@ -442,11 +449,12 @@ async fn test_fork_article() -> MyResult<()> {
     let forked_article = fork_res.article;
     assert_eq!(resolved_article.title, forked_article.title);
     assert_eq!(resolved_article.text, forked_article.text);
-    assert_eq!(resolve_res.edits, fork_res.edits);
-    assert_eq!(
-        resolved_article.latest_version,
-        forked_article.latest_version
-    );
+    assert_eq!(resolve_res.edits.len(), fork_res.edits.len());
+    assert_eq!(resolve_res.edits[0].diff, fork_res.edits[0].diff);
+    assert_eq!(resolve_res.edits[0].version, fork_res.edits[0].version);
+    assert_ne!(resolve_res.edits[0].id, fork_res.edits[0].id);
+    assert!(fork_res.edits[0].local);
+    assert_eq!(resolve_res.latest_version, fork_res.latest_version);
     assert_ne!(resolved_article.ap_id, forked_article.ap_id);
     assert!(forked_article.local);
 

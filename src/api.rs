@@ -44,13 +44,11 @@ pub struct CreateArticleData {
 async fn create_article(
     data: Data<MyDataHandle>,
     Form(create_article): Form<CreateArticleData>,
-) -> MyResult<Json<DbArticle>> {
-    dbg!(1);
+) -> MyResult<Json<ArticleView>> {
     let existing_article = DbArticle::read_local_title(&create_article.title, &data.db_connection);
     if existing_article.is_ok() {
         return Err(anyhow!("A local article with this title already exists").into());
     }
-    dbg!(2);
 
     let instance_id = data.local_instance().ap_id;
     let ap_id = ObjectId::parse(&format!(
@@ -58,24 +56,19 @@ async fn create_article(
         instance_id.inner().domain().unwrap(),
         instance_id.inner().port().unwrap(),
         create_article.title
-    ))?
-    .into();
+    ))?;
     let form = DbArticleForm {
         title: create_article.title,
         text: String::new(),
         ap_id,
-        latest_version: Default::default(),
         instance_id,
         local: true,
     };
-    dbg!(3);
-    let article = dbg!(DbArticle::create(&form, &data.db_connection))?;
+    let article = DbArticle::create(&form, &data.db_connection)?;
 
-    dbg!(4);
     CreateArticle::send_to_followers(article.clone(), &data).await?;
-    dbg!(5);
 
-    Ok(Json(article))
+    Ok(Json(DbArticle::read_view(article.id, &data.db_connection)?))
 }
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -122,30 +115,37 @@ async fn edit_article(
         }
         lock.retain(|c| &c.id != resolve_conflict_id);
     }
-    let original_article = DbArticle::read(edit_form.article_id, &data.db_connection)?;
+    let original_article = DbArticle::read_view(edit_form.article_id, &data.db_connection)?;
 
     if edit_form.previous_version == original_article.latest_version {
         // No intermediate changes, simply submit new version
-        submit_article_update(&data, edit_form.new_text.clone(), &original_article).await?;
+        submit_article_update(
+            &data,
+            edit_form.new_text.clone(),
+            edit_form.previous_version,
+            &original_article.article,
+        )
+        .await?;
         Ok(Json(None))
     } else {
         // There have been other changes since this edit was initiated. Get the common ancestor
         // version and generate a diff to find out what exactly has changed.
-        let edits = DbEdit::for_article(&original_article, &data.db_connection)?;
-        let ancestor = generate_article_version(&edits, &edit_form.previous_version)?;
+        let ancestor =
+            generate_article_version(&original_article.edits, &edit_form.previous_version)?;
         let patch = create_patch(&ancestor, &edit_form.new_text);
+        dbg!(&edit_form.previous_version);
 
         let db_conflict = DbConflict {
             id: random(),
             diff: patch.to_string(),
-            article_id: original_article.ap_id.clone().into(),
+            article_id: original_article.article.ap_id.clone(),
             previous_version: edit_form.previous_version,
         };
         {
             let mut lock = data.conflicts.lock().unwrap();
             lock.push(db_conflict.clone());
         }
-        Ok(Json(db_conflict.to_api_conflict(&data).await?))
+        Ok(Json(dbg!(db_conflict.to_api_conflict(&data).await)?))
     }
 }
 
@@ -191,7 +191,12 @@ async fn resolve_article(
 ) -> MyResult<Json<ArticleView>> {
     let article: DbArticle = ObjectId::from(query.id).dereference(&data).await?;
     let edits = DbEdit::for_article(&article, &data.db_connection)?;
-    Ok(Json(ArticleView { article, edits }))
+    let latest_version = edits.last().unwrap().version.clone();
+    Ok(Json(ArticleView {
+        article,
+        edits,
+        latest_version,
+    }))
 }
 
 /// Retrieve the local instance info.
@@ -220,16 +225,21 @@ async fn follow_instance(
 /// Get a list of all unresolved edit conflicts.
 #[debug_handler]
 async fn edit_conflicts(data: Data<MyDataHandle>) -> MyResult<Json<Vec<ApiConflict>>> {
+    dbg!("a");
     let conflicts = { data.conflicts.lock().unwrap().to_vec() };
+    dbg!(&conflicts);
+    dbg!("b");
     let conflicts: Vec<ApiConflict> = try_join_all(conflicts.into_iter().map(|c| {
         let data = data.reset_request_count();
-        async move { c.to_api_conflict(&data).await }
+        dbg!(&c.previous_version);
+        async move { dbg!(c.to_api_conflict(&data).await) }
     }))
     .await?
     .into_iter()
     .flatten()
     .collect();
-    Ok(Json(conflicts))
+    dbg!("c");
+    Ok(Json(dbg!(conflicts)))
 }
 
 #[derive(Deserialize, Serialize, Clone)]
@@ -276,19 +286,22 @@ async fn fork_article(
         instance_id.inner().domain().unwrap(),
         instance_id.inner().port().unwrap(),
         original_article.title
-    ))?
-    .into();
+    ))?;
     let form = DbArticleForm {
         title: original_article.title.clone(),
         text: original_article.text.clone(),
         ap_id,
-        latest_version: original_article.latest_version.0.clone(),
         instance_id,
         local: true,
     };
     let article = DbArticle::create(&form, &data.db_connection)?;
 
-    // TODO: need to copy edits separately with db query
+    // copy edits to new article
+    let edits = DbEdit::for_article(&original_article, &data.db_connection)?;
+    for e in edits {
+        let form = e.copy_to_local_fork(&article)?;
+        DbEdit::create(&form, &data.db_connection)?;
+    }
 
     CreateArticle::send_to_followers(article.clone(), &data).await?;
 

@@ -42,12 +42,12 @@ impl Object for DbEdit {
         let article = DbArticle::read(self.article_id, &data.db_connection)?;
         Ok(ApubEdit {
             kind: EditType::Edit,
-            id: self.ap_id.into(),
+            id: self.ap_id,
             content: self.diff,
             version: self.version,
             // TODO: this is wrong
-            previous_version: article.latest_version,
-            object: article.ap_id.into(),
+            previous_version: self.previous_version,
+            object: article.ap_id,
         })
     }
 
@@ -62,10 +62,11 @@ impl Object for DbEdit {
     async fn from_json(json: Self::Kind, data: &Data<Self::DataType>) -> Result<Self, Self::Error> {
         let article = json.object.dereference(data).await?;
         let form = DbEditForm {
-            ap_id: json.id.into(),
+            ap_id: json.id,
             diff: json.content,
             article_id: article.id,
             version: json.version,
+            previous_version: json.previous_version,
             local: false,
         };
         let edit = DbEdit::create(&form, &data.db_connection)?;
