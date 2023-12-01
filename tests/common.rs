@@ -12,6 +12,7 @@ use serde::ser::Serialize;
 use std::env::current_dir;
 use std::process::{Command, Stdio};
 use std::sync::Once;
+use std::thread::spawn;
 use tokio::task::JoinHandle;
 use tracing::log::LevelFilter;
 use url::Url;
@@ -19,9 +20,9 @@ use url::Url;
 pub static CLIENT: Lazy<Client> = Lazy::new(Client::new);
 
 pub struct TestData {
-    pub alpha: Instance,
-    pub beta: Instance,
-    pub gamma: Instance,
+    pub alpha: FediwikiInstance,
+    pub beta: FediwikiInstance,
+    pub gamma: FediwikiInstance,
 }
 
 impl TestData {
@@ -35,51 +36,56 @@ impl TestData {
                 .init();
         });
 
-        // initialize postgres databases in parallel because its slow
-        let (alpha_db_path, alpha_db_thread) = start_temporary_database("alpha");
-        let (beta_db_path, beta_db_thread) = start_temporary_database("beta");
-        let (gamma_db_path, gamma_db_thread) = start_temporary_database("gamma");
+        let alpha_db_path = generate_db_path("alpha");
+        let beta_db_path = generate_db_path("beta");
+        let gamma_db_path = generate_db_path("gamma");
 
-        alpha_db_thread.join().unwrap();
-        beta_db_thread.join().unwrap();
-        gamma_db_thread.join().unwrap();
+        // initialize postgres databases in parallel because its slow
+        for j in [
+            FediwikiInstance::prepare_db(alpha_db_path.clone()),
+            FediwikiInstance::prepare_db(beta_db_path.clone()),
+            FediwikiInstance::prepare_db(gamma_db_path.clone()),
+        ] {
+            j.join().unwrap();
+        }
 
         Self {
-            alpha: Instance::start(alpha_db_path, 8131),
-            beta: Instance::start(beta_db_path, 8132),
-            gamma: Instance::start(gamma_db_path, 8133),
+            alpha: FediwikiInstance::start(alpha_db_path, 8131),
+            beta: FediwikiInstance::start(beta_db_path, 8132),
+            gamma: FediwikiInstance::start(gamma_db_path, 8133),
         }
     }
 
     pub fn stop(self) -> MyResult<()> {
-        self.alpha.stop();
-        self.beta.stop();
-        self.gamma.stop();
+        for j in [self.alpha.stop(), self.beta.stop(), self.gamma.stop()] {
+            j.join().unwrap();
+        }
         Ok(())
     }
 }
 
-fn start_temporary_database(name: &'static str) -> (String, std::thread::JoinHandle<()>) {
-    let db_path = format!("{}/target/test_db/{name}", current_dir().unwrap().display());
-    let db_path_ = db_path.clone();
-    let db_thread = std::thread::spawn(move || {
-        Command::new("./tests/scripts/start_dev_db.sh")
-            .arg(&db_path_)
-            .stdout(Stdio::null())
-            .stderr(Stdio::null())
-            .output()
-            .unwrap();
-    });
-    (db_path, db_thread)
+fn generate_db_path(name: &'static str) -> String {
+    format!("{}/target/test_db/{name}", current_dir().unwrap().display())
 }
 
-pub struct Instance {
-    db_path: String,
+pub struct FediwikiInstance {
     pub hostname: String,
-    handle: JoinHandle<()>,
+    db_path: String,
+    db_handle: JoinHandle<()>,
 }
 
-impl Instance {
+impl FediwikiInstance {
+    fn prepare_db(db_path: String) -> std::thread::JoinHandle<()> {
+        spawn(move || {
+            Command::new("./tests/scripts/start_dev_db.sh")
+                .arg(&db_path)
+                .stdout(Stdio::null())
+                .stderr(Stdio::null())
+                .output()
+                .unwrap();
+        })
+    }
+
     fn start(db_path: String, port: i32) -> Self {
         let db_url = format!("postgresql://lemmy:password@/lemmy?host={db_path}");
         let hostname = format!("localhost:{port}");
@@ -90,18 +96,20 @@ impl Instance {
         Self {
             db_path,
             hostname,
-            handle,
+            db_handle: handle,
         }
     }
 
-    fn stop(self) {
-        self.handle.abort();
-        Command::new("./tests/scripts/stop_dev_db.sh")
-            .arg(&self.db_path)
-            .stdout(Stdio::null())
-            .stderr(Stdio::null())
-            .output()
-            .unwrap();
+    fn stop(self) -> std::thread::JoinHandle<()> {
+        self.db_handle.abort();
+        spawn(move || {
+            Command::new("./tests/scripts/stop_dev_db.sh")
+                .arg(&self.db_path)
+                .stdout(Stdio::null())
+                .stderr(Stdio::null())
+                .output()
+                .unwrap();
+        })
     }
 }
 

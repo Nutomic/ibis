@@ -4,14 +4,16 @@ set -e
 export PGHOST=$1
 export PGDATA="$1/dev_pgdata"
 
-# If cluster exists, stop the server and delete the cluster
+# If cluster exists, stop the server
 if [ -d $PGDATA ]
 then
   # Prevent `stop` from failing if server already stopped
   pg_ctl restart > /dev/null
   pg_ctl stop
-  rm -rf $PGDATA
 fi
+
+# Remove any leftover data from revious run
+rm -rf $PGDATA
 
 # Create cluster
 initdb --username=postgres --auth=trust --no-instructions
