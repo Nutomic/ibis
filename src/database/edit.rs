@@ -35,8 +35,6 @@ pub struct DbEdit {
     pub version: EditVersion,
     // TODO: could be an Option<DbEdit.id> instead
     pub previous_version: EditVersion,
-    // TODO: there is already `local` field on article, do we need this?
-    pub local: bool,
 }
 
 #[derive(Debug, Clone, Insertable, AsChangeset)]
@@ -47,7 +45,6 @@ pub struct DbEditForm {
     pub article_id: i32,
     pub version: EditVersion,
     pub previous_version: EditVersion,
-    pub local: bool,
 }
 
 impl DbEditForm {
@@ -64,7 +61,6 @@ impl DbEditForm {
             article_id: original_article.id,
             version: EditVersion(hash),
             previous_version,
-            local: true,
         })
     }
 
@@ -106,7 +102,6 @@ impl DbEdit {
             article_id: article.id,
             version: self.version,
             previous_version: self.previous_version,
-            local: true,
         })
     }
 }

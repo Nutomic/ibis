@@ -13,6 +13,5 @@ create table edit (
     diff text not null,
     article_id int REFERENCES article ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
     version text not null,
-    previous_version text not null,
-    local bool not null
+    previous_version text not null
 )

@@ -36,7 +36,6 @@ pub async fn submit_article_update(
             article_id: form.article_id,
             version: form.version,
             previous_version: form.previous_version,
-            local: form.local,
         };
         let instance: DbInstance = original_article
             .instance_id

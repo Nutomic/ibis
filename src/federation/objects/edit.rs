@@ -67,7 +67,6 @@ impl Object for DbEdit {
             article_id: article.id,
             version: json.version,
             previous_version: json.previous_version,
-            local: false,
         };
         let edit = DbEdit::create(&form, &data.db_connection)?;
         Ok(edit)

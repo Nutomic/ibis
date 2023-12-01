@@ -22,7 +22,6 @@ diesel::table! {
         article_id -> Int4,
         version -> Text,
         previous_version -> Text,
-        local -> Bool,
     }
 }
 

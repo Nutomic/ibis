@@ -453,7 +453,6 @@ async fn test_fork_article() -> MyResult<()> {
     assert_eq!(resolve_res.edits[0].diff, fork_res.edits[0].diff);
     assert_eq!(resolve_res.edits[0].version, fork_res.edits[0].version);
     assert_ne!(resolve_res.edits[0].id, fork_res.edits[0].id);
-    assert!(fork_res.edits[0].local);
     assert_eq!(resolve_res.latest_version, fork_res.latest_version);
     assert_ne!(resolved_article.ap_id, forked_article.ap_id);
     assert!(forked_article.local);
