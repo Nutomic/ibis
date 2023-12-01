@@ -35,10 +35,19 @@ impl TestData {
                 .init();
         });
 
+        // initialize postgres databases in parallel because its slow
+        let (alpha_db_path, alpha_db_thread) = start_temporary_database("alpha");
+        let (beta_db_path, beta_db_thread) = start_temporary_database("beta");
+        let (gamma_db_path, gamma_db_thread) = start_temporary_database("gamma");
+
+        alpha_db_thread.join().unwrap();
+        beta_db_thread.join().unwrap();
+        gamma_db_thread.join().unwrap();
+
         Self {
-            alpha: Instance::start("alpha", 8131),
-            beta: Instance::start("beta", 8132),
-            gamma: Instance::start("gamma", 8133),
+            alpha: Instance::start(alpha_db_path, 8131),
+            beta: Instance::start(beta_db_path, 8132),
+            gamma: Instance::start(gamma_db_path, 8133),
         }
     }
 
@@ -50,6 +59,20 @@ impl TestData {
     }
 }
 
+fn start_temporary_database(name: &'static str) -> (String, std::thread::JoinHandle<()>) {
+    let db_path = format!("{}/target/test_db/{name}", current_dir().unwrap().display());
+    let db_path_ = db_path.clone();
+    let db_thread = std::thread::spawn(move || {
+        Command::new("./tests/scripts/start_dev_db.sh")
+            .arg(&db_path_)
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .output()
+            .unwrap();
+    });
+    (db_path, db_thread)
+}
+
 pub struct Instance {
     db_path: String,
     pub hostname: String,
@@ -57,15 +80,7 @@ pub struct Instance {
 }
 
 impl Instance {
-    fn start(name: &'static str, port: i32) -> Self {
-        let db_path = format!("{}/target/test_db/{name}", current_dir().unwrap().display());
-        // TODO: would be faster to use async Command from tokio and run in parallel
-        Command::new("./tests/scripts/start_dev_db.sh")
-            .arg(&db_path)
-            .stdout(Stdio::null())
-            .stderr(Stdio::null())
-            .output()
-            .unwrap();
+    fn start(db_path: String, port: i32) -> Self {
         let db_url = format!("postgresql://lemmy:password@/lemmy?host={db_path}");
         let hostname = format!("localhost:{port}");
         let hostname_ = hostname.clone();

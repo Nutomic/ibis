@@ -16,7 +16,8 @@ fi
 # Create cluster
 initdb --username=postgres --auth=trust --no-instructions
 
-#touch "$PGHOST/.s.PGSQL.5432"
+touch "$PGHOST/.s.PGSQL.5432"
+echo "$PGHOST/.s.PGSQL.5432"
 
 # Start server that only listens to socket in current directory
 pg_ctl start --options="-c listen_addresses= -c unix_socket_directories=$PGHOST"
