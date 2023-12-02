@@ -1,8 +1,8 @@
 use crate::database::edit::{DbEdit, EditVersion};
+use crate::database::instance::DbInstance;
 use crate::database::schema::article;
 use crate::error::MyResult;
 use crate::federation::objects::edits_collection::DbEditCollection;
-use crate::federation::objects::instance::DbInstance;
 use activitypub_federation::fetch::collection_id::CollectionId;
 use activitypub_federation::fetch::object_id::ObjectId;
 use diesel::pg::PgConnection;
@@ -18,13 +18,13 @@ use std::ops::DerefMut;
 use std::sync::Mutex;
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Queryable, Selectable, Identifiable)]
-#[diesel(table_name = article, check_for_backend(diesel::pg::Pg))]
+#[diesel(table_name = article, check_for_backend(diesel::pg::Pg), belongs_to(DbInstance, foreign_key = instance_id))]
 pub struct DbArticle {
     pub id: i32,
     pub title: String,
     pub text: String,
     pub ap_id: ObjectId<DbArticle>,
-    pub instance_id: ObjectId<DbInstance>,
+    pub instance_id: i32,
     pub local: bool,
 }
 
@@ -42,8 +42,7 @@ pub struct DbArticleForm {
     pub title: String,
     pub text: String,
     pub ap_id: ObjectId<DbArticle>,
-    // TODO: change to foreign key
-    pub instance_id: ObjectId<DbInstance>,
+    pub instance_id: i32,
     pub local: bool,
 }
 

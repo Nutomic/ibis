@@ -1,9 +1,10 @@
-use crate::database::article::DbArticle;
+use crate::database::article::{ArticleView, DbArticle};
 use crate::database::MyDataHandle;
 use crate::error::Error;
 use crate::federation::objects::edit::ApubEdit;
 
 use crate::database::edit::DbEdit;
+use crate::database::instance::DbInstance;
 use activitypub_federation::kinds::collection::OrderedCollectionType;
 use activitypub_federation::{
     config::Data,
@@ -37,19 +38,20 @@ impl Collection for DbEditCollection {
         owner: &Self::Owner,
         data: &Data<Self::DataType>,
     ) -> Result<Self::Kind, Self::Error> {
-        let edits = DbEditCollection(DbEdit::for_article(owner, &data.db_connection)?);
+        let article = DbArticle::read_view(owner.id, &data.db_connection)?;
 
         let edits = future::try_join_all(
-            edits
-                .0
+            article
+                .edits
                 .into_iter()
                 .map(|a| a.into_json(data))
                 .collect::<Vec<_>>(),
         )
         .await?;
+        let local_instance = DbInstance::read_local_instance(&data.db_connection)?;
         let collection = ApubEditCollection {
             r#type: Default::default(),
-            id: Url::from(data.local_instance().articles_id),
+            id: Url::from(local_instance.articles_url),
             total_items: edits.len() as i32,
             items: edits,
         };

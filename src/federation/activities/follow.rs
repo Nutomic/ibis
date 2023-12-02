@@ -1,5 +1,5 @@
+use crate::database::instance::DbInstance;
 use crate::error::MyResult;
-use crate::federation::objects::instance::DbInstance;
 use crate::{database::MyDataHandle, federation::activities::accept::Accept, generate_activity_id};
 use activitypub_federation::{
     config::Data,
@@ -21,14 +21,22 @@ pub struct Follow {
 }
 
 impl Follow {
-    pub fn new(actor: ObjectId<DbInstance>, object: ObjectId<DbInstance>) -> MyResult<Follow> {
-        let id = generate_activity_id(actor.inner())?;
-        Ok(Follow {
-            actor,
-            object,
+    pub async fn send(
+        local_instance: DbInstance,
+        to: DbInstance,
+        data: &Data<MyDataHandle>,
+    ) -> MyResult<()> {
+        let id = generate_activity_id(local_instance.ap_id.inner())?;
+        let follow = Follow {
+            actor: local_instance.ap_id.clone(),
+            object: to.ap_id.clone(),
             kind: Default::default(),
             id,
-        })
+        };
+        local_instance
+            .send(follow, vec![to.shared_inbox_or_inbox()], data)
+            .await?;
+        Ok(())
     }
 }
 
@@ -51,13 +59,8 @@ impl ActivityHandler for Follow {
 
     async fn receive(self, data: &Data<Self::DataType>) -> Result<(), Self::Error> {
         let actor = self.actor.dereference(data).await?;
-        // add to followers
-        let local_instance = {
-            let mut lock = data.instances.lock().unwrap();
-            let local_instance = lock.iter_mut().find(|i| i.1.local).unwrap().1;
-            local_instance.followers.push(actor);
-            local_instance.clone()
-        };
+        let local_instance = DbInstance::read_local_instance(&data.db_connection)?;
+        DbInstance::follow(actor.id, local_instance.id, false, &data)?;
 
         // send back an accept
         let follower = self.actor.dereference(data).await?;

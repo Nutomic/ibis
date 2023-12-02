@@ -3,13 +3,13 @@ use crate::database::article::DbArticle;
 use crate::database::edit::DbEdit;
 use crate::error::MyResult;
 use crate::federation::activities::submit_article_update;
-use crate::federation::objects::instance::DbInstance;
 use crate::utils::generate_article_version;
 use activitypub_federation::config::Data;
 use activitypub_federation::fetch::object_id::ObjectId;
 use diesel::PgConnection;
 use diffy::{apply, merge, Patch};
 use edit::EditVersion;
+use instance::DbInstance;
 use std::collections::HashMap;
 use std::ops::Deref;
 use std::sync::{Arc, Mutex};
@@ -17,6 +17,7 @@ use url::Url;
 
 pub mod article;
 pub mod edit;
+pub mod instance;
 mod schema;
 
 #[derive(Clone)]
@@ -35,15 +36,7 @@ impl Deref for MyData {
 pub type MyDataHandle = MyData;
 
 pub struct FakeDatabase {
-    pub instances: Mutex<HashMap<Url, DbInstance>>,
     pub conflicts: Mutex<Vec<DbConflict>>,
-}
-
-impl FakeDatabase {
-    pub fn local_instance(&self) -> DbInstance {
-        let lock = self.instances.lock().unwrap();
-        lock.iter().find(|i| i.1.local).unwrap().1.clone()
-    }
 }
 
 #[derive(Clone, Debug)]

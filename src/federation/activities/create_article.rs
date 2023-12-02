@@ -1,7 +1,7 @@
+use crate::database::instance::DbInstance;
 use crate::database::{article::DbArticle, MyDataHandle};
 use crate::error::MyResult;
 use crate::federation::objects::article::ApubArticle;
-use crate::federation::objects::instance::DbInstance;
 use crate::utils::generate_activity_id;
 use activitypub_federation::kinds::activity::CreateType;
 use activitypub_federation::{
@@ -27,12 +27,13 @@ pub struct CreateArticle {
 
 impl CreateArticle {
     pub async fn send_to_followers(article: DbArticle, data: &Data<MyDataHandle>) -> MyResult<()> {
-        let local_instance = data.local_instance();
+        let local_instance = DbInstance::read_local_instance(&data.db_connection)?;
         let object = article.clone().into_json(data).await?;
         let id = generate_activity_id(local_instance.ap_id.inner())?;
+        let to = local_instance.follower_ids(&data)?;
         let create = CreateArticle {
             actor: local_instance.ap_id.clone(),
-            to: local_instance.follower_ids(),
+            to,
             object,
             kind: Default::default(),
             id,
@@ -63,9 +64,8 @@ impl ActivityHandler for CreateArticle {
     async fn receive(self, data: &Data<Self::DataType>) -> Result<(), Self::Error> {
         let article = DbArticle::from_json(self.object.clone(), data).await?;
         if article.local {
-            data.local_instance()
-                .send_to_followers(self, vec![], data)
-                .await?;
+            let local_instance = DbInstance::read_local_instance(&data.db_connection)?;
+            local_instance.send_to_followers(self, vec![], data).await?;
         }
         Ok(())
     }

@@ -1,10 +1,11 @@
 use crate::database::article::{ArticleView, DbArticle, DbArticleForm};
 use crate::database::edit::{DbEdit, EditVersion};
+use crate::database::instance::{DbInstance, InstanceView};
 use crate::database::{DbConflict, MyDataHandle};
 use crate::error::MyResult;
 use crate::federation::activities::create_article::CreateArticle;
+use crate::federation::activities::follow::Follow;
 use crate::federation::activities::submit_article_update;
-use crate::federation::objects::instance::DbInstance;
 use crate::utils::generate_article_version;
 use activitypub_federation::config::Data;
 use activitypub_federation::fetch::object_id::ObjectId;
@@ -45,23 +46,18 @@ async fn create_article(
     data: Data<MyDataHandle>,
     Form(create_article): Form<CreateArticleData>,
 ) -> MyResult<Json<ArticleView>> {
-    let existing_article = DbArticle::read_local_title(&create_article.title, &data.db_connection);
-    if existing_article.is_ok() {
-        return Err(anyhow!("A local article with this title already exists").into());
-    }
-
-    let instance_id = data.local_instance().ap_id;
+    let local_instance = DbInstance::read_local_instance(&data.db_connection)?;
     let ap_id = ObjectId::parse(&format!(
         "http://{}:{}/article/{}",
-        instance_id.inner().domain().unwrap(),
-        instance_id.inner().port().unwrap(),
+        local_instance.ap_id.inner().domain().unwrap(),
+        local_instance.ap_id.inner().port().unwrap(),
         create_article.title
     ))?;
     let form = DbArticleForm {
         title: create_article.title,
         text: String::new(),
         ap_id,
-        instance_id,
+        instance_id: local_instance.id,
         local: true,
     };
     let article = DbArticle::create(&form, &data.db_connection)?;
@@ -201,13 +197,14 @@ async fn resolve_article(
 
 /// Retrieve the local instance info.
 #[debug_handler]
-async fn get_local_instance(data: Data<MyDataHandle>) -> MyResult<Json<DbInstance>> {
-    Ok(Json(data.local_instance()))
+async fn get_local_instance(data: Data<MyDataHandle>) -> MyResult<Json<InstanceView>> {
+    let local_instance = DbInstance::read_local_view(&data.db_connection)?;
+    Ok(Json(local_instance))
 }
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct FollowInstance {
-    pub instance_id: ObjectId<DbInstance>,
+    pub id: i32,
 }
 
 /// Make the local instance follow a given remote instance, to receive activities about new and
@@ -217,8 +214,12 @@ async fn follow_instance(
     data: Data<MyDataHandle>,
     Form(query): Form<FollowInstance>,
 ) -> MyResult<()> {
-    let instance = query.instance_id.dereference(&data).await?;
-    data.local_instance().follow(&instance, &data).await?;
+    let local_instance = DbInstance::read_local_instance(&data.db_connection)?;
+    let target = DbInstance::read(query.id, &data.db_connection)?;
+    let pending = !target.local;
+    DbInstance::follow(local_instance.id, target.id, pending, &data)?;
+    let instance = DbInstance::read(query.id, &data.db_connection)?;
+    Follow::send(local_instance, instance, &data).await?;
     Ok(())
 }
 
@@ -274,29 +275,25 @@ async fn fork_article(
 ) -> MyResult<Json<ArticleView>> {
     // TODO: lots of code duplicated from create_article(), can move it into helper
     let original_article = DbArticle::read(fork_form.article_id, &data.db_connection)?;
-    let existing_article =
-        DbArticle::read_local_title(&original_article.title, &data.db_connection);
-    if existing_article.is_ok() {
-        return Err(anyhow!("A local article with this title already exists").into());
-    }
 
-    let instance_id = data.local_instance().ap_id;
+    let local_instance = DbInstance::read_local_instance(&data.db_connection)?;
     let ap_id = ObjectId::parse(&format!(
         "http://{}:{}/article/{}",
-        instance_id.inner().domain().unwrap(),
-        instance_id.inner().port().unwrap(),
+        local_instance.ap_id.inner().domain().unwrap(),
+        local_instance.ap_id.inner().port().unwrap(),
         original_article.title
     ))?;
     let form = DbArticleForm {
         title: original_article.title.clone(),
         text: original_article.text.clone(),
         ap_id,
-        instance_id,
+        instance_id: local_instance.id,
         local: true,
     };
     let article = DbArticle::create(&form, &data.db_connection)?;
 
     // copy edits to new article
+    // TODO: convert to sql
     let edits = DbEdit::for_article(&original_article, &data.db_connection)?;
     for e in edits {
         let form = e.copy_to_local_fork(&article)?;

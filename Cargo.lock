@@ -5,7 +5,6 @@ version = 3
 [[package]]
 name = "activitypub_federation"
 version = "0.5.0-beta.5"
-source = "git+https://github.com/LemmyNet/activitypub-federation-rust.git?branch=diesel-feature#ca42d891b10888c0dcc666140385d380c664a978"
 dependencies = [
  "activitystreams-kinds",
  "async-trait",
@@ -488,6 +487,7 @@ checksum = "62c6fcf842f17f8c78ecf7c81d75c5ce84436b41ee07e03f490fbb5f5a8731d8"
 dependencies = [
  "bitflags 2.4.1",
  "byteorder",
+ "chrono",
  "diesel_derives",
  "itoa",
  "pq-sys",

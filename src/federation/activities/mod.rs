@@ -1,10 +1,10 @@
 use crate::database::article::DbArticle;
 use crate::database::edit::{DbEdit, DbEditForm, EditVersion};
+use crate::database::instance::DbInstance;
 use crate::database::MyDataHandle;
 use crate::error::Error;
 use crate::federation::activities::update_local_article::UpdateLocalArticle;
 use crate::federation::activities::update_remote_article::UpdateRemoteArticle;
-use crate::federation::objects::instance::DbInstance;
 use activitypub_federation::config::Data;
 
 pub mod accept;
@@ -37,11 +37,7 @@ pub async fn submit_article_update(
             version: form.version,
             previous_version: form.previous_version,
         };
-        let instance: DbInstance = original_article
-            .instance_id
-            .clone()
-            .dereference(data)
-            .await?;
+        let instance = DbInstance::read(original_article.instance_id, &data.db_connection)?;
         UpdateRemoteArticle::send(edit, instance, data).await?;
     }
     Ok(())

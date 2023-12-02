@@ -3,10 +3,10 @@ use crate::error::MyResult;
 
 use crate::database::article::DbArticle;
 use crate::database::edit::DbEdit;
+use crate::database::instance::DbInstance;
 use crate::federation::activities::reject::RejectEdit;
 use crate::federation::activities::update_local_article::UpdateLocalArticle;
 use crate::federation::objects::edit::ApubEdit;
-use crate::federation::objects::instance::DbInstance;
 use crate::utils::generate_activity_id;
 use activitypub_federation::kinds::activity::UpdateType;
 use activitypub_federation::{
@@ -38,7 +38,7 @@ impl UpdateRemoteArticle {
         article_instance: DbInstance,
         data: &Data<MyDataHandle>,
     ) -> MyResult<()> {
-        let local_instance = data.local_instance();
+        let local_instance = DbInstance::read_local_instance(&data.db_connection)?;
         let id = generate_activity_id(local_instance.ap_id.inner())?;
         let update = UpdateRemoteArticle {
             actor: local_instance.ap_id.clone(),
@@ -51,7 +51,7 @@ impl UpdateRemoteArticle {
         //       or put previous_version in DbEdit
         dbg!(&update.object.previous_version);
         local_instance
-            .send(update, vec![article_instance.inbox], data)
+            .send(update, vec![Url::parse(&article_instance.inbox_url)?], data)
             .await?;
         Ok(())
     }

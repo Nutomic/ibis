@@ -1,7 +1,7 @@
+use crate::database::instance::DbInstance;
 use crate::database::{article::DbArticle, MyDataHandle};
 use crate::error::Error;
 use crate::federation::objects::article::ApubArticle;
-use crate::federation::objects::instance::DbInstance;
 
 use activitypub_federation::kinds::collection::CollectionType;
 use activitypub_federation::{
@@ -33,7 +33,7 @@ impl Collection for DbArticleCollection {
     type Error = Error;
 
     async fn read_local(
-        _owner: &Self::Owner,
+        owner: &Self::Owner,
         data: &Data<Self::DataType>,
     ) -> Result<Self::Kind, Self::Error> {
         let local_articles = DbArticle::read_all_local(&data.db_connection)?;
@@ -46,7 +46,7 @@ impl Collection for DbArticleCollection {
         .await?;
         let collection = ArticleCollection {
             r#type: Default::default(),
-            id: data.local_instance().articles_id.into(),
+            id: owner.articles_url.clone().into(),
             total_items: articles.len() as i32,
             items: articles,
         };

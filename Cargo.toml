@@ -4,13 +4,13 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-activitypub_federation = { git = "https://github.com/LemmyNet/activitypub-federation-rust.git", branch = "diesel-feature", features = ["axum", "diesel"], default-features = false }
+activitypub_federation = { path = "../lemmy/activitypub-federation-rust", features = ["axum", "diesel"], default-features = false }
 anyhow = "1.0.75"
 async-trait = "0.1.74"
 axum = "0.6.20"
 axum-macros = "0.3.8"
 chrono = { version = "0.4.31", features = ["serde"] }
-diesel = {version = "2.1.4", features = ["postgres"] }
+diesel = {version = "2.1.4", features = ["postgres", "chrono"] }
 diesel-derive-newtype = "2.1.0"
 diesel_migrations = "2.1.0"
 diffy = "0.3.0"

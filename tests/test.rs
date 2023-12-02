@@ -13,10 +13,11 @@ use fediwiki::api::{
 use fediwiki::database::article::{ArticleView, DbArticle};
 use fediwiki::error::MyResult;
 
-use fediwiki::federation::objects::instance::DbInstance;
+use fediwiki::database::instance::{DbInstance, InstanceView};
 use pretty_assertions::{assert_eq, assert_ne};
 use url::Url;
 
+// TODO: can run tests in parallel if we use different ports
 #[tokio::test]
 async fn test_create_read_and_edit_article() -> MyResult<()> {
     let data = TestData::start();
@@ -80,19 +81,21 @@ async fn test_follow_instance() -> MyResult<()> {
     let data = TestData::start();
 
     // check initial state
-    let alpha_instance: DbInstance = get(&data.alpha.hostname, "instance").await?;
-    assert_eq!(0, alpha_instance.follows.len());
-    let beta_instance: DbInstance = get(&data.beta.hostname, "instance").await?;
+    let alpha_instance: InstanceView = get(&data.alpha.hostname, "instance").await?;
+    assert_eq!(0, alpha_instance.followers.len());
+    assert_eq!(0, alpha_instance.followed.len());
+    let beta_instance: InstanceView = get(&data.beta.hostname, "instance").await?;
     assert_eq!(0, beta_instance.followers.len());
+    assert_eq!(0, beta_instance.followed.len());
 
     follow_instance(&data.alpha.hostname, &data.beta.hostname).await?;
 
     // check that follow was federated
-    let beta_instance: DbInstance = get(&data.beta.hostname, "instance").await?;
+    let beta_instance: InstanceView = get(&data.beta.hostname, "instance").await?;
     assert_eq!(1, beta_instance.followers.len());
 
-    let alpha_instance: DbInstance = get(&data.alpha.hostname, "instance").await?;
-    assert_eq!(1, alpha_instance.follows.len());
+    let alpha_instance: InstanceView = get(&data.alpha.hostname, "instance").await?;
+    assert_eq!(1, alpha_instance.followed.len());
 
     data.stop()
 }
@@ -154,6 +157,7 @@ async fn test_edit_local_article() -> MyResult<()> {
     let create_res = create_article(&data.beta.hostname, title.clone()).await?;
     assert_eq!(title, create_res.article.title);
     assert!(create_res.article.local);
+    dbg!(1);
 
     // article should be federated to alpha
     let get_res = get_article(&data.alpha.hostname, create_res.article.id).await?;
@@ -161,6 +165,7 @@ async fn test_edit_local_article() -> MyResult<()> {
     assert_eq!(1, get_res.edits.len());
     assert!(!get_res.article.local);
     assert_eq!(create_res.article.text, get_res.article.text);
+    dbg!(2);
 
     // edit the article
     let edit_form = EditArticleData {
@@ -170,6 +175,7 @@ async fn test_edit_local_article() -> MyResult<()> {
         resolve_conflict_id: None,
     };
     let edit_res = edit_article(&data.beta.hostname, &edit_form).await?;
+    dbg!(3);
     assert_eq!(edit_res.article.text, edit_form.new_text);
     assert_eq!(edit_res.edits.len(), 2);
     assert!(edit_res.edits[0]
@@ -179,6 +185,7 @@ async fn test_edit_local_article() -> MyResult<()> {
 
     // edit should be federated to alpha
     let get_res = get_article(&data.alpha.hostname, edit_res.article.id).await?;
+    dbg!(4);
     assert_eq!(edit_res.article.title, get_res.article.title);
     assert_eq!(edit_res.edits.len(), 2);
     assert_eq!(edit_res.article.text, get_res.article.text);
@@ -446,8 +453,8 @@ async fn test_fork_article() -> MyResult<()> {
     assert_ne!(resolved_article.ap_id, forked_article.ap_id);
     assert!(forked_article.local);
 
-    let beta_instance: DbInstance = get(&data.beta.hostname, "instance").await?;
-    assert_eq!(forked_article.instance_id, beta_instance.ap_id);
+    let beta_instance: InstanceView = get(&data.beta.hostname, "instance").await?;
+    assert_eq!(forked_article.instance_id, beta_instance.instance.id);
 
     // now search returns two articles for this title (original and forked)
     let search_form = SearchArticleData {

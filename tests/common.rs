@@ -2,8 +2,8 @@ use fediwiki::api::{
     ApiConflict, CreateArticleData, EditArticleData, FollowInstance, GetArticleData, ResolveObject,
 };
 use fediwiki::database::article::ArticleView;
+use fediwiki::database::instance::DbInstance;
 use fediwiki::error::MyResult;
-use fediwiki::federation::objects::instance::DbInstance;
 use fediwiki::start;
 use once_cell::sync::Lazy;
 use reqwest::Client;
@@ -221,7 +221,7 @@ pub async fn follow_instance(follow_instance: &str, followed_instance: &str) -> 
 
     // send follow
     let follow_form = FollowInstance {
-        instance_id: instance_resolved.ap_id,
+        id: instance_resolved.id,
     };
     // cant use post helper because follow doesnt return json
     CLIENT

@@ -2,7 +2,7 @@ use crate::database::{article::DbArticle, MyDataHandle};
 use crate::error::MyResult;
 use crate::federation::objects::article::ApubArticle;
 
-use crate::federation::objects::instance::DbInstance;
+use crate::database::instance::DbInstance;
 use crate::utils::generate_activity_id;
 use activitypub_federation::kinds::activity::UpdateType;
 use activitypub_federation::{
@@ -35,9 +35,9 @@ impl UpdateLocalArticle {
         data: &Data<MyDataHandle>,
     ) -> MyResult<()> {
         debug_assert!(article.local);
-        let local_instance = data.local_instance();
+        let local_instance = DbInstance::read_local_instance(&data.db_connection)?;
         let id = generate_activity_id(local_instance.ap_id.inner())?;
-        let mut to = local_instance.follower_ids();
+        let mut to = local_instance.follower_ids(&data)?;
         to.extend(extra_recipients.iter().map(|i| i.ap_id.inner().clone()));
         let update = UpdateLocalArticle {
             actor: local_instance.ap_id.clone(),

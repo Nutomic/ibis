@@ -1,7 +1,7 @@
+use crate::database::instance::DbInstance;
 use crate::database::MyDataHandle;
 use crate::error::MyResult;
 use crate::federation::objects::edit::ApubEdit;
-use crate::federation::objects::instance::DbInstance;
 use crate::utils::generate_activity_id;
 use activitypub_federation::kinds::activity::RejectType;
 use activitypub_federation::{
@@ -32,7 +32,7 @@ impl RejectEdit {
         user_instance: DbInstance,
         data: &Data<MyDataHandle>,
     ) -> MyResult<()> {
-        let local_instance = data.local_instance();
+        let local_instance = DbInstance::read_local_instance(&data.db_connection)?;
         let id = generate_activity_id(local_instance.ap_id.inner())?;
         let reject = RejectEdit {
             actor: local_instance.ap_id.clone(),
@@ -42,7 +42,7 @@ impl RejectEdit {
             id,
         };
         local_instance
-            .send(reject, vec![user_instance.inbox], data)
+            .send(reject, vec![Url::parse(&user_instance.inbox_url)?], data)
             .await?;
         Ok(())
     }
