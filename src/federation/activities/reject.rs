@@ -10,7 +10,9 @@ use activitypub_federation::{
 };
 use rand::random;
 
+use crate::database::article::DbArticle;
 use crate::database::DbConflict;
+use crate::federation::activities::update_local_article::UpdateLocalArticle;
 use serde::{Deserialize, Serialize};
 use url::Url;
 
@@ -66,6 +68,7 @@ impl ActivityHandler for RejectEdit {
     }
 
     async fn receive(self, data: &Data<Self::DataType>) -> Result<(), Self::Error> {
+        dbg!(&self);
         // cant convert this to DbEdit as it tries to apply patch and fails
         let mut lock = data.conflicts.lock().unwrap();
         let conflict = DbConflict {

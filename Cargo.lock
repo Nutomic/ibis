@@ -5,7 +5,7 @@ version = 3
 [[package]]
 name = "activitypub_federation"
 version = "0.5.0-beta.5"
-source = "git+https://github.com/LemmyNet/activitypub-federation-rust.git?branch=diesel-feature#ffb020bcdd5004fdcba501950e6a87bc82c806ed"
+source = "git+https://github.com/LemmyNet/activitypub-federation-rust.git?branch=diesel-feature#9ffdadfc8df6719542861466234a7dac2f9707c9"
 dependencies = [
  "activitystreams-kinds",
  "async-trait",

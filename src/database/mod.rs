@@ -50,8 +50,8 @@ impl DbConflict {
         &self,
         data: &Data<MyDataHandle>,
     ) -> MyResult<Option<ApiConflict>> {
-        let original_article =
-            DbArticle::read_from_ap_id(&self.article_id.clone(), &data.db_connection)?;
+        // Make sure to get latest version from origin so that all conflicts can be resolved
+        let original_article = self.article_id.dereference_forced(&data).await?;
 
         // create common ancestor version
         let edits = DbEdit::for_article(&original_article, &data.db_connection)?;
@@ -60,7 +60,7 @@ impl DbConflict {
         let patch = Patch::from_str(&self.diff)?;
         // apply self.diff to ancestor to get `ours`
         let ours = apply(&ancestor, &patch)?;
-        match merge(&ancestor, &ours, &original_article.text) {
+        match dbg!(merge(&ancestor, &ours, &original_article.text)) {
             Ok(new_text) => {
                 // patch applies cleanly so we are done
                 // federate the change
