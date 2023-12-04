@@ -83,19 +83,29 @@ async fn test_follow_instance() -> MyResult<()> {
     // check initial state
     let alpha_instance: InstanceView = get(&data.alpha.hostname, "instance").await?;
     assert_eq!(0, alpha_instance.followers.len());
-    assert_eq!(0, alpha_instance.followed.len());
+    assert_eq!(0, alpha_instance.following.len());
     let beta_instance: InstanceView = get(&data.beta.hostname, "instance").await?;
     assert_eq!(0, beta_instance.followers.len());
-    assert_eq!(0, beta_instance.followed.len());
+    assert_eq!(0, beta_instance.following.len());
 
     follow_instance(&data.alpha.hostname, &data.beta.hostname).await?;
 
     // check that follow was federated
-    let beta_instance: InstanceView = get(&data.beta.hostname, "instance").await?;
-    assert_eq!(1, beta_instance.followers.len());
-
     let alpha_instance: InstanceView = get(&data.alpha.hostname, "instance").await?;
-    assert_eq!(1, alpha_instance.followed.len());
+    assert_eq!(1, alpha_instance.following.len());
+    assert_eq!(0, alpha_instance.followers.len());
+    assert_eq!(
+        beta_instance.instance.ap_id,
+        alpha_instance.following[0].ap_id
+    );
+
+    let beta_instance: InstanceView = get(&data.beta.hostname, "instance").await?;
+    assert_eq!(0, beta_instance.following.len());
+    assert_eq!(1, beta_instance.followers.len());
+    assert_eq!(
+        alpha_instance.instance.ap_id,
+        beta_instance.followers[0].ap_id
+    );
 
     data.stop()
 }
@@ -157,7 +167,6 @@ async fn test_edit_local_article() -> MyResult<()> {
     let create_res = create_article(&data.beta.hostname, title.clone()).await?;
     assert_eq!(title, create_res.article.title);
     assert!(create_res.article.local);
-    dbg!(1);
 
     // article should be federated to alpha
     let get_res = get_article(&data.alpha.hostname, create_res.article.id).await?;
@@ -165,7 +174,6 @@ async fn test_edit_local_article() -> MyResult<()> {
     assert_eq!(1, get_res.edits.len());
     assert!(!get_res.article.local);
     assert_eq!(create_res.article.text, get_res.article.text);
-    dbg!(2);
 
     // edit the article
     let edit_form = EditArticleData {
@@ -175,7 +183,6 @@ async fn test_edit_local_article() -> MyResult<()> {
         resolve_conflict_id: None,
     };
     let edit_res = edit_article(&data.beta.hostname, &edit_form).await?;
-    dbg!(3);
     assert_eq!(edit_res.article.text, edit_form.new_text);
     assert_eq!(edit_res.edits.len(), 2);
     assert!(edit_res.edits[0]
@@ -185,7 +192,6 @@ async fn test_edit_local_article() -> MyResult<()> {
 
     // edit should be federated to alpha
     let get_res = get_article(&data.alpha.hostname, edit_res.article.id).await?;
-    dbg!(4);
     assert_eq!(edit_res.article.title, get_res.article.title);
     assert_eq!(edit_res.edits.len(), 2);
     assert_eq!(edit_res.article.text, get_res.article.text);
@@ -341,20 +347,17 @@ async fn test_federated_edit_conflict() -> MyResult<()> {
 
     // gamma also edits, as its not the latest version there is a conflict. local version should
     // not be updated with this conflicting version, instead user needs to handle the conflict
-    dbg!(&create_res.article.text, &create_res.latest_version);
     let edit_form = EditArticleData {
         article_id: create_res.article.id,
         new_text: "aaaa\n".to_string(),
         previous_version: create_res.latest_version,
         resolve_conflict_id: None,
     };
-    dbg!(1);
     let edit_res = edit_article(&data.gamma.hostname, &edit_form).await?;
     assert_ne!(edit_form.new_text, edit_res.article.text);
     assert_eq!(2, edit_res.edits.len());
     assert!(!edit_res.article.local);
 
-    dbg!(2);
     let conflicts: Vec<ApiConflict> =
         get_query(&data.gamma.hostname, "edit_conflicts", None::<()>).await?;
     assert_eq!(1, conflicts.len());
@@ -366,16 +369,13 @@ async fn test_federated_edit_conflict() -> MyResult<()> {
         previous_version: conflicts[0].previous_version.clone(),
         resolve_conflict_id: Some(conflicts[0].id),
     };
-    dbg!(3);
     let edit_res = edit_article(&data.gamma.hostname, &edit_form).await?;
     assert_eq!(edit_form.new_text, edit_res.article.text);
     assert_eq!(3, edit_res.edits.len());
 
-    dbg!(4);
     let conflicts: Vec<ApiConflict> =
         get_query(&data.gamma.hostname, "edit_conflicts", None::<()>).await?;
     assert_eq!(0, conflicts.len());
-    dbg!(5);
 
     data.stop()
 }

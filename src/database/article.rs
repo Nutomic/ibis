@@ -1,5 +1,5 @@
 use crate::database::edit::{DbEdit, EditVersion};
-use crate::database::instance::DbInstance;
+
 use crate::database::schema::article;
 use crate::error::MyResult;
 use crate::federation::objects::edits_collection::DbEditCollection;

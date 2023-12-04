@@ -42,8 +42,8 @@ diesel::table! {
 diesel::table! {
     instance_follow (id) {
         id -> Int4,
+        instance_id -> Int4,
         follower_id -> Int4,
-        followed_id -> Int4,
         pending -> Bool,
     }
 }

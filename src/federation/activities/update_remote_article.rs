@@ -47,9 +47,6 @@ impl UpdateRemoteArticle {
             kind: Default::default(),
             id,
         };
-        // TODO: this is wrong and causes test failure. need to take previous_version from api param,
-        //       or put previous_version in DbEdit
-        dbg!(&update.object.previous_version);
         local_instance
             .send(update, vec![Url::parse(&article_instance.inbox_url)?], data)
             .await?;

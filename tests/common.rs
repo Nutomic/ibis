@@ -167,13 +167,7 @@ pub async fn edit_article_with_conflict(
 }
 
 pub async fn edit_article(hostname: &str, edit_form: &EditArticleData) -> MyResult<ArticleView> {
-    let edit_res: Option<ApiConflict> = CLIENT
-        .patch(format!("http://{}/api/v1/article", hostname))
-        .form(&edit_form)
-        .send()
-        .await?
-        .json()
-        .await?;
+    let edit_res = edit_article_with_conflict(hostname, edit_form).await?;
     assert!(edit_res.is_none());
     get_article(hostname, edit_form.article_id).await
 }
@@ -211,13 +205,13 @@ where
         .await?)
 }
 
-pub async fn follow_instance(follow_instance: &str, followed_instance: &str) -> MyResult<()> {
+pub async fn follow_instance(api_instance: &str, follow_instance: &str) -> MyResult<()> {
     // fetch beta instance on alpha
     let resolve_form = ResolveObject {
-        id: Url::parse(&format!("http://{}", followed_instance))?,
+        id: Url::parse(&format!("http://{}", follow_instance))?,
     };
     let instance_resolved: DbInstance =
-        get_query(followed_instance, "resolve_instance", Some(resolve_form)).await?;
+        get_query(api_instance, "resolve_instance", Some(resolve_form)).await?;
 
     // send follow
     let follow_form = FollowInstance {
@@ -225,7 +219,7 @@ pub async fn follow_instance(follow_instance: &str, followed_instance: &str) -> 
     };
     // cant use post helper because follow doesnt return json
     CLIENT
-        .post(format!("http://{}/api/v1/instance/follow", follow_instance))
+        .post(format!("http://{}/api/v1/instance/follow", api_instance))
         .form(&follow_form)
         .send()
         .await?;

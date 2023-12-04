@@ -8,12 +8,12 @@ use activitypub_federation::{
     config::Data,
     fetch::object_id::ObjectId,
     protocol::{public_key::PublicKey, verification::verify_domains_match},
-    traits::{ActivityHandler, Actor, Object},
+    traits::{Actor, Object},
 };
 use chrono::{DateTime, Local, Utc};
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
-use url::{ParseError, Url};
+use url::Url;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -40,7 +40,7 @@ impl Object for DbInstance {
         object_id: Url,
         data: &Data<Self::DataType>,
     ) -> Result<Option<Self>, Self::Error> {
-        Ok(DbInstance::read_from_ap_id(&object_id.into(), &data).ok())
+        Ok(DbInstance::read_from_ap_id(&object_id.into(), data).ok())
     }
 
     async fn into_json(self, _data: &Data<Self::DataType>) -> Result<Self::Kind, Self::Error> {

@@ -9,11 +9,9 @@ use activitypub_federation::fetch::object_id::ObjectId;
 use diesel::PgConnection;
 use diffy::{apply, merge, Patch};
 use edit::EditVersion;
-use instance::DbInstance;
-use std::collections::HashMap;
+
 use std::ops::Deref;
 use std::sync::{Arc, Mutex};
-use url::Url;
 
 pub mod article;
 pub mod edit;
@@ -58,12 +56,10 @@ impl DbConflict {
         // create common ancestor version
         let edits = DbEdit::for_article(&original_article, &data.db_connection)?;
         let ancestor = generate_article_version(&edits, &self.previous_version)?;
-        dbg!(&ancestor, &self.previous_version);
 
-        dbg!(&self.diff);
         let patch = Patch::from_str(&self.diff)?;
         // apply self.diff to ancestor to get `ours`
-        let ours = dbg!(apply(&ancestor, &patch))?;
+        let ours = apply(&ancestor, &patch)?;
         match merge(&ancestor, &ours, &original_article.text) {
             Ok(new_text) => {
                 // patch applies cleanly so we are done

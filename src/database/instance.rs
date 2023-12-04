@@ -1,19 +1,18 @@
-use crate::database::article::DbArticle;
 use crate::database::schema::{instance, instance_follow};
 use crate::database::MyDataHandle;
 use crate::error::{Error, MyResult};
-use crate::federation::activities::follow::Follow;
+
 use crate::federation::objects::articles_collection::DbArticleCollection;
 use activitypub_federation::activity_sending::SendActivityTask;
 use activitypub_federation::config::Data;
 use activitypub_federation::fetch::collection_id::CollectionId;
 use activitypub_federation::fetch::object_id::ObjectId;
 use activitypub_federation::protocol::context::WithContext;
-use activitypub_federation::traits::{ActivityHandler, Actor};
+use activitypub_federation::traits::ActivityHandler;
 use chrono::{DateTime, Utc};
 use diesel::ExpressionMethods;
 use diesel::{
-    insert_into, update, AsChangeset, Identifiable, Insertable, JoinOnDsl, PgConnection, QueryDsl,
+    insert_into, AsChangeset, Identifiable, Insertable, JoinOnDsl, PgConnection, QueryDsl,
     Queryable, RunQueryDsl, Selectable,
 };
 use serde::{Deserialize, Serialize};
@@ -56,7 +55,7 @@ pub struct DbInstanceForm {
 pub struct InstanceView {
     pub instance: DbInstance,
     pub followers: Vec<DbInstance>,
-    pub followed: Vec<DbInstance>,
+    pub following: Vec<DbInstance>,
 }
 
 impl DbInstance {
@@ -151,49 +150,54 @@ impl DbInstance {
     pub fn read_local_view(conn: &Mutex<PgConnection>) -> MyResult<InstanceView> {
         let instance = DbInstance::read_local_instance(conn)?;
         let followers = DbInstance::read_followers(instance.id, conn)?;
-        let followed = DbInstance::read_followed(instance.id, conn)?;
+        let following = DbInstance::read_following(instance.id, conn)?;
 
         Ok(InstanceView {
             instance,
             followers,
-            followed,
+            following,
         })
     }
 
     pub fn follow(
         follower_id_: i32,
-        followed_id_: i32,
+        instance_id_: i32,
         pending_: bool,
         data: &Data<MyDataHandle>,
     ) -> MyResult<()> {
-        use instance_follow::dsl::{followed_id, follower_id, pending};
+        debug_assert_ne!(follower_id_, instance_id_);
+        use instance_follow::dsl::{follower_id, instance_id, pending};
         let mut conn = data.db_connection.lock().unwrap();
+        let form = (
+            instance_id.eq(instance_id_),
+            follower_id.eq(follower_id_),
+            pending.eq(pending_),
+        );
+        dbg!(follower_id_, instance_id_, pending_);
         insert_into(instance_follow::table)
-            .values((
-                follower_id.eq(follower_id_),
-                followed_id.eq(followed_id_),
-                pending.eq(pending_),
-            ))
+            .values(form)
+            .on_conflict((instance_id, follower_id))
+            .do_update()
+            .set(form)
             .execute(conn.deref_mut())?;
         Ok(())
     }
 
     pub fn read_followers(id_: i32, conn: &Mutex<PgConnection>) -> MyResult<Vec<Self>> {
-        use instance_follow::dsl::{followed_id, id};
+        use instance_follow::dsl::{follower_id, instance_id};
         let mut conn = conn.lock().unwrap();
         Ok(instance_follow::table
-            .inner_join(instance::table.on(id.eq(instance::dsl::id)))
-            .filter(followed_id.eq(id_))
+            .inner_join(instance::table.on(follower_id.eq(instance::dsl::id)))
+            .filter(instance_id.eq(id_))
             .select(instance::all_columns)
             .get_results(conn.deref_mut())?)
     }
 
-    pub fn read_followed(id_: i32, conn: &Mutex<PgConnection>) -> MyResult<Vec<Self>> {
-        // TODO: is this correct?
-        use instance_follow::dsl::{follower_id, id};
+    pub fn read_following(id_: i32, conn: &Mutex<PgConnection>) -> MyResult<Vec<Self>> {
+        use instance_follow::dsl::{follower_id, instance_id};
         let mut conn = conn.lock().unwrap();
         Ok(instance_follow::table
-            .inner_join(instance::table.on(id.eq(instance::dsl::id)))
+            .inner_join(instance::table.on(instance_id.eq(instance::dsl::id)))
             .filter(follower_id.eq(id_))
             .select(instance::all_columns)
             .get_results(conn.deref_mut())?)

@@ -1,4 +1,4 @@
-use crate::database::article::{ArticleView, DbArticle};
+use crate::database::article::DbArticle;
 use crate::database::MyDataHandle;
 use crate::error::Error;
 use crate::federation::objects::edit::ApubEdit;

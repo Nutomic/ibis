@@ -18,7 +18,6 @@ use diesel_migrations::MigrationHarness;
 use std::net::ToSocketAddrs;
 use std::sync::{Arc, Mutex};
 use tracing::info;
-use url::Url;
 
 pub mod api;
 pub mod database;

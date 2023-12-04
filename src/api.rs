@@ -129,7 +129,6 @@ async fn edit_article(
         let ancestor =
             generate_article_version(&original_article.edits, &edit_form.previous_version)?;
         let patch = create_patch(&ancestor, &edit_form.new_text);
-        dbg!(&edit_form.previous_version);
 
         let db_conflict = DbConflict {
             id: random(),
@@ -141,7 +140,7 @@ async fn edit_article(
             let mut lock = data.conflicts.lock().unwrap();
             lock.push(db_conflict.clone());
         }
-        Ok(Json(dbg!(db_conflict.to_api_conflict(&data).await)?))
+        Ok(Json(db_conflict.to_api_conflict(&data).await?))
     }
 }
 
@@ -226,21 +225,16 @@ async fn follow_instance(
 /// Get a list of all unresolved edit conflicts.
 #[debug_handler]
 async fn edit_conflicts(data: Data<MyDataHandle>) -> MyResult<Json<Vec<ApiConflict>>> {
-    dbg!("a");
     let conflicts = { data.conflicts.lock().unwrap().to_vec() };
-    dbg!(&conflicts);
-    dbg!("b");
     let conflicts: Vec<ApiConflict> = try_join_all(conflicts.into_iter().map(|c| {
         let data = data.reset_request_count();
-        dbg!(&c.previous_version);
-        async move { dbg!(c.to_api_conflict(&data).await) }
+        async move { c.to_api_conflict(&data).await }
     }))
     .await?
     .into_iter()
     .flatten()
     .collect();
-    dbg!("c");
-    Ok(Json(dbg!(conflicts)))
+    Ok(Json(conflicts))
 }
 
 #[derive(Deserialize, Serialize, Clone)]

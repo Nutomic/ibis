@@ -29,7 +29,6 @@ pub fn generate_article_version(edits: &Vec<DbEdit>, version: &EditVersion) -> M
         return Ok(generated);
     }
     for e in edits {
-        dbg!(&e);
         let patch = Patch::from_str(&e.diff)?;
         generated = apply(&generated, &patch)?;
         if &e.version == version {

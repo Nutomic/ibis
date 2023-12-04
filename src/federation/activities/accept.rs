@@ -51,7 +51,7 @@ impl ActivityHandler for Accept {
         // add to follows
         let local_instance = DbInstance::read_local_instance(&data.db_connection)?;
         let actor = self.actor.dereference(data).await?;
-        DbInstance::follow(local_instance.id, actor.id, false, &data)?;
+        DbInstance::follow(local_instance.id, actor.id, false, data)?;
         Ok(())
     }
 }

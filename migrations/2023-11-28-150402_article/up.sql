@@ -11,11 +11,12 @@ create table instance (
 
 create table instance_follow (
     id serial primary key,
+    instance_id int REFERENCES instance ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
     follower_id int REFERENCES instance ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
-    followed_id int REFERENCES instance ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
-    pending boolean not null
-
+    pending boolean not null,
+    unique(instance_id, follower_id)
 );
+
 create table article (
     id serial primary key,
     title text not null,

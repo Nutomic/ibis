@@ -60,7 +60,7 @@ impl ActivityHandler for Follow {
     async fn receive(self, data: &Data<Self::DataType>) -> Result<(), Self::Error> {
         let actor = self.actor.dereference(data).await?;
         let local_instance = DbInstance::read_local_instance(&data.db_connection)?;
-        DbInstance::follow(actor.id, local_instance.id, false, &data)?;
+        DbInstance::follow(actor.id, local_instance.id, false, data)?;
 
         // send back an accept
         let follower = self.actor.dereference(data).await?;
