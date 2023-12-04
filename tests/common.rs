@@ -11,8 +11,10 @@ use serde::de::Deserialize;
 use serde::ser::Serialize;
 use std::env::current_dir;
 use std::process::{Command, Stdio};
+use std::sync::atomic::{AtomicI32, Ordering};
 use std::sync::Once;
-use std::thread::spawn;
+use std::thread::{sleep, spawn};
+use std::time::Duration;
 use tokio::task::JoinHandle;
 use tracing::log::LevelFilter;
 use url::Url;
@@ -36,9 +38,21 @@ impl TestData {
                 .init();
         });
 
-        let alpha_db_path = generate_db_path("alpha");
-        let beta_db_path = generate_db_path("beta");
-        let gamma_db_path = generate_db_path("gamma");
+        // Run things on different ports and db paths to allow parallel tests
+        static COUNTER: AtomicI32 = AtomicI32::new(0);
+        let current_run = COUNTER.fetch_add(1, Ordering::Relaxed);
+
+        // Give each test a moment to start its postgres databases
+        sleep(Duration::from_millis(current_run as u64 * 500));
+
+        let first_port = 8000 + (current_run * 3);
+        let port_alpha = first_port;
+        let port_beta = first_port + 1;
+        let port_gamma = first_port + 2;
+
+        let alpha_db_path = generate_db_path("alpha", port_alpha);
+        let beta_db_path = generate_db_path("beta", port_beta);
+        let gamma_db_path = generate_db_path("gamma", port_gamma);
 
         // initialize postgres databases in parallel because its slow
         for j in [
@@ -50,9 +64,9 @@ impl TestData {
         }
 
         Self {
-            alpha: FediwikiInstance::start(alpha_db_path, 8131),
-            beta: FediwikiInstance::start(beta_db_path, 8132),
-            gamma: FediwikiInstance::start(gamma_db_path, 8133),
+            alpha: FediwikiInstance::start(alpha_db_path, port_alpha),
+            beta: FediwikiInstance::start(beta_db_path, port_beta),
+            gamma: FediwikiInstance::start(gamma_db_path, port_gamma),
         }
     }
 
@@ -64,8 +78,12 @@ impl TestData {
     }
 }
 
-fn generate_db_path(name: &'static str) -> String {
-    format!("{}/target/test_db/{name}", current_dir().unwrap().display())
+/// Generate a unique db path for each postgres so that tests can run in parallel.
+fn generate_db_path(name: &'static str, port: i32) -> String {
+    format!(
+        "{}/target/test_db/{name}-{port}",
+        current_dir().unwrap().display()
+    )
 }
 
 pub struct FediwikiInstance {

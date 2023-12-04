@@ -15,11 +15,9 @@ use fediwiki::error::MyResult;
 
 use fediwiki::federation::objects::instance::DbInstance;
 use pretty_assertions::{assert_eq, assert_ne};
-use serial_test::serial;
 use url::Url;
 
 #[tokio::test]
-#[serial]
 async fn test_create_read_and_edit_article() -> MyResult<()> {
     let data = TestData::start();
 
@@ -62,7 +60,6 @@ async fn test_create_read_and_edit_article() -> MyResult<()> {
 }
 
 #[tokio::test]
-#[serial]
 async fn test_create_duplicate_article() -> MyResult<()> {
     let data = TestData::start();
 
@@ -79,7 +76,6 @@ async fn test_create_duplicate_article() -> MyResult<()> {
 }
 
 #[tokio::test]
-#[serial]
 async fn test_follow_instance() -> MyResult<()> {
     let data = TestData::start();
 
@@ -102,7 +98,6 @@ async fn test_follow_instance() -> MyResult<()> {
 }
 
 #[tokio::test]
-#[serial]
 async fn test_synchronize_articles() -> MyResult<()> {
     let data = TestData::start();
 
@@ -149,7 +144,6 @@ async fn test_synchronize_articles() -> MyResult<()> {
 }
 
 #[tokio::test]
-#[serial]
 async fn test_edit_local_article() -> MyResult<()> {
     let data = TestData::start();
 
@@ -193,7 +187,6 @@ async fn test_edit_local_article() -> MyResult<()> {
 }
 
 #[tokio::test]
-#[serial]
 async fn test_edit_remote_article() -> MyResult<()> {
     let data = TestData::start();
 
@@ -246,7 +239,6 @@ async fn test_edit_remote_article() -> MyResult<()> {
 }
 
 #[tokio::test]
-#[serial]
 async fn test_local_edit_conflict() -> MyResult<()> {
     let data = TestData::start();
 
@@ -301,7 +293,6 @@ async fn test_local_edit_conflict() -> MyResult<()> {
 }
 
 #[tokio::test]
-#[serial]
 async fn test_federated_edit_conflict() -> MyResult<()> {
     let data = TestData::start();
 
@@ -383,7 +374,6 @@ async fn test_federated_edit_conflict() -> MyResult<()> {
 }
 
 #[tokio::test]
-#[serial]
 async fn test_overlapping_edits_no_conflict() -> MyResult<()> {
     let data = TestData::start();
 
@@ -422,7 +412,6 @@ async fn test_overlapping_edits_no_conflict() -> MyResult<()> {
 }
 
 #[tokio::test]
-#[serial]
 async fn test_fork_article() -> MyResult<()> {
     let data = TestData::start();
 
