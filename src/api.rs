@@ -60,7 +60,8 @@ async fn create_article(
         instance_id: local_instance.id,
         local: true,
     };
-    let article = DbArticle::create(&form, &data.db_connection)?;
+    dbg!(&form.ap_id);
+    let article = dbg!(DbArticle::create(&form, &data.db_connection))?;
 
     CreateArticle::send_to_followers(article.clone(), &data).await?;
 

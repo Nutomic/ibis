@@ -76,7 +76,7 @@ impl Object for DbArticle {
             local: false,
             instance_id: instance.id,
         };
-        let article = DbArticle::create(&form, &data.db_connection)?;
+        let article = DbArticle::create_or_update(&form, &data.db_connection)?;
 
         json.edits.dereference(&article, data).await?;
 

@@ -55,6 +55,13 @@ impl DbArticle {
         let mut conn = conn.lock().unwrap();
         Ok(insert_into(article::table)
             .values(form)
+            .get_result(conn.deref_mut())?)
+    }
+
+    pub fn create_or_update(form: &DbArticleForm, conn: &Mutex<PgConnection>) -> MyResult<Self> {
+        let mut conn = conn.lock().unwrap();
+        Ok(insert_into(article::table)
+            .values(form)
             .on_conflict(article::dsl::ap_id)
             .do_update()
             .set(form)
