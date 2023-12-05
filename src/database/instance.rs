@@ -24,11 +24,11 @@ pub struct DbInstance {
     pub articles_url: CollectionId<DbArticleCollection>,
     pub inbox_url: String,
     #[serde(skip)]
-    pub(crate) public_key: String,
+    pub public_key: String,
     #[serde(skip)]
-    pub(crate) private_key: Option<String>,
+    pub private_key: Option<String>,
     #[serde(skip)]
-    pub(crate) last_refreshed_at: DateTime<Utc>,
+    pub last_refreshed_at: DateTime<Utc>,
     pub local: bool,
 }
 
@@ -38,9 +38,9 @@ pub struct DbInstanceForm {
     pub ap_id: ObjectId<DbInstance>,
     pub articles_url: CollectionId<DbArticleCollection>,
     pub inbox_url: String,
-    pub(crate) public_key: String,
-    pub(crate) private_key: Option<String>,
-    pub(crate) last_refreshed_at: DateTime<Utc>,
+    pub public_key: String,
+    pub private_key: Option<String>,
+    pub last_refreshed_at: DateTime<Utc>,
     pub local: bool,
 }
 

@@ -66,6 +66,7 @@ impl DbInstance {
         Ok(())
     }
 
+    // TODO: move to user?
     pub async fn send<Activity>(
         &self,
         activity: Activity,

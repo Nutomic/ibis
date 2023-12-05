@@ -5,7 +5,7 @@ use std::fmt::{Display, Formatter};
 pub type MyResult<T> = Result<T, Error>;
 
 #[derive(Debug)]
-pub struct Error(pub(crate) anyhow::Error);
+pub struct Error(pub anyhow::Error);
 
 impl Display for Error {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {

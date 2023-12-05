@@ -18,10 +18,10 @@ use url::Url;
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ApubEditCollection {
-    pub(crate) r#type: OrderedCollectionType,
-    pub(crate) id: Url,
-    pub(crate) total_items: i32,
-    pub(crate) items: Vec<ApubEdit>,
+    pub r#type: OrderedCollectionType,
+    pub id: Url,
+    pub total_items: i32,
+    pub items: Vec<ApubEdit>,
 }
 
 #[derive(Clone, Debug)]

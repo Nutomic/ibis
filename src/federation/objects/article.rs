@@ -19,11 +19,11 @@ use url::Url;
 #[serde(rename_all = "camelCase")]
 pub struct ApubArticle {
     #[serde(rename = "type")]
-    pub(crate) kind: ArticleType,
-    pub(crate) id: ObjectId<DbArticle>,
-    pub(crate) attributed_to: ObjectId<DbInstance>,
+    pub kind: ArticleType,
+    pub id: ObjectId<DbArticle>,
+    pub attributed_to: ObjectId<DbInstance>,
     #[serde(deserialize_with = "deserialize_one_or_many")]
-    pub(crate) to: Vec<Url>,
+    pub to: Vec<Url>,
     pub edits: CollectionId<DbEditCollection>,
     latest_version: EditVersion,
     content: String,

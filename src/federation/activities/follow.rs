@@ -13,8 +13,8 @@ use url::Url;
 #[derive(Deserialize, Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Follow {
-    pub(crate) actor: ObjectId<DbInstance>,
-    pub(crate) object: ObjectId<DbInstance>,
+    pub actor: ObjectId<DbInstance>,
+    pub object: ObjectId<DbInstance>,
     #[serde(rename = "type")]
     kind: FollowType,
     id: Url,
