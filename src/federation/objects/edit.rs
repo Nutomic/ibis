@@ -33,10 +33,10 @@ impl Object for DbEdit {
     type Error = Error;
 
     async fn read_from_id(
-        _object_id: Url,
-        _data: &Data<Self::DataType>,
+        object_id: Url,
+        data: &Data<Self::DataType>,
     ) -> Result<Option<Self>, Self::Error> {
-        todo!()
+        Ok(DbEdit::read_from_ap_id(&object_id.into(), data).ok())
     }
 
     async fn into_json(self, data: &Data<Self::DataType>) -> Result<Self::Kind, Self::Error> {

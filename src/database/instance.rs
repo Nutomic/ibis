@@ -1,14 +1,10 @@
 use crate::database::schema::{instance, instance_follow};
 use crate::database::MyDataHandle;
-use crate::error::{Error, MyResult};
-
+use crate::error::MyResult;
 use crate::federation::objects::articles_collection::DbArticleCollection;
-use activitypub_federation::activity_sending::SendActivityTask;
 use activitypub_federation::config::Data;
 use activitypub_federation::fetch::collection_id::CollectionId;
 use activitypub_federation::fetch::object_id::ObjectId;
-use activitypub_federation::protocol::context::WithContext;
-use activitypub_federation::traits::ActivityHandler;
 use chrono::{DateTime, Utc};
 use diesel::ExpressionMethods;
 use diesel::{
@@ -19,8 +15,6 @@ use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 use std::ops::DerefMut;
 use std::sync::Mutex;
-use tracing::warn;
-use url::Url;
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Queryable, Selectable, Identifiable)]
 #[diesel(table_name = instance, check_for_backend(diesel::pg::Pg))]
@@ -59,62 +53,6 @@ pub struct InstanceView {
 }
 
 impl DbInstance {
-    pub fn followers_url(&self) -> MyResult<Url> {
-        Ok(Url::parse(&format!("{}/followers", self.ap_id.inner()))?)
-    }
-
-    pub fn follower_ids(&self, data: &Data<MyDataHandle>) -> MyResult<Vec<Url>> {
-        Ok(DbInstance::read_followers(self.id, &data.db_connection)?
-            .into_iter()
-            .map(|f| f.ap_id.into())
-            .collect())
-    }
-
-    pub async fn send_to_followers<Activity>(
-        &self,
-        activity: Activity,
-        extra_recipients: Vec<DbInstance>,
-        data: &Data<MyDataHandle>,
-    ) -> Result<(), <Activity as ActivityHandler>::Error>
-    where
-        Activity: ActivityHandler + Serialize + Debug + Send + Sync,
-        <Activity as ActivityHandler>::Error: From<activitypub_federation::error::Error>,
-        <Activity as ActivityHandler>::Error: From<Error>,
-    {
-        let mut inboxes: Vec<_> = DbInstance::read_followers(self.id, &data.db_connection)?
-            .iter()
-            .map(|f| Url::parse(&f.inbox_url).unwrap())
-            .collect();
-        inboxes.extend(
-            extra_recipients
-                .into_iter()
-                .map(|i| Url::parse(&i.inbox_url).unwrap()),
-        );
-        self.send(activity, inboxes, data).await?;
-        Ok(())
-    }
-
-    pub async fn send<Activity>(
-        &self,
-        activity: Activity,
-        recipients: Vec<Url>,
-        data: &Data<MyDataHandle>,
-    ) -> Result<(), <Activity as ActivityHandler>::Error>
-    where
-        Activity: ActivityHandler + Serialize + Debug + Send + Sync,
-        <Activity as ActivityHandler>::Error: From<activitypub_federation::error::Error>,
-    {
-        let activity = WithContext::new_default(activity);
-        let sends = SendActivityTask::prepare(&activity, self, recipients, data).await?;
-        for send in sends {
-            let send = send.sign_and_send(data).await;
-            if let Err(e) = send {
-                warn!("Failed to send activity {:?}: {e}", activity);
-            }
-        }
-        Ok(())
-    }
-
     pub fn create(form: &DbInstanceForm, conn: &Mutex<PgConnection>) -> MyResult<Self> {
         let mut conn = conn.lock().unwrap();
         Ok(insert_into(instance::table)

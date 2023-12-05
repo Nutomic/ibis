@@ -79,10 +79,18 @@ impl DbEdit {
             .set(form)
             .get_result(conn.deref_mut())?)
     }
+
     pub fn read(version: &EditVersion, conn: &Mutex<PgConnection>) -> MyResult<Self> {
         let mut conn = conn.lock().unwrap();
         Ok(edit::table
             .filter(edit::dsl::hash.eq(version))
+            .get_result(conn.deref_mut())?)
+    }
+
+    pub fn read_from_ap_id(ap_id: &ObjectId<DbEdit>, conn: &Mutex<PgConnection>) -> MyResult<Self> {
+        let mut conn = conn.lock().unwrap();
+        Ok(edit::table
+            .filter(edit::dsl::ap_id.eq(ap_id))
             .get_result(conn.deref_mut())?)
     }
 

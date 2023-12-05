@@ -273,11 +273,10 @@ async fn fork_article(
     let article = DbArticle::create(&form, &data.db_connection)?;
 
     // copy edits to new article
-    // TODO: convert to sql
+    // this could also be done in sql
     let edits = DbEdit::read_for_article(&original_article, &data.db_connection)?;
     for e in edits {
         let ap_id = DbEditForm::generate_ap_id(&article, &e.hash)?;
-        // TODO: id gives db unique violation
         let form = DbEditForm {
             ap_id,
             diff: e.diff,
@@ -285,7 +284,7 @@ async fn fork_article(
             hash: e.hash,
             previous_version_id: e.previous_version_id,
         };
-        dbg!(DbEdit::create(&form, &data.db_connection))?;
+        DbEdit::create(&form, &data.db_connection)?;
     }
 
     CreateArticle::send_to_followers(article.clone(), &data).await?;

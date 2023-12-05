@@ -37,3 +37,54 @@ pub fn generate_article_version(edits: &Vec<DbEdit>, version: &EditVersion) -> M
     }
     Err(anyhow!("failed to generate article version").into())
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use activitypub_federation::fetch::object_id::ObjectId;
+    use diffy::create_patch;
+
+    fn create_edits() -> MyResult<Vec<DbEdit>> {
+        let generate_edit = |a, b| -> MyResult<DbEdit> {
+            let diff = create_patch(a, b).to_string();
+            Ok(DbEdit {
+                id: 0,
+                hash: EditVersion::new(&diff)?,
+                ap_id: ObjectId::parse("http://example.com")?,
+                diff,
+                article_id: 0,
+                previous_version_id: Default::default(),
+            })
+        };
+        Ok([
+            generate_edit("", "test\n")?,
+            generate_edit("test\n", "sda\n")?,
+            generate_edit("sda\n", "123\n")?,
+        ]
+        .to_vec())
+    }
+
+    #[test]
+    fn test_generate_article_version() -> MyResult<()> {
+        let edits = create_edits()?;
+        let generated = generate_article_version(&edits, &edits[1].hash)?;
+        assert_eq!("sda\n", generated);
+        Ok(())
+    }
+
+    #[test]
+    fn test_generate_invalid_version() -> MyResult<()> {
+        let edits = create_edits()?;
+        let generated = generate_article_version(&edits, &EditVersion::new("invalid")?);
+        assert!(generated.is_err());
+        Ok(())
+    }
+
+    #[test]
+    fn test_generate_first_version() -> MyResult<()> {
+        let edits = create_edits()?;
+        let generated = generate_article_version(&edits, &EditVersion::default())?;
+        assert_eq!("", generated);
+        Ok(())
+    }
+}

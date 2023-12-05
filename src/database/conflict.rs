@@ -52,6 +52,7 @@ impl DbConflict {
             .values(form)
             .get_result(conn.deref_mut())?)
     }
+
     pub fn list(conn: &Mutex<PgConnection>) -> MyResult<Vec<Self>> {
         let mut conn = conn.lock().unwrap();
         Ok(conflict::table.get_results(conn.deref_mut())?)
@@ -60,7 +61,6 @@ impl DbConflict {
     /// Delete a merge conflict after it is resolved.
     pub fn delete(id: EditVersion, conn: &Mutex<PgConnection>) -> MyResult<Self> {
         let mut conn = conn.lock().unwrap();
-        // TODO: should throw error on invalid id param
         Ok(delete(conflict::table.find(id)).get_result(conn.deref_mut())?)
     }
 

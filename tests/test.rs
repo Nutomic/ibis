@@ -16,7 +16,6 @@ use fediwiki::database::instance::{DbInstance, InstanceView};
 use pretty_assertions::{assert_eq, assert_ne};
 use url::Url;
 
-// TODO: can run tests in parallel if we use different ports
 #[tokio::test]
 async fn test_create_read_and_edit_article() -> MyResult<()> {
     let data = TestData::start();
@@ -354,8 +353,7 @@ async fn test_federated_edit_conflict() -> MyResult<()> {
     };
     let edit_res = edit_article(&data.gamma.hostname, &edit_form).await?;
     assert_ne!(edit_form.new_text, edit_res.article.text);
-    // TODO
-    //assert_eq!(2, edit_res.edits.len());
+    assert_eq!(1, edit_res.edits.len());
     assert!(!edit_res.article.local);
 
     let conflicts: Vec<ApiConflict> =

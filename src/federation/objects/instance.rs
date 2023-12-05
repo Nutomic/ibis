@@ -1,9 +1,12 @@
 use crate::database::instance::{DbInstance, DbInstanceForm};
 use crate::database::MyDataHandle;
-use crate::error::Error;
+use crate::error::{Error, MyResult};
 use crate::federation::objects::articles_collection::DbArticleCollection;
+use activitypub_federation::activity_sending::SendActivityTask;
 use activitypub_federation::fetch::collection_id::CollectionId;
 use activitypub_federation::kinds::actor::ServiceType;
+use activitypub_federation::protocol::context::WithContext;
+use activitypub_federation::traits::ActivityHandler;
 use activitypub_federation::{
     config::Data,
     fetch::object_id::ObjectId,
@@ -13,6 +16,7 @@ use activitypub_federation::{
 use chrono::{DateTime, Local, Utc};
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
+use tracing::log::warn;
 use url::Url;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -24,6 +28,64 @@ pub struct ApubInstance {
     articles: CollectionId<DbArticleCollection>,
     inbox: Url,
     public_key: PublicKey,
+}
+
+impl DbInstance {
+    pub fn followers_url(&self) -> MyResult<Url> {
+        Ok(Url::parse(&format!("{}/followers", self.ap_id.inner()))?)
+    }
+
+    pub fn follower_ids(&self, data: &Data<MyDataHandle>) -> MyResult<Vec<Url>> {
+        Ok(DbInstance::read_followers(self.id, &data.db_connection)?
+            .into_iter()
+            .map(|f| f.ap_id.into())
+            .collect())
+    }
+
+    pub async fn send_to_followers<Activity>(
+        &self,
+        activity: Activity,
+        extra_recipients: Vec<DbInstance>,
+        data: &Data<MyDataHandle>,
+    ) -> Result<(), <Activity as ActivityHandler>::Error>
+    where
+        Activity: ActivityHandler + Serialize + Debug + Send + Sync,
+        <Activity as ActivityHandler>::Error: From<activitypub_federation::error::Error>,
+        <Activity as ActivityHandler>::Error: From<Error>,
+    {
+        let mut inboxes: Vec<_> = DbInstance::read_followers(self.id, &data.db_connection)?
+            .iter()
+            .map(|f| Url::parse(&f.inbox_url).unwrap())
+            .collect();
+        inboxes.extend(
+            extra_recipients
+                .into_iter()
+                .map(|i| Url::parse(&i.inbox_url).unwrap()),
+        );
+        self.send(activity, inboxes, data).await?;
+        Ok(())
+    }
+
+    pub async fn send<Activity>(
+        &self,
+        activity: Activity,
+        recipients: Vec<Url>,
+        data: &Data<MyDataHandle>,
+    ) -> Result<(), <Activity as ActivityHandler>::Error>
+    where
+        Activity: ActivityHandler + Serialize + Debug + Send + Sync,
+        <Activity as ActivityHandler>::Error: From<activitypub_federation::error::Error>,
+    {
+        let activity = WithContext::new_default(activity);
+        let sends = SendActivityTask::prepare(&activity, self, recipients, data).await?;
+        for send in sends {
+            let send = send.sign_and_send(data).await;
+            if let Err(e) = send {
+                warn!("Failed to send activity {:?}: {e}", activity);
+            }
+        }
+        Ok(())
+    }
 }
 
 #[async_trait::async_trait]

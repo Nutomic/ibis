@@ -1,6 +1,6 @@
 use crate::database::edit::DbEdit;
 
-use crate::database::schema::article;
+use crate::database::schema::{article, edit};
 use crate::error::MyResult;
 use crate::federation::objects::edits_collection::DbEditCollection;
 use activitypub_federation::fetch::collection_id::CollectionId;
@@ -76,7 +76,7 @@ impl DbArticle {
             .get_result::<Self>(conn.deref_mut())?)
     }
 
-    pub fn read(id: i32, conn: &Mutex<PgConnection>) -> MyResult<DbArticle> {
+    pub fn read(id: i32, conn: &Mutex<PgConnection>) -> MyResult<Self> {
         let mut conn = conn.lock().unwrap();
         Ok(article::table.find(id).get_result(conn.deref_mut())?)
     }
@@ -98,14 +98,14 @@ impl DbArticle {
     pub fn read_from_ap_id(
         ap_id: &ObjectId<DbArticle>,
         conn: &Mutex<PgConnection>,
-    ) -> MyResult<DbArticle> {
+    ) -> MyResult<Self> {
         let mut conn = conn.lock().unwrap();
         Ok(article::table
             .filter(article::dsl::ap_id.eq(ap_id))
             .get_result(conn.deref_mut())?)
     }
 
-    pub fn read_local_title(title: &str, conn: &Mutex<PgConnection>) -> MyResult<DbArticle> {
+    pub fn read_local_title(title: &str, conn: &Mutex<PgConnection>) -> MyResult<Self> {
         let mut conn = conn.lock().unwrap();
         Ok(article::table
             .filter(article::dsl::title.eq(title))
@@ -113,14 +113,14 @@ impl DbArticle {
             .get_result(conn.deref_mut())?)
     }
 
-    pub fn read_all_local(conn: &Mutex<PgConnection>) -> MyResult<Vec<DbArticle>> {
+    pub fn read_all_local(conn: &Mutex<PgConnection>) -> MyResult<Vec<Self>> {
         let mut conn = conn.lock().unwrap();
         Ok(article::table
             .filter(article::dsl::local.eq(true))
             .get_results(conn.deref_mut())?)
     }
 
-    pub fn search(query: &str, conn: &Mutex<PgConnection>) -> MyResult<Vec<DbArticle>> {
+    pub fn search(query: &str, conn: &Mutex<PgConnection>) -> MyResult<Vec<Self>> {
         let mut conn = conn.lock().unwrap();
         let replaced = query
             .replace('%', "\\%")
@@ -135,10 +135,16 @@ impl DbArticle {
             .get_results(conn.deref_mut())?)
     }
 
-    // TODO: shouldnt have to read all edits from db
     pub fn latest_edit_version(&self, conn: &Mutex<PgConnection>) -> MyResult<EditVersion> {
-        let edits: Vec<DbEdit> = DbEdit::read_for_article(self, conn)?;
-        match edits.last().map(|e| e.hash.clone()) {
+        let mut conn = conn.lock().unwrap();
+        let latest_version: Option<EditVersion> = edit::table
+            .filter(edit::dsl::article_id.eq(self.id))
+            .order_by(edit::dsl::id.desc())
+            .limit(1)
+            .select(edit::dsl::hash)
+            .get_result(conn.deref_mut())
+            .ok();
+        match latest_version {
             Some(latest_version) => Ok(latest_version),
             None => Ok(EditVersion::default()),
         }
