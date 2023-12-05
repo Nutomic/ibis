@@ -1,4 +1,6 @@
+use crate::database::conflict::{DbConflict, DbConflictForm};
 use crate::database::instance::DbInstance;
+use crate::database::version::EditVersion;
 use crate::database::MyDataHandle;
 use crate::error::MyResult;
 use crate::federation::objects::edit::ApubEdit;
@@ -8,11 +10,7 @@ use activitypub_federation::{
     config::Data, fetch::object_id::ObjectId, protocol::helpers::deserialize_one_or_many,
     traits::ActivityHandler,
 };
-use rand::random;
 
-use crate::database::article::DbArticle;
-use crate::database::DbConflict;
-use crate::federation::activities::update_local_article::UpdateLocalArticle;
 use serde::{Deserialize, Serialize};
 use url::Url;
 
@@ -68,16 +66,15 @@ impl ActivityHandler for RejectEdit {
     }
 
     async fn receive(self, data: &Data<Self::DataType>) -> Result<(), Self::Error> {
-        dbg!(&self);
         // cant convert this to DbEdit as it tries to apply patch and fails
-        let mut lock = data.conflicts.lock().unwrap();
-        let conflict = DbConflict {
-            id: random(),
+        let article = self.object.object.dereference(data).await?;
+        let form = DbConflictForm {
+            id: EditVersion::new(&self.object.content)?,
             diff: self.object.content,
-            article_id: self.object.object,
-            previous_version: self.object.previous_version,
+            article_id: article.id,
+            previous_version_id: self.object.previous_version,
         };
-        lock.push(conflict);
+        DbConflict::create(&form, &data.db_connection)?;
         Ok(())
     }
 }

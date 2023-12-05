@@ -1,4 +1,4 @@
-use crate::database::edit::{DbEdit, EditVersion};
+use crate::database::edit::DbEdit;
 
 use crate::database::schema::article;
 use crate::error::MyResult;
@@ -6,7 +6,7 @@ use crate::federation::objects::edits_collection::DbEditCollection;
 use activitypub_federation::fetch::collection_id::CollectionId;
 use activitypub_federation::fetch::object_id::ObjectId;
 use diesel::pg::PgConnection;
-use diesel::BelongingToDsl;
+
 use diesel::ExpressionMethods;
 use diesel::{
     insert_into, AsChangeset, BoolExpressionMethods, Identifiable, Insertable,
@@ -14,6 +14,7 @@ use diesel::{
 };
 use serde::{Deserialize, Serialize};
 
+use crate::database::version::EditVersion;
 use std::ops::DerefMut;
 use std::sync::Mutex;
 
@@ -86,8 +87,7 @@ impl DbArticle {
             article::table.find(id).get_result(conn.deref_mut())?
         };
         let latest_version = article.latest_edit_version(conn)?;
-        let mut conn = conn.lock().unwrap();
-        let edits: Vec<DbEdit> = DbEdit::belonging_to(&article).get_results(conn.deref_mut())?;
+        let edits: Vec<DbEdit> = DbEdit::read_for_article(&article, conn)?;
         Ok(ArticleView {
             article,
             edits,
@@ -137,9 +137,8 @@ impl DbArticle {
 
     // TODO: shouldnt have to read all edits from db
     pub fn latest_edit_version(&self, conn: &Mutex<PgConnection>) -> MyResult<EditVersion> {
-        let mut conn = conn.lock().unwrap();
-        let edits: Vec<DbEdit> = DbEdit::belonging_to(&self).get_results(conn.deref_mut())?;
-        match edits.last().map(|e| e.version.clone()) {
+        let edits: Vec<DbEdit> = DbEdit::read_for_article(self, conn)?;
+        match edits.last().map(|e| e.hash.clone()) {
             Some(latest_version) => Ok(latest_version),
             None => Ok(EditVersion::default()),
         }

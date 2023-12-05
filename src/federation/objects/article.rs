@@ -1,6 +1,6 @@
 use crate::database::article::DbArticleForm;
-use crate::database::edit::EditVersion;
 use crate::database::instance::DbInstance;
+use crate::database::version::EditVersion;
 use crate::database::{article::DbArticle, MyDataHandle};
 use crate::error::Error;
 use crate::federation::objects::edits_collection::DbEditCollection;

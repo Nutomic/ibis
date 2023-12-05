@@ -1,5 +1,6 @@
 use crate::database::article::DbArticle;
-use crate::database::edit::{DbEdit, DbEditForm, EditVersion};
+use crate::database::edit::{DbEdit, DbEditForm};
+use crate::database::version::EditVersion;
 use crate::database::MyDataHandle;
 use crate::error::Error;
 use activitypub_federation::config::Data;
@@ -44,9 +45,8 @@ impl Object for DbEdit {
             kind: EditType::Edit,
             id: self.ap_id,
             content: self.diff,
-            version: self.version,
-            // TODO: this is wrong
-            previous_version: self.previous_version,
+            version: self.hash,
+            previous_version: self.previous_version_id,
             object: article.ap_id,
         })
     }
@@ -65,8 +65,8 @@ impl Object for DbEdit {
             ap_id: json.id,
             diff: json.content,
             article_id: article.id,
-            version: json.version,
-            previous_version: json.previous_version,
+            hash: json.version,
+            previous_version_id: json.previous_version,
         };
         let edit = DbEdit::create(&form, &data.db_connection)?;
         Ok(edit)

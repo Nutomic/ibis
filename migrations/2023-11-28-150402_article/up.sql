@@ -28,9 +28,16 @@ create table article (
 
 create table edit (
     id serial primary key,
+    hash uuid not null,
     ap_id varchar(255) not null unique,
     diff text not null,
     article_id int REFERENCES article ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
-    version text not null,
-    previous_version text not null
-)
+    previous_version_id uuid not null
+);
+
+create table conflict (
+    id uuid primary key,
+    diff text not null,
+    article_id int REFERENCES article ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
+    previous_version_id uuid not null
+);

@@ -1,5 +1,5 @@
 use crate::database::edit::DbEdit;
-use crate::database::edit::EditVersion;
+use crate::database::version::EditVersion;
 use crate::error::MyResult;
 use anyhow::anyhow;
 use diffy::{apply, Patch};
@@ -31,7 +31,7 @@ pub fn generate_article_version(edits: &Vec<DbEdit>, version: &EditVersion) -> M
     for e in edits {
         let patch = Patch::from_str(&e.diff)?;
         generated = apply(&generated, &patch)?;
-        if &e.version == version {
+        if &e.hash == version {
             return Ok(generated);
         }
     }

@@ -1,12 +1,14 @@
+use anyhow::anyhow;
 use fediwiki::api::{
-    ApiConflict, CreateArticleData, EditArticleData, FollowInstance, GetArticleData, ResolveObject,
+    CreateArticleData, EditArticleData, FollowInstance, GetArticleData, ResolveObject,
 };
 use fediwiki::database::article::ArticleView;
+use fediwiki::database::conflict::ApiConflict;
 use fediwiki::database::instance::DbInstance;
 use fediwiki::error::MyResult;
 use fediwiki::start;
 use once_cell::sync::Lazy;
-use reqwest::Client;
+use reqwest::{Client, RequestBuilder, StatusCode};
 use serde::de::Deserialize;
 use serde::ser::Serialize;
 use std::env::current_dir;
@@ -142,7 +144,7 @@ pub async fn create_article(hostname: &str, title: String) -> MyResult<ArticleVi
     let edit_form = EditArticleData {
         article_id: article.article.id,
         new_text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
-        previous_version: article.latest_version,
+        previous_version_id: article.latest_version,
         resolve_conflict_id: None,
     };
     edit_article(hostname, &edit_form).await
@@ -157,13 +159,10 @@ pub async fn edit_article_with_conflict(
     hostname: &str,
     edit_form: &EditArticleData,
 ) -> MyResult<Option<ApiConflict>> {
-    Ok(CLIENT
+    let req = CLIENT
         .patch(format!("http://{}/api/v1/article", hostname))
-        .form(edit_form)
-        .send()
-        .await?
-        .json()
-        .await?)
+        .form(edit_form);
+    handle_json_res(req).await
 }
 
 pub async fn edit_article(hostname: &str, edit_form: &EditArticleData) -> MyResult<ArticleView> {
@@ -184,25 +183,34 @@ where
     T: for<'de> Deserialize<'de>,
     R: Serialize,
 {
-    let mut res = CLIENT.get(format!("http://{}/api/v1/{}", hostname, endpoint));
+    let mut req = CLIENT.get(format!("http://{}/api/v1/{}", hostname, endpoint));
     if let Some(query) = query {
-        res = res.query(&query);
+        req = req.query(&query);
     }
-    let alpha_instance: T = res.send().await?.json().await?;
-    Ok(alpha_instance)
+    handle_json_res(req).await
 }
 
 pub async fn post<T: Serialize, R>(hostname: &str, endpoint: &str, form: &T) -> MyResult<R>
 where
     R: for<'de> Deserialize<'de>,
 {
-    Ok(CLIENT
+    let req = CLIENT
         .post(format!("http://{}/api/v1/{}", hostname, endpoint))
-        .form(form)
-        .send()
-        .await?
-        .json()
-        .await?)
+        .form(form);
+    handle_json_res(req).await
+}
+
+async fn handle_json_res<T>(req: RequestBuilder) -> MyResult<T>
+where
+    T: for<'de> Deserialize<'de>,
+{
+    let res = req.send().await?;
+    if res.status() == StatusCode::OK {
+        Ok(res.json().await?)
+    } else {
+        let text = res.text().await?;
+        Err(anyhow!("Post API response {text}").into())
+    }
 }
 
 pub async fn follow_instance(api_instance: &str, follow_instance: &str) -> MyResult<()> {

@@ -1,6 +1,7 @@
 use crate::database::article::DbArticle;
-use crate::database::edit::{DbEdit, DbEditForm, EditVersion};
+use crate::database::edit::{DbEdit, DbEditForm};
 use crate::database::instance::DbInstance;
+use crate::database::version::EditVersion;
 use crate::database::MyDataHandle;
 use crate::error::Error;
 use crate::federation::activities::update_local_article::UpdateLocalArticle;
@@ -30,12 +31,12 @@ pub async fn submit_article_update(
     } else {
         // dont insert edit into db, might be invalid in case of conflict
         let edit = DbEdit {
-            id: 0,
+            id: -1,
+            hash: form.hash,
             ap_id: form.ap_id,
             diff: form.diff,
             article_id: form.article_id,
-            version: form.version,
-            previous_version: form.previous_version,
+            previous_version_id: form.previous_version_id,
         };
         let instance = DbInstance::read(original_article.instance_id, &data.db_connection)?;
         UpdateRemoteArticle::send(edit, instance, data).await?;

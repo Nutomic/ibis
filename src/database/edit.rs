@@ -1,80 +1,71 @@
 use crate::database::schema::edit;
+use crate::database::version::EditVersion;
 use crate::database::DbArticle;
 use crate::error::MyResult;
 use activitypub_federation::fetch::object_id::ObjectId;
+use diesel::ExpressionMethods;
 use diesel::{
-    insert_into, AsChangeset, Identifiable, Insertable, PgConnection, Queryable, RunQueryDsl,
+    insert_into, AsChangeset, Insertable, PgConnection, QueryDsl, Queryable, RunQueryDsl,
     Selectable,
 };
-use diesel::{Associations, BelongingToDsl};
-use diesel_derive_newtype::DieselNewType;
 use diffy::create_patch;
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha224};
 use std::ops::DerefMut;
 use std::sync::Mutex;
 
 /// Represents a single change to the article.
-#[derive(
-    Clone,
-    Debug,
-    Serialize,
-    Deserialize,
-    PartialEq,
-    Queryable,
-    Selectable,
-    Identifiable,
-    Associations,
-)]
-#[diesel(table_name = edit, check_for_backend(diesel::pg::Pg), belongs_to(DbArticle, foreign_key = article_id))]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Queryable, Selectable)]
+#[diesel(table_name = edit, check_for_backend(diesel::pg::Pg))]
 pub struct DbEdit {
+    // TODO: we could use hash as primary key, but that gives errors on forking because
+    //       the same edit is used for multiple articles
     pub id: i32,
+    /// UUID built from sha224 hash of diff
+    pub hash: EditVersion,
     pub ap_id: ObjectId<DbEdit>,
     pub diff: String,
     pub article_id: i32,
-    pub version: EditVersion,
-    // TODO: could be an Option<DbEdit.id> instead
-    pub previous_version: EditVersion,
+    /// First edit of an article always has `EditVersion::default()` here
+    pub previous_version_id: EditVersion,
 }
 
 #[derive(Debug, Clone, Insertable, AsChangeset)]
 #[diesel(table_name = edit, check_for_backend(diesel::pg::Pg))]
 pub struct DbEditForm {
+    pub hash: EditVersion,
     pub ap_id: ObjectId<DbEdit>,
     pub diff: String,
     pub article_id: i32,
-    pub version: EditVersion,
-    pub previous_version: EditVersion,
+    pub previous_version_id: EditVersion,
 }
 
 impl DbEditForm {
     pub fn new(
         original_article: &DbArticle,
         updated_text: &str,
-        previous_version: EditVersion,
+        previous_version_id: EditVersion,
     ) -> MyResult<Self> {
         let diff = create_patch(&original_article.text, updated_text);
-        let (ap_id, hash) = Self::generate_ap_id_and_hash(original_article, diff.to_bytes())?;
+        let version = EditVersion::new(&diff.to_string())?;
+        let ap_id = Self::generate_ap_id(original_article, &version)?;
         Ok(DbEditForm {
+            hash: version,
             ap_id,
             diff: diff.to_string(),
             article_id: original_article.id,
-            version: EditVersion(hash),
-            previous_version,
+            previous_version_id,
         })
     }
 
-    fn generate_ap_id_and_hash(
+    pub(crate) fn generate_ap_id(
         article: &DbArticle,
-        diff: Vec<u8>,
-    ) -> MyResult<(ObjectId<DbEdit>, String)> {
-        let mut sha224 = Sha224::new();
-        sha224.update(diff);
-        let hash = format!("{:X}", sha224.finalize());
-        Ok((
-            ObjectId::parse(&format!("{}/{}", article.ap_id, hash))?,
-            hash,
-        ))
+        version: &EditVersion,
+    ) -> MyResult<ObjectId<DbEdit>> {
+        Ok(ObjectId::parse(&format!(
+            "{}/{}",
+            article.ap_id,
+            version.hash()
+        ))?)
     }
 }
 
@@ -88,31 +79,20 @@ impl DbEdit {
             .set(form)
             .get_result(conn.deref_mut())?)
     }
-
-    pub fn for_article(article: &DbArticle, conn: &Mutex<PgConnection>) -> MyResult<Vec<Self>> {
+    pub fn read(version: &EditVersion, conn: &Mutex<PgConnection>) -> MyResult<Self> {
         let mut conn = conn.lock().unwrap();
-        Ok(DbEdit::belonging_to(&article).get_results(conn.deref_mut())?)
+        Ok(edit::table
+            .filter(edit::dsl::hash.eq(version))
+            .get_result(conn.deref_mut())?)
     }
-    pub fn copy_to_local_fork(self, article: &DbArticle) -> MyResult<DbEditForm> {
-        let (ap_id, _) =
-            DbEditForm::generate_ap_id_and_hash(article, self.diff.clone().into_bytes())?;
-        Ok(DbEditForm {
-            ap_id,
-            diff: self.diff,
-            article_id: article.id,
-            version: self.version,
-            previous_version: self.previous_version,
-        })
-    }
-}
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, DieselNewType)]
-pub struct EditVersion(pub String);
-
-impl Default for EditVersion {
-    fn default() -> Self {
-        let sha224 = Sha224::new();
-        let hash = format!("{:X}", sha224.finalize());
-        EditVersion(hash)
+    pub fn read_for_article(
+        article: &DbArticle,
+        conn: &Mutex<PgConnection>,
+    ) -> MyResult<Vec<Self>> {
+        let mut conn = conn.lock().unwrap();
+        Ok(edit::table
+            .filter(edit::dsl::article_id.eq(article.id))
+            .get_results(conn.deref_mut())?)
     }
 }

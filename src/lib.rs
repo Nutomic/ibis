@@ -1,6 +1,6 @@
 use crate::api::api_routes;
 use crate::database::instance::{DbInstance, DbInstanceForm};
-use crate::database::{FakeDatabase, MyData};
+use crate::database::MyData;
 use crate::error::MyResult;
 use crate::federation::routes::federation_routes;
 use crate::utils::generate_activity_id;
@@ -28,10 +28,6 @@ mod utils;
 const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
 
 pub async fn start(hostname: &str, database_url: &str) -> MyResult<()> {
-    let fake_db = Arc::new(FakeDatabase {
-        conflicts: Mutex::new(vec![]),
-    });
-
     let db_connection = Arc::new(Mutex::new(PgConnection::establish(database_url)?));
     db_connection
         .lock()
@@ -39,10 +35,7 @@ pub async fn start(hostname: &str, database_url: &str) -> MyResult<()> {
         .run_pending_migrations(MIGRATIONS)
         .unwrap();
 
-    let data = MyData {
-        db_connection,
-        fake_db,
-    };
+    let data = MyData { db_connection };
     let config = FederationConfig::builder()
         .domain(hostname)
         .app_data(data)

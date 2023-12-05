@@ -1,7 +1,9 @@
 use crate::database::article::{ArticleView, DbArticle, DbArticleForm};
-use crate::database::edit::{DbEdit, EditVersion};
+use crate::database::conflict::{ApiConflict, DbConflict, DbConflictForm};
+use crate::database::edit::{DbEdit, DbEditForm};
 use crate::database::instance::{DbInstance, InstanceView};
-use crate::database::{DbConflict, MyDataHandle};
+use crate::database::version::EditVersion;
+use crate::database::MyDataHandle;
 use crate::error::MyResult;
 use crate::federation::activities::create_article::CreateArticle;
 use crate::federation::activities::follow::Follow;
@@ -9,14 +11,12 @@ use crate::federation::activities::submit_article_update;
 use crate::utils::generate_article_version;
 use activitypub_federation::config::Data;
 use activitypub_federation::fetch::object_id::ObjectId;
-use anyhow::anyhow;
 use axum::extract::Query;
 use axum::routing::{get, post};
 use axum::{Form, Json, Router};
 use axum_macros::debug_handler;
 use diffy::create_patch;
 use futures::future::try_join_all;
-use rand::random;
 use serde::{Deserialize, Serialize};
 use url::Url;
 
@@ -60,8 +60,7 @@ async fn create_article(
         instance_id: local_instance.id,
         local: true,
     };
-    dbg!(&form.ap_id);
-    let article = dbg!(DbArticle::create(&form, &data.db_connection))?;
+    let article = DbArticle::create(&form, &data.db_connection)?;
 
     CreateArticle::send_to_followers(article.clone(), &data).await?;
 
@@ -77,17 +76,9 @@ pub struct EditArticleData {
     pub new_text: String,
     /// The version that this edit is based on, ie [DbArticle.latest_version] or
     /// [ApiConflict.previous_version]
-    pub previous_version: EditVersion,
+    pub previous_version_id: EditVersion,
     /// If you are resolving a conflict, pass the id to delete conflict from the database
-    pub resolve_conflict_id: Option<i32>,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
-pub struct ApiConflict {
-    pub id: i32,
-    pub three_way_merge: String,
-    pub article_id: ObjectId<DbArticle>,
-    pub previous_version: EditVersion,
+    pub resolve_conflict_id: Option<EditVersion>,
 }
 
 /// Edit an existing article (local or remote).
@@ -105,21 +96,17 @@ async fn edit_article(
     Form(edit_form): Form<EditArticleData>,
 ) -> MyResult<Json<Option<ApiConflict>>> {
     // resolve conflict if any
-    if let Some(resolve_conflict_id) = &edit_form.resolve_conflict_id {
-        let mut lock = data.conflicts.lock().unwrap();
-        if !lock.iter().any(|c| &c.id == resolve_conflict_id) {
-            return Err(anyhow!("invalid resolve conflict"))?;
-        }
-        lock.retain(|c| &c.id != resolve_conflict_id);
+    if let Some(resolve_conflict_id) = edit_form.resolve_conflict_id {
+        DbConflict::delete(resolve_conflict_id, &data.db_connection)?;
     }
     let original_article = DbArticle::read_view(edit_form.article_id, &data.db_connection)?;
 
-    if edit_form.previous_version == original_article.latest_version {
+    if edit_form.previous_version_id == original_article.latest_version {
         // No intermediate changes, simply submit new version
         submit_article_update(
             &data,
             edit_form.new_text.clone(),
-            edit_form.previous_version,
+            edit_form.previous_version_id,
             &original_article.article,
         )
         .await?;
@@ -128,20 +115,18 @@ async fn edit_article(
         // There have been other changes since this edit was initiated. Get the common ancestor
         // version and generate a diff to find out what exactly has changed.
         let ancestor =
-            generate_article_version(&original_article.edits, &edit_form.previous_version)?;
+            generate_article_version(&original_article.edits, &edit_form.previous_version_id)?;
         let patch = create_patch(&ancestor, &edit_form.new_text);
 
-        let db_conflict = DbConflict {
-            id: random(),
+        let previous_version = DbEdit::read(&edit_form.previous_version_id, &data.db_connection)?;
+        let form = DbConflictForm {
+            id: EditVersion::new(&patch.to_string())?,
             diff: patch.to_string(),
-            article_id: original_article.article.ap_id.clone(),
-            previous_version: edit_form.previous_version,
+            article_id: original_article.article.id,
+            previous_version_id: previous_version.hash,
         };
-        {
-            let mut lock = data.conflicts.lock().unwrap();
-            lock.push(db_conflict.clone());
-        }
-        Ok(Json(db_conflict.to_api_conflict(&data).await?))
+        let conflict = DbConflict::create(&form, &data.db_connection)?;
+        Ok(Json(conflict.to_api_conflict(&data).await?))
     }
 }
 
@@ -186,8 +171,8 @@ async fn resolve_article(
     data: Data<MyDataHandle>,
 ) -> MyResult<Json<ArticleView>> {
     let article: DbArticle = ObjectId::from(query.id).dereference(&data).await?;
-    let edits = DbEdit::for_article(&article, &data.db_connection)?;
-    let latest_version = edits.last().unwrap().version.clone();
+    let edits = DbEdit::read_for_article(&article, &data.db_connection)?;
+    let latest_version = edits.last().unwrap().hash.clone();
     Ok(Json(ArticleView {
         article,
         edits,
@@ -226,7 +211,7 @@ async fn follow_instance(
 /// Get a list of all unresolved edit conflicts.
 #[debug_handler]
 async fn edit_conflicts(data: Data<MyDataHandle>) -> MyResult<Json<Vec<ApiConflict>>> {
-    let conflicts = { data.conflicts.lock().unwrap().to_vec() };
+    let conflicts = DbConflict::list(&data.db_connection)?;
     let conflicts: Vec<ApiConflict> = try_join_all(conflicts.into_iter().map(|c| {
         let data = data.reset_request_count();
         async move { c.to_api_conflict(&data).await }
@@ -289,10 +274,18 @@ async fn fork_article(
 
     // copy edits to new article
     // TODO: convert to sql
-    let edits = DbEdit::for_article(&original_article, &data.db_connection)?;
+    let edits = DbEdit::read_for_article(&original_article, &data.db_connection)?;
     for e in edits {
-        let form = e.copy_to_local_fork(&article)?;
-        DbEdit::create(&form, &data.db_connection)?;
+        let ap_id = DbEditForm::generate_ap_id(&article, &e.hash)?;
+        // TODO: id gives db unique violation
+        let form = DbEditForm {
+            ap_id,
+            diff: e.diff,
+            article_id: article.id,
+            hash: e.hash,
+            previous_version_id: e.previous_version_id,
+        };
+        dbg!(DbEdit::create(&form, &data.db_connection))?;
     }
 
     CreateArticle::send_to_followers(article.clone(), &data).await?;

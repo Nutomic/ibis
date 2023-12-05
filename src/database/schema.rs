@@ -13,14 +13,23 @@ diesel::table! {
 }
 
 diesel::table! {
+    conflict (id) {
+        id -> Uuid,
+        diff -> Text,
+        article_id -> Int4,
+        previous_version_id -> Uuid,
+    }
+}
+
+diesel::table! {
     edit (id) {
         id -> Int4,
+        hash -> Uuid,
         #[max_length = 255]
         ap_id -> Varchar,
         diff -> Text,
         article_id -> Int4,
-        version -> Text,
-        previous_version -> Text,
+        previous_version_id -> Uuid,
     }
 }
 
@@ -49,6 +58,7 @@ diesel::table! {
 }
 
 diesel::joinable!(article -> instance (instance_id));
+diesel::joinable!(conflict -> article (article_id));
 diesel::joinable!(edit -> article (article_id));
 
-diesel::allow_tables_to_appear_in_same_query!(article, edit, instance, instance_follow,);
+diesel::allow_tables_to_appear_in_same_query!(article, conflict, edit, instance, instance_follow,);
