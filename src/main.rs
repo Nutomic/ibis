@@ -9,6 +9,7 @@ pub async fn main() -> MyResult<()> {
         .filter_module("activitypub_federation", LevelFilter::Info)
         .filter_module("fediwiki", LevelFilter::Info)
         .init();
-    start("localhost:8131").await?;
+    let database_url = "postgres://fediwiki:password@localhost:5432/fediwiki";
+    start("localhost:8131", database_url).await?;
     Ok(())
 }

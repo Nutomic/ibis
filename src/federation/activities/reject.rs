@@ -1,16 +1,16 @@
-use crate::database::DatabaseHandle;
+use crate::database::conflict::{DbConflict, DbConflictForm};
+use crate::database::instance::DbInstance;
+use crate::database::version::EditVersion;
+use crate::database::MyDataHandle;
 use crate::error::MyResult;
 use crate::federation::objects::edit::ApubEdit;
-use crate::federation::objects::instance::DbInstance;
 use crate::utils::generate_activity_id;
 use activitypub_federation::kinds::activity::RejectType;
 use activitypub_federation::{
     config::Data, fetch::object_id::ObjectId, protocol::helpers::deserialize_one_or_many,
     traits::ActivityHandler,
 };
-use rand::random;
 
-use crate::database::DbConflict;
 use serde::{Deserialize, Serialize};
 use url::Url;
 
@@ -30,9 +30,9 @@ impl RejectEdit {
     pub async fn send(
         edit: ApubEdit,
         user_instance: DbInstance,
-        data: &Data<DatabaseHandle>,
+        data: &Data<MyDataHandle>,
     ) -> MyResult<()> {
-        let local_instance = data.local_instance();
+        let local_instance = DbInstance::read_local_instance(&data.db_connection)?;
         let id = generate_activity_id(local_instance.ap_id.inner())?;
         let reject = RejectEdit {
             actor: local_instance.ap_id.clone(),
@@ -42,7 +42,7 @@ impl RejectEdit {
             id,
         };
         local_instance
-            .send(reject, vec![user_instance.inbox], data)
+            .send(reject, vec![Url::parse(&user_instance.inbox_url)?], data)
             .await?;
         Ok(())
     }
@@ -50,7 +50,7 @@ impl RejectEdit {
 
 #[async_trait::async_trait]
 impl ActivityHandler for RejectEdit {
-    type DataType = DatabaseHandle;
+    type DataType = MyDataHandle;
     type Error = crate::error::Error;
 
     fn id(&self) -> &Url {
@@ -67,14 +67,14 @@ impl ActivityHandler for RejectEdit {
 
     async fn receive(self, data: &Data<Self::DataType>) -> Result<(), Self::Error> {
         // cant convert this to DbEdit as it tries to apply patch and fails
-        let mut lock = data.conflicts.lock().unwrap();
-        let conflict = DbConflict {
-            id: random(),
+        let article = self.object.object.dereference(data).await?;
+        let form = DbConflictForm {
+            id: EditVersion::new(&self.object.content)?,
             diff: self.object.content,
-            article_id: self.object.object,
-            previous_version: self.object.previous_version,
+            article_id: article.id,
+            previous_version_id: self.object.previous_version,
         };
-        lock.push(conflict);
+        DbConflict::create(&form, &data.db_connection)?;
         Ok(())
     }
 }

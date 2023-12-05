@@ -1,44 +1,26 @@
-use crate::error::MyResult;
-use crate::federation::objects::edit::{DbEdit, EditVersion};
+use crate::database::article::DbArticleForm;
+use crate::database::instance::DbInstance;
+use crate::database::version::EditVersion;
+use crate::database::{article::DbArticle, MyDataHandle};
+use crate::error::Error;
 use crate::federation::objects::edits_collection::DbEditCollection;
-use crate::federation::objects::instance::DbInstance;
-use crate::{database::DatabaseHandle, error::Error};
+use activitypub_federation::config::Data;
 use activitypub_federation::fetch::collection_id::CollectionId;
 use activitypub_federation::kinds::object::ArticleType;
+use activitypub_federation::kinds::public;
+use activitypub_federation::protocol::verification::verify_domains_match;
 use activitypub_federation::{
-    config::Data,
-    fetch::object_id::ObjectId,
-    kinds::public,
-    protocol::{helpers::deserialize_one_or_many, verification::verify_domains_match},
-    traits::Object,
+    fetch::object_id::ObjectId, protocol::helpers::deserialize_one_or_many, traits::Object,
 };
 use serde::{Deserialize, Serialize};
 use url::Url;
-
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
-pub struct DbArticle {
-    pub title: String,
-    pub text: String,
-    pub ap_id: ObjectId<DbArticle>,
-    pub instance: ObjectId<DbInstance>,
-    /// List of all edits which make up this article, oldest first.
-    pub edits: Vec<DbEdit>,
-    pub latest_version: EditVersion,
-    pub local: bool,
-}
-
-impl DbArticle {
-    fn edits_id(&self) -> MyResult<CollectionId<DbEditCollection>> {
-        Ok(CollectionId::parse(&format!("{}/edits", self.ap_id))?)
-    }
-}
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ApubArticle {
     #[serde(rename = "type")]
-    kind: ArticleType,
-    id: ObjectId<DbArticle>,
+    pub(crate) kind: ArticleType,
+    pub(crate) id: ObjectId<DbArticle>,
     pub(crate) attributed_to: ObjectId<DbInstance>,
     #[serde(deserialize_with = "deserialize_one_or_many")]
     pub(crate) to: Vec<Url>,
@@ -50,7 +32,7 @@ pub struct ApubArticle {
 
 #[async_trait::async_trait]
 impl Object for DbArticle {
-    type DataType = DatabaseHandle;
+    type DataType = MyDataHandle;
     type Kind = ApubArticle;
     type Error = Error;
 
@@ -58,24 +40,19 @@ impl Object for DbArticle {
         object_id: Url,
         data: &Data<Self::DataType>,
     ) -> Result<Option<Self>, Self::Error> {
-        let posts = data.articles.lock().unwrap();
-        let res = posts
-            .clone()
-            .into_iter()
-            .find(|u| u.1.ap_id.inner() == &object_id)
-            .map(|u| u.1);
-        Ok(res)
+        let article = DbArticle::read_from_ap_id(&object_id.into(), &data.db_connection).ok();
+        Ok(article)
     }
 
     async fn into_json(self, data: &Data<Self::DataType>) -> Result<Self::Kind, Self::Error> {
-        let instance = self.instance.dereference_local(data).await?;
+        let local_instance = DbInstance::read_local_instance(&data.db_connection)?;
         Ok(ApubArticle {
             kind: Default::default(),
             id: self.ap_id.clone(),
-            attributed_to: self.instance.clone(),
-            to: vec![public(), instance.followers_url()?],
+            attributed_to: local_instance.ap_id.clone(),
+            to: vec![public(), local_instance.followers_url()?],
             edits: self.edits_id()?,
-            latest_version: self.latest_version,
+            latest_version: self.latest_edit_version(&data.db_connection)?,
             content: self.text,
             name: self.title,
         })
@@ -91,26 +68,17 @@ impl Object for DbArticle {
     }
 
     async fn from_json(json: Self::Kind, data: &Data<Self::DataType>) -> Result<Self, Self::Error> {
-        let mut article = DbArticle {
+        let instance = json.attributed_to.dereference(data).await?;
+        let form = DbArticleForm {
             title: json.name,
             text: json.content,
             ap_id: json.id,
-            instance: json.attributed_to,
-            // TODO: shouldnt overwrite existing edits
-            edits: vec![],
-            latest_version: json.latest_version,
             local: false,
+            instance_id: instance.id,
         };
+        let article = DbArticle::create_or_update(&form, &data.db_connection)?;
 
-        {
-            let mut lock = data.articles.lock().unwrap();
-            lock.insert(article.ap_id.inner().clone(), article.clone());
-        }
-
-        let edits = json.edits.dereference(&article, data).await?;
-
-        // include edits in return value (they are already written to db, no need to do that here)
-        article.edits = edits.0;
+        json.edits.dereference(&article, data).await?;
 
         Ok(article)
     }

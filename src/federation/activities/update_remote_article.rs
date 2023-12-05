@@ -1,8 +1,12 @@
-use crate::database::DatabaseHandle;
+use crate::database::MyDataHandle;
 use crate::error::MyResult;
 
-use crate::federation::objects::edit::{ApubEdit, DbEdit};
-use crate::federation::objects::instance::DbInstance;
+use crate::database::article::DbArticle;
+use crate::database::edit::DbEdit;
+use crate::database::instance::DbInstance;
+use crate::federation::activities::reject::RejectEdit;
+use crate::federation::activities::update_local_article::UpdateLocalArticle;
+use crate::federation::objects::edit::ApubEdit;
 use crate::utils::generate_activity_id;
 use activitypub_federation::kinds::activity::UpdateType;
 use activitypub_federation::{
@@ -12,9 +16,6 @@ use activitypub_federation::{
     traits::{ActivityHandler, Object},
 };
 use diffy::{apply, Patch};
-
-use crate::federation::activities::reject::RejectEdit;
-use crate::federation::activities::update_local_article::UpdateLocalArticle;
 use serde::{Deserialize, Serialize};
 use url::Url;
 
@@ -35,9 +36,9 @@ impl UpdateRemoteArticle {
     pub async fn send(
         edit: DbEdit,
         article_instance: DbInstance,
-        data: &Data<DatabaseHandle>,
+        data: &Data<MyDataHandle>,
     ) -> MyResult<()> {
-        let local_instance = data.local_instance();
+        let local_instance = DbInstance::read_local_instance(&data.db_connection)?;
         let id = generate_activity_id(local_instance.ap_id.inner())?;
         let update = UpdateRemoteArticle {
             actor: local_instance.ap_id.clone(),
@@ -47,7 +48,7 @@ impl UpdateRemoteArticle {
             id,
         };
         local_instance
-            .send(update, vec![article_instance.inbox], data)
+            .send(update, vec![Url::parse(&article_instance.inbox_url)?], data)
             .await?;
         Ok(())
     }
@@ -55,7 +56,7 @@ impl UpdateRemoteArticle {
 
 #[async_trait::async_trait]
 impl ActivityHandler for UpdateRemoteArticle {
-    type DataType = DatabaseHandle;
+    type DataType = MyDataHandle;
     type Error = crate::error::Error;
 
     fn id(&self) -> &Url {
@@ -72,21 +73,14 @@ impl ActivityHandler for UpdateRemoteArticle {
 
     /// Received on article origin instances
     async fn receive(self, data: &Data<Self::DataType>) -> Result<(), Self::Error> {
-        let article_text = {
-            let lock = data.articles.lock().unwrap();
-            lock.get(self.object.object.inner()).unwrap().text.clone()
-        };
+        let local_article = DbArticle::read_from_ap_id(&self.object.object, &data.db_connection)?;
         let patch = Patch::from_str(&self.object.content)?;
 
-        match apply(&article_text, &patch) {
+        match apply(&local_article.text, &patch) {
             Ok(applied) => {
-                let article = {
-                    let edit = DbEdit::from_json(self.object.clone(), data).await?;
-                    let mut lock = data.articles.lock().unwrap();
-                    let article = lock.get_mut(edit.article_id.inner()).unwrap();
-                    article.text = applied;
-                    article.clone()
-                };
+                let edit = DbEdit::from_json(self.object.clone(), data).await?;
+                let article =
+                    DbArticle::update_text(edit.article_id, &applied, &data.db_connection)?;
                 UpdateLocalArticle::send(article, vec![self.actor.dereference(data).await?], data)
                     .await?;
             }

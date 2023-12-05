@@ -1,9 +1,17 @@
-use crate::database::DatabaseHandle;
+use crate::database::article::DbArticle;
+use crate::database::instance::DbInstance;
+use crate::database::MyDataHandle;
 use crate::error::MyResult;
 use crate::federation::activities::accept::Accept;
+use crate::federation::activities::create_article::CreateArticle;
 use crate::federation::activities::follow::Follow;
-use crate::federation::objects::instance::{ApubInstance, DbInstance};
-
+use crate::federation::activities::reject::RejectEdit;
+use crate::federation::activities::update_local_article::UpdateLocalArticle;
+use crate::federation::activities::update_remote_article::UpdateRemoteArticle;
+use crate::federation::objects::article::ApubArticle;
+use crate::federation::objects::articles_collection::{ArticleCollection, DbArticleCollection};
+use crate::federation::objects::edits_collection::{ApubEditCollection, DbEditCollection};
+use crate::federation::objects::instance::ApubInstance;
 use activitypub_federation::axum::inbox::{receive_activity, ActivityData};
 use activitypub_federation::axum::json::FederationJson;
 use activitypub_federation::config::Data;
@@ -11,14 +19,6 @@ use activitypub_federation::protocol::context::WithContext;
 use activitypub_federation::traits::Object;
 use activitypub_federation::traits::{ActivityHandler, Collection};
 use axum::extract::Path;
-
-use crate::federation::activities::create_article::CreateArticle;
-use crate::federation::activities::reject::RejectEdit;
-use crate::federation::activities::update_local_article::UpdateLocalArticle;
-use crate::federation::activities::update_remote_article::UpdateRemoteArticle;
-use crate::federation::objects::article::ApubArticle;
-use crate::federation::objects::articles_collection::{ArticleCollection, DbArticleCollection};
-use crate::federation::objects::edits_collection::{ApubEditCollection, DbEditCollection};
 use axum::response::IntoResponse;
 use axum::routing::{get, post};
 use axum::Router;
@@ -37,30 +37,28 @@ pub fn federation_routes() -> Router {
 
 #[debug_handler]
 async fn http_get_instance(
-    data: Data<DatabaseHandle>,
+    data: Data<MyDataHandle>,
 ) -> MyResult<FederationJson<WithContext<ApubInstance>>> {
-    let db_instance = data.local_instance();
-    let json_instance = db_instance.into_json(&data).await?;
+    let local_instance = DbInstance::read_local_instance(&data.db_connection)?;
+    let json_instance = local_instance.into_json(&data).await?;
     Ok(FederationJson(WithContext::new_default(json_instance)))
 }
 
 #[debug_handler]
 async fn http_get_all_articles(
-    data: Data<DatabaseHandle>,
+    data: Data<MyDataHandle>,
 ) -> MyResult<FederationJson<WithContext<ArticleCollection>>> {
-    let collection = DbArticleCollection::read_local(&data.local_instance(), &data).await?;
+    let local_instance = DbInstance::read_local_instance(&data.db_connection)?;
+    let collection = DbArticleCollection::read_local(&local_instance, &data).await?;
     Ok(FederationJson(WithContext::new_default(collection)))
 }
 
 #[debug_handler]
 async fn http_get_article(
     Path(title): Path<String>,
-    data: Data<DatabaseHandle>,
+    data: Data<MyDataHandle>,
 ) -> MyResult<FederationJson<WithContext<ApubArticle>>> {
-    let article = {
-        let lock = data.articles.lock().unwrap();
-        lock.values().find(|a| a.title == title).unwrap().clone()
-    };
+    let article = DbArticle::read_local_title(&title, &data.db_connection)?;
     let json = article.into_json(&data).await?;
     Ok(FederationJson(WithContext::new_default(json)))
 }
@@ -68,12 +66,9 @@ async fn http_get_article(
 #[debug_handler]
 async fn http_get_article_edits(
     Path(title): Path<String>,
-    data: Data<DatabaseHandle>,
+    data: Data<MyDataHandle>,
 ) -> MyResult<FederationJson<WithContext<ApubEditCollection>>> {
-    let article = {
-        let lock = data.articles.lock().unwrap();
-        lock.values().find(|a| a.title == title).unwrap().clone()
-    };
+    let article = DbArticle::read_local_title(&title, &data.db_connection)?;
     let json = DbEditCollection::read_local(&article, &data).await?;
     Ok(FederationJson(WithContext::new_default(json)))
 }
@@ -93,12 +88,9 @@ pub enum InboxActivities {
 
 #[debug_handler]
 pub async fn http_post_inbox(
-    data: Data<DatabaseHandle>,
+    data: Data<MyDataHandle>,
     activity_data: ActivityData,
 ) -> impl IntoResponse {
-    receive_activity::<WithContext<InboxActivities>, DbInstance, DatabaseHandle>(
-        activity_data,
-        &data,
-    )
-    .await
+    receive_activity::<WithContext<InboxActivities>, DbInstance, MyDataHandle>(activity_data, &data)
+        .await
 }

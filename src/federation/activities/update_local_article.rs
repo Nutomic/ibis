@@ -1,8 +1,8 @@
-use crate::database::DatabaseHandle;
+use crate::database::{article::DbArticle, MyDataHandle};
 use crate::error::MyResult;
-use crate::federation::objects::article::{ApubArticle, DbArticle};
+use crate::federation::objects::article::ApubArticle;
 
-use crate::federation::objects::instance::DbInstance;
+use crate::database::instance::DbInstance;
 use crate::utils::generate_activity_id;
 use activitypub_federation::kinds::activity::UpdateType;
 use activitypub_federation::{
@@ -32,12 +32,12 @@ impl UpdateLocalArticle {
     pub async fn send(
         article: DbArticle,
         extra_recipients: Vec<DbInstance>,
-        data: &Data<DatabaseHandle>,
+        data: &Data<MyDataHandle>,
     ) -> MyResult<()> {
         debug_assert!(article.local);
-        let local_instance = data.local_instance();
+        let local_instance = DbInstance::read_local_instance(&data.db_connection)?;
         let id = generate_activity_id(local_instance.ap_id.inner())?;
-        let mut to = local_instance.follower_ids();
+        let mut to = local_instance.follower_ids(data)?;
         to.extend(extra_recipients.iter().map(|i| i.ap_id.inner().clone()));
         let update = UpdateLocalArticle {
             actor: local_instance.ap_id.clone(),
@@ -55,7 +55,7 @@ impl UpdateLocalArticle {
 
 #[async_trait::async_trait]
 impl ActivityHandler for UpdateLocalArticle {
-    type DataType = DatabaseHandle;
+    type DataType = MyDataHandle;
     type Error = crate::error::Error;
 
     fn id(&self) -> &Url {

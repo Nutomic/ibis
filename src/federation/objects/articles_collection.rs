@@ -1,7 +1,7 @@
-use crate::database::DatabaseHandle;
+use crate::database::instance::DbInstance;
+use crate::database::{article::DbArticle, MyDataHandle};
 use crate::error::Error;
-use crate::federation::objects::article::{ApubArticle, DbArticle};
-use crate::federation::objects::instance::DbInstance;
+use crate::federation::objects::article::ApubArticle;
 
 use activitypub_federation::kinds::collection::CollectionType;
 use activitypub_federation::{
@@ -28,24 +28,15 @@ pub struct DbArticleCollection(Vec<DbArticle>);
 #[async_trait::async_trait]
 impl Collection for DbArticleCollection {
     type Owner = DbInstance;
-    type DataType = DatabaseHandle;
+    type DataType = MyDataHandle;
     type Kind = ArticleCollection;
     type Error = Error;
 
     async fn read_local(
-        _owner: &Self::Owner,
+        owner: &Self::Owner,
         data: &Data<Self::DataType>,
     ) -> Result<Self::Kind, Self::Error> {
-        let local_articles = {
-            let articles = data.articles.lock().unwrap();
-            articles
-                .iter()
-                .map(|a| a.1)
-                .filter(|a| a.local)
-                .clone()
-                .cloned()
-                .collect::<Vec<_>>()
-        };
+        let local_articles = DbArticle::read_all_local(&data.db_connection)?;
         let articles = future::try_join_all(
             local_articles
                 .into_iter()
@@ -55,7 +46,7 @@ impl Collection for DbArticleCollection {
         .await?;
         let collection = ArticleCollection {
             r#type: Default::default(),
-            id: data.local_instance().articles_id.into(),
+            id: owner.articles_url.clone().into(),
             total_items: articles.len() as i32,
             items: articles,
         };

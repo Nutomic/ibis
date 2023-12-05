@@ -1,53 +1,13 @@
-use crate::database::DatabaseHandle;
-use crate::error::{Error, MyResult};
-
-use crate::federation::objects::article::DbArticle;
+use crate::database::article::DbArticle;
+use crate::database::edit::{DbEdit, DbEditForm};
+use crate::database::version::EditVersion;
+use crate::database::MyDataHandle;
+use crate::error::Error;
 use activitypub_federation::config::Data;
 use activitypub_federation::fetch::object_id::ObjectId;
 use activitypub_federation::traits::Object;
-use diffy::create_patch;
 use serde::{Deserialize, Serialize};
-use sha2::Digest;
-use sha2::Sha224;
 use url::Url;
-
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
-pub struct EditVersion(String);
-
-impl Default for EditVersion {
-    fn default() -> Self {
-        let sha224 = Sha224::new();
-        let hash = format!("{:X}", sha224.finalize());
-        EditVersion(hash)
-    }
-}
-
-/// Represents a single change to the article.
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
-pub struct DbEdit {
-    pub id: ObjectId<DbEdit>,
-    pub diff: String,
-    pub article_id: ObjectId<DbArticle>,
-    pub version: EditVersion,
-    pub local: bool,
-}
-
-impl DbEdit {
-    pub fn new(original_article: &DbArticle, updated_text: &str) -> MyResult<Self> {
-        let diff = create_patch(&original_article.text, updated_text);
-        let mut sha224 = Sha224::new();
-        sha224.update(diff.to_bytes());
-        let hash = format!("{:X}", sha224.finalize());
-        let edit_id = ObjectId::parse(&format!("{}/{}", original_article.ap_id, hash))?;
-        Ok(DbEdit {
-            id: edit_id,
-            diff: diff.to_string(),
-            article_id: original_article.ap_id.clone(),
-            version: EditVersion(hash),
-            local: true,
-        })
-    }
-}
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum EditType {
@@ -68,7 +28,7 @@ pub struct ApubEdit {
 
 #[async_trait::async_trait]
 impl Object for DbEdit {
-    type DataType = DatabaseHandle;
+    type DataType = MyDataHandle;
     type Kind = ApubEdit;
     type Error = Error;
 
@@ -80,18 +40,14 @@ impl Object for DbEdit {
     }
 
     async fn into_json(self, data: &Data<Self::DataType>) -> Result<Self::Kind, Self::Error> {
-        let article_version = {
-            let mut lock = data.articles.lock().unwrap();
-            let article = lock.get_mut(self.article_id.inner()).unwrap();
-            article.latest_version.clone()
-        };
+        let article = DbArticle::read(self.article_id, &data.db_connection)?;
         Ok(ApubEdit {
             kind: EditType::Edit,
-            id: self.id,
+            id: self.ap_id,
             content: self.diff,
-            version: self.version,
-            previous_version: article_version,
-            object: self.article_id,
+            version: self.hash,
+            previous_version: self.previous_version_id,
+            object: article.ap_id,
         })
     }
 
@@ -104,16 +60,15 @@ impl Object for DbEdit {
     }
 
     async fn from_json(json: Self::Kind, data: &Data<Self::DataType>) -> Result<Self, Self::Error> {
-        let edit = Self {
-            id: json.id,
+        let article = json.object.dereference(data).await?;
+        let form = DbEditForm {
+            ap_id: json.id,
             diff: json.content,
-            article_id: json.object,
-            version: json.version,
-            local: false,
+            article_id: article.id,
+            hash: json.version,
+            previous_version_id: json.previous_version,
         };
-        let mut lock = data.articles.lock().unwrap();
-        let article = lock.get_mut(edit.article_id.inner()).unwrap();
-        article.edits.push(edit.clone());
+        let edit = DbEdit::create(&form, &data.db_connection)?;
         Ok(edit)
     }
 }
