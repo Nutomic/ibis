@@ -9,16 +9,18 @@ use activitypub_federation::traits::Object;
 use serde::{Deserialize, Serialize};
 use url::Url;
 
+/// Same type used by Forgefed
+/// https://codeberg.org/ForgeFed/ForgeFed/issues/88
 #[derive(Clone, Debug, Serialize, Deserialize)]
-pub enum EditType {
-    Edit,
+pub enum PatchType {
+    Patch,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ApubEdit {
     #[serde(rename = "type")]
-    kind: EditType,
+    kind: PatchType,
     pub id: ObjectId<DbEdit>,
     pub content: String,
     pub version: EditVersion,
@@ -42,7 +44,7 @@ impl Object for DbEdit {
     async fn into_json(self, data: &Data<Self::DataType>) -> Result<Self::Kind, Self::Error> {
         let article = DbArticle::read(self.article_id, &data.db_connection)?;
         Ok(ApubEdit {
-            kind: EditType::Edit,
+            kind: PatchType::Patch,
             id: self.ap_id,
             content: self.diff,
             version: self.hash,
