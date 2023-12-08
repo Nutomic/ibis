@@ -58,8 +58,17 @@ diesel::table! {
 }
 
 diesel::table! {
-    user_ (id) {
+    local_user (id) {
         id -> Int4,
+        password_encrypted -> Text,
+        person_id -> Int4,
+    }
+}
+
+diesel::table! {
+    person (id) {
+        id -> Int4,
+        username -> Text,
         #[max_length = 255]
         ap_id -> Varchar,
         inbox_url -> Text,
@@ -74,7 +83,8 @@ diesel::joinable!(article -> instance (instance_id));
 diesel::joinable!(conflict -> article (article_id));
 diesel::joinable!(edit -> article (article_id));
 diesel::joinable!(instance_follow -> instance (instance_id));
-diesel::joinable!(instance_follow -> user_ (follower_id));
+diesel::joinable!(instance_follow -> person (follower_id));
+diesel::joinable!(local_user -> person (person_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     article,
@@ -82,5 +92,6 @@ diesel::allow_tables_to_appear_in_same_query!(
     edit,
     instance,
     instance_follow,
-    user_,
+    local_user,
+    person,
 );

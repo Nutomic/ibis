@@ -9,20 +9,27 @@ create table instance (
     local bool not null
 );
 
-create table user_ (
-      id serial primary key,
-      ap_id varchar(255) not null unique,
-      inbox_url text not null,
-      public_key text not null,
-      private_key text,
-      last_refreshed_at timestamptz not null default now(),
-      local bool not null
-  );
+create table person (
+    id serial primary key,
+    username text not null,
+    ap_id varchar(255) not null unique,
+    inbox_url text not null,
+    public_key text not null,
+    private_key text,
+    last_refreshed_at timestamptz not null default now(),
+    local bool not null
+);
+
+create table local_user (
+    id serial primary key,
+    password_encrypted text not null,
+    person_id int REFERENCES person ON UPDATE CASCADE ON DELETE CASCADE NOT NULL
+);
 
 create table instance_follow (
     id serial primary key,
     instance_id int REFERENCES instance ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
-    follower_id int REFERENCES user_ ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
+    follower_id int REFERENCES person ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
     pending boolean not null,
     unique(instance_id, follower_id)
 );

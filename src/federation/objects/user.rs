@@ -1,4 +1,4 @@
-use crate::database::user::{DbUser, DbUserForm};
+use crate::database::user::{DbLocalUser, DbLocalUserForm, DbPerson, DbPersonForm};
 use crate::database::MyDataHandle;
 use crate::error::Error;
 use activitypub_federation::kinds::actor::PersonType;
@@ -18,13 +18,14 @@ use url::Url;
 pub struct ApubUser {
     #[serde(rename = "type")]
     kind: PersonType,
-    id: ObjectId<DbUser>,
+    id: ObjectId<DbPerson>,
+    preferred_username: String,
     inbox: Url,
     public_key: PublicKey,
 }
 
 #[async_trait::async_trait]
-impl Object for DbUser {
+impl Object for DbPerson {
     type DataType = MyDataHandle;
     type Kind = ApubUser;
     type Error = Error;
@@ -37,13 +38,14 @@ impl Object for DbUser {
         object_id: Url,
         data: &Data<Self::DataType>,
     ) -> Result<Option<Self>, Self::Error> {
-        Ok(DbUser::read_from_ap_id(&object_id.into(), data).ok())
+        Ok(DbPerson::read_from_ap_id(&object_id.into(), data).ok())
     }
 
     async fn into_json(self, _data: &Data<Self::DataType>) -> Result<Self::Kind, Self::Error> {
         Ok(ApubUser {
             kind: Default::default(),
             id: self.ap_id.clone(),
+            preferred_username: self.username.clone(),
             inbox: Url::parse(&self.inbox_url)?,
             public_key: self.public_key(),
         })
@@ -59,7 +61,8 @@ impl Object for DbUser {
     }
 
     async fn from_json(json: Self::Kind, data: &Data<Self::DataType>) -> Result<Self, Self::Error> {
-        let form = DbUserForm {
+        let form = DbPersonForm {
+            username: json.preferred_username,
             ap_id: json.id,
             inbox_url: json.inbox.to_string(),
             public_key: json.public_key.public_key_pem,
@@ -67,11 +70,11 @@ impl Object for DbUser {
             last_refreshed_at: Local::now().into(),
             local: false,
         };
-        DbUser::create(&form, &data.db_connection)
+        DbPerson::create(&form, None, &data.db_connection)
     }
 }
 
-impl Actor for DbUser {
+impl Actor for DbPerson {
     fn id(&self) -> Url {
         self.ap_id.inner().clone()
     }

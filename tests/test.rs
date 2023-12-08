@@ -7,7 +7,7 @@ use crate::common::{
     get_query, post, TestData, TEST_ARTICLE_DEFAULT_TEXT,
 };
 use common::get;
-use fediwiki::api::{EditArticleData, ForkArticleData, ResolveObject, SearchArticleData};
+use fediwiki::api::{EditArticleData, ForkArticleData, RegisterUserData, ResolveObject, SearchArticleData};
 use fediwiki::database::article::{ArticleView, DbArticle};
 use fediwiki::error::MyResult;
 
@@ -462,5 +462,15 @@ async fn test_fork_article() -> MyResult<()> {
         get_query(&data.beta.hostname, "search", Some(search_form)).await?;
     assert_eq!(2, search_res.len());
 
+    data.stop()
+}
+
+#[tokio::test]
+async fn test_user_registration_login() -> MyResult<()> {
+    let data = TestData::start();
+    let data = RegisterUserData {
+
+    }
+    post(data.alpha.hostname, "user/register")
     data.stop()
 }

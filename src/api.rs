@@ -19,6 +19,7 @@ use diffy::create_patch;
 use futures::future::try_join_all;
 use serde::{Deserialize, Serialize};
 use url::Url;
+use crate::database::user::{DbLocalUserForm, DbPerson, DbPersonForm};
 
 pub fn api_routes() -> Router {
     Router::new()
@@ -33,6 +34,8 @@ pub fn api_routes() -> Router {
         .route("/instance", get(get_local_instance))
         .route("/instance/follow", post(follow_instance))
         .route("/search", get(search_article))
+        .route("/user/register", post(register_user))
+        .route("/user/login", post(login_user))
 }
 
 #[derive(Deserialize, Serialize)]
@@ -290,4 +293,43 @@ async fn fork_article(
     CreateArticle::send_to_followers(article.clone(), &data).await?;
 
     Ok(Json(DbArticle::read_view(article.id, &data.db_connection)?))
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct RegisterUserData {
+    name: String,
+    password: String,
+}
+
+#[derive(Deserialize, Serialize)]
+#[serde(transparent)]
+pub struct Jwt(String);
+
+#[debug_handler]
+async fn register_user(
+    data: Data<MyDataHandle>,
+    Form(form): Form<RegisterUserData>,
+) -> MyResult<Json<Jwt>> {
+    let local_user_form = DbLocalUserForm {
+
+    };
+    let person_form = DbPersonForm {
+
+    };
+    DbPerson::create(&person_form, Some(&local_user_form), &data.db_connection)?;
+
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct LoginUserData {
+    name: String,
+    password: String,
+}
+
+#[debug_handler]
+async fn login_user(
+    data: Data<MyDataHandle>,
+    Form(form): Form<Jwt>,
+) -> MyResult<Json<ArticleView>> {
+    todo!()
 }
