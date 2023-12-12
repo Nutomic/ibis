@@ -12,6 +12,7 @@ use reqwest::{Client, RequestBuilder, StatusCode};
 use serde::de::Deserialize;
 use serde::ser::Serialize;
 use std::env::current_dir;
+use std::fs::create_dir_all;
 use std::process::{Command, Stdio};
 use std::sync::atomic::{AtomicI32, Ordering};
 use std::sync::Once;
@@ -82,10 +83,12 @@ impl TestData {
 
 /// Generate a unique db path for each postgres so that tests can run in parallel.
 fn generate_db_path(name: &'static str, port: i32) -> String {
-    format!(
+    let path = format!(
         "{}/target/test_db/{name}-{port}",
         current_dir().unwrap().display()
-    )
+    );
+    create_dir_all(&path).unwrap();
+    path
 }
 
 pub struct FediwikiInstance {

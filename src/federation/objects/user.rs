@@ -1,4 +1,4 @@
-use crate::database::user::{DbLocalUser, DbLocalUserForm, DbPerson, DbPersonForm};
+use crate::database::user::{DbPerson, DbPersonForm};
 use crate::database::MyDataHandle;
 use crate::error::Error;
 use activitypub_federation::kinds::actor::PersonType;
@@ -70,7 +70,7 @@ impl Object for DbPerson {
             last_refreshed_at: Local::now().into(),
             local: false,
         };
-        DbPerson::create(&form, None, &data.db_connection)
+        DbPerson::create(&form, &data.db_connection)
     }
 }
 

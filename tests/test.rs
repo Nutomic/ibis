@@ -7,12 +7,14 @@ use crate::common::{
     get_query, post, TestData, TEST_ARTICLE_DEFAULT_TEXT,
 };
 use common::get;
-use fediwiki::api::{EditArticleData, ForkArticleData, RegisterUserData, ResolveObject, SearchArticleData};
+use fediwiki::api::{
+    EditArticleData, ForkArticleData, LoginResponse, RegisterUserData, ResolveObject,
+    SearchArticleData,
+};
 use fediwiki::database::article::{ArticleView, DbArticle};
-use fediwiki::error::MyResult;
-
 use fediwiki::database::conflict::ApiConflict;
 use fediwiki::database::instance::{DbInstance, InstanceView};
+use fediwiki::error::MyResult;
 use pretty_assertions::{assert_eq, assert_ne};
 use url::Url;
 
@@ -90,6 +92,7 @@ async fn test_follow_instance() -> MyResult<()> {
 
     // check that follow was federated
     let alpha_instance: InstanceView = get(&data.alpha.hostname, "instance").await?;
+    dbg!(&alpha_instance);
     assert_eq!(1, alpha_instance.following.len());
     assert_eq!(0, alpha_instance.followers.len());
     assert_eq!(
@@ -468,9 +471,25 @@ async fn test_fork_article() -> MyResult<()> {
 #[tokio::test]
 async fn test_user_registration_login() -> MyResult<()> {
     let data = TestData::start();
-    let data = RegisterUserData {
+    let register_form = RegisterUserData {
+        name: "my_user".to_string(),
+        password: "hunter2".to_string(),
+    };
+    let register: LoginResponse =
+        post(&data.alpha.hostname, "user/register", &register_form).await?;
+    assert!(!register.jwt.is_empty());
 
-    }
-    post(data.alpha.hostname, "user/register")
+    let mut login_form = RegisterUserData {
+        name: register_form.name.clone(),
+        password: "asd123".to_string(),
+    };
+    let invalid_login =
+        post::<_, LoginResponse>(&data.alpha.hostname, "user/login", &login_form).await;
+    assert!(invalid_login.is_err());
+
+    login_form.password = register_form.password;
+    let valid_login: LoginResponse = post(&data.alpha.hostname, "user/login", &login_form).await?;
+    assert!(!valid_login.jwt.is_empty());
+
     data.stop()
 }
