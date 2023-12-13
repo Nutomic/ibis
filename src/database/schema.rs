@@ -82,8 +82,6 @@ diesel::table! {
 diesel::joinable!(article -> instance (instance_id));
 diesel::joinable!(conflict -> article (article_id));
 diesel::joinable!(edit -> article (article_id));
-diesel::joinable!(instance_follow -> instance (instance_id));
-diesel::joinable!(instance_follow -> person (follower_id));
 diesel::joinable!(local_user -> person (person_id));
 
 diesel::allow_tables_to_appear_in_same_query!(

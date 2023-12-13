@@ -29,7 +29,7 @@ create table local_user (
 create table instance_follow (
     id serial primary key,
     instance_id int REFERENCES instance ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
-    follower_id int REFERENCES person ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
+    follower_id int REFERENCES instance ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
     pending boolean not null,
     unique(instance_id, follower_id)
 );

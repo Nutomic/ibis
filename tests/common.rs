@@ -20,6 +20,7 @@ use std::thread::{sleep, spawn};
 use std::time::Duration;
 use tokio::task::JoinHandle;
 use tracing::log::LevelFilter;
+use tracing::warn;
 use url::Url;
 
 pub static CLIENT: Lazy<Client> = Lazy::new(Client::new);
@@ -208,11 +209,12 @@ where
     T: for<'de> Deserialize<'de>,
 {
     let res = req.send().await?;
-    if res.status() == StatusCode::OK {
-        Ok(res.json().await?)
+    let status = res.status();
+    let text = res.text().await?;
+    if status == StatusCode::OK {
+        Ok(serde_json::from_str(&text).map_err(|e| anyhow!("Json error on {text}: {e}"))?)
     } else {
-        let text = res.text().await?;
-        Err(anyhow!("Post API response {text}").into())
+        Err(anyhow!("API error: {text}").into())
     }
 }
 
@@ -229,10 +231,14 @@ pub async fn follow_instance(api_instance: &str, follow_instance: &str) -> MyRes
         id: instance_resolved.id,
     };
     // cant use post helper because follow doesnt return json
-    CLIENT
+    let res = CLIENT
         .post(format!("http://{}/api/v1/instance/follow", api_instance))
         .form(&follow_form)
         .send()
         .await?;
-    Ok(())
+    if res.status() == StatusCode::OK {
+        Ok(())
+    } else {
+        Err(anyhow!("API error: {}", res.text().await?).into())
+    }
 }
