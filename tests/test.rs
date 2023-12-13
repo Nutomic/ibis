@@ -7,10 +7,9 @@ use crate::common::{
     get_query, post, TestData, TEST_ARTICLE_DEFAULT_TEXT,
 };
 use common::get;
-use fediwiki::api::{
-    EditArticleData, ForkArticleData, LoginResponse, RegisterUserData, ResolveObject,
-    SearchArticleData,
-};
+use fediwiki::api::article::{EditArticleData, ForkArticleData};
+use fediwiki::api::user::{LoginResponse, RegisterUserData};
+use fediwiki::api::{ResolveObject, SearchArticleData};
 use fediwiki::database::article::{ArticleView, DbArticle};
 use fediwiki::database::conflict::ApiConflict;
 use fediwiki::database::instance::{DbInstance, InstanceView};

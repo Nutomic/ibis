@@ -1,46 +1,21 @@
 use crate::database::article::{ArticleView, DbArticle, DbArticleForm};
 use crate::database::conflict::{ApiConflict, DbConflict, DbConflictForm};
 use crate::database::edit::{DbEdit, DbEditForm};
-use crate::database::instance::{DbInstance, InstanceView};
-use crate::database::user::{DbLocalUser, DbPerson};
+use crate::database::instance::DbInstance;
 use crate::database::version::EditVersion;
 use crate::database::MyDataHandle;
 use crate::error::MyResult;
 use crate::federation::activities::create_article::CreateArticle;
-use crate::federation::activities::follow::Follow;
 use crate::federation::activities::submit_article_update;
 use crate::utils::generate_article_version;
 use activitypub_federation::config::Data;
 use activitypub_federation::fetch::object_id::ObjectId;
-use anyhow::anyhow;
 use axum::extract::Query;
-use axum::routing::{get, post};
-use axum::{Form, Json, Router};
+use axum::Form;
+use axum::Json;
 use axum_macros::debug_handler;
-use bcrypt::verify;
-use chrono::Utc;
 use diffy::create_patch;
-use futures::future::try_join_all;
-use jsonwebtoken::{encode, EncodingKey, Header};
 use serde::{Deserialize, Serialize};
-use url::Url;
-
-pub fn api_routes() -> Router {
-    Router::new()
-        .route(
-            "/article",
-            get(get_article).post(create_article).patch(edit_article),
-        )
-        .route("/article/fork", post(fork_article))
-        .route("/edit_conflicts", get(edit_conflicts))
-        .route("/resolve_instance", get(resolve_instance))
-        .route("/resolve_article", get(resolve_article))
-        .route("/instance", get(get_local_instance))
-        .route("/instance/follow", post(follow_instance))
-        .route("/search", get(search_article))
-        .route("/user/register", post(register_user))
-        .route("/user/login", post(login_user))
-}
 
 #[derive(Deserialize, Serialize)]
 pub struct CreateArticleData {
@@ -49,7 +24,7 @@ pub struct CreateArticleData {
 
 /// Create a new article with empty text, and federate it to followers.
 #[debug_handler]
-async fn create_article(
+pub(in crate::api) async fn create_article(
     data: Data<MyDataHandle>,
     Form(create_article): Form<CreateArticleData>,
 ) -> MyResult<Json<ArticleView>> {
@@ -98,7 +73,7 @@ pub struct EditArticleData {
 ///
 /// Conflicts are stored in the database so they can be retrieved later from `/api/v3/edit_conflicts`.
 #[debug_handler]
-async fn edit_article(
+pub(in crate::api) async fn edit_article(
     data: Data<MyDataHandle>,
     Form(edit_form): Form<EditArticleData>,
 ) -> MyResult<Json<Option<ApiConflict>>> {
@@ -144,7 +119,7 @@ pub struct GetArticleData {
 
 /// Retrieve an article by ID. It must already be stored in the local database.
 #[debug_handler]
-async fn get_article(
+pub(in crate::api) async fn get_article(
     Query(query): Query<GetArticleData>,
     data: Data<MyDataHandle>,
 ) -> MyResult<Json<ArticleView>> {
@@ -152,97 +127,6 @@ async fn get_article(
         query.article_id,
         &data.db_connection,
     )?))
-}
-
-#[derive(Deserialize, Serialize)]
-pub struct ResolveObject {
-    pub id: Url,
-}
-
-/// Fetch a remote instance actor. This automatically synchronizes the remote articles collection to
-/// the local instance, and allows for interactions such as following.
-#[debug_handler]
-async fn resolve_instance(
-    Query(query): Query<ResolveObject>,
-    data: Data<MyDataHandle>,
-) -> MyResult<Json<DbInstance>> {
-    let instance: DbInstance = ObjectId::from(query.id).dereference(&data).await?;
-    Ok(Json(instance))
-}
-
-/// Fetch a remote article, including edits collection. Allows viewing and editing. Note that new
-/// article changes can only be received if we follow the instance, or if it is refetched manually.
-#[debug_handler]
-async fn resolve_article(
-    Query(query): Query<ResolveObject>,
-    data: Data<MyDataHandle>,
-) -> MyResult<Json<ArticleView>> {
-    let article: DbArticle = ObjectId::from(query.id).dereference(&data).await?;
-    let edits = DbEdit::read_for_article(&article, &data.db_connection)?;
-    let latest_version = edits.last().unwrap().hash.clone();
-    Ok(Json(ArticleView {
-        article,
-        edits,
-        latest_version,
-    }))
-}
-
-/// Retrieve the local instance info.
-#[debug_handler]
-async fn get_local_instance(data: Data<MyDataHandle>) -> MyResult<Json<InstanceView>> {
-    let local_instance = DbInstance::read_local_view(&data.db_connection)?;
-    Ok(Json(local_instance))
-}
-
-#[derive(Deserialize, Serialize, Debug)]
-pub struct FollowInstance {
-    pub id: i32,
-}
-
-/// Make the local instance follow a given remote instance, to receive activities about new and
-/// updated articles.
-#[debug_handler]
-async fn follow_instance(
-    data: Data<MyDataHandle>,
-    Form(query): Form<FollowInstance>,
-) -> MyResult<()> {
-    let local_instance = DbInstance::read_local_instance(&data.db_connection)?;
-    let target = DbInstance::read(query.id, &data.db_connection)?;
-    let pending = !target.local;
-    DbInstance::follow(local_instance.id, target.id, pending, &data)?;
-    let instance = DbInstance::read(query.id, &data.db_connection)?;
-    Follow::send(local_instance, instance, &data).await?;
-    Ok(())
-}
-
-/// Get a list of all unresolved edit conflicts.
-#[debug_handler]
-async fn edit_conflicts(data: Data<MyDataHandle>) -> MyResult<Json<Vec<ApiConflict>>> {
-    let conflicts = DbConflict::list(&data.db_connection)?;
-    let conflicts: Vec<ApiConflict> = try_join_all(conflicts.into_iter().map(|c| {
-        let data = data.reset_request_count();
-        async move { c.to_api_conflict(&data).await }
-    }))
-    .await?
-    .into_iter()
-    .flatten()
-    .collect();
-    Ok(Json(conflicts))
-}
-
-#[derive(Deserialize, Serialize, Clone)]
-pub struct SearchArticleData {
-    pub query: String,
-}
-
-/// Search articles for matching title or body text.
-#[debug_handler]
-async fn search_article(
-    Query(query): Query<SearchArticleData>,
-    data: Data<MyDataHandle>,
-) -> MyResult<Json<Vec<DbArticle>>> {
-    let article = DbArticle::search(&query.query, &data.db_connection)?;
-    Ok(Json(article))
 }
 
 #[derive(Deserialize, Serialize)]
@@ -256,7 +140,7 @@ pub struct ForkArticleData {
 /// Fork a remote article to local instance. This is useful if there are disagreements about
 /// how an article should be edited.
 #[debug_handler]
-async fn fork_article(
+pub(in crate::api) async fn fork_article(
     data: Data<MyDataHandle>,
     Form(fork_form): Form<ForkArticleData>,
 ) -> MyResult<Json<ArticleView>> {
@@ -297,70 +181,4 @@ async fn fork_article(
     CreateArticle::send_to_followers(article.clone(), &data).await?;
 
     Ok(Json(DbArticle::read_view(article.id, &data.db_connection)?))
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Claims {
-    /// local_user.id
-    pub sub: String,
-    /// hostname
-    pub iss: String,
-    /// Creation time as unix timestamp
-    pub iat: i64,
-}
-
-pub fn generate_login_token(
-    local_user: DbLocalUser,
-    data: &Data<MyDataHandle>,
-) -> MyResult<LoginResponse> {
-    let hostname = data.domain().to_string();
-    let claims = Claims {
-        sub: local_user.id.to_string(),
-        iss: hostname,
-        iat: Utc::now().timestamp(),
-    };
-
-    // TODO: move to config
-    let key = EncodingKey::from_secret("secret".as_bytes());
-    let jwt = encode(&Header::default(), &claims, &key)?;
-    Ok(LoginResponse { jwt })
-}
-
-#[derive(Deserialize, Serialize)]
-pub struct RegisterUserData {
-    pub name: String,
-    pub password: String,
-}
-
-#[derive(Deserialize, Serialize)]
-pub struct LoginResponse {
-    pub jwt: String,
-}
-
-#[debug_handler]
-async fn register_user(
-    data: Data<MyDataHandle>,
-    Form(form): Form<RegisterUserData>,
-) -> MyResult<Json<LoginResponse>> {
-    let user = DbPerson::create_local(form.name, form.password, &data)?;
-    Ok(Json(generate_login_token(user.local_user, &data)?))
-}
-
-#[derive(Deserialize, Serialize)]
-pub struct LoginUserData {
-    name: String,
-    password: String,
-}
-
-#[debug_handler]
-async fn login_user(
-    data: Data<MyDataHandle>,
-    Form(form): Form<LoginUserData>,
-) -> MyResult<Json<LoginResponse>> {
-    let user = DbPerson::read_local_from_name(&form.name, &data)?;
-    let valid = verify(&form.password, &user.local_user.password_encrypted)?;
-    if !valid {
-        return Err(anyhow!("Invalid login").into());
-    }
-    Ok(Json(generate_login_token(user.local_user, &data)?))
 }

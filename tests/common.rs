@@ -1,7 +1,7 @@
 use anyhow::anyhow;
-use fediwiki::api::{
-    CreateArticleData, EditArticleData, FollowInstance, GetArticleData, ResolveObject,
-};
+use fediwiki::api::article::{CreateArticleData, EditArticleData, GetArticleData};
+use fediwiki::api::instance::FollowInstance;
+use fediwiki::api::ResolveObject;
 use fediwiki::database::article::ArticleView;
 use fediwiki::database::conflict::ApiConflict;
 use fediwiki::database::instance::DbInstance;
@@ -20,7 +20,6 @@ use std::thread::{sleep, spawn};
 use std::time::Duration;
 use tokio::task::JoinHandle;
 use tracing::log::LevelFilter;
-use tracing::warn;
 use url::Url;
 
 pub static CLIENT: Lazy<Client> = Lazy::new(Client::new);

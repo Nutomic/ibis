@@ -1,4 +1,3 @@
-use crate::api::api_routes;
 use crate::database::instance::{DbInstance, DbInstanceForm};
 use crate::database::MyData;
 use crate::error::MyResult;
@@ -8,6 +7,7 @@ use activitypub_federation::config::{FederationConfig, FederationMiddleware};
 use activitypub_federation::fetch::collection_id::CollectionId;
 use activitypub_federation::fetch::object_id::ObjectId;
 use activitypub_federation::http_signatures::generate_actor_keypair;
+use api::api_routes;
 use axum::{Router, Server};
 use chrono::Local;
 use diesel::Connection;
