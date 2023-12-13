@@ -145,6 +145,7 @@ pub struct ForkArticleData {
 /// how an article should be edited.
 #[debug_handler]
 pub(in crate::api) async fn fork_article(
+    Extension(_user): Extension<LocalUserView>,
     data: Data<MyDataHandle>,
     Form(fork_form): Form<ForkArticleData>,
 ) -> MyResult<Json<ArticleView>> {

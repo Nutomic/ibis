@@ -1,8 +1,8 @@
 use anyhow::anyhow;
-use fediwiki::api::article::{CreateArticleData, EditArticleData, GetArticleData};
+use fediwiki::api::article::{CreateArticleData, EditArticleData, ForkArticleData, GetArticleData};
 use fediwiki::api::instance::FollowInstance;
-use fediwiki::api::user::LoginResponse;
 use fediwiki::api::user::RegisterUserData;
+use fediwiki::api::user::{LoginResponse, LoginUserData};
 use fediwiki::api::ResolveObject;
 use fediwiki::database::article::ArticleView;
 use fediwiki::database::conflict::ApiConflict;
@@ -119,16 +119,12 @@ impl FediwikiInstance {
         let handle = tokio::task::spawn(async move {
             start(&hostname_, &db_url).await.unwrap();
         });
-        let register_form = RegisterUserData {
-            name: username.to_string(),
-            password: "hunter2".to_string(),
-        };
-        let register: LoginResponse = post(&hostname, "user/register", &register_form)
-            .await
-            .unwrap();
-        assert!(!register.jwt.is_empty());
+        // wait a moment for the server to start
+        tokio::time::sleep(Duration::from_millis(100)).await;
+        let register_res = register(&hostname, username, "hunter2").await.unwrap();
+        assert!(!register_res.jwt.is_empty());
         Self {
-            jwt: register.jwt,
+            jwt: register_res.jwt,
             hostname,
             db_path,
             db_handle: handle,
@@ -214,13 +210,14 @@ where
     handle_json_res(req).await
 }
 
-pub async fn post<T: Serialize, R>(hostname: &str, endpoint: &str, form: &T) -> MyResult<R>
-where
-    R: for<'de> Deserialize<'de>,
-{
+pub async fn fork_article(
+    instance: &FediwikiInstance,
+    form: &ForkArticleData,
+) -> MyResult<ArticleView> {
     let req = CLIENT
-        .post(format!("http://{}/api/v1/{}", hostname, endpoint))
-        .form(form);
+        .post(format!("http://{}/api/v1/article/fork", instance.hostname))
+        .form(form)
+        .bearer_auth(&instance.jwt);
     handle_json_res(req).await
 }
 
@@ -261,4 +258,30 @@ pub async fn follow_instance(api_instance: &str, follow_instance: &str) -> MyRes
     } else {
         Err(anyhow!("API error: {}", res.text().await?).into())
     }
+}
+
+pub async fn register(hostname: &str, username: &str, password: &str) -> MyResult<LoginResponse> {
+    let register_form = RegisterUserData {
+        username: username.to_string(),
+        password: password.to_string(),
+    };
+    let req = CLIENT
+        .post(format!("http://{}/api/v1/user/register", hostname))
+        .form(&register_form);
+    handle_json_res(req).await
+}
+
+pub async fn login(
+    instance: &FediwikiInstance,
+    username: &str,
+    password: &str,
+) -> MyResult<LoginResponse> {
+    let login_form = LoginUserData {
+        username: username.to_string(),
+        password: password.to_string(),
+    };
+    let req = CLIENT
+        .post(format!("http://{}/api/v1/user/login", instance.hostname))
+        .form(&login_form);
+    handle_json_res(req).await
 }

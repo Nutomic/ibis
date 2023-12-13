@@ -2,14 +2,14 @@ extern crate fediwiki;
 
 mod common;
 
-use crate::common::handle_json_res;
+use crate::common::register;
 use crate::common::{
     create_article, edit_article, edit_article_with_conflict, follow_instance, get_article,
-    get_query, post, TestData, CLIENT, TEST_ARTICLE_DEFAULT_TEXT,
+    get_query, TestData, CLIENT, TEST_ARTICLE_DEFAULT_TEXT,
 };
+use crate::common::{fork_article, handle_json_res, login};
 use common::get;
 use fediwiki::api::article::{CreateArticleData, EditArticleData, ForkArticleData};
-use fediwiki::api::user::{LoginResponse, RegisterUserData};
 use fediwiki::api::{ResolveObject, SearchArticleData};
 use fediwiki::database::article::{ArticleView, DbArticle};
 use fediwiki::database::conflict::ApiConflict;
@@ -441,7 +441,7 @@ async fn test_fork_article() -> MyResult<()> {
     let fork_form = ForkArticleData {
         article_id: resolved_article.id,
     };
-    let fork_res: ArticleView = post(&data.beta.hostname, "article/fork", &fork_form).await?;
+    let fork_res = fork_article(&data.beta, &fork_form).await?;
     let forked_article = fork_res.article;
     assert_eq!(resolved_article.title, forked_article.title);
     assert_eq!(resolved_article.text, forked_article.text);
@@ -470,24 +470,15 @@ async fn test_fork_article() -> MyResult<()> {
 #[tokio::test]
 async fn test_user_registration_login() -> MyResult<()> {
     let data = TestData::start().await;
-    let register_form = RegisterUserData {
-        name: "my_user".to_string(),
-        password: "hunter2".to_string(),
-    };
-    let register: LoginResponse =
-        post(&data.alpha.hostname, "user/register", &register_form).await?;
+    let username = "my_user";
+    let password = "hunter2";
+    let register = register(&data.alpha.hostname, username, password).await?;
     assert!(!register.jwt.is_empty());
 
-    let mut login_form = RegisterUserData {
-        name: register_form.name.clone(),
-        password: "asd123".to_string(),
-    };
-    let invalid_login =
-        post::<_, LoginResponse>(&data.alpha.hostname, "user/login", &login_form).await;
+    let invalid_login = login(&data.alpha, username, "asd123").await;
     assert!(invalid_login.is_err());
 
-    login_form.password = register_form.password;
-    let valid_login: LoginResponse = post(&data.alpha.hostname, "user/login", &login_form).await?;
+    let valid_login = login(&data.alpha, username, password).await?;
     assert!(!valid_login.jwt.is_empty());
 
     let title = "Manu_Chao".to_string();

@@ -54,7 +54,7 @@ pub async fn validate(jwt: &str, data: &Data<MyDataHandle>) -> MyResult<LocalUse
 
 #[derive(Deserialize, Serialize)]
 pub struct RegisterUserData {
-    pub name: String,
+    pub username: String,
     pub password: String,
 }
 
@@ -68,14 +68,14 @@ pub(in crate::api) async fn register_user(
     data: Data<MyDataHandle>,
     Form(form): Form<RegisterUserData>,
 ) -> MyResult<Json<LoginResponse>> {
-    let user = DbPerson::create_local(form.name, form.password, &data)?;
+    let user = DbPerson::create_local(form.username, form.password, &data)?;
     Ok(Json(generate_login_token(user.local_user, &data)?))
 }
 
 #[derive(Deserialize, Serialize)]
 pub struct LoginUserData {
-    name: String,
-    password: String,
+    pub username: String,
+    pub password: String,
 }
 
 #[debug_handler]
@@ -83,7 +83,7 @@ pub(in crate::api) async fn login_user(
     data: Data<MyDataHandle>,
     Form(form): Form<LoginUserData>,
 ) -> MyResult<Json<LoginResponse>> {
-    let user = DbPerson::read_local_from_name(&form.name, &data)?;
+    let user = DbPerson::read_local_from_name(&form.username, &data)?;
     let valid = verify(&form.password, &user.local_user.password_encrypted)?;
     if !valid {
         return Err(anyhow!("Invalid login").into());
