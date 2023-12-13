@@ -1,4 +1,4 @@
-use crate::database::user::{DbLocalUser, DbPerson};
+use crate::database::user::{DbLocalUser, DbPerson, LocalUserView};
 use crate::database::MyDataHandle;
 use crate::error::MyResult;
 use activitypub_federation::config::Data;
@@ -7,6 +7,9 @@ use axum::{Form, Json};
 use axum_macros::debug_handler;
 use bcrypt::verify;
 use chrono::Utc;
+use jsonwebtoken::DecodingKey;
+use jsonwebtoken::Validation;
+use jsonwebtoken::{decode, get_current_timestamp};
 use jsonwebtoken::{encode, EncodingKey, Header};
 use serde::{Deserialize, Serialize};
 
@@ -18,7 +21,12 @@ pub struct Claims {
     pub iss: String,
     /// Creation time as unix timestamp
     pub iat: i64,
+    /// Expiration time
+    pub exp: u64,
 }
+
+// TODO: move to config
+const SECRET: &[u8] = "secret".as_bytes();
 
 pub(in crate::api) fn generate_login_token(
     local_user: DbLocalUser,
@@ -29,12 +37,19 @@ pub(in crate::api) fn generate_login_token(
         sub: local_user.id.to_string(),
         iss: hostname,
         iat: Utc::now().timestamp(),
+        exp: get_current_timestamp(),
     };
 
-    // TODO: move to config
-    let key = EncodingKey::from_secret("secret".as_bytes());
+    let key = EncodingKey::from_secret(SECRET);
     let jwt = encode(&Header::default(), &claims, &key)?;
     Ok(LoginResponse { jwt })
+}
+
+pub async fn validate(jwt: &str, data: &Data<MyDataHandle>) -> MyResult<LocalUserView> {
+    let validation = Validation::default();
+    let key = DecodingKey::from_secret(SECRET);
+    let claims = decode::<Claims>(jwt, &key, &validation)?;
+    DbPerson::read_local_from_id(claims.claims.sub.parse()?, data)
 }
 
 #[derive(Deserialize, Serialize)]

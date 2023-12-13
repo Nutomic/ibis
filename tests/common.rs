@@ -1,6 +1,8 @@
 use anyhow::anyhow;
 use fediwiki::api::article::{CreateArticleData, EditArticleData, GetArticleData};
 use fediwiki::api::instance::FollowInstance;
+use fediwiki::api::user::LoginResponse;
+use fediwiki::api::user::RegisterUserData;
 use fediwiki::api::ResolveObject;
 use fediwiki::database::article::ArticleView;
 use fediwiki::database::conflict::ApiConflict;
@@ -31,7 +33,7 @@ pub struct TestData {
 }
 
 impl TestData {
-    pub fn start() -> Self {
+    pub async fn start() -> Self {
         static INIT: Once = Once::new();
         INIT.call_once(|| {
             env_logger::builder()
@@ -67,9 +69,9 @@ impl TestData {
         }
 
         Self {
-            alpha: FediwikiInstance::start(alpha_db_path, port_alpha),
-            beta: FediwikiInstance::start(beta_db_path, port_beta),
-            gamma: FediwikiInstance::start(gamma_db_path, port_gamma),
+            alpha: FediwikiInstance::start(alpha_db_path, port_alpha, "alpha").await,
+            beta: FediwikiInstance::start(beta_db_path, port_beta, "beta").await,
+            gamma: FediwikiInstance::start(gamma_db_path, port_gamma, "gamma").await,
         }
     }
 
@@ -93,6 +95,7 @@ fn generate_db_path(name: &'static str, port: i32) -> String {
 
 pub struct FediwikiInstance {
     pub hostname: String,
+    pub jwt: String,
     db_path: String,
     db_handle: JoinHandle<()>,
 }
@@ -109,16 +112,25 @@ impl FediwikiInstance {
         })
     }
 
-    fn start(db_path: String, port: i32) -> Self {
+    async fn start(db_path: String, port: i32, username: &str) -> Self {
         let db_url = format!("postgresql://lemmy:password@/lemmy?host={db_path}");
         let hostname = format!("localhost:{port}");
         let hostname_ = hostname.clone();
         let handle = tokio::task::spawn(async move {
             start(&hostname_, &db_url).await.unwrap();
         });
+        let register_form = RegisterUserData {
+            name: username.to_string(),
+            password: "hunter2".to_string(),
+        };
+        let register: LoginResponse = post(&hostname, "user/register", &register_form)
+            .await
+            .unwrap();
+        assert!(!register.jwt.is_empty());
         Self {
-            db_path,
+            jwt: register.jwt,
             hostname,
+            db_path,
             db_handle: handle,
         }
     }
@@ -138,11 +150,16 @@ impl FediwikiInstance {
 
 pub const TEST_ARTICLE_DEFAULT_TEXT: &str = "some\nexample\ntext\n";
 
-pub async fn create_article(hostname: &str, title: String) -> MyResult<ArticleView> {
+pub async fn create_article(instance: &FediwikiInstance, title: String) -> MyResult<ArticleView> {
     let create_form = CreateArticleData {
         title: title.clone(),
     };
-    let article: ArticleView = post(hostname, "article", &create_form).await?;
+    let req = CLIENT
+        .post(format!("http://{}/api/v1/article", &instance.hostname))
+        .form(&create_form)
+        .bearer_auth(&instance.jwt);
+    let article: ArticleView = handle_json_res(req).await?;
+
     // create initial edit to ensure that conflicts are generated (there are no conflicts on empty file)
     let edit_form = EditArticleData {
         article_id: article.article.id,
@@ -150,7 +167,7 @@ pub async fn create_article(hostname: &str, title: String) -> MyResult<ArticleVi
         previous_version_id: article.latest_version,
         resolve_conflict_id: None,
     };
-    edit_article(hostname, &edit_form).await
+    edit_article(&instance, &edit_form).await
 }
 
 pub async fn get_article(hostname: &str, article_id: i32) -> MyResult<ArticleView> {
@@ -159,19 +176,23 @@ pub async fn get_article(hostname: &str, article_id: i32) -> MyResult<ArticleVie
 }
 
 pub async fn edit_article_with_conflict(
-    hostname: &str,
+    instance: &FediwikiInstance,
     edit_form: &EditArticleData,
 ) -> MyResult<Option<ApiConflict>> {
     let req = CLIENT
-        .patch(format!("http://{}/api/v1/article", hostname))
-        .form(edit_form);
+        .patch(format!("http://{}/api/v1/article", instance.hostname))
+        .form(edit_form)
+        .bearer_auth(&instance.jwt);
     handle_json_res(req).await
 }
 
-pub async fn edit_article(hostname: &str, edit_form: &EditArticleData) -> MyResult<ArticleView> {
-    let edit_res = edit_article_with_conflict(hostname, edit_form).await?;
+pub async fn edit_article(
+    instance: &FediwikiInstance,
+    edit_form: &EditArticleData,
+) -> MyResult<ArticleView> {
+    let edit_res = edit_article_with_conflict(instance, edit_form).await?;
     assert!(edit_res.is_none());
-    get_article(hostname, edit_form.article_id).await
+    get_article(&instance.hostname, edit_form.article_id).await
 }
 
 pub async fn get<T>(hostname: &str, endpoint: &str) -> MyResult<T>
@@ -203,7 +224,7 @@ where
     handle_json_res(req).await
 }
 
-async fn handle_json_res<T>(req: RequestBuilder) -> MyResult<T>
+pub async fn handle_json_res<T>(req: RequestBuilder) -> MyResult<T>
 where
     T: for<'de> Deserialize<'de>,
 {

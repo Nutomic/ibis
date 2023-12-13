@@ -137,4 +137,13 @@ impl DbPerson {
             .filter(person::dsl::username.eq(username))
             .get_result(conn.deref_mut())?)
     }
+
+    pub fn read_local_from_id(id: i32, data: &Data<MyDataHandle>) -> MyResult<LocalUserView> {
+        let mut conn = data.db_connection.lock().unwrap();
+        Ok(person::table
+            .inner_join(local_user::table)
+            .filter(person::dsl::local)
+            .filter(person::dsl::id.eq(id))
+            .get_result(conn.deref_mut())?)
+    }
 }

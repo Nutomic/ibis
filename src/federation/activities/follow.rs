@@ -26,7 +26,6 @@ impl Follow {
         to: DbInstance,
         data: &Data<MyDataHandle>,
     ) -> MyResult<()> {
-        dbg!(1);
         let id = generate_activity_id(local_instance.ap_id.inner())?;
         let follow = Follow {
             actor: local_instance.ap_id.clone(),
@@ -34,7 +33,6 @@ impl Follow {
             kind: Default::default(),
             id,
         };
-        dbg!(&follow);
         local_instance
             .send(follow, vec![to.shared_inbox_or_inbox()], data)
             .await?;

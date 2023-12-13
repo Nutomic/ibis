@@ -2,6 +2,7 @@ use crate::database::article::{ArticleView, DbArticle, DbArticleForm};
 use crate::database::conflict::{ApiConflict, DbConflict, DbConflictForm};
 use crate::database::edit::{DbEdit, DbEditForm};
 use crate::database::instance::DbInstance;
+use crate::database::user::LocalUserView;
 use crate::database::version::EditVersion;
 use crate::database::MyDataHandle;
 use crate::error::MyResult;
@@ -11,6 +12,7 @@ use crate::utils::generate_article_version;
 use activitypub_federation::config::Data;
 use activitypub_federation::fetch::object_id::ObjectId;
 use axum::extract::Query;
+use axum::Extension;
 use axum::Form;
 use axum::Json;
 use axum_macros::debug_handler;
@@ -25,6 +27,7 @@ pub struct CreateArticleData {
 /// Create a new article with empty text, and federate it to followers.
 #[debug_handler]
 pub(in crate::api) async fn create_article(
+    Extension(_user): Extension<LocalUserView>,
     data: Data<MyDataHandle>,
     Form(create_article): Form<CreateArticleData>,
 ) -> MyResult<Json<ArticleView>> {
@@ -74,6 +77,7 @@ pub struct EditArticleData {
 /// Conflicts are stored in the database so they can be retrieved later from `/api/v3/edit_conflicts`.
 #[debug_handler]
 pub(in crate::api) async fn edit_article(
+    Extension(_user): Extension<LocalUserView>,
     data: Data<MyDataHandle>,
     Form(edit_form): Form<EditArticleData>,
 ) -> MyResult<Json<Option<ApiConflict>>> {

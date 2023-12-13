@@ -4,6 +4,7 @@ use crate::api::instance::follow_instance;
 use crate::api::instance::get_local_instance;
 use crate::api::user::login_user;
 use crate::api::user::register_user;
+use crate::api::user::validate;
 use crate::database::article::{ArticleView, DbArticle};
 use crate::database::conflict::{ApiConflict, DbConflict};
 use crate::database::edit::DbEdit;
@@ -14,10 +15,19 @@ use activitypub_federation::config::Data;
 use activitypub_federation::fetch::object_id::ObjectId;
 use axum::extract::Query;
 use axum::routing::{get, post};
+use axum::{
+    extract::TypedHeader,
+    headers::authorization::{Authorization, Bearer},
+    http::Request,
+    http::StatusCode,
+    middleware::{self, Next},
+    response::Response,
+};
 use axum::{Json, Router};
 use axum_macros::debug_handler;
 use futures::future::try_join_all;
 use serde::{Deserialize, Serialize};
+use tracing::warn;
 use url::Url;
 
 pub mod article;
@@ -39,6 +49,24 @@ pub fn api_routes() -> Router {
         .route("/search", get(search_article))
         .route("/user/register", post(register_user))
         .route("/user/login", post(login_user))
+        .route_layer(middleware::from_fn(auth))
+}
+
+async fn auth<B>(
+    data: Data<MyDataHandle>,
+    auth: Option<TypedHeader<Authorization<Bearer>>>,
+    mut request: Request<B>,
+    next: Next<B>,
+) -> Result<Response, StatusCode> {
+    if let Some(auth) = auth {
+        let user = validate(auth.token(), &data).await.map_err(|e| {
+            warn!("Failed to validate auth token: {e}");
+            StatusCode::UNAUTHORIZED
+        })?;
+        request.extensions_mut().insert(user);
+    }
+    let response = next.run(request).await;
+    Ok(response)
 }
 
 #[derive(Deserialize, Serialize)]

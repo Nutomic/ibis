@@ -2,12 +2,13 @@ extern crate fediwiki;
 
 mod common;
 
+use crate::common::handle_json_res;
 use crate::common::{
     create_article, edit_article, edit_article_with_conflict, follow_instance, get_article,
-    get_query, post, TestData, TEST_ARTICLE_DEFAULT_TEXT,
+    get_query, post, TestData, CLIENT, TEST_ARTICLE_DEFAULT_TEXT,
 };
 use common::get;
-use fediwiki::api::article::{EditArticleData, ForkArticleData};
+use fediwiki::api::article::{CreateArticleData, EditArticleData, ForkArticleData};
 use fediwiki::api::user::{LoginResponse, RegisterUserData};
 use fediwiki::api::{ResolveObject, SearchArticleData};
 use fediwiki::database::article::{ArticleView, DbArticle};
@@ -19,11 +20,11 @@ use url::Url;
 
 #[tokio::test]
 async fn test_create_read_and_edit_article() -> MyResult<()> {
-    let data = TestData::start();
+    let data = TestData::start().await;
 
     // create article
     let title = "Manu_Chao".to_string();
-    let create_res = create_article(&data.alpha.hostname, title.clone()).await?;
+    let create_res = create_article(&data.alpha, title.clone()).await?;
     assert_eq!(title, create_res.article.title);
     assert!(create_res.article.local);
 
@@ -44,7 +45,7 @@ async fn test_create_read_and_edit_article() -> MyResult<()> {
         previous_version_id: get_res.latest_version,
         resolve_conflict_id: None,
     };
-    let edit_res = edit_article(&data.alpha.hostname, &edit_form).await?;
+    let edit_res = edit_article(&data.alpha, &edit_form).await?;
     assert_eq!(edit_form.new_text, edit_res.article.text);
     assert_eq!(2, edit_res.edits.len());
 
@@ -61,15 +62,15 @@ async fn test_create_read_and_edit_article() -> MyResult<()> {
 
 #[tokio::test]
 async fn test_create_duplicate_article() -> MyResult<()> {
-    let data = TestData::start();
+    let data = TestData::start().await;
 
     // create article
     let title = "Manu_Chao".to_string();
-    let create_res = create_article(&data.alpha.hostname, title.clone()).await?;
+    let create_res = create_article(&data.alpha, title.clone()).await?;
     assert_eq!(title, create_res.article.title);
     assert!(create_res.article.local);
 
-    let create_res = create_article(&data.alpha.hostname, title.clone()).await;
+    let create_res = create_article(&data.alpha, title.clone()).await;
     assert!(create_res.is_err());
 
     data.stop()
@@ -77,7 +78,7 @@ async fn test_create_duplicate_article() -> MyResult<()> {
 
 #[tokio::test]
 async fn test_follow_instance() -> MyResult<()> {
-    let data = TestData::start();
+    let data = TestData::start().await;
 
     // check initial state
     let alpha_instance: InstanceView = get(&data.alpha.hostname, "instance").await?;
@@ -91,7 +92,6 @@ async fn test_follow_instance() -> MyResult<()> {
 
     // check that follow was federated
     let alpha_instance: InstanceView = get(&data.alpha.hostname, "instance").await?;
-    dbg!(&alpha_instance);
     assert_eq!(1, alpha_instance.following.len());
     assert_eq!(0, alpha_instance.followers.len());
     assert_eq!(
@@ -112,11 +112,11 @@ async fn test_follow_instance() -> MyResult<()> {
 
 #[tokio::test]
 async fn test_synchronize_articles() -> MyResult<()> {
-    let data = TestData::start();
+    let data = TestData::start().await;
 
     // create article on alpha
     let title = "Manu_Chao".to_string();
-    let create_res = create_article(&data.alpha.hostname, title.clone()).await?;
+    let create_res = create_article(&data.alpha, title.clone()).await?;
     assert_eq!(title, create_res.article.title);
     assert_eq!(1, create_res.edits.len());
     assert!(create_res.article.local);
@@ -128,7 +128,7 @@ async fn test_synchronize_articles() -> MyResult<()> {
         previous_version_id: create_res.latest_version,
         resolve_conflict_id: None,
     };
-    edit_article(&data.alpha.hostname, &edit_form).await?;
+    edit_article(&data.alpha, &edit_form).await?;
 
     // article is not yet on beta
     let get_res = get_article(&data.beta.hostname, create_res.article.id).await;
@@ -158,13 +158,13 @@ async fn test_synchronize_articles() -> MyResult<()> {
 
 #[tokio::test]
 async fn test_edit_local_article() -> MyResult<()> {
-    let data = TestData::start();
+    let data = TestData::start().await;
 
     follow_instance(&data.alpha.hostname, &data.beta.hostname).await?;
 
     // create new article
     let title = "Manu_Chao".to_string();
-    let create_res = create_article(&data.beta.hostname, title.clone()).await?;
+    let create_res = create_article(&data.beta, title.clone()).await?;
     assert_eq!(title, create_res.article.title);
     assert!(create_res.article.local);
 
@@ -182,7 +182,7 @@ async fn test_edit_local_article() -> MyResult<()> {
         previous_version_id: get_res.latest_version,
         resolve_conflict_id: None,
     };
-    let edit_res = edit_article(&data.beta.hostname, &edit_form).await?;
+    let edit_res = edit_article(&data.beta, &edit_form).await?;
     assert_eq!(edit_res.article.text, edit_form.new_text);
     assert_eq!(edit_res.edits.len(), 2);
     assert!(edit_res.edits[0]
@@ -201,14 +201,14 @@ async fn test_edit_local_article() -> MyResult<()> {
 
 #[tokio::test]
 async fn test_edit_remote_article() -> MyResult<()> {
-    let data = TestData::start();
+    let data = TestData::start().await;
 
     follow_instance(&data.alpha.hostname, &data.beta.hostname).await?;
     follow_instance(&data.gamma.hostname, &data.beta.hostname).await?;
 
     // create new article
     let title = "Manu_Chao".to_string();
-    let create_res = create_article(&data.beta.hostname, title.clone()).await?;
+    let create_res = create_article(&data.beta, title.clone()).await?;
     assert_eq!(title, create_res.article.title);
     assert!(create_res.article.local);
 
@@ -228,7 +228,7 @@ async fn test_edit_remote_article() -> MyResult<()> {
         previous_version_id: get_res.latest_version,
         resolve_conflict_id: None,
     };
-    let edit_res = edit_article(&data.alpha.hostname, &edit_form).await?;
+    let edit_res = edit_article(&data.alpha, &edit_form).await?;
     assert_eq!(edit_form.new_text, edit_res.article.text);
     assert_eq!(2, edit_res.edits.len());
     assert!(!edit_res.article.local);
@@ -253,11 +253,11 @@ async fn test_edit_remote_article() -> MyResult<()> {
 
 #[tokio::test]
 async fn test_local_edit_conflict() -> MyResult<()> {
-    let data = TestData::start();
+    let data = TestData::start().await;
 
     // create new article
     let title = "Manu_Chao".to_string();
-    let create_res = create_article(&data.alpha.hostname, title.clone()).await?;
+    let create_res = create_article(&data.alpha, title.clone()).await?;
     assert_eq!(title, create_res.article.title);
     assert!(create_res.article.local);
 
@@ -268,7 +268,7 @@ async fn test_local_edit_conflict() -> MyResult<()> {
         previous_version_id: create_res.latest_version.clone(),
         resolve_conflict_id: None,
     };
-    let edit_res = edit_article(&data.alpha.hostname, &edit_form).await?;
+    let edit_res = edit_article(&data.alpha, &edit_form).await?;
     assert_eq!(edit_res.article.text, edit_form.new_text);
     assert_eq!(2, edit_res.edits.len());
 
@@ -279,7 +279,7 @@ async fn test_local_edit_conflict() -> MyResult<()> {
         previous_version_id: create_res.latest_version,
         resolve_conflict_id: None,
     };
-    let edit_res = edit_article_with_conflict(&data.alpha.hostname, &edit_form)
+    let edit_res = edit_article_with_conflict(&data.alpha, &edit_form)
         .await?
         .unwrap();
     assert_eq!("<<<<<<< ours\nIpsum Lorem\n||||||| original\nsome\nexample\ntext\n=======\nLorem Ipsum\n>>>>>>> theirs\n", edit_res.three_way_merge);
@@ -295,7 +295,7 @@ async fn test_local_edit_conflict() -> MyResult<()> {
         previous_version_id: edit_res.previous_version_id,
         resolve_conflict_id: Some(edit_res.id),
     };
-    let edit_res = edit_article(&data.alpha.hostname, &edit_form).await?;
+    let edit_res = edit_article(&data.alpha, &edit_form).await?;
     assert_eq!(edit_form.new_text, edit_res.article.text);
 
     let conflicts: Vec<ApiConflict> =
@@ -307,13 +307,13 @@ async fn test_local_edit_conflict() -> MyResult<()> {
 
 #[tokio::test]
 async fn test_federated_edit_conflict() -> MyResult<()> {
-    let data = TestData::start();
+    let data = TestData::start().await;
 
     follow_instance(&data.alpha.hostname, &data.beta.hostname).await?;
 
     // create new article
     let title = "Manu_Chao".to_string();
-    let create_res = create_article(&data.beta.hostname, title.clone()).await?;
+    let create_res = create_article(&data.beta, title.clone()).await?;
     assert_eq!(title, create_res.article.title);
     assert!(create_res.article.local);
 
@@ -336,7 +336,7 @@ async fn test_federated_edit_conflict() -> MyResult<()> {
         previous_version_id: create_res.latest_version.clone(),
         resolve_conflict_id: None,
     };
-    let edit_res = edit_article(&data.alpha.hostname, &edit_form).await?;
+    let edit_res = edit_article(&data.alpha, &edit_form).await?;
     assert_eq!(edit_res.article.text, edit_form.new_text);
     assert_eq!(2, edit_res.edits.len());
     assert!(!edit_res.article.local);
@@ -353,7 +353,7 @@ async fn test_federated_edit_conflict() -> MyResult<()> {
         previous_version_id: create_res.latest_version,
         resolve_conflict_id: None,
     };
-    let edit_res = edit_article(&data.gamma.hostname, &edit_form).await?;
+    let edit_res = edit_article(&data.gamma, &edit_form).await?;
     assert_ne!(edit_form.new_text, edit_res.article.text);
     assert_eq!(1, edit_res.edits.len());
     assert!(!edit_res.article.local);
@@ -369,7 +369,7 @@ async fn test_federated_edit_conflict() -> MyResult<()> {
         previous_version_id: conflicts[0].previous_version_id.clone(),
         resolve_conflict_id: Some(conflicts[0].id.clone()),
     };
-    let edit_res = edit_article(&data.gamma.hostname, &edit_form).await?;
+    let edit_res = edit_article(&data.gamma, &edit_form).await?;
     assert_eq!(edit_form.new_text, edit_res.article.text);
     assert_eq!(3, edit_res.edits.len());
 
@@ -382,11 +382,11 @@ async fn test_federated_edit_conflict() -> MyResult<()> {
 
 #[tokio::test]
 async fn test_overlapping_edits_no_conflict() -> MyResult<()> {
-    let data = TestData::start();
+    let data = TestData::start().await;
 
     // create new article
     let title = "Manu_Chao".to_string();
-    let create_res = create_article(&data.alpha.hostname, title.clone()).await?;
+    let create_res = create_article(&data.alpha, title.clone()).await?;
     assert_eq!(title, create_res.article.title);
     assert!(create_res.article.local);
 
@@ -397,7 +397,7 @@ async fn test_overlapping_edits_no_conflict() -> MyResult<()> {
         previous_version_id: create_res.latest_version.clone(),
         resolve_conflict_id: None,
     };
-    let edit_res = edit_article(&data.alpha.hostname, &edit_form).await?;
+    let edit_res = edit_article(&data.alpha, &edit_form).await?;
     assert_eq!(edit_res.article.text, edit_form.new_text);
     assert_eq!(2, edit_res.edits.len());
 
@@ -408,7 +408,7 @@ async fn test_overlapping_edits_no_conflict() -> MyResult<()> {
         previous_version_id: create_res.latest_version,
         resolve_conflict_id: None,
     };
-    let edit_res = edit_article(&data.alpha.hostname, &edit_form).await?;
+    let edit_res = edit_article(&data.alpha, &edit_form).await?;
     let conflicts: Vec<ApiConflict> =
         get_query(&data.alpha.hostname, "edit_conflicts", None::<()>).await?;
     assert_eq!(0, conflicts.len());
@@ -420,11 +420,11 @@ async fn test_overlapping_edits_no_conflict() -> MyResult<()> {
 
 #[tokio::test]
 async fn test_fork_article() -> MyResult<()> {
-    let data = TestData::start();
+    let data = TestData::start().await;
 
     // create article
     let title = "Manu_Chao".to_string();
-    let create_res = create_article(&data.alpha.hostname, title.clone()).await?;
+    let create_res = create_article(&data.alpha, title.clone()).await?;
     assert_eq!(title, create_res.article.title);
     assert!(create_res.article.local);
 
@@ -469,7 +469,7 @@ async fn test_fork_article() -> MyResult<()> {
 
 #[tokio::test]
 async fn test_user_registration_login() -> MyResult<()> {
-    let data = TestData::start();
+    let data = TestData::start().await;
     let register_form = RegisterUserData {
         name: "my_user".to_string(),
         password: "hunter2".to_string(),
@@ -489,6 +489,18 @@ async fn test_user_registration_login() -> MyResult<()> {
     login_form.password = register_form.password;
     let valid_login: LoginResponse = post(&data.alpha.hostname, "user/login", &login_form).await?;
     assert!(!valid_login.jwt.is_empty());
+
+    let title = "Manu_Chao".to_string();
+    let create_form = CreateArticleData {
+        title: title.clone(),
+    };
+
+    let req = CLIENT
+        .post(format!("http://{}/api/v1/article", &data.alpha.hostname))
+        .form(&create_form)
+        .bearer_auth(valid_login.jwt);
+    let create_res: ArticleView = handle_json_res(req).await?;
+    assert_eq!(title, create_res.article.title);
 
     data.stop()
 }

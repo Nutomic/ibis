@@ -111,7 +111,6 @@ impl DbInstance {
             follower_id.eq(follower_id_),
             pending.eq(pending_),
         );
-        dbg!(follower_id_, instance_id_, pending_);
         insert_into(instance_follow::table)
             .values(form)
             .on_conflict((instance_id, follower_id))
