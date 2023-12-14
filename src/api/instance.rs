@@ -1,8 +1,10 @@
 use crate::database::instance::{DbInstance, InstanceView};
+use crate::database::user::LocalUserView;
 use crate::database::MyDataHandle;
 use crate::error::MyResult;
 use crate::federation::activities::follow::Follow;
 use activitypub_federation::config::Data;
+use axum::Extension;
 use axum::{Form, Json};
 use axum_macros::debug_handler;
 use serde::{Deserialize, Serialize};
@@ -25,14 +27,14 @@ pub struct FollowInstance {
 /// updated articles.
 #[debug_handler]
 pub(in crate::api) async fn follow_instance(
+    Extension(user): Extension<LocalUserView>,
     data: Data<MyDataHandle>,
     Form(query): Form<FollowInstance>,
 ) -> MyResult<()> {
-    let local_instance = DbInstance::read_local_instance(&data.db_connection)?;
     let target = DbInstance::read(query.id, &data.db_connection)?;
     let pending = !target.local;
-    DbInstance::follow(local_instance.id, target.id, pending, &data)?;
+    DbInstance::follow(&user.person, &target, pending, &data)?;
     let instance = DbInstance::read(query.id, &data.db_connection)?;
-    Follow::send(local_instance, instance, &data).await?;
+    Follow::send(user.person, instance, &data).await?;
     Ok(())
 }

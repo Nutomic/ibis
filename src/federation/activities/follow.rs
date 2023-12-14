@@ -1,5 +1,7 @@
 use crate::database::instance::DbInstance;
+use crate::database::user::DbPerson;
 use crate::error::MyResult;
+use crate::federation::send_activity;
 use crate::{database::MyDataHandle, federation::activities::accept::Accept, generate_activity_id};
 use activitypub_federation::{
     config::Data,
@@ -13,7 +15,7 @@ use url::Url;
 #[derive(Deserialize, Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Follow {
-    pub actor: ObjectId<DbInstance>,
+    pub actor: ObjectId<DbPerson>,
     pub object: ObjectId<DbInstance>,
     #[serde(rename = "type")]
     kind: FollowType,
@@ -21,21 +23,16 @@ pub struct Follow {
 }
 
 impl Follow {
-    pub async fn send(
-        local_instance: DbInstance,
-        to: DbInstance,
-        data: &Data<MyDataHandle>,
-    ) -> MyResult<()> {
-        let id = generate_activity_id(local_instance.ap_id.inner())?;
+    pub async fn send(actor: DbPerson, to: DbInstance, data: &Data<MyDataHandle>) -> MyResult<()> {
+        let id = generate_activity_id(actor.ap_id.inner())?;
         let follow = Follow {
-            actor: local_instance.ap_id.clone(),
+            actor: actor.ap_id.clone(),
             object: to.ap_id.clone(),
             kind: Default::default(),
             id,
         };
-        local_instance
-            .send(follow, vec![to.shared_inbox_or_inbox()], data)
-            .await?;
+
+        send_activity(&actor, follow, vec![to.shared_inbox_or_inbox()], data).await?;
         Ok(())
     }
 }
@@ -58,16 +55,14 @@ impl ActivityHandler for Follow {
     }
 
     async fn receive(self, data: &Data<Self::DataType>) -> Result<(), Self::Error> {
+        dbg!(&self);
         let actor = self.actor.dereference(data).await?;
         let local_instance = DbInstance::read_local_instance(&data.db_connection)?;
-        DbInstance::follow(actor.id, local_instance.id, false, data)?;
+        dbg!(&actor.ap_id, &local_instance.ap_id);
+        DbInstance::follow(&actor, &local_instance, false, data)?;
 
         // send back an accept
-        let follower = self.actor.dereference(data).await?;
-        let accept = Accept::new(local_instance.ap_id.clone(), self)?;
-        local_instance
-            .send(accept, vec![follower.shared_inbox_or_inbox()], data)
-            .await?;
+        Accept::send(local_instance, self, data).await?;
         Ok(())
     }
 }

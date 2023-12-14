@@ -11,6 +11,7 @@ use activitypub_federation::{
     traits::ActivityHandler,
 };
 
+use crate::federation::send_activity;
 use serde::{Deserialize, Serialize};
 use url::Url;
 
@@ -41,9 +42,13 @@ impl RejectEdit {
             kind: Default::default(),
             id,
         };
-        local_instance
-            .send(reject, vec![Url::parse(&user_instance.inbox_url)?], data)
-            .await?;
+        send_activity(
+            &local_instance,
+            reject,
+            vec![Url::parse(&user_instance.inbox_url)?],
+            data,
+        )
+        .await?;
         Ok(())
     }
 }

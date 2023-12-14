@@ -88,7 +88,7 @@ async fn test_follow_instance() -> MyResult<()> {
     assert_eq!(0, beta_instance.followers.len());
     assert_eq!(0, beta_instance.following.len());
 
-    follow_instance(&data.alpha.hostname, &data.beta.hostname).await?;
+    follow_instance(&data.alpha, &data.beta.hostname).await?;
 
     // check that follow was federated
     let alpha_instance: InstanceView = get(&data.alpha.hostname, "instance").await?;
@@ -102,9 +102,10 @@ async fn test_follow_instance() -> MyResult<()> {
     let beta_instance: InstanceView = get(&data.beta.hostname, "instance").await?;
     assert_eq!(0, beta_instance.following.len());
     assert_eq!(1, beta_instance.followers.len());
+    // TODO: compare full ap_id of alpha user, but its not available through api yet
     assert_eq!(
-        alpha_instance.instance.ap_id,
-        beta_instance.followers[0].ap_id
+        alpha_instance.instance.ap_id.inner().domain(),
+        beta_instance.followers[0].ap_id.inner().domain()
     );
 
     data.stop()
@@ -160,7 +161,7 @@ async fn test_synchronize_articles() -> MyResult<()> {
 async fn test_edit_local_article() -> MyResult<()> {
     let data = TestData::start().await;
 
-    follow_instance(&data.alpha.hostname, &data.beta.hostname).await?;
+    follow_instance(&data.alpha, &data.beta.hostname).await?;
 
     // create new article
     let title = "Manu_Chao".to_string();
@@ -203,8 +204,8 @@ async fn test_edit_local_article() -> MyResult<()> {
 async fn test_edit_remote_article() -> MyResult<()> {
     let data = TestData::start().await;
 
-    follow_instance(&data.alpha.hostname, &data.beta.hostname).await?;
-    follow_instance(&data.gamma.hostname, &data.beta.hostname).await?;
+    follow_instance(&data.alpha, &data.beta.hostname).await?;
+    follow_instance(&data.gamma, &data.beta.hostname).await?;
 
     // create new article
     let title = "Manu_Chao".to_string();
@@ -309,7 +310,7 @@ async fn test_local_edit_conflict() -> MyResult<()> {
 async fn test_federated_edit_conflict() -> MyResult<()> {
     let data = TestData::start().await;
 
-    follow_instance(&data.alpha.hostname, &data.beta.hostname).await?;
+    follow_instance(&data.alpha, &data.beta.hostname).await?;
 
     // create new article
     let title = "Manu_Chao".to_string();

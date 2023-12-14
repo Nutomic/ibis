@@ -7,6 +7,7 @@ use crate::database::instance::DbInstance;
 use crate::federation::activities::reject::RejectEdit;
 use crate::federation::activities::update_local_article::UpdateLocalArticle;
 use crate::federation::objects::edit::ApubEdit;
+use crate::federation::send_activity;
 use crate::utils::generate_activity_id;
 use activitypub_federation::kinds::activity::UpdateType;
 use activitypub_federation::{
@@ -47,9 +48,13 @@ impl UpdateRemoteArticle {
             kind: Default::default(),
             id,
         };
-        local_instance
-            .send(update, vec![Url::parse(&article_instance.inbox_url)?], data)
-            .await?;
+        send_activity(
+            &local_instance,
+            update,
+            vec![Url::parse(&article_instance.inbox_url)?],
+            data,
+        )
+        .await?;
         Ok(())
     }
 }

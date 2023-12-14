@@ -235,13 +235,13 @@ where
     }
 }
 
-pub async fn follow_instance(api_instance: &str, follow_instance: &str) -> MyResult<()> {
+pub async fn follow_instance(instance: &FediwikiInstance, follow_instance: &str) -> MyResult<()> {
     // fetch beta instance on alpha
     let resolve_form = ResolveObject {
         id: Url::parse(&format!("http://{}", follow_instance))?,
     };
     let instance_resolved: DbInstance =
-        get_query(api_instance, "resolve_instance", Some(resolve_form)).await?;
+        get_query(&instance.hostname, "resolve_instance", Some(resolve_form)).await?;
 
     // send follow
     let follow_form = FollowInstance {
@@ -249,8 +249,12 @@ pub async fn follow_instance(api_instance: &str, follow_instance: &str) -> MyRes
     };
     // cant use post helper because follow doesnt return json
     let res = CLIENT
-        .post(format!("http://{}/api/v1/instance/follow", api_instance))
+        .post(format!(
+            "http://{}/api/v1/instance/follow",
+            instance.hostname
+        ))
         .form(&follow_form)
+        .bearer_auth(&instance.jwt)
         .send()
         .await?;
     if res.status() == StatusCode::OK {
