@@ -57,7 +57,7 @@ impl DbEditForm {
         })
     }
 
-    pub(crate) fn generate_ap_id(
+    pub fn generate_ap_id(
         article: &DbArticle,
         version: &EditVersion,
     ) -> MyResult<ObjectId<DbEdit>> {

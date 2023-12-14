@@ -9,6 +9,7 @@ pub mod conflict;
 pub mod edit;
 pub mod instance;
 mod schema;
+pub mod user;
 pub mod version;
 
 #[derive(Clone)]

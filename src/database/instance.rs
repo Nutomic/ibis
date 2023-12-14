@@ -1,4 +1,5 @@
 use crate::database::schema::{instance, instance_follow};
+use crate::database::user::DbPerson;
 use crate::database::MyDataHandle;
 use crate::error::MyResult;
 use crate::federation::objects::articles_collection::DbArticleCollection;
@@ -24,11 +25,11 @@ pub struct DbInstance {
     pub articles_url: CollectionId<DbArticleCollection>,
     pub inbox_url: String,
     #[serde(skip)]
-    pub(crate) public_key: String,
+    pub public_key: String,
     #[serde(skip)]
-    pub(crate) private_key: Option<String>,
+    pub private_key: Option<String>,
     #[serde(skip)]
-    pub(crate) last_refreshed_at: DateTime<Utc>,
+    pub last_refreshed_at: DateTime<Utc>,
     pub local: bool,
 }
 
@@ -38,9 +39,9 @@ pub struct DbInstanceForm {
     pub ap_id: ObjectId<DbInstance>,
     pub articles_url: CollectionId<DbArticleCollection>,
     pub inbox_url: String,
-    pub(crate) public_key: String,
-    pub(crate) private_key: Option<String>,
-    pub(crate) last_refreshed_at: DateTime<Utc>,
+    pub public_key: String,
+    pub private_key: Option<String>,
+    pub last_refreshed_at: DateTime<Utc>,
     pub local: bool,
 }
 
@@ -48,7 +49,7 @@ pub struct DbInstanceForm {
 #[diesel(table_name = article, check_for_backend(diesel::pg::Pg))]
 pub struct InstanceView {
     pub instance: DbInstance,
-    pub followers: Vec<DbInstance>,
+    pub followers: Vec<DbPerson>,
     pub following: Vec<DbInstance>,
 }
 
@@ -98,36 +99,36 @@ impl DbInstance {
     }
 
     pub fn follow(
-        follower_id_: i32,
-        instance_id_: i32,
+        follower: &DbPerson,
+        instance: &DbInstance,
         pending_: bool,
         data: &Data<MyDataHandle>,
     ) -> MyResult<()> {
-        debug_assert_ne!(follower_id_, instance_id_);
         use instance_follow::dsl::{follower_id, instance_id, pending};
         let mut conn = data.db_connection.lock().unwrap();
         let form = (
-            instance_id.eq(instance_id_),
-            follower_id.eq(follower_id_),
+            instance_id.eq(instance.id),
+            follower_id.eq(follower.id),
             pending.eq(pending_),
         );
-        dbg!(follower_id_, instance_id_, pending_);
-        insert_into(instance_follow::table)
+        let rows = insert_into(instance_follow::table)
             .values(form)
             .on_conflict((instance_id, follower_id))
             .do_update()
             .set(form)
             .execute(conn.deref_mut())?;
+        assert_eq!(1, rows);
         Ok(())
     }
 
-    pub fn read_followers(id_: i32, conn: &Mutex<PgConnection>) -> MyResult<Vec<Self>> {
+    pub fn read_followers(id_: i32, conn: &Mutex<PgConnection>) -> MyResult<Vec<DbPerson>> {
+        use crate::database::schema::person;
         use instance_follow::dsl::{follower_id, instance_id};
         let mut conn = conn.lock().unwrap();
         Ok(instance_follow::table
-            .inner_join(instance::table.on(follower_id.eq(instance::dsl::id)))
+            .inner_join(person::table.on(follower_id.eq(person::dsl::id)))
             .filter(instance_id.eq(id_))
-            .select(instance::all_columns)
+            .select(person::all_columns)
             .get_results(conn.deref_mut())?)
     }
 
