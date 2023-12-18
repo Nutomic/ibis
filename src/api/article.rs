@@ -77,7 +77,7 @@ pub struct EditArticleData {
 /// Conflicts are stored in the database so they can be retrieved later from `/api/v3/edit_conflicts`.
 #[debug_handler]
 pub(in crate::api) async fn edit_article(
-    Extension(_user): Extension<LocalUserView>,
+    Extension(user): Extension<LocalUserView>,
     data: Data<MyDataHandle>,
     Form(edit_form): Form<EditArticleData>,
 ) -> MyResult<Json<Option<ApiConflict>>> {
@@ -90,10 +90,11 @@ pub(in crate::api) async fn edit_article(
     if edit_form.previous_version_id == original_article.latest_version {
         // No intermediate changes, simply submit new version
         submit_article_update(
-            &data,
             edit_form.new_text.clone(),
             edit_form.previous_version_id,
             &original_article.article,
+            user.person.id,
+            &data,
         )
         .await?;
         Ok(Json(None))
@@ -108,6 +109,7 @@ pub(in crate::api) async fn edit_article(
         let form = DbConflictForm {
             id: EditVersion::new(&patch.to_string())?,
             diff: patch.to_string(),
+            creator_id: user.person.id,
             article_id: original_article.article.id,
             previous_version_id: previous_version.hash,
         };
@@ -176,6 +178,7 @@ pub(in crate::api) async fn fork_article(
         let form = DbEditForm {
             ap_id,
             diff: e.diff,
+            creator_id: e.creator_id,
             article_id: article.id,
             hash: e.hash,
             previous_version_id: e.previous_version_id,

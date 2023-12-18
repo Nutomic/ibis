@@ -16,6 +16,7 @@ diesel::table! {
     conflict (id) {
         id -> Uuid,
         diff -> Text,
+        creator_id -> Int4,
         article_id -> Int4,
         previous_version_id -> Uuid,
     }
@@ -24,6 +25,7 @@ diesel::table! {
 diesel::table! {
     edit (id) {
         id -> Int4,
+        creator_id -> Int4,
         hash -> Uuid,
         #[max_length = 255]
         ap_id -> Varchar,
@@ -81,7 +83,11 @@ diesel::table! {
 
 diesel::joinable!(article -> instance (instance_id));
 diesel::joinable!(conflict -> article (article_id));
+diesel::joinable!(conflict -> person (creator_id));
 diesel::joinable!(edit -> article (article_id));
+diesel::joinable!(edit -> person (creator_id));
+diesel::joinable!(instance_follow -> instance (instance_id));
+diesel::joinable!(instance_follow -> person (follower_id));
 diesel::joinable!(local_user -> person (person_id));
 
 diesel::allow_tables_to_appear_in_same_query!(

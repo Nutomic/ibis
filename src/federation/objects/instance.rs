@@ -3,10 +3,10 @@ use crate::database::MyDataHandle;
 use crate::error::{Error, MyResult};
 use crate::federation::objects::articles_collection::DbArticleCollection;
 use crate::federation::send_activity;
-use activitypub_federation::activity_sending::SendActivityTask;
+
 use activitypub_federation::fetch::collection_id::CollectionId;
 use activitypub_federation::kinds::actor::ServiceType;
-use activitypub_federation::protocol::context::WithContext;
+
 use activitypub_federation::traits::ActivityHandler;
 use activitypub_federation::{
     config::Data,
@@ -17,7 +17,7 @@ use activitypub_federation::{
 use chrono::{DateTime, Local, Utc};
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
-use tracing::log::warn;
+
 use url::Url;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

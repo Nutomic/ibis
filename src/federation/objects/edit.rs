@@ -1,5 +1,6 @@
 use crate::database::article::DbArticle;
 use crate::database::edit::{DbEdit, DbEditForm};
+use crate::database::user::DbPerson;
 use crate::database::version::EditVersion;
 use crate::database::MyDataHandle;
 use crate::error::Error;
@@ -26,6 +27,7 @@ pub struct ApubEdit {
     pub version: EditVersion,
     pub previous_version: EditVersion,
     pub object: ObjectId<DbArticle>,
+    pub attributed_to: ObjectId<DbPerson>,
 }
 
 #[async_trait::async_trait]
@@ -43,6 +45,7 @@ impl Object for DbEdit {
 
     async fn into_json(self, data: &Data<Self::DataType>) -> Result<Self::Kind, Self::Error> {
         let article = DbArticle::read(self.article_id, &data.db_connection)?;
+        let creator = DbPerson::read(self.creator_id, data)?;
         Ok(ApubEdit {
             kind: PatchType::Patch,
             id: self.ap_id,
@@ -50,6 +53,7 @@ impl Object for DbEdit {
             version: self.hash,
             previous_version: self.previous_version_id,
             object: article.ap_id,
+            attributed_to: creator.ap_id,
         })
     }
 
@@ -63,7 +67,9 @@ impl Object for DbEdit {
 
     async fn from_json(json: Self::Kind, data: &Data<Self::DataType>) -> Result<Self, Self::Error> {
         let article = json.object.dereference(data).await?;
+        let creator = json.attributed_to.dereference(data).await?;
         let form = DbEditForm {
+            creator_id: creator.id,
             ap_id: json.id,
             diff: json.content,
             article_id: article.id,

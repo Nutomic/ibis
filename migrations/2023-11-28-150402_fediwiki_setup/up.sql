@@ -45,6 +45,7 @@ create table article (
 
 create table edit (
     id serial primary key,
+    creator_id int REFERENCES person ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
     hash uuid not null,
     ap_id varchar(255) not null unique,
     diff text not null,
@@ -55,6 +56,7 @@ create table edit (
 create table conflict (
     id uuid primary key,
     diff text not null,
+    creator_id int REFERENCES person ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
     article_id int REFERENCES article ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
     previous_version_id uuid not null
 );

@@ -20,6 +20,7 @@ pub struct DbEdit {
     // TODO: we could use hash as primary key, but that gives errors on forking because
     //       the same edit is used for multiple articles
     pub id: i32,
+    pub creator_id: i32,
     /// UUID built from sha224 hash of diff
     pub hash: EditVersion,
     pub ap_id: ObjectId<DbEdit>,
@@ -32,6 +33,7 @@ pub struct DbEdit {
 #[derive(Debug, Clone, Insertable, AsChangeset)]
 #[diesel(table_name = edit, check_for_backend(diesel::pg::Pg))]
 pub struct DbEditForm {
+    pub creator_id: i32,
     pub hash: EditVersion,
     pub ap_id: ObjectId<DbEdit>,
     pub diff: String,
@@ -42,6 +44,7 @@ pub struct DbEditForm {
 impl DbEditForm {
     pub fn new(
         original_article: &DbArticle,
+        creator_id: i32,
         updated_text: &str,
         previous_version_id: EditVersion,
     ) -> MyResult<Self> {
@@ -52,6 +55,7 @@ impl DbEditForm {
             hash: version,
             ap_id,
             diff: diff.to_string(),
+            creator_id,
             article_id: original_article.id,
             previous_version_id,
         })

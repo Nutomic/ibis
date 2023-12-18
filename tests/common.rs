@@ -163,7 +163,7 @@ pub async fn create_article(instance: &FediwikiInstance, title: String) -> MyRes
         previous_version_id: article.latest_version,
         resolve_conflict_id: None,
     };
-    edit_article(&instance, &edit_form).await
+    edit_article(instance, &edit_form).await
 }
 
 pub async fn get_article(hostname: &str, article_id: i32) -> MyResult<ArticleView> {

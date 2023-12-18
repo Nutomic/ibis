@@ -150,10 +150,10 @@ impl Object for UserOrInstance {
         object_id: Url,
         data: &Data<Self::DataType>,
     ) -> Result<Option<Self>, Error> {
-        let person = DbPerson::read_from_id(object_id.clone(), data).await?;
+        let person = DbPerson::read_from_id(object_id.clone(), data).await;
         Ok(match person {
-            Some(o) => Some(UserOrInstance::User(o)),
-            None => DbInstance::read_from_id(object_id, data)
+            Ok(Some(o)) => Some(UserOrInstance::User(o)),
+            _ => DbInstance::read_from_id(object_id.clone(), data)
                 .await?
                 .map(UserOrInstance::Instance),
         })

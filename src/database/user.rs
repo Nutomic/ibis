@@ -80,6 +80,11 @@ impl DbPerson {
             .get_result::<DbPerson>(conn.deref_mut())?)
     }
 
+    pub fn read(id: i32, data: &Data<MyDataHandle>) -> MyResult<DbPerson> {
+        let mut conn = data.db_connection.lock().unwrap();
+        Ok(person::table.find(id).get_result(conn.deref_mut())?)
+    }
+
     pub fn create_local(
         username: String,
         password: String,

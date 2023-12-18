@@ -49,6 +49,7 @@ mod test {
             let diff = create_patch(a, b).to_string();
             Ok(DbEdit {
                 id: 0,
+                creator_id: 0,
                 hash: EditVersion::new(&diff)?,
                 ap_id: ObjectId::parse("http://example.com")?,
                 diff,

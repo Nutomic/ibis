@@ -1,6 +1,7 @@
 use crate::database::article::DbArticle;
 use crate::database::edit::{DbEdit, DbEditForm};
 use crate::database::instance::DbInstance;
+
 use crate::database::version::EditVersion;
 use crate::database::MyDataHandle;
 use crate::error::Error;
@@ -16,12 +17,13 @@ pub mod update_local_article;
 pub mod update_remote_article;
 
 pub async fn submit_article_update(
-    data: &Data<MyDataHandle>,
     new_text: String,
     previous_version: EditVersion,
     original_article: &DbArticle,
+    creator_id: i32,
+    data: &Data<MyDataHandle>,
 ) -> Result<(), Error> {
-    let form = DbEditForm::new(original_article, &new_text, previous_version)?;
+    let form = DbEditForm::new(original_article, creator_id, &new_text, previous_version)?;
     if original_article.local {
         let edit = DbEdit::create(&form, &data.db_connection)?;
         let updated_article =
@@ -32,6 +34,7 @@ pub async fn submit_article_update(
         // dont insert edit into db, might be invalid in case of conflict
         let edit = DbEdit {
             id: -1,
+            creator_id,
             hash: form.hash,
             ap_id: form.ap_id,
             diff: form.diff,

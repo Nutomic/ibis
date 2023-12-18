@@ -34,7 +34,6 @@ impl Accept {
             kind: Default::default(),
             id,
         };
-        dbg!(&accept);
         send_activity(
             &local_instance,
             accept,
@@ -64,7 +63,6 @@ impl ActivityHandler for Accept {
     }
 
     async fn receive(self, data: &Data<Self::DataType>) -> Result<(), Self::Error> {
-        dbg!(&self);
         // add to follows
         let person = self.object.actor.dereference_local(data).await?;
         let instance = self.actor.dereference(data).await?;
