@@ -83,7 +83,7 @@ diesel::table! {
 
 diesel::joinable!(article -> instance (instance_id));
 diesel::joinable!(conflict -> article (article_id));
-diesel::joinable!(conflict -> person (creator_id));
+diesel::joinable!(conflict -> local_user (creator_id));
 diesel::joinable!(edit -> article (article_id));
 diesel::joinable!(edit -> person (creator_id));
 diesel::joinable!(instance_follow -> instance (instance_id));

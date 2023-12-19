@@ -182,6 +182,16 @@ pub async fn edit_article_with_conflict(
     handle_json_res(req).await
 }
 
+pub async fn get_conflicts(instance: &FediwikiInstance) -> MyResult<Vec<ApiConflict>> {
+    let req = CLIENT
+        .get(format!(
+            "http://{}/api/v1/edit_conflicts",
+            &instance.hostname
+        ))
+        .bearer_auth(&instance.jwt);
+    handle_json_res(req).await
+}
+
 pub async fn edit_article(
     instance: &FediwikiInstance,
     edit_form: &EditArticleData,

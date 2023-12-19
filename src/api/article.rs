@@ -109,7 +109,7 @@ pub(in crate::api) async fn edit_article(
         let form = DbConflictForm {
             id: EditVersion::new(&patch.to_string())?,
             diff: patch.to_string(),
-            creator_id: user.person.id,
+            creator_id: user.local_user.id,
             article_id: original_article.article.id,
             previous_version_id: previous_version.hash,
         };

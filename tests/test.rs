@@ -2,17 +2,16 @@ extern crate fediwiki;
 
 mod common;
 
-use crate::common::register;
 use crate::common::{
     create_article, edit_article, edit_article_with_conflict, follow_instance, get_article,
     get_query, TestData, CLIENT, TEST_ARTICLE_DEFAULT_TEXT,
 };
 use crate::common::{fork_article, handle_json_res, login};
+use crate::common::{get_conflicts, register};
 use common::get;
 use fediwiki::api::article::{CreateArticleData, EditArticleData, ForkArticleData};
 use fediwiki::api::{ResolveObject, SearchArticleData};
 use fediwiki::database::article::{ArticleView, DbArticle};
-use fediwiki::database::conflict::ApiConflict;
 use fediwiki::database::instance::{DbInstance, InstanceView};
 use fediwiki::error::MyResult;
 use pretty_assertions::{assert_eq, assert_ne};
@@ -285,8 +284,7 @@ async fn test_local_edit_conflict() -> MyResult<()> {
         .unwrap();
     assert_eq!("<<<<<<< ours\nIpsum Lorem\n||||||| original\nsome\nexample\ntext\n=======\nLorem Ipsum\n>>>>>>> theirs\n", edit_res.three_way_merge);
 
-    let conflicts: Vec<ApiConflict> =
-        get_query(&data.alpha.hostname, "edit_conflicts", None::<()>).await?;
+    let conflicts = get_conflicts(&data.alpha).await?;
     assert_eq!(1, conflicts.len());
     assert_eq!(conflicts[0], edit_res);
 
@@ -299,8 +297,7 @@ async fn test_local_edit_conflict() -> MyResult<()> {
     let edit_res = edit_article(&data.alpha, &edit_form).await?;
     assert_eq!(edit_form.new_text, edit_res.article.text);
 
-    let conflicts: Vec<ApiConflict> =
-        get_query(&data.alpha.hostname, "edit_conflicts", None::<()>).await?;
+    let conflicts = get_conflicts(&data.alpha).await?;
     assert_eq!(0, conflicts.len());
 
     data.stop()
@@ -359,8 +356,7 @@ async fn test_federated_edit_conflict() -> MyResult<()> {
     assert_eq!(1, edit_res.edits.len());
     assert!(!edit_res.article.local);
 
-    let conflicts: Vec<ApiConflict> =
-        get_query(&data.gamma.hostname, "edit_conflicts", None::<()>).await?;
+    let conflicts = get_conflicts(&data.gamma).await?;
     assert_eq!(1, conflicts.len());
 
     // resolve the conflict
@@ -374,8 +370,7 @@ async fn test_federated_edit_conflict() -> MyResult<()> {
     assert_eq!(edit_form.new_text, edit_res.article.text);
     assert_eq!(3, edit_res.edits.len());
 
-    let conflicts: Vec<ApiConflict> =
-        get_query(&data.gamma.hostname, "edit_conflicts", None::<()>).await?;
+    let conflicts = get_conflicts(&data.gamma).await?;
     assert_eq!(0, conflicts.len());
 
     data.stop()
@@ -410,8 +405,7 @@ async fn test_overlapping_edits_no_conflict() -> MyResult<()> {
         resolve_conflict_id: None,
     };
     let edit_res = edit_article(&data.alpha, &edit_form).await?;
-    let conflicts: Vec<ApiConflict> =
-        get_query(&data.alpha.hostname, "edit_conflicts", None::<()>).await?;
+    let conflicts = get_conflicts(&data.alpha).await?;
     assert_eq!(0, conflicts.len());
     assert_eq!(3, edit_res.edits.len());
     assert_eq!("my\nexample\narticle\n", edit_res.article.text);

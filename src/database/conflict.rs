@@ -1,13 +1,14 @@
 use crate::database::article::DbArticle;
 use crate::database::edit::DbEdit;
 use crate::database::schema::conflict;
+use crate::database::user::DbLocalUser;
 use crate::database::version::EditVersion;
 use crate::database::MyDataHandle;
 use crate::error::MyResult;
 use crate::federation::activities::submit_article_update;
 use crate::utils::generate_article_version;
 use activitypub_federation::config::Data;
-
+use diesel::ExpressionMethods;
 use diesel::{
     delete, insert_into, Identifiable, Insertable, PgConnection, QueryDsl, Queryable, RunQueryDsl,
     Selectable,
@@ -55,9 +56,11 @@ impl DbConflict {
             .get_result(conn.deref_mut())?)
     }
 
-    pub fn list(conn: &Mutex<PgConnection>) -> MyResult<Vec<Self>> {
+    pub fn list(local_user: &DbLocalUser, conn: &Mutex<PgConnection>) -> MyResult<Vec<Self>> {
         let mut conn = conn.lock().unwrap();
-        Ok(conflict::table.get_results(conn.deref_mut())?)
+        Ok(conflict::table
+            .filter(conflict::dsl::creator_id.eq(local_user.id))
+            .get_results(conn.deref_mut())?)
     }
 
     /// Delete a merge conflict after it is resolved.

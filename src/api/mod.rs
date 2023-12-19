@@ -9,6 +9,7 @@ use crate::database::article::{ArticleView, DbArticle};
 use crate::database::conflict::{ApiConflict, DbConflict};
 use crate::database::edit::DbEdit;
 use crate::database::instance::DbInstance;
+use crate::database::user::LocalUserView;
 use crate::database::MyDataHandle;
 use crate::error::MyResult;
 use activitypub_federation::config::Data;
@@ -22,6 +23,7 @@ use axum::{
     http::StatusCode,
     middleware::{self, Next},
     response::Response,
+    Extension,
 };
 use axum::{Json, Router};
 use axum_macros::debug_handler;
@@ -104,8 +106,11 @@ async fn resolve_article(
 
 /// Get a list of all unresolved edit conflicts.
 #[debug_handler]
-async fn edit_conflicts(data: Data<MyDataHandle>) -> MyResult<Json<Vec<ApiConflict>>> {
-    let conflicts = DbConflict::list(&data.db_connection)?;
+async fn edit_conflicts(
+    Extension(user): Extension<LocalUserView>,
+    data: Data<MyDataHandle>,
+) -> MyResult<Json<Vec<ApiConflict>>> {
+    let conflicts = DbConflict::list(&user.local_user, &data.db_connection)?;
     let conflicts: Vec<ApiConflict> = try_join_all(conflicts.into_iter().map(|c| {
         let data = data.reset_request_count();
         async move { c.to_api_conflict(&data).await }

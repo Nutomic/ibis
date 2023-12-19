@@ -8,12 +8,12 @@ export PGDATA="$1/dev_pgdata"
 if [ -d $PGDATA ]
 then
   # Prevent `stop` from failing if server already stopped
-  pg_ctl restart > /dev/null
+  #pg_ctl restart > /dev/null
   pg_ctl stop
 fi
 
 # Remove any leftover data from revious run
-rm -rf $PGDATA
+rm -rf $1
 
 # Create cluster
 initdb --username=postgres --auth=trust --no-instructions

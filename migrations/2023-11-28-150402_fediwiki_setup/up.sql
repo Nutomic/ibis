@@ -56,7 +56,7 @@ create table edit (
 create table conflict (
     id uuid primary key,
     diff text not null,
-    creator_id int REFERENCES person ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
+    creator_id int REFERENCES local_user ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
     article_id int REFERENCES article ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
     previous_version_id uuid not null
 );
