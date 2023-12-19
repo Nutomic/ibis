@@ -60,3 +60,13 @@ create table conflict (
     article_id int REFERENCES article ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
     previous_version_id uuid not null
 );
+
+-- generate a jwt secret
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
+CREATE TABLE jwt_secret (
+    id serial PRIMARY KEY,
+    secret varchar NOT NULL DEFAULT gen_random_uuid ()
+);
+
+INSERT INTO jwt_secret DEFAULT VALUES;

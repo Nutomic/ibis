@@ -1,5 +1,5 @@
 use crate::database::user::{DbLocalUser, DbPerson, LocalUserView};
-use crate::database::MyDataHandle;
+use crate::database::{read_jwt_secret, MyDataHandle};
 use crate::error::MyResult;
 use activitypub_federation::config::Data;
 use anyhow::anyhow;
@@ -25,9 +25,6 @@ pub struct Claims {
     pub exp: u64,
 }
 
-// TODO: move to config
-const SECRET: &[u8] = "secret".as_bytes();
-
 pub(in crate::api) fn generate_login_token(
     local_user: DbLocalUser,
     data: &Data<MyDataHandle>,
@@ -40,14 +37,16 @@ pub(in crate::api) fn generate_login_token(
         exp: get_current_timestamp(),
     };
 
-    let key = EncodingKey::from_secret(SECRET);
+    let secret = read_jwt_secret(data)?;
+    let key = EncodingKey::from_secret(secret.as_bytes());
     let jwt = encode(&Header::default(), &claims, &key)?;
     Ok(LoginResponse { jwt })
 }
 
 pub async fn validate(jwt: &str, data: &Data<MyDataHandle>) -> MyResult<LocalUserView> {
     let validation = Validation::default();
-    let key = DecodingKey::from_secret(SECRET);
+    let secret = read_jwt_secret(data)?;
+    let key = DecodingKey::from_secret(secret.as_bytes());
     let claims = decode::<Claims>(jwt, &key, &validation)?;
     DbPerson::read_local_from_id(claims.claims.sub.parse()?, data)
 }

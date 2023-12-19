@@ -60,6 +60,13 @@ diesel::table! {
 }
 
 diesel::table! {
+    jwt_secret (id) {
+        id -> Int4,
+        secret -> Varchar,
+    }
+}
+
+diesel::table! {
     local_user (id) {
         id -> Int4,
         password_encrypted -> Text,
@@ -81,6 +88,13 @@ diesel::table! {
     }
 }
 
+diesel::table! {
+    secret (id) {
+        id -> Int4,
+        jwt_secret -> Varchar,
+    }
+}
+
 diesel::joinable!(article -> instance (instance_id));
 diesel::joinable!(conflict -> article (article_id));
 diesel::joinable!(conflict -> local_user (creator_id));
@@ -96,6 +110,8 @@ diesel::allow_tables_to_appear_in_same_query!(
     edit,
     instance,
     instance_follow,
+    jwt_secret,
     local_user,
     person,
+    secret,
 );
