@@ -1,4 +1,4 @@
-extern crate fediwiki;
+extern crate ibis;
 
 mod common;
 
@@ -9,11 +9,11 @@ use crate::common::{
 use crate::common::{fork_article, handle_json_res, login};
 use crate::common::{get_conflicts, register};
 use common::get;
-use fediwiki::api::article::{CreateArticleData, EditArticleData, ForkArticleData};
-use fediwiki::api::{ResolveObject, SearchArticleData};
-use fediwiki::database::article::{ArticleView, DbArticle};
-use fediwiki::database::instance::{DbInstance, InstanceView};
-use fediwiki::error::MyResult;
+use ibis::api::article::{CreateArticleData, EditArticleData, ForkArticleData};
+use ibis::api::{ResolveObject, SearchArticleData};
+use ibis::database::article::{ArticleView, DbArticle};
+use ibis::database::instance::{DbInstance, InstanceView};
+use ibis::error::MyResult;
 use pretty_assertions::{assert_eq, assert_ne};
 use url::Url;
 

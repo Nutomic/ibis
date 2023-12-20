@@ -1,14 +1,14 @@
 use anyhow::anyhow;
-use fediwiki::api::article::{CreateArticleData, EditArticleData, ForkArticleData, GetArticleData};
-use fediwiki::api::instance::FollowInstance;
-use fediwiki::api::user::RegisterUserData;
-use fediwiki::api::user::{LoginResponse, LoginUserData};
-use fediwiki::api::ResolveObject;
-use fediwiki::database::article::ArticleView;
-use fediwiki::database::conflict::ApiConflict;
-use fediwiki::database::instance::DbInstance;
-use fediwiki::error::MyResult;
-use fediwiki::start;
+use ibis::api::article::{CreateArticleData, EditArticleData, ForkArticleData, GetArticleData};
+use ibis::api::instance::FollowInstance;
+use ibis::api::user::RegisterUserData;
+use ibis::api::user::{LoginResponse, LoginUserData};
+use ibis::api::ResolveObject;
+use ibis::database::article::ArticleView;
+use ibis::database::conflict::ApiConflict;
+use ibis::database::instance::DbInstance;
+use ibis::error::MyResult;
+use ibis::start;
 use once_cell::sync::Lazy;
 use reqwest::{Client, RequestBuilder, StatusCode};
 use serde::de::Deserialize;
@@ -27,9 +27,9 @@ use url::Url;
 pub static CLIENT: Lazy<Client> = Lazy::new(Client::new);
 
 pub struct TestData {
-    pub alpha: FediwikiInstance,
-    pub beta: FediwikiInstance,
-    pub gamma: FediwikiInstance,
+    pub alpha: IbisInstance,
+    pub beta: IbisInstance,
+    pub gamma: IbisInstance,
 }
 
 impl TestData {
@@ -39,7 +39,7 @@ impl TestData {
             env_logger::builder()
                 .filter_level(LevelFilter::Warn)
                 .filter_module("activitypub_federation", LevelFilter::Info)
-                .filter_module("fediwiki", LevelFilter::Info)
+                .filter_module("ibis", LevelFilter::Info)
                 .init();
         });
 
@@ -61,17 +61,17 @@ impl TestData {
 
         // initialize postgres databases in parallel because its slow
         for j in [
-            FediwikiInstance::prepare_db(alpha_db_path.clone()),
-            FediwikiInstance::prepare_db(beta_db_path.clone()),
-            FediwikiInstance::prepare_db(gamma_db_path.clone()),
+            IbisInstance::prepare_db(alpha_db_path.clone()),
+            IbisInstance::prepare_db(beta_db_path.clone()),
+            IbisInstance::prepare_db(gamma_db_path.clone()),
         ] {
             j.join().unwrap();
         }
 
         Self {
-            alpha: FediwikiInstance::start(alpha_db_path, port_alpha, "alpha").await,
-            beta: FediwikiInstance::start(beta_db_path, port_beta, "beta").await,
-            gamma: FediwikiInstance::start(gamma_db_path, port_gamma, "gamma").await,
+            alpha: IbisInstance::start(alpha_db_path, port_alpha, "alpha").await,
+            beta: IbisInstance::start(beta_db_path, port_beta, "beta").await,
+            gamma: IbisInstance::start(gamma_db_path, port_gamma, "gamma").await,
         }
     }
 
@@ -93,14 +93,14 @@ fn generate_db_path(name: &'static str, port: i32) -> String {
     path
 }
 
-pub struct FediwikiInstance {
+pub struct IbisInstance {
     pub hostname: String,
     pub jwt: String,
     db_path: String,
     db_handle: JoinHandle<()>,
 }
 
-impl FediwikiInstance {
+impl IbisInstance {
     fn prepare_db(db_path: String) -> std::thread::JoinHandle<()> {
         spawn(move || {
             Command::new("./tests/scripts/start_dev_db.sh")
@@ -146,7 +146,7 @@ impl FediwikiInstance {
 
 pub const TEST_ARTICLE_DEFAULT_TEXT: &str = "some\nexample\ntext\n";
 
-pub async fn create_article(instance: &FediwikiInstance, title: String) -> MyResult<ArticleView> {
+pub async fn create_article(instance: &IbisInstance, title: String) -> MyResult<ArticleView> {
     let create_form = CreateArticleData {
         title: title.clone(),
     };
@@ -172,7 +172,7 @@ pub async fn get_article(hostname: &str, article_id: i32) -> MyResult<ArticleVie
 }
 
 pub async fn edit_article_with_conflict(
-    instance: &FediwikiInstance,
+    instance: &IbisInstance,
     edit_form: &EditArticleData,
 ) -> MyResult<Option<ApiConflict>> {
     let req = CLIENT
@@ -182,7 +182,7 @@ pub async fn edit_article_with_conflict(
     handle_json_res(req).await
 }
 
-pub async fn get_conflicts(instance: &FediwikiInstance) -> MyResult<Vec<ApiConflict>> {
+pub async fn get_conflicts(instance: &IbisInstance) -> MyResult<Vec<ApiConflict>> {
     let req = CLIENT
         .get(format!(
             "http://{}/api/v1/edit_conflicts",
@@ -193,7 +193,7 @@ pub async fn get_conflicts(instance: &FediwikiInstance) -> MyResult<Vec<ApiConfl
 }
 
 pub async fn edit_article(
-    instance: &FediwikiInstance,
+    instance: &IbisInstance,
     edit_form: &EditArticleData,
 ) -> MyResult<ArticleView> {
     let edit_res = edit_article_with_conflict(instance, edit_form).await?;
@@ -221,7 +221,7 @@ where
 }
 
 pub async fn fork_article(
-    instance: &FediwikiInstance,
+    instance: &IbisInstance,
     form: &ForkArticleData,
 ) -> MyResult<ArticleView> {
     let req = CLIENT
@@ -245,7 +245,7 @@ where
     }
 }
 
-pub async fn follow_instance(instance: &FediwikiInstance, follow_instance: &str) -> MyResult<()> {
+pub async fn follow_instance(instance: &IbisInstance, follow_instance: &str) -> MyResult<()> {
     // fetch beta instance on alpha
     let resolve_form = ResolveObject {
         id: Url::parse(&format!("http://{}", follow_instance))?,
@@ -286,7 +286,7 @@ pub async fn register(hostname: &str, username: &str, password: &str) -> MyResul
 }
 
 pub async fn login(
-    instance: &FediwikiInstance,
+    instance: &IbisInstance,
     username: &str,
     password: &str,
 ) -> MyResult<LoginResponse> {
