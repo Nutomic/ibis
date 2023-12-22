@@ -70,9 +70,7 @@ pub async fn start(hostname: &str, database_url: &str) -> MyResult<()> {
         .to_socket_addrs()?
         .next()
         .expect("Failed to lookup domain name");
-    let server = Server::bind(&addr).serve(app.into_make_service());
-
-    tokio::spawn(server);
+    Server::bind(&addr).serve(app.into_make_service()).await?;
 
     Ok(())
 }
