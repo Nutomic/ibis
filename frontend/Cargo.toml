@@ -10,3 +10,4 @@ console_log = "1"
 console_error_panic_hook = "0.1"
 log = "0.4"
 serde = { version = "1", features = ["derive"] }
+url = {version = "2.4.1", features = ["serde"] }

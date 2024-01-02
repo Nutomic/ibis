@@ -1,6 +1,8 @@
 use leptos::error::Result;
 use leptos::*;
+use log::info;
 use serde::{Deserialize, Serialize};
+use url::Url;
 
 pub fn main() {
     _ = console_log::init_with_level(log::Level::Debug);
@@ -35,6 +37,35 @@ async fn fetch_cats(count: CatCount) -> Result<Vec<String>> {
     }
 }
 
+// TODO: import this from backend somehow
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct DbInstance {
+    pub id: i32,
+    pub ap_id: Url,
+    pub articles_url: Url,
+    pub inbox_url: String,
+    #[serde(skip)]
+    pub public_key: String,
+    #[serde(skip)]
+    pub private_key: Option<String>,
+    pub local: bool,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct InstanceView {
+    pub instance: DbInstance,
+    pub following: Vec<DbInstance>,
+}
+
+async fn fetch_instance(url: &str) -> Result<InstanceView> {
+    let res = reqwest::get(url)
+        .await?
+        .json::<InstanceView>()
+        .await?;
+    info!("{:?}", &res);
+    Ok(res)
+}
+
 pub fn fetch_example() -> impl IntoView {
     let (cat_count, set_cat_count) = create_signal::<CatCount>(0);
 
@@ -43,6 +74,7 @@ pub fn fetch_example() -> impl IntoView {
     // 2) we're not doing server-side rendering in this example anyway
     //    (during SSR, create_resource will begin loading on the server and resolve on the client)
     let cats = create_local_resource(move || cat_count.get(), fetch_cats);
+    let instance = create_local_resource(move || "http://localhost:8131/api/v1/instance", fetch_instance);
 
     let fallback = move |errors: RwSignal<Errors>| {
         let error_list = move || {
@@ -74,7 +106,14 @@ pub fn fetch_example() -> impl IntoView {
         })
     };
 
+    let instance_view = move || {
+        instance.and_then(|data| {
+            view! { <h1>{data.instance.ap_id.to_string()}</h1> }
+        })
+    };
+
     view! {
+        {instance_view}
         <div>
             <label>
                 "How many cats would you like?"

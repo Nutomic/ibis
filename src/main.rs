@@ -1,3 +1,3 @@
-pub async fn main() {
+pub fn main() {
     unimplemented!();
 }

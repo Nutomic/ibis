@@ -17,7 +17,7 @@ use diesel_migrations::EmbeddedMigrations;
 use diesel_migrations::MigrationHarness;
 use std::net::ToSocketAddrs;
 use std::sync::{Arc, Mutex};
-use tracing::info;
+use tracing::info;use tower_http::cors::CorsLayer;
 
 pub mod api;
 pub mod database;
@@ -64,7 +64,8 @@ pub async fn start(hostname: &str, database_url: &str) -> MyResult<()> {
     let app = Router::new()
         .nest("", federation_routes())
         .nest("/api/v1", api_routes())
-        .layer(FederationMiddleware::new(config));
+        .layer(FederationMiddleware::new(config))
+        .layer(CorsLayer::permissive());
 
     let addr = hostname
         .to_socket_addrs()?

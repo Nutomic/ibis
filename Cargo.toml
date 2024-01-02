@@ -7,4 +7,5 @@ edition = "2021"
 members = [
   "frontend",
   "backend",
+  "api_client",
 ]
