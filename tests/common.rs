@@ -1,18 +1,19 @@
 use anyhow::anyhow;
-use ibis::api::article::{CreateArticleData, EditArticleData, ForkArticleData, GetArticleData};
-use ibis::api::instance::FollowInstance;
-use ibis::api::user::RegisterUserData;
-use ibis::api::user::{LoginResponse, LoginUserData};
-use ibis::api::ResolveObject;
-use ibis::database::article::ArticleView;
-use ibis::database::conflict::ApiConflict;
-use ibis::database::instance::DbInstance;
-use ibis::error::MyResult;
-use ibis::start;
+use ibis::backend::api::article::{CreateArticleData, EditArticleData, ForkArticleData};
+use ibis::backend::api::instance::FollowInstance;
+use ibis::backend::api::user::RegisterUserData;
+use ibis::backend::api::user::{LoginResponse, LoginUserData};
+use ibis::backend::api::ResolveObject;
+use ibis::backend::database::conflict::ApiConflict;
+use ibis::backend::database::instance::DbInstance;
+use ibis::backend::error::MyResult;
+use ibis::backend::start;
+use ibis::common::ArticleView;
+use ibis::frontend::api;
+use ibis::frontend::api::get_query;
 use once_cell::sync::Lazy;
-use reqwest::{Client, RequestBuilder, StatusCode};
+use reqwest::{Client, StatusCode};
 use serde::de::Deserialize;
-use serde::ser::Serialize;
 use std::env::current_dir;
 use std::fs::create_dir_all;
 use std::process::{Command, Stdio};
@@ -154,7 +155,7 @@ pub async fn create_article(instance: &IbisInstance, title: String) -> MyResult<
         .post(format!("http://{}/api/v1/article", &instance.hostname))
         .form(&create_form)
         .bearer_auth(&instance.jwt);
-    let article: ArticleView = handle_json_res(req).await?;
+    let article: ArticleView = api::handle_json_res(req).await?;
 
     // create initial edit to ensure that conflicts are generated (there are no conflicts on empty file)
     let edit_form = EditArticleData {
@@ -166,11 +167,6 @@ pub async fn create_article(instance: &IbisInstance, title: String) -> MyResult<
     edit_article(instance, &edit_form).await
 }
 
-pub async fn get_article(hostname: &str, article_id: i32) -> MyResult<ArticleView> {
-    let get_article = GetArticleData { article_id };
-    get_query::<ArticleView, _>(hostname, "article", Some(get_article.clone())).await
-}
-
 pub async fn edit_article_with_conflict(
     instance: &IbisInstance,
     edit_form: &EditArticleData,
@@ -179,7 +175,7 @@ pub async fn edit_article_with_conflict(
         .patch(format!("http://{}/api/v1/article", instance.hostname))
         .form(edit_form)
         .bearer_auth(&instance.jwt);
-    handle_json_res(req).await
+    api::handle_json_res(req).await
 }
 
 pub async fn get_conflicts(instance: &IbisInstance) -> MyResult<Vec<ApiConflict>> {
@@ -189,7 +185,7 @@ pub async fn get_conflicts(instance: &IbisInstance) -> MyResult<Vec<ApiConflict>
             &instance.hostname
         ))
         .bearer_auth(&instance.jwt);
-    handle_json_res(req).await
+    api::handle_json_res(req).await
 }
 
 pub async fn edit_article(
@@ -198,7 +194,7 @@ pub async fn edit_article(
 ) -> MyResult<ArticleView> {
     let edit_res = edit_article_with_conflict(instance, edit_form).await?;
     assert!(edit_res.is_none());
-    get_article(&instance.hostname, edit_form.article_id).await
+    api::get_article(&instance.hostname, edit_form.article_id).await
 }
 
 pub async fn get<T>(hostname: &str, endpoint: &str) -> MyResult<T>
@@ -206,18 +202,6 @@ where
     T: for<'de> Deserialize<'de>,
 {
     get_query(hostname, endpoint, None::<i32>).await
-}
-
-pub async fn get_query<T, R>(hostname: &str, endpoint: &str, query: Option<R>) -> MyResult<T>
-where
-    T: for<'de> Deserialize<'de>,
-    R: Serialize,
-{
-    let mut req = CLIENT.get(format!("http://{}/api/v1/{}", hostname, endpoint));
-    if let Some(query) = query {
-        req = req.query(&query);
-    }
-    handle_json_res(req).await
 }
 
 pub async fn fork_article(
@@ -228,21 +212,7 @@ pub async fn fork_article(
         .post(format!("http://{}/api/v1/article/fork", instance.hostname))
         .form(form)
         .bearer_auth(&instance.jwt);
-    handle_json_res(req).await
-}
-
-pub async fn handle_json_res<T>(req: RequestBuilder) -> MyResult<T>
-where
-    T: for<'de> Deserialize<'de>,
-{
-    let res = req.send().await?;
-    let status = res.status();
-    let text = res.text().await?;
-    if status == StatusCode::OK {
-        Ok(serde_json::from_str(&text).map_err(|e| anyhow!("Json error on {text}: {e}"))?)
-    } else {
-        Err(anyhow!("API error: {text}").into())
-    }
+    api::handle_json_res(req).await
 }
 
 pub async fn follow_instance(instance: &IbisInstance, follow_instance: &str) -> MyResult<()> {
@@ -251,7 +221,7 @@ pub async fn follow_instance(instance: &IbisInstance, follow_instance: &str) -> 
         id: Url::parse(&format!("http://{}", follow_instance))?,
     };
     let instance_resolved: DbInstance =
-        get_query(&instance.hostname, "resolve_instance", Some(resolve_form)).await?;
+        api::get_query(&instance.hostname, "resolve_instance", Some(resolve_form)).await?;
 
     // send follow
     let follow_form = FollowInstance {
@@ -282,7 +252,7 @@ pub async fn register(hostname: &str, username: &str, password: &str) -> MyResul
     let req = CLIENT
         .post(format!("http://{}/api/v1/user/register", hostname))
         .form(&register_form);
-    handle_json_res(req).await
+    api::handle_json_res(req).await
 }
 
 pub async fn login(
@@ -297,5 +267,5 @@ pub async fn login(
     let req = CLIENT
         .post(format!("http://{}/api/v1/user/login", instance.hostname))
         .form(&login_form);
-    handle_json_res(req).await
+    api::handle_json_res(req).await
 }

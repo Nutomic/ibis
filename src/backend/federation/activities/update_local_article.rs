@@ -1,4 +1,4 @@
-use crate::backend::database::{article::DbArticle, MyDataHandle};
+use crate::backend::database::MyDataHandle;
 use crate::backend::error::MyResult;
 use crate::backend::federation::objects::article::ApubArticle;
 
@@ -12,6 +12,7 @@ use activitypub_federation::{
     traits::{ActivityHandler, Object},
 };
 
+use crate::common::DbArticle;
 use serde::{Deserialize, Serialize};
 use url::Url;
 

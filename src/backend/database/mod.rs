@@ -1,4 +1,3 @@
-use crate::backend::database::article::DbArticle;
 use diesel::PgConnection;
 use std::ops::Deref;
 use std::sync::{Arc, Mutex};
@@ -12,7 +11,7 @@ pub mod article;
 pub mod conflict;
 pub mod edit;
 pub mod instance;
-mod schema;
+pub(crate) mod schema;
 pub mod user;
 pub mod version;
 

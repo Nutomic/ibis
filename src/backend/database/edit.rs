@@ -1,34 +1,13 @@
 use crate::backend::database::schema::edit;
-use crate::backend::database::version::EditVersion;
-use crate::backend::database::DbArticle;
 use crate::backend::error::MyResult;
+use crate::common::EditVersion;
+use crate::common::{DbArticle, DbEdit};
 use activitypub_federation::fetch::object_id::ObjectId;
 use diesel::ExpressionMethods;
-use diesel::{
-    insert_into, AsChangeset, Insertable, PgConnection, QueryDsl, Queryable, RunQueryDsl,
-    Selectable,
-};
+use diesel::{insert_into, AsChangeset, Insertable, PgConnection, QueryDsl, RunQueryDsl};
 use diffy::create_patch;
-use serde::{Deserialize, Serialize};
 use std::ops::DerefMut;
 use std::sync::Mutex;
-
-/// Represents a single change to the article.
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Queryable, Selectable)]
-#[diesel(table_name = edit, check_for_backend(diesel::pg::Pg))]
-pub struct DbEdit {
-    // TODO: we could use hash as primary key, but that gives errors on forking because
-    //       the same edit is used for multiple articles
-    pub id: i32,
-    pub creator_id: i32,
-    /// UUID built from sha224 hash of diff
-    pub hash: EditVersion,
-    pub ap_id: ObjectId<DbEdit>,
-    pub diff: String,
-    pub article_id: i32,
-    /// First edit of an article always has `EditVersion::default()` here
-    pub previous_version_id: EditVersion,
-}
 
 #[derive(Debug, Clone, Insertable, AsChangeset)]
 #[diesel(table_name = edit, check_for_backend(diesel::pg::Pg))]

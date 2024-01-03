@@ -1,41 +1,19 @@
-use crate::backend::database::edit::DbEdit;
-
 use crate::backend::database::schema::{article, edit};
 use crate::backend::error::MyResult;
 use crate::backend::federation::objects::edits_collection::DbEditCollection;
+use crate::common::DbEdit;
+use crate::common::EditVersion;
+use crate::common::{ArticleView, DbArticle};
 use activitypub_federation::fetch::collection_id::CollectionId;
 use activitypub_federation::fetch::object_id::ObjectId;
 use diesel::pg::PgConnection;
-
 use diesel::ExpressionMethods;
 use diesel::{
-    insert_into, AsChangeset, BoolExpressionMethods, Identifiable, Insertable,
-    PgTextExpressionMethods, QueryDsl, Queryable, RunQueryDsl, Selectable,
+    insert_into, AsChangeset, BoolExpressionMethods, Insertable, PgTextExpressionMethods, QueryDsl,
+    RunQueryDsl,
 };
-use serde::{Deserialize, Serialize};
-
-use crate::backend::database::version::EditVersion;
 use std::ops::DerefMut;
 use std::sync::Mutex;
-
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Queryable, Selectable, Identifiable)]
-#[diesel(table_name = article, check_for_backend(diesel::pg::Pg), belongs_to(DbInstance, foreign_key = instance_id))]
-pub struct DbArticle {
-    pub id: i32,
-    pub title: String,
-    pub text: String,
-    pub ap_id: ObjectId<DbArticle>,
-    pub instance_id: i32,
-    pub local: bool,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Queryable)]
-#[diesel(table_name = article, check_for_backend(diesel::pg::Pg))]
-pub struct ArticleView {
-    pub article: DbArticle,
-    pub latest_version: EditVersion,
-    pub edits: Vec<DbEdit>,
-}
 
 #[derive(Debug, Clone, Insertable, AsChangeset)]
 #[diesel(table_name = article, check_for_backend(diesel::pg::Pg))]
@@ -47,6 +25,7 @@ pub struct DbArticleForm {
     pub local: bool,
 }
 
+// TODO: get rid of unnecessary methods
 impl DbArticle {
     pub fn edits_id(&self) -> MyResult<CollectionId<DbEditCollection>> {
         Ok(CollectionId::parse(&format!("{}/edits", self.ap_id))?)
@@ -85,6 +64,22 @@ impl DbArticle {
         let article: DbArticle = {
             let mut conn = conn.lock().unwrap();
             article::table.find(id).get_result(conn.deref_mut())?
+        };
+        let latest_version = article.latest_edit_version(conn)?;
+        let edits: Vec<DbEdit> = DbEdit::read_for_article(&article, conn)?;
+        Ok(ArticleView {
+            article,
+            edits,
+            latest_version,
+        })
+    }
+
+    pub fn read_view_title(title: &str, conn: &Mutex<PgConnection>) -> MyResult<ArticleView> {
+        let article: DbArticle = {
+            let mut conn = conn.lock().unwrap();
+            article::table
+                .filter(article::dsl::title.eq(title))
+                .get_result(conn.deref_mut())?
         };
         let latest_version = article.latest_edit_version(conn)?;
         let edits: Vec<DbEdit> = DbEdit::read_for_article(&article, conn)?;

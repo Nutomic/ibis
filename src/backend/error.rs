@@ -1,5 +1,3 @@
-use axum::http::StatusCode;
-use axum::response::{IntoResponse, Response};
 use std::fmt::{Display, Formatter};
 
 pub type MyResult<T> = Result<T, Error>;
@@ -22,8 +20,13 @@ where
     }
 }
 
-impl IntoResponse for Error {
-    fn into_response(self) -> Response {
-        (StatusCode::INTERNAL_SERVER_ERROR, format!("{}", self.0)).into_response()
+#[cfg(feature = "ssr")]
+impl axum::response::IntoResponse for Error {
+    fn into_response(self) -> axum::response::Response {
+        (
+            axum::http::StatusCode::INTERNAL_SERVER_ERROR,
+            format!("{}", self.0),
+        )
+            .into_response()
     }
 }

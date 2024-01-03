@@ -1,3 +1,8 @@
+pub mod api;
+pub mod app;
+pub mod article;
+pub mod nav;
+
 use leptos::error::Result;
 use leptos::*;
 use log::info;
@@ -17,14 +22,14 @@ async fn fetch_cats(count: CatCount) -> Result<Vec<String>> {
         let res = reqwest::get(&format!(
             "https://api.thecatapi.com/v1/images/search?limit={count}",
         ))
-            .await?
-            .json::<Vec<Cat>>()
-            .await?
-            // extract the URL field for each cat
-            .into_iter()
-            .take(count)
-            .map(|cat| cat.url)
-            .collect::<Vec<_>>();
+        .await?
+        .json::<Vec<Cat>>()
+        .await?
+        // extract the URL field for each cat
+        .into_iter()
+        .take(count)
+        .map(|cat| cat.url)
+        .collect::<Vec<_>>();
         Ok(res)
     } else {
         Ok(vec![])
@@ -52,10 +57,7 @@ pub struct InstanceView {
 }
 
 async fn fetch_instance(url: &str) -> Result<InstanceView> {
-    let res = reqwest::get(url)
-        .await?
-        .json::<InstanceView>()
-        .await?;
+    let res = reqwest::get(url).await?.json::<InstanceView>().await?;
     info!("{:?}", &res);
     Ok(res)
 }

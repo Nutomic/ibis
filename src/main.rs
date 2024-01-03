@@ -1,3 +1,4 @@
+#[cfg(feature = "ssr")]
 #[tokio::main]
 pub async fn main() -> ibis::backend::error::MyResult<()> {
     use log::LevelFilter;
@@ -10,3 +11,6 @@ pub async fn main() -> ibis::backend::error::MyResult<()> {
     ibis::backend::start("localhost:8131", database_url).await?;
     Ok(())
 }
+
+#[cfg(not(feature = "ssr"))]
+fn main() {}

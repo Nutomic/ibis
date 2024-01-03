@@ -1,14 +1,16 @@
-use crate::backend::database::article::{ArticleView, DbArticle, DbArticleForm};
+use crate::backend::database::article::DbArticleForm;
 use crate::backend::database::conflict::{ApiConflict, DbConflict, DbConflictForm};
-use crate::backend::database::edit::{DbEdit, DbEditForm};
+use crate::backend::database::edit::DbEditForm;
 use crate::backend::database::instance::DbInstance;
 use crate::backend::database::user::LocalUserView;
-use crate::backend::database::version::EditVersion;
 use crate::backend::database::MyDataHandle;
 use crate::backend::error::MyResult;
 use crate::backend::federation::activities::create_article::CreateArticle;
 use crate::backend::federation::activities::submit_article_update;
 use crate::backend::utils::generate_article_version;
+use crate::common::EditVersion;
+use crate::common::GetArticleData;
+use crate::common::{ArticleView, DbArticle, DbEdit};
 use activitypub_federation::config::Data;
 use activitypub_federation::fetch::object_id::ObjectId;
 use axum::extract::Query;
@@ -118,19 +120,14 @@ pub(in crate::backend::api) async fn edit_article(
     }
 }
 
-#[derive(Deserialize, Serialize, Clone)]
-pub struct GetArticleData {
-    pub article_id: i32,
-}
-
 /// Retrieve an article by ID. It must already be stored in the local database.
 #[debug_handler]
 pub(in crate::backend::api) async fn get_article(
     Query(query): Query<GetArticleData>,
     data: Data<MyDataHandle>,
 ) -> MyResult<Json<ArticleView>> {
-    Ok(Json(DbArticle::read_view(
-        query.article_id,
+    Ok(Json(DbArticle::read_view_title(
+        &query.title,
         &data.db_connection,
     )?))
 }

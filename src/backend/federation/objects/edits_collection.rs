@@ -1,10 +1,10 @@
-use crate::backend::database::article::DbArticle;
 use crate::backend::database::MyDataHandle;
 use crate::backend::error::Error;
 use crate::backend::federation::objects::edit::ApubEdit;
+use crate::common::DbArticle;
 
-use crate::backend::database::edit::DbEdit;
 use crate::backend::database::instance::DbInstance;
+use crate::common::DbEdit;
 use activitypub_federation::kinds::collection::OrderedCollectionType;
 use activitypub_federation::{
     config::Data,

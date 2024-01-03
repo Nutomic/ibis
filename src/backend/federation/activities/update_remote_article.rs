@@ -1,14 +1,14 @@
 use crate::backend::database::MyDataHandle;
 use crate::backend::error::MyResult;
 
-use crate::backend::database::article::DbArticle;
-use crate::backend::database::edit::DbEdit;
 use crate::backend::database::instance::DbInstance;
 use crate::backend::federation::activities::reject::RejectEdit;
 use crate::backend::federation::activities::update_local_article::UpdateLocalArticle;
 use crate::backend::federation::objects::edit::ApubEdit;
 use crate::backend::federation::send_activity;
 use crate::backend::utils::generate_activity_id;
+use crate::common::DbArticle;
+use crate::common::DbEdit;
 use activitypub_federation::kinds::activity::UpdateType;
 use activitypub_federation::{
     config::Data,

@@ -2,7 +2,9 @@ use crate::backend::database::instance::DbInstance;
 use crate::backend::database::user::DbPerson;
 use crate::backend::error::MyResult;
 use crate::backend::federation::send_activity;
-use crate::backend::{database::MyDataHandle, federation::activities::accept::Accept, generate_activity_id};
+use crate::backend::{
+    database::MyDataHandle, federation::activities::accept::Accept, generate_activity_id,
+};
 use activitypub_federation::{
     config::Data,
     fetch::object_id::ObjectId,

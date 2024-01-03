@@ -1,6 +1,6 @@
-use crate::backend::database::edit::DbEdit;
-use crate::backend::database::version::EditVersion;
 use crate::backend::error::MyResult;
+use crate::common::DbEdit;
+use crate::common::EditVersion;
 use anyhow::anyhow;
 use diffy::{apply, Patch};
 use rand::{distributions::Alphanumeric, thread_rng, Rng};

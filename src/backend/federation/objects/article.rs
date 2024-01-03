@@ -1,9 +1,10 @@
 use crate::backend::database::article::DbArticleForm;
 use crate::backend::database::instance::DbInstance;
-use crate::backend::database::version::EditVersion;
-use crate::backend::database::{article::DbArticle, MyDataHandle};
+use crate::backend::database::MyDataHandle;
 use crate::backend::error::Error;
 use crate::backend::federation::objects::edits_collection::DbEditCollection;
+use crate::common::DbArticle;
+use crate::common::EditVersion;
 use activitypub_federation::config::Data;
 use activitypub_federation::fetch::collection_id::CollectionId;
 use activitypub_federation::kinds::object::ArticleType;
@@ -48,7 +49,7 @@ impl Object for DbArticle {
         let local_instance = DbInstance::read_local_instance(&data.db_connection)?;
         Ok(ApubArticle {
             kind: Default::default(),
-            id: self.ap_id.clone(),
+            id: ObjectId::parse(&self.ap_id)?,
             attributed_to: local_instance.ap_id.clone(),
             to: vec![public(), local_instance.followers_url()?],
             edits: self.edits_id()?,

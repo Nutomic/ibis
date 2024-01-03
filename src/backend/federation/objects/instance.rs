@@ -1,12 +1,13 @@
 use crate::backend::database::instance::{DbInstance, DbInstanceForm};
 use crate::backend::database::MyDataHandle;
-use crate::backend::error::{Error, MyResult};
+use crate::backend::error::Error;
 use crate::backend::federation::objects::articles_collection::DbArticleCollection;
 use crate::backend::federation::send_activity;
 
 use activitypub_federation::fetch::collection_id::CollectionId;
 use activitypub_federation::kinds::actor::ServiceType;
 
+use crate::backend::error::MyResult;
 use activitypub_federation::traits::ActivityHandler;
 use activitypub_federation::{
     config::Data,
@@ -17,7 +18,6 @@ use activitypub_federation::{
 use chrono::{DateTime, Local, Utc};
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
-
 use url::Url;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]

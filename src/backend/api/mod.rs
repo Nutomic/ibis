@@ -5,13 +5,13 @@ use crate::backend::api::instance::get_local_instance;
 use crate::backend::api::user::login_user;
 use crate::backend::api::user::register_user;
 use crate::backend::api::user::validate;
-use crate::backend::database::article::{ArticleView, DbArticle};
 use crate::backend::database::conflict::{ApiConflict, DbConflict};
-use crate::backend::database::edit::DbEdit;
 use crate::backend::database::instance::DbInstance;
 use crate::backend::database::user::LocalUserView;
 use crate::backend::database::MyDataHandle;
 use crate::backend::error::MyResult;
+use crate::common::DbEdit;
+use crate::common::{ArticleView, DbArticle};
 use activitypub_federation::config::Data;
 use activitypub_federation::fetch::object_id::ObjectId;
 use axum::extract::Query;
@@ -28,8 +28,8 @@ use axum::{
 use axum::{Json, Router};
 use axum_macros::debug_handler;
 use futures::future::try_join_all;
-use serde::{Deserialize, Serialize};
 use log::warn;
+use serde::{Deserialize, Serialize};
 use url::Url;
 
 pub mod article;
@@ -83,7 +83,9 @@ async fn resolve_instance(
     Query(query): Query<ResolveObject>,
     data: Data<MyDataHandle>,
 ) -> MyResult<Json<DbInstance>> {
-    let instance: DbInstance = ObjectId::from(query.id).dereference(&data).await?;
+    // TODO: workaround because axum makes it hard to have multiple routes on /
+    let id = format!("{}instance", query.id);
+    let instance: DbInstance = ObjectId::parse(&id)?.dereference(&data).await?;
     Ok(Json(instance))
 }
 

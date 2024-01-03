@@ -3,9 +3,9 @@ use activitypub_federation::activity_sending::SendActivityTask;
 use activitypub_federation::config::Data;
 use activitypub_federation::protocol::context::WithContext;
 use activitypub_federation::traits::{ActivityHandler, Actor};
+use log::warn;
 use serde::Serialize;
 use std::fmt::Debug;
-use log::warn;
 use url::Url;
 
 pub mod activities;

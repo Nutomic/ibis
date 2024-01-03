@@ -1,11 +1,11 @@
-use crate::backend::database::article::DbArticle;
-use crate::backend::database::edit::{DbEdit, DbEditForm};
+use crate::backend::database::edit::DbEditForm;
 use crate::backend::database::instance::DbInstance;
-use crate::backend::database::version::EditVersion;
 use crate::backend::database::MyDataHandle;
 use crate::backend::error::Error;
 use crate::backend::federation::activities::update_local_article::UpdateLocalArticle;
 use crate::backend::federation::activities::update_remote_article::UpdateRemoteArticle;
+use crate::common::EditVersion;
+use crate::common::{DbArticle, DbEdit};
 use activitypub_federation::config::Data;
 
 pub mod accept;
@@ -35,7 +35,7 @@ pub async fn submit_article_update(
             id: -1,
             creator_id,
             hash: form.hash,
-            ap_id: form.ap_id,
+            ap_id: form.ap_id.to_string(),
             diff: form.diff,
             article_id: form.article_id,
             previous_version_id: form.previous_version_id,

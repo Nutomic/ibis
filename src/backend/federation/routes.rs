@@ -1,8 +1,8 @@
-use crate::backend::database::article::DbArticle;
 use crate::backend::database::instance::DbInstance;
 use crate::backend::database::user::DbPerson;
 use crate::backend::database::MyDataHandle;
-use crate::backend::error::{Error, MyResult};
+use crate::backend::error::Error;
+use crate::backend::error::MyResult;
 use crate::backend::federation::activities::accept::Accept;
 use crate::backend::federation::activities::create_article::CreateArticle;
 use crate::backend::federation::activities::follow::Follow;
@@ -10,10 +10,13 @@ use crate::backend::federation::activities::reject::RejectEdit;
 use crate::backend::federation::activities::update_local_article::UpdateLocalArticle;
 use crate::backend::federation::activities::update_remote_article::UpdateRemoteArticle;
 use crate::backend::federation::objects::article::ApubArticle;
-use crate::backend::federation::objects::articles_collection::{ArticleCollection, DbArticleCollection};
+use crate::backend::federation::objects::articles_collection::{
+    ArticleCollection, DbArticleCollection,
+};
 use crate::backend::federation::objects::edits_collection::{ApubEditCollection, DbEditCollection};
 use crate::backend::federation::objects::instance::ApubInstance;
 use crate::backend::federation::objects::user::ApubUser;
+use crate::common::DbArticle;
 use activitypub_federation::axum::inbox::{receive_activity, ActivityData};
 use activitypub_federation::axum::json::FederationJson;
 use activitypub_federation::config::Data;
@@ -32,8 +35,9 @@ use url::Url;
 
 pub fn federation_routes() -> Router {
     Router::new()
-        // TODO
-        //.route("/", get(http_get_instance))
+        // TODO: would be nice if this could be at / but axum doesnt properly support routing by headers
+        //       https://github.com/tokio-rs/axum/issues/1654
+        .route("/instance", get(http_get_instance))
         .route("/user/:name", get(http_get_person))
         .route("/all_articles", get(http_get_all_articles))
         .route("/article/:title", get(http_get_article))
