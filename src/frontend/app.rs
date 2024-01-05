@@ -12,9 +12,7 @@ pub fn App() -> impl IntoView {
     provide_meta_context();
     view! {
         <>
-            <Link rel="shortcut icon" type_="image/ico" href="/favicon.ico"/>
             <Stylesheet id="leptos" href="/style.css"/>
-            <Meta name="description" content="Leptos implementation of a HackerNews demo."/>
             <Router>
                 <Nav />
                 <main>

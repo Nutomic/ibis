@@ -98,7 +98,6 @@ pub async fn start(hostname: &str, database_url: &str) -> MyResult<()> {
         .layer(FederationMiddleware::new(config))
         .layer(CorsLayer::permissive());
 
-    dbg!(&addr, &hostname);
     Server::bind(&addr).serve(app.into_make_service()).await?;
 
     Ok(())
