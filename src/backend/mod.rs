@@ -20,10 +20,11 @@ use diesel_migrations::EmbeddedMigrations;
 use diesel_migrations::MigrationHarness;
 use leptos::*;
 use leptos_axum::{generate_route_list, LeptosRoutes};
+use log::info;
 use std::net::ToSocketAddrs;
 use std::sync::{Arc, Mutex};
 use tower_http::cors::CorsLayer;
-use tower_http::services::ServeFile;
+use tower_http::services::{ServeDir, ServeFile};
 
 pub mod api;
 pub mod database;
@@ -92,12 +93,21 @@ pub async fn start(hostname: &str, database_url: &str) -> MyResult<()> {
     let app = Router::new()
         .leptos_routes(&leptos_options, routes, || view! {  <App/> })
         .with_state(leptos_options)
-        .route_service("/style.css", ServeFile::new("style.css"))
+        .nest_service("/assets", ServeDir::new("assets"))
+        .nest_service(
+            "/pkg/ibis.js",
+            ServeFile::new_with_mime("dist/ibis.js", &"application/javascript".parse()?),
+        )
+        .nest_service(
+            "/pkg/ibis_bg.wasm",
+            ServeFile::new_with_mime("dist/ibis_bg.wasm", &"application/wasm".parse()?),
+        )
         .nest("", federation_routes())
         .nest("/api/v1", api_routes())
         .layer(FederationMiddleware::new(config))
         .layer(CorsLayer::permissive());
 
+    info!("{addr}");
     Server::bind(&addr).serve(app.into_make_service()).await?;
 
     Ok(())

@@ -7,6 +7,12 @@ A federated Wikipedia alternative. Main objects in terms of federation are the `
 
 The Ibis is a [bird which is related to the Egyptian god of knowledge and science](https://en.wikipedia.org/wiki/African_sacred_ibis#In_myth_and_legend).
 
+## Development
+
+```
+cargo run
+trunk serve --no-default-features --features csr,hydrate --filehash false --proxy-backend http://[::1]:8131
+```
 ## License
 
 [AGPL](LICENSE)
