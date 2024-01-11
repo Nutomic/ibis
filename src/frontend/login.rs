@@ -11,7 +11,7 @@ fn do_login(ev: SubmitEvent, username: String, password: String) {
   spawn_local(
     async move {
       let res = login("localhost:8080", &username, &password).await;
-      info!("{}", res.jwt);
+      info!("{}", res.unwrap().jwt);
   });
 }
 

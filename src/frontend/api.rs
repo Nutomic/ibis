@@ -4,15 +4,16 @@ use anyhow::anyhow;
 use once_cell::sync::Lazy;
 use reqwest::{Client, RequestBuilder};
 use serde::{Deserialize, Serialize};
+use crate::frontend::error::MyResult;
 
 pub static CLIENT: Lazy<Client> = Lazy::new(Client::new);
 
-pub async fn get_article(hostname: &str, title: String) -> ArticleView {
+pub async fn get_article(hostname: &str, title: String) -> MyResult<ArticleView> {
     let get_article = GetArticleData { title };
     get_query::<ArticleView, _>(hostname, "article", Some(get_article.clone())).await
 }
 
-pub async fn get_query<T, R>(hostname: &str, endpoint: &str, query: Option<R>) -> T
+pub async fn get_query<T, R>(hostname: &str, endpoint: &str, query: Option<R>) -> MyResult<T>
 where
     T: for<'de> Deserialize<'de>,
     R: Serialize,
@@ -24,23 +25,23 @@ where
     handle_json_res::<T>(req).await
 }
 
-pub async fn handle_json_res<T>(req: RequestBuilder) -> T
+pub async fn handle_json_res<T>(req: RequestBuilder) -> MyResult<T>
 where
     T: for<'de> Deserialize<'de>,
 {
-    let res = req.send().await.unwrap();
+    let res = req.send().await?;
     let status = res.status();
-    let text = res.text().await.unwrap();
+    let text = res.text().await?;
     if status == reqwest::StatusCode::OK {
-        serde_json::from_str(&text)
+        Ok(serde_json::from_str(&text)
             .map_err(|e| anyhow!("Json error on {text}: {e}"))
-            .unwrap()
+            ?)
     } else {
-        Err(anyhow!("API error: {text}")).unwrap()
+        Err(anyhow!("API error: {text}").into())
     }
 }
 
-pub async fn register(hostname: &str, username: &str, password: &str) -> LoginResponse {
+pub async fn register(hostname: &str, username: &str, password: &str) -> MyResult<LoginResponse> {
     let register_form = RegisterUserData {
         username: username.to_string(),
         password: password.to_string(),
@@ -55,7 +56,7 @@ pub async fn login(
     hostname: &str,
     username: &str,
     password: &str,
-) -> LoginResponse {
+) -> MyResult<LoginResponse> {
     let login_form = LoginUserData {
         username: username.to_string(),
         password: password.to_string(),

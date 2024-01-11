@@ -3,6 +3,7 @@ pub mod app;
 pub mod article;
 mod login;
 pub mod nav;
+mod error;
 
 #[cfg(feature = "hydrate")]
 #[wasm_bindgen::prelude::wasm_bindgen]

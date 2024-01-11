@@ -13,7 +13,7 @@ pub fn Article() -> impl IntoView {
                 .cloned()
                 .unwrap_or("Main Page".to_string())
         },
-        move |title| async move { get_article("localhost:8131", title).await },
+        move |title| async move { get_article("localhost:8131", title).await.unwrap() },
     );
 
     view! {
