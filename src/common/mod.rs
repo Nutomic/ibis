@@ -54,3 +54,20 @@ pub struct DbEdit {
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ssr", derive(diesel_derive_newtype::DieselNewType))]
 pub struct EditVersion(pub(crate) Uuid);
+
+#[derive(Deserialize, Serialize)]
+pub struct RegisterUserData {
+    pub username: String,
+    pub password: String,
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct LoginResponse {
+    pub jwt: String,
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct LoginUserData {
+    pub username: String,
+    pub password: String,
+}

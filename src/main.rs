@@ -1,5 +1,3 @@
-use log::info;
-
 #[cfg(feature = "ssr")]
 #[tokio::main]
 pub async fn main() -> ibis_lib::backend::error::MyResult<()> {
@@ -25,5 +23,5 @@ fn main() {
     mount_to_body(|| {
         view! {  <App/> }
     });
-    info!("test 2");
+    log::info!("test 2");
 }

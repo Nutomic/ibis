@@ -1,5 +1,5 @@
 use crate::backend::database::user::{DbLocalUser, DbPerson, LocalUserView};
-use crate::backend::database::{read_jwt_secret, MyDataHandle};
+use crate::backend::database::{MyDataHandle, read_jwt_secret};
 use crate::backend::error::MyResult;
 use activitypub_federation::config::Data;
 use anyhow::anyhow;
@@ -12,9 +12,10 @@ use jsonwebtoken::Validation;
 use jsonwebtoken::{decode, get_current_timestamp};
 use jsonwebtoken::{encode, EncodingKey, Header};
 use serde::{Deserialize, Serialize};
+use crate::common::{LoginResponse, LoginUserData, RegisterUserData};
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Claims {
+struct Claims {
     /// local_user.id
     pub sub: String,
     /// hostname
@@ -25,7 +26,7 @@ pub struct Claims {
     pub exp: u64,
 }
 
-pub(in crate::backend::api) fn generate_login_token(
+fn generate_login_token(
     local_user: DbLocalUser,
     data: &Data<MyDataHandle>,
 ) -> MyResult<LoginResponse> {
@@ -51,17 +52,6 @@ pub async fn validate(jwt: &str, data: &Data<MyDataHandle>) -> MyResult<LocalUse
     DbPerson::read_local_from_id(claims.claims.sub.parse()?, data)
 }
 
-#[derive(Deserialize, Serialize)]
-pub struct RegisterUserData {
-    pub username: String,
-    pub password: String,
-}
-
-#[derive(Deserialize, Serialize)]
-pub struct LoginResponse {
-    pub jwt: String,
-}
-
 #[debug_handler]
 pub(in crate::backend::api) async fn register_user(
     data: Data<MyDataHandle>,
@@ -69,12 +59,6 @@ pub(in crate::backend::api) async fn register_user(
 ) -> MyResult<Json<LoginResponse>> {
     let user = DbPerson::create_local(form.username, form.password, &data)?;
     Ok(Json(generate_login_token(user.local_user, &data)?))
-}
-
-#[derive(Deserialize, Serialize)]
-pub struct LoginUserData {
-    pub username: String,
-    pub password: String,
 }
 
 #[debug_handler]

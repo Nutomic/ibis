@@ -24,6 +24,7 @@ use std::time::Duration;
 use tokio::task::JoinHandle;
 use tracing::log::LevelFilter;
 use url::Url;
+use ibis_lib::frontend::api;
 
 pub static CLIENT: Lazy<Client> = Lazy::new(Client::new);
 
@@ -122,7 +123,7 @@ impl IbisInstance {
         });
         // wait a moment for the backend to start
         tokio::time::sleep(Duration::from_millis(100)).await;
-        let register_res = register(&hostname, username, "hunter2").await.unwrap();
+        let register_res = api::register(&hostname, username, "hunter2").await.unwrap();
         assert!(!register_res.jwt.is_empty());
         Self {
             jwt: register_res.jwt,
@@ -242,30 +243,4 @@ pub async fn follow_instance(instance: &IbisInstance, follow_instance: &str) -> 
     } else {
         Err(anyhow!("API error: {}", res.text().await?).into())
     }
-}
-
-pub async fn register(hostname: &str, username: &str, password: &str) -> MyResult<LoginResponse> {
-    let register_form = RegisterUserData {
-        username: username.to_string(),
-        password: password.to_string(),
-    };
-    let req = CLIENT
-        .post(format!("http://{}/api/v1/user/register", hostname))
-        .form(&register_form);
-    api::handle_json_res(req).await
-}
-
-pub async fn login(
-    instance: &IbisInstance,
-    username: &str,
-    password: &str,
-) -> MyResult<LoginResponse> {
-    let login_form = LoginUserData {
-        username: username.to_string(),
-        password: password.to_string(),
-    };
-    let req = CLIENT
-        .post(format!("http://{}/api/v1/user/login", instance.hostname))
-        .form(&login_form);
-    api::handle_json_res(req).await
 }

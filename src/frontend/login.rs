@@ -1,41 +1,52 @@
 use leptos::*;
-use leptos_form::prelude::*;
+use leptos::ev::{SubmitEvent};
 use log::info;
-use serde::{Deserialize, Serialize};
+use crate::frontend::api::login;
 
-#[derive(Clone, Debug, Deserialize, Default, Form, Serialize)]
-#[form(
-    component(
-        action = create_my_data(my_data),
-        on_success = |DbMyData { id, .. }, _| view!(<div>{format!("Created {id}")}</div>)
-    )
-)
-]
-pub struct MyData {
-    pub username: String,
-    pub password: String,
-}
-
-#[derive(Clone, Debug, Deserialize, Serialize)]
-pub struct DbMyData {
-    pub id: i32,
-    pub name: String,
-}
-
-async fn create_my_data(my_data: MyData) -> Result<DbMyData, ServerFnError> {
-    info!("{:?}", &my_data);
-    Ok(DbMyData {
-        id: 1,
-        name: my_data.username,
-    })
+// TODO: this seems to be working, but need to implement registration also
+// TODO: use leptos_form if possible
+//       https://github.com/leptos-form/leptos_form/issues/18
+fn do_login(ev: SubmitEvent, username: String, password: String) {
+  ev.prevent_default();
+  spawn_local(
+    async move {
+      let res = login("localhost:8080", &username, &password).await;
+      info!("{}", res.jwt);
+  });
 }
 
 #[component]
 pub fn Login() -> impl IntoView {
-    view! {
-        <MyData
-            initial={MyData::default()}
-            top=|| view!(<input type="button" value="Login" />)
-        />
-    }
+  let name = RwSignal::new(String::new());
+  let password = RwSignal::new(String::new());
+
+  view! {
+    <form on:submit=move |ev| do_login(ev, name.get(), password.get())>
+    <div>
+      <label for="username">Username: </label>
+      <input
+        id="username"
+        type="text"
+        on:input=move |ev| name.set(event_target_value(&ev))
+        label="Username"
+      />
+    </div>
+
+    <div>
+      <label for="password">Password: </label>
+      <input
+        id="password"
+        type="password"
+        on:input=move |ev| password.set(event_target_value(&ev))
+      />
+    </div>
+
+      <div>
+        <button type="submit">
+          "Login"
+        </button>
+
+      </div>
+    </form>
+  }
 }

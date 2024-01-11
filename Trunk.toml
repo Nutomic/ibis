@@ -1,0 +1,6 @@
+[build]
+filehash = false
+target = "assets/index.html"
+
+[[proxy]]
+backend = "http://[::1]:8131"

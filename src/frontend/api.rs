@@ -1,4 +1,4 @@
-use crate::common::ArticleView;
+use crate::common::{ArticleView, LoginResponse, LoginUserData, RegisterUserData};
 use crate::common::GetArticleData;
 use anyhow::anyhow;
 use once_cell::sync::Lazy;
@@ -38,4 +38,30 @@ where
     } else {
         Err(anyhow!("API error: {text}")).unwrap()
     }
+}
+
+pub async fn register(hostname: &str, username: &str, password: &str) -> LoginResponse {
+    let register_form = RegisterUserData {
+        username: username.to_string(),
+        password: password.to_string(),
+    };
+    let req = CLIENT
+        .post(format!("http://{}/api/v1/user/register", hostname))
+        .form(&register_form);
+    handle_json_res(req).await
+}
+
+pub async fn login(
+    hostname: &str,
+    username: &str,
+    password: &str,
+) -> LoginResponse {
+    let login_form = LoginUserData {
+        username: username.to_string(),
+        password: password.to_string(),
+    };
+    let req = CLIENT
+        .post(format!("http://{}/api/v1/user/login", hostname))
+        .form(&login_form);
+    handle_json_res(req).await
 }
