@@ -61,7 +61,7 @@ pub struct RegisterUserData {
     pub password: String,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct LoginResponse {
     pub jwt: String,
 }

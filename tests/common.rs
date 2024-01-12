@@ -11,6 +11,7 @@ use ibis::backend::start;
 use ibis::common::ArticleView;
 use ibis::frontend::api;
 use ibis::frontend::api::get_query;
+use ibis_lib::frontend::api;
 use once_cell::sync::Lazy;
 use reqwest::{Client, StatusCode};
 use serde::de::Deserialize;
@@ -24,7 +25,6 @@ use std::time::Duration;
 use tokio::task::JoinHandle;
 use tracing::log::LevelFilter;
 use url::Url;
-use ibis_lib::frontend::api;
 
 pub static CLIENT: Lazy<Client> = Lazy::new(Client::new);
 

@@ -3,6 +3,7 @@ use leptos_router::*;
 
 #[component]
 pub fn Nav() -> impl IntoView {
+    // TODO: use `<Show when` based on auth token for login/register/logout
     view! {
         <nav class="inner">
             <li>

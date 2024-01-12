@@ -1,6 +1,7 @@
 use crate::backend::database::user::{DbLocalUser, DbPerson, LocalUserView};
-use crate::backend::database::{MyDataHandle, read_jwt_secret};
+use crate::backend::database::{read_jwt_secret, MyDataHandle};
 use crate::backend::error::MyResult;
+use crate::common::{LoginResponse, LoginUserData, RegisterUserData};
 use activitypub_federation::config::Data;
 use anyhow::anyhow;
 use axum::{Form, Json};
@@ -12,7 +13,6 @@ use jsonwebtoken::Validation;
 use jsonwebtoken::{decode, get_current_timestamp};
 use jsonwebtoken::{encode, EncodingKey, Header};
 use serde::{Deserialize, Serialize};
-use crate::common::{LoginResponse, LoginUserData, RegisterUserData};
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Claims {

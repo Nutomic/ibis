@@ -96,11 +96,11 @@ pub async fn start(hostname: &str, database_url: &str) -> MyResult<()> {
         .nest_service("/assets", ServeDir::new("assets"))
         .nest_service(
             "/pkg/ibis.js",
-            ServeFile::new_with_mime("dist/ibis.js", &"application/javascript".parse()?),
+            ServeFile::new_with_mime("assets/dist/ibis.js", &"application/javascript".parse()?),
         )
         .nest_service(
             "/pkg/ibis_bg.wasm",
-            ServeFile::new_with_mime("dist/ibis_bg.wasm", &"application/wasm".parse()?),
+            ServeFile::new_with_mime("assets/dist/ibis_bg.wasm", &"application/wasm".parse()?),
         )
         .nest("", federation_routes())
         .nest("/api/v1", api_routes())

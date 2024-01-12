@@ -1,10 +1,10 @@
-use crate::common::{ArticleView, LoginResponse, LoginUserData, RegisterUserData};
 use crate::common::GetArticleData;
+use crate::common::{ArticleView, LoginResponse, LoginUserData, RegisterUserData};
+use crate::frontend::error::MyResult;
 use anyhow::anyhow;
 use once_cell::sync::Lazy;
 use reqwest::{Client, RequestBuilder};
 use serde::{Deserialize, Serialize};
-use crate::frontend::error::MyResult;
 
 pub static CLIENT: Lazy<Client> = Lazy::new(Client::new);
 
@@ -33,30 +33,20 @@ where
     let status = res.status();
     let text = res.text().await?;
     if status == reqwest::StatusCode::OK {
-        Ok(serde_json::from_str(&text)
-            .map_err(|e| anyhow!("Json error on {text}: {e}"))
-            ?)
+        Ok(serde_json::from_str(&text).map_err(|e| anyhow!("Json error on {text}: {e}"))?)
     } else {
         Err(anyhow!("API error: {text}").into())
     }
 }
 
-pub async fn register(hostname: &str, username: &str, password: &str) -> MyResult<LoginResponse> {
-    let register_form = RegisterUserData {
-        username: username.to_string(),
-        password: password.to_string(),
-    };
+pub async fn register(hostname: &str, register_form: RegisterUserData) -> MyResult<LoginResponse> {
     let req = CLIENT
         .post(format!("http://{}/api/v1/user/register", hostname))
         .form(&register_form);
     handle_json_res(req).await
 }
 
-pub async fn login(
-    hostname: &str,
-    username: &str,
-    password: &str,
-) -> MyResult<LoginResponse> {
+pub async fn login(hostname: &str, username: &str, password: &str) -> MyResult<LoginResponse> {
     let login_form = LoginUserData {
         username: username.to_string(),
         password: password.to_string(),
