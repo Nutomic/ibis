@@ -1,6 +1,7 @@
-use crate::backend::database::user::{DbPerson, DbPersonForm};
+use crate::backend::database::user::DbPersonForm;
 use crate::backend::database::MyDataHandle;
 use crate::backend::error::Error;
+use crate::common::DbPerson;
 use activitypub_federation::kinds::actor::PersonType;
 use activitypub_federation::{
     config::Data,

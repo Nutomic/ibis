@@ -1,5 +1,6 @@
 use crate::common::GetArticleData;
-use crate::common::{ArticleView, LoginResponse, LoginUserData, RegisterUserData};
+use crate::common::LocalUserView;
+use crate::common::{ArticleView, LoginUserData, RegisterUserData};
 use crate::frontend::error::MyResult;
 use anyhow::anyhow;
 use once_cell::sync::Lazy;
@@ -39,20 +40,29 @@ where
     }
 }
 
-pub async fn register(hostname: &str, register_form: RegisterUserData) -> MyResult<LoginResponse> {
+pub async fn register(hostname: &str, register_form: RegisterUserData) -> MyResult<LocalUserView> {
     let req = CLIENT
-        .post(format!("http://{}/api/v1/user/register", hostname))
+        .post(format!("http://{}/api/v1/account/register", hostname))
         .form(&register_form);
-    handle_json_res(req).await
+    handle_json_res::<LocalUserView>(req).await
 }
 
-pub async fn login(hostname: &str, username: &str, password: &str) -> MyResult<LoginResponse> {
-    let login_form = LoginUserData {
-        username: username.to_string(),
-        password: password.to_string(),
-    };
+pub async fn login(hostname: &str, login_form: LoginUserData) -> MyResult<LocalUserView> {
     let req = CLIENT
-        .post(format!("http://{}/api/v1/user/login", hostname))
+        .post(format!("http://{}/api/v1/account/login", hostname))
         .form(&login_form);
-    handle_json_res(req).await
+    handle_json_res::<LocalUserView>(req).await
+}
+
+pub async fn my_profile(hostname: &str) -> MyResult<LocalUserView> {
+    let req = CLIENT.get(format!("http://{}/api/v1/account/my_profile", hostname));
+    handle_json_res::<LocalUserView>(req).await
+}
+
+pub async fn logout(hostname: &str) -> MyResult<()> {
+    CLIENT
+        .get(format!("http://{}/api/v1/account/logout", hostname))
+        .send()
+        .await?;
+    Ok(())
 }

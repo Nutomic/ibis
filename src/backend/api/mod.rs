@@ -2,15 +2,16 @@ use crate::backend::api::article::create_article;
 use crate::backend::api::article::{edit_article, fork_article, get_article};
 use crate::backend::api::instance::follow_instance;
 use crate::backend::api::instance::get_local_instance;
-use crate::backend::api::user::login_user;
+use crate::backend::api::user::my_profile;
 use crate::backend::api::user::register_user;
 use crate::backend::api::user::validate;
+use crate::backend::api::user::{login_user, logout_user};
 use crate::backend::database::conflict::{ApiConflict, DbConflict};
 use crate::backend::database::instance::DbInstance;
-use crate::backend::database::user::LocalUserView;
 use crate::backend::database::MyDataHandle;
 use crate::backend::error::MyResult;
 use crate::common::DbEdit;
+use crate::common::LocalUserView;
 use crate::common::{ArticleView, DbArticle};
 use activitypub_federation::config::Data;
 use activitypub_federation::fetch::object_id::ObjectId;
@@ -49,8 +50,10 @@ pub fn api_routes() -> Router {
         .route("/instance", get(get_local_instance))
         .route("/instance/follow", post(follow_instance))
         .route("/search", get(search_article))
-        .route("/user/register", post(register_user))
-        .route("/user/login", post(login_user))
+        .route("/account/register", post(register_user))
+        .route("/account/login", post(login_user))
+        .route("/account/my_profile", get(my_profile))
+        .route("/account/logout", get(logout_user))
         .route_layer(middleware::from_fn(auth))
 }
 

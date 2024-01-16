@@ -1,7 +1,7 @@
 use crate::backend::database::edit::DbEditForm;
-use crate::backend::database::user::DbPerson;
 use crate::backend::database::MyDataHandle;
 use crate::backend::error::Error;
+use crate::common::DbPerson;
 use crate::common::EditVersion;
 use crate::common::{DbArticle, DbEdit};
 use activitypub_federation::config::Data;
@@ -48,11 +48,11 @@ impl Object for DbEdit {
         let creator = DbPerson::read(self.creator_id, data)?;
         Ok(ApubEdit {
             kind: PatchType::Patch,
-            id: ObjectId::parse(&self.ap_id)?,
+            id: self.ap_id,
             content: self.diff,
             version: self.hash,
             previous_version: self.previous_version_id,
-            object: ObjectId::parse(&article.ap_id)?,
+            object: article.ap_id,
             attributed_to: creator.ap_id,
         })
     }

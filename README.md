@@ -11,11 +11,11 @@ The Ibis is a [bird which is related to the Egyptian god of knowledge and scienc
 
 You need to install [cargo](https://rustup.rs/) and [trunk](https://trunkrs.dev). Then run the following commands in separate terminals:
 ```
-# start backend
-cargo run
+# start backend, with separate target folder to avoid rebuilds from arch change
+cargo run --target-dir target/backend
 
-# start frontend
-trunk serve
+# start frontend, automatic rebuild on changes
+trunk serve -w src/frontend/
 ```
 ## License
 

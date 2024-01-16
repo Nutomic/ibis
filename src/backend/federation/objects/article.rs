@@ -49,7 +49,7 @@ impl Object for DbArticle {
         let local_instance = DbInstance::read_local_instance(&data.db_connection)?;
         Ok(ApubArticle {
             kind: Default::default(),
-            id: ObjectId::parse(&self.ap_id)?,
+            id: self.ap_id.clone(),
             attributed_to: local_instance.ap_id.clone(),
             to: vec![public(), local_instance.followers_url()?],
             edits: self.edits_id()?,

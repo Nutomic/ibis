@@ -1,14 +1,13 @@
 use crate::backend::database::schema::conflict;
-use crate::backend::database::user::DbLocalUser;
 use crate::backend::database::MyDataHandle;
 use crate::backend::error::MyResult;
 use crate::backend::federation::activities::submit_article_update;
 use crate::backend::utils::generate_article_version;
 use crate::common::DbArticle;
 use crate::common::DbEdit;
+use crate::common::DbLocalUser;
 use crate::common::EditVersion;
 use activitypub_federation::config::Data;
-use activitypub_federation::fetch::object_id::ObjectId;
 use diesel::ExpressionMethods;
 use diesel::{
     delete, insert_into, Identifiable, Insertable, PgConnection, QueryDsl, Queryable, RunQueryDsl,
@@ -76,9 +75,7 @@ impl DbConflict {
     ) -> MyResult<Option<ApiConflict>> {
         let article = DbArticle::read(self.article_id, &data.db_connection)?;
         // Make sure to get latest version from origin so that all conflicts can be resolved
-        let original_article = ObjectId::parse(&article.ap_id)?
-            .dereference_forced(data)
-            .await?;
+        let original_article = article.ap_id.dereference_forced(data).await?;
 
         // create common ancestor version
         let edits = DbEdit::read_for_article(&original_article, &data.db_connection)?;

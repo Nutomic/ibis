@@ -2,12 +2,12 @@ extern crate ibis;
 
 mod common;
 
+use crate::common::fork_article;
+use crate::common::get_conflicts;
 use crate::common::{
     create_article, edit_article, edit_article_with_conflict, follow_instance, get, TestData,
     CLIENT, TEST_ARTICLE_DEFAULT_TEXT,
 };
-use crate::common::{fork_article, login};
-use crate::common::{get_conflicts, register};
 use ibis::backend::api::article::{CreateArticleData, EditArticleData, ForkArticleData};
 use ibis::backend::api::{ResolveObject, SearchArticleData};
 use ibis::backend::database::instance::{DbInstance, InstanceView};
@@ -17,6 +17,7 @@ use ibis::common::DbArticle;
 use ibis::frontend::api::get_article;
 use ibis::frontend::api::get_query;
 use ibis::frontend::api::handle_json_res;
+use ibis::frontend::api::login;
 use pretty_assertions::{assert_eq, assert_ne};
 use url::Url;
 

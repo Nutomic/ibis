@@ -1,33 +1,62 @@
+use crate::common::LocalUserView;
+use crate::frontend::api::my_profile;
 use crate::frontend::components::nav::Nav;
 use crate::frontend::pages::article::Article;
 use crate::frontend::pages::login::Login;
 use crate::frontend::pages::register::Register;
 use crate::frontend::pages::Page;
-use leptos::{component, provide_context, use_context, view, IntoView};
+use leptos::{
+    component, create_local_resource, create_rw_signal, expect_context, provide_context,
+    use_context, view, IntoView, RwSignal, SignalGetUntracked, SignalUpdate,
+};
 use leptos_meta::provide_meta_context;
 use leptos_meta::*;
 use leptos_router::Route;
 use leptos_router::Router;
 use leptos_router::Routes;
 
-// TODO: change to GlobalState and also store auth token here
-//       https://book.leptos.dev/15_global_state.html
+// https://book.leptos.dev/15_global_state.html
 #[derive(Clone)]
-pub struct BackendHostname(String);
+pub struct GlobalState {
+    backend_hostname: String,
+    pub(crate) my_profile: Option<LocalUserView>,
+}
 
-impl BackendHostname {
-    pub fn read() -> String {
-        use_context::<BackendHostname>()
+impl GlobalState {
+    pub fn read_hostname() -> String {
+        use_context::<RwSignal<GlobalState>>()
             .expect("backend hostname is provided")
-            .0
+            .get_untracked()
+            .backend_hostname
+    }
+
+    pub fn update_my_profile(&self) {
+        let backend_hostname_ = self.backend_hostname.clone();
+        create_local_resource(
+            move || backend_hostname_.clone(),
+            |backend_hostname| async move {
+                if let Ok(my_profile) = my_profile(&backend_hostname).await {
+                    expect_context::<RwSignal<GlobalState>>()
+                        .update(|state| state.my_profile = Some(my_profile.clone()))
+                };
+            },
+        );
     }
 }
 
 #[component]
 pub fn App() -> impl IntoView {
+    let backend_hostname = "localhost:8080".to_string();
+
     provide_meta_context();
-    let backend_hostname = BackendHostname("localhost:8080".to_string());
-    provide_context(backend_hostname);
+    let backend_hostname = GlobalState {
+        backend_hostname,
+        my_profile: None,
+    };
+    // Load user profile in case we are already logged in
+    backend_hostname.update_my_profile();
+    provide_context(create_rw_signal(backend_hostname));
+
     view! {
         <>
             <Stylesheet id="simple" href="/assets/simple.css"/>
@@ -42,7 +71,6 @@ pub fn App() -> impl IntoView {
                     </Routes>
                 </main>
             </Router>
-
         </>
     }
 }

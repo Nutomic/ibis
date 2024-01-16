@@ -35,7 +35,7 @@ pub async fn submit_article_update(
             id: -1,
             creator_id,
             hash: form.hash,
-            ap_id: form.ap_id.to_string(),
+            ap_id: form.ap_id,
             diff: form.diff,
             article_id: form.article_id,
             previous_version_id: form.previous_version_id,

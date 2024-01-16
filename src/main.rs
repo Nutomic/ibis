@@ -23,5 +23,4 @@ fn main() {
     mount_to_body(|| {
         view! {  <App/> }
     });
-    log::info!("test 2");
 }

@@ -1,14 +1,12 @@
-use crate::common::{LoginResponse, RegisterUserData};
+use crate::common::RegisterUserData;
 use crate::frontend::api::register;
-use crate::frontend::app::BackendHostname;
+use crate::frontend::app::GlobalState;
 use crate::frontend::components::credentials::*;
-use crate::frontend::pages::Page;
 use leptos::{logging::log, *};
-use leptos_router::*;
 
 #[component]
 pub fn Register() -> impl IntoView {
-    let (register_response, set_register_response) = create_signal(None::<LoginResponse>);
+    let (register_response, set_register_response) = create_signal(None::<()>);
     let (register_error, set_register_error) = create_signal(None::<String>);
     let (wait_for_response, set_wait_for_response) = create_signal(false);
 
@@ -19,11 +17,13 @@ pub fn Register() -> impl IntoView {
         log!("Try to register new account for {}", credentials.username);
         async move {
             set_wait_for_response.update(|w| *w = true);
-            let result = register(&BackendHostname::read(), credentials).await;
+            let result = register(&GlobalState::read_hostname(), credentials).await;
             set_wait_for_response.update(|w| *w = false);
             match result {
                 Ok(res) => {
-                    set_register_response.update(|v| *v = Some(res));
+                    expect_context::<RwSignal<GlobalState>>()
+                        .update(|state| state.my_profile = Some(res));
+                    set_register_response.update(|v| *v = Some(()));
                     set_register_error.update(|e| *e = None);
                 }
                 Err(err) => {
@@ -53,7 +53,6 @@ pub fn Register() -> impl IntoView {
             }
         >
             <p>"You have successfully registered."</p>
-            <p>"You can now " <A href=Page::Login.path()>"login"</A> " with your new account."</p>
         </Show>
     }
 }

@@ -1,8 +1,8 @@
 use crate::backend::database::schema::{instance, instance_follow};
-use crate::backend::database::user::DbPerson;
 use crate::backend::database::MyDataHandle;
 use crate::backend::error::MyResult;
 use crate::backend::federation::objects::articles_collection::DbArticleCollection;
+use crate::common::DbPerson;
 use activitypub_federation::config::Data;
 use activitypub_federation::fetch::collection_id::CollectionId;
 use activitypub_federation::fetch::object_id::ObjectId;

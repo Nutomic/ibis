@@ -8,6 +8,7 @@ default = ["ssr"]
 ssr = [
   "axum",
   "axum-macros",
+  "axum-extra",
   "tower-http",
   "diesel",
   "diesel-derive-newtype",
@@ -28,6 +29,7 @@ anyhow = "1.0.75"
 async-trait = "0.1.74"
 axum = { version = "0.6.20", optional = true }
 axum-macros = { version = "0.3.8", optional = true }
+axum-extra = { version = "0.7.7", features = ["cookie"], optional = true }
 leptos = "0.5.4"
 leptos_meta = "0.5.4"
 leptos_router = "0.5.4"
@@ -62,10 +64,11 @@ once_cell = "1.18.0"
 wasm-bindgen = "0.2.89"
 console_error_panic_hook = "0.1.7"
 console_log = "1.0.0"
+time = "0.3.31"
 
 [dev-dependencies]
 pretty_assertions = "1.4.0"
-reqwest = "0.11.22"
+reqwest = { version = "0.11.22", features = ["cookies"] }
 
 [package.metadata.leptos]
 output-name = "ibis"

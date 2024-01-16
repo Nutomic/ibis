@@ -1,6 +1,7 @@
 use crate::backend::database::schema::{local_user, person};
 use crate::backend::database::MyDataHandle;
 use crate::backend::error::MyResult;
+use crate::common::{DbLocalUser, DbPerson, LocalUserView};
 use activitypub_federation::config::Data;
 use activitypub_federation::fetch::object_id::ObjectId;
 use activitypub_federation::http_signatures::generate_actor_keypair;
@@ -9,52 +10,15 @@ use bcrypt::DEFAULT_COST;
 use chrono::{DateTime, Local, Utc};
 use diesel::ExpressionMethods;
 use diesel::QueryDsl;
-use diesel::{
-    insert_into, AsChangeset, Identifiable, Insertable, PgConnection, Queryable, RunQueryDsl,
-    Selectable,
-};
-use serde::{Deserialize, Serialize};
+use diesel::{insert_into, AsChangeset, Insertable, PgConnection, RunQueryDsl};
 use std::ops::DerefMut;
 use std::sync::Mutex;
-
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Queryable)]
-#[diesel(check_for_backend(diesel::pg::Pg))]
-pub struct LocalUserView {
-    pub person: DbPerson,
-    pub local_user: DbLocalUser,
-}
-
-/// A user with account registered on local instance.
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Queryable, Selectable, Identifiable)]
-#[diesel(table_name = local_user, check_for_backend(diesel::pg::Pg))]
-pub struct DbLocalUser {
-    pub id: i32,
-    pub password_encrypted: String,
-    pub person_id: i32,
-}
 
 #[derive(Debug, Clone, Insertable, AsChangeset)]
 #[diesel(table_name = local_user, check_for_backend(diesel::pg::Pg))]
 pub struct DbLocalUserForm {
     pub password_encrypted: String,
     pub person_id: i32,
-}
-
-/// Federation related data from a local or remote user.
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Queryable, Selectable, Identifiable)]
-#[diesel(table_name = person, check_for_backend(diesel::pg::Pg))]
-pub struct DbPerson {
-    pub id: i32,
-    pub username: String,
-    pub ap_id: ObjectId<DbPerson>,
-    pub inbox_url: String,
-    #[serde(skip)]
-    pub public_key: String,
-    #[serde(skip)]
-    pub private_key: Option<String>,
-    #[serde(skip)]
-    pub last_refreshed_at: DateTime<Utc>,
-    pub local: bool,
 }
 
 #[derive(Debug, Clone, Insertable, AsChangeset)]

@@ -1,51 +1,58 @@
+use crate::common::LoginUserData;
 use crate::frontend::api::login;
-use leptos::ev::SubmitEvent;
+use crate::frontend::app::GlobalState;
+use crate::frontend::components::credentials::*;
 use leptos::*;
-use log::info;
-
-// TODO: this seems to be working, but need to implement registration also
-// TODO: use leptos_form if possible
-//       https://github.com/leptos-form/leptos_form/issues/18
-fn do_login(ev: SubmitEvent, username: String, password: String) {
-    ev.prevent_default();
-    spawn_local(async move {
-        let res = login("localhost:8080", &username, &password).await;
-        info!("{}", res.unwrap().jwt);
-    });
-}
+use leptos_router::Redirect;
 
 #[component]
 pub fn Login() -> impl IntoView {
-    let name = RwSignal::new(String::new());
-    let password = RwSignal::new(String::new());
+    let (login_response, set_login_response) = create_signal(None::<()>);
+    let (login_error, set_login_error) = create_signal(None::<String>);
+    let (wait_for_response, set_wait_for_response) = create_signal(false);
+
+    let login_action = create_action(move |(email, password): &(String, String)| {
+        let username = email.to_string();
+        let password = password.to_string();
+        let credentials = LoginUserData { username, password };
+        async move {
+            set_wait_for_response.update(|w| *w = true);
+            let result = login(&GlobalState::read_hostname(), credentials).await;
+            set_wait_for_response.update(|w| *w = false);
+            match result {
+                Ok(res) => {
+                    expect_context::<RwSignal<GlobalState>>()
+                        .update(|state| state.my_profile = Some(res));
+                    set_login_response.update(|v| *v = Some(()));
+                    set_login_error.update(|e| *e = None);
+                }
+                Err(err) => {
+                    let msg = err.0.to_string();
+                    log::warn!("Unable to login: {msg}");
+                    set_login_error.update(|e| *e = Some(msg));
+                }
+            }
+        }
+    });
+
+    let disabled = Signal::derive(move || wait_for_response.get());
 
     view! {
-      <form on:submit=move |ev| do_login(ev, name.get(), password.get())>
-      <div>
-        <label for="username">Username: </label>
-        <input
-          id="username"
-          type="text"
-          on:input=move |ev| name.set(event_target_value(&ev))
-          label="Username"
-        />
-      </div>
-
-      <div>
-        <label for="password">Password: </label>
-        <input
-          id="password"
-          type="password"
-          on:input=move |ev| password.set(event_target_value(&ev))
-        />
-      </div>
-
-        <div>
-          <button type="submit">
-            "Login"
-          </button>
-
-        </div>
-      </form>
+        <Show
+            when=move || login_response.get().is_some()
+            fallback=move || {
+                view! {
+                    <CredentialsForm
+                        title="Please enter the desired credentials"
+                        action_label="Login"
+                        action=login_action
+                        error=login_error.into()
+                        disabled
+                    />
+                }
+            }
+        >
+            <Redirect path="/"/>
+        </Show>
     }
 }

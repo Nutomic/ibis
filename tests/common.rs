@@ -1,19 +1,18 @@
 use anyhow::anyhow;
 use ibis::backend::api::article::{CreateArticleData, EditArticleData, ForkArticleData};
 use ibis::backend::api::instance::FollowInstance;
-use ibis::backend::api::user::RegisterUserData;
-use ibis::backend::api::user::{LoginResponse, LoginUserData};
+use ibis::backend::api::user::AUTH_COOKIE;
 use ibis::backend::api::ResolveObject;
 use ibis::backend::database::conflict::ApiConflict;
 use ibis::backend::database::instance::DbInstance;
 use ibis::backend::error::MyResult;
 use ibis::backend::start;
 use ibis::common::ArticleView;
-use ibis::frontend::api;
-use ibis::frontend::api::get_query;
-use ibis_lib::frontend::api;
+use ibis::common::LoginUserData;
+use ibis::common::RegisterUserData;
+use ibis::frontend::api::{get_article, get_query, handle_json_res, register};
 use once_cell::sync::Lazy;
-use reqwest::{Client, StatusCode};
+use reqwest::{Client, ClientBuilder, StatusCode};
 use serde::de::Deserialize;
 use std::env::current_dir;
 use std::fs::create_dir_all;
@@ -97,6 +96,7 @@ fn generate_db_path(name: &'static str, port: i32) -> String {
 
 pub struct IbisInstance {
     pub hostname: String,
+    pub client: Client,
     pub jwt: String,
     db_path: String,
     db_handle: JoinHandle<()>,
@@ -123,11 +123,18 @@ impl IbisInstance {
         });
         // wait a moment for the backend to start
         tokio::time::sleep(Duration::from_millis(100)).await;
-        let register_res = api::register(&hostname, username, "hunter2").await.unwrap();
-        assert!(!register_res.jwt.is_empty());
+        let form = RegisterUserData {
+            username: username.to_string(),
+            password: "hunter2".to_string(),
+        };
+        // TODO: use a separate http client for each backend instance, with cookie store for auth
+        // TODO: how to pass the client/hostname to api client methods?
+        //       probably create a struct ApiClient(hostname, client) with all api methods in impl
+        let client = ClientBuilder::new().cookie_store(true).build();
+        let register_res = register(&hostname, form).await.unwrap();
         Self {
-            jwt: register_res.jwt,
             hostname,
+            client,
             db_path,
             db_handle: handle,
         }
@@ -156,7 +163,7 @@ pub async fn create_article(instance: &IbisInstance, title: String) -> MyResult<
         .post(format!("http://{}/api/v1/article", &instance.hostname))
         .form(&create_form)
         .bearer_auth(&instance.jwt);
-    let article: ArticleView = api::handle_json_res(req).await?;
+    let article: ArticleView = handle_json_res(req).await?;
 
     // create initial edit to ensure that conflicts are generated (there are no conflicts on empty file)
     let edit_form = EditArticleData {
@@ -176,7 +183,7 @@ pub async fn edit_article_with_conflict(
         .patch(format!("http://{}/api/v1/article", instance.hostname))
         .form(edit_form)
         .bearer_auth(&instance.jwt);
-    api::handle_json_res(req).await
+    handle_json_res(req).await?
 }
 
 pub async fn get_conflicts(instance: &IbisInstance) -> MyResult<Vec<ApiConflict>> {
@@ -186,7 +193,7 @@ pub async fn get_conflicts(instance: &IbisInstance) -> MyResult<Vec<ApiConflict>
             &instance.hostname
         ))
         .bearer_auth(&instance.jwt);
-    api::handle_json_res(req).await
+    handle_json_res(req).await?
 }
 
 pub async fn edit_article(
@@ -195,7 +202,8 @@ pub async fn edit_article(
 ) -> MyResult<ArticleView> {
     let edit_res = edit_article_with_conflict(instance, edit_form).await?;
     assert!(edit_res.is_none());
-    api::get_article(&instance.hostname, edit_form.article_id).await
+
+    get_article(&instance.hostname, todo!("{}", edit_form.article_id)).await
 }
 
 pub async fn get<T>(hostname: &str, endpoint: &str) -> MyResult<T>
@@ -213,7 +221,7 @@ pub async fn fork_article(
         .post(format!("http://{}/api/v1/article/fork", instance.hostname))
         .form(form)
         .bearer_auth(&instance.jwt);
-    api::handle_json_res(req).await
+    handle_json_res(req).await?
 }
 
 pub async fn follow_instance(instance: &IbisInstance, follow_instance: &str) -> MyResult<()> {
@@ -222,7 +230,7 @@ pub async fn follow_instance(instance: &IbisInstance, follow_instance: &str) -> 
         id: Url::parse(&format!("http://{}", follow_instance))?,
     };
     let instance_resolved: DbInstance =
-        api::get_query(&instance.hostname, "resolve_instance", Some(resolve_form)).await?;
+        get_query(&instance.hostname, "resolve_instance", Some(resolve_form)).await?;
 
     // send follow
     let follow_form = FollowInstance {

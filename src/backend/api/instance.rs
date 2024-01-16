@@ -1,8 +1,8 @@
 use crate::backend::database::instance::{DbInstance, InstanceView};
-use crate::backend::database::user::LocalUserView;
 use crate::backend::database::MyDataHandle;
 use crate::backend::error::MyResult;
 use crate::backend::federation::activities::follow::Follow;
+use crate::common::LocalUserView;
 use activitypub_federation::config::Data;
 use axum::Extension;
 use axum::{Form, Json};

@@ -1,9 +1,12 @@
-#[cfg(feature = "ssr")]
-use crate::backend::database::schema::{article, edit};
-#[cfg(feature = "ssr")]
-use diesel::{Identifiable, Queryable, Selectable};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+#[cfg(feature = "ssr")]
+use {
+    crate::backend::database::schema::{article, edit, local_user, person},
+    activitypub_federation::fetch::object_id::ObjectId,
+    diesel::{Identifiable, Queryable, Selectable},
+};
 
 #[derive(Deserialize, Serialize, Clone)]
 pub struct GetArticleData {
@@ -26,6 +29,9 @@ pub struct DbArticle {
     pub id: i32,
     pub title: String,
     pub text: String,
+    #[cfg(feature = "ssr")]
+    pub ap_id: ObjectId<DbArticle>,
+    #[cfg(not(feature = "ssr"))]
     pub ap_id: String,
     pub instance_id: i32,
     pub local: bool,
@@ -42,6 +48,9 @@ pub struct DbEdit {
     pub creator_id: i32,
     /// UUID built from sha224 hash of diff
     pub hash: EditVersion,
+    #[cfg(feature = "ssr")]
+    pub ap_id: ObjectId<DbEdit>,
+    #[cfg(not(feature = "ssr"))]
     pub ap_id: String,
     pub diff: String,
     pub article_id: i32,
@@ -55,19 +64,53 @@ pub struct DbEdit {
 #[cfg_attr(feature = "ssr", derive(diesel_derive_newtype::DieselNewType))]
 pub struct EditVersion(pub(crate) Uuid);
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone)]
 pub struct RegisterUserData {
     pub username: String,
     pub password: String,
-}
-
-#[derive(Deserialize, Serialize, Clone)]
-pub struct LoginResponse {
-    pub jwt: String,
 }
 
 #[derive(Deserialize, Serialize)]
 pub struct LoginUserData {
     pub username: String,
     pub password: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[cfg_attr(feature = "ssr", derive(Queryable))]
+#[cfg_attr(feature = "ssr", diesel(check_for_backend(diesel::pg::Pg)))]
+pub struct LocalUserView {
+    pub person: DbPerson,
+    pub local_user: DbLocalUser,
+}
+
+/// A user with account registered on local instance.
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[cfg_attr(feature = "ssr", derive(Queryable, Selectable, Identifiable))]
+#[cfg_attr(feature = "ssr", diesel(table_name = local_user, check_for_backend(diesel::pg::Pg)))]
+pub struct DbLocalUser {
+    pub id: i32,
+    pub password_encrypted: String,
+    pub person_id: i32,
+}
+
+/// Federation related data from a local or remote user.
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[cfg_attr(feature = "ssr", derive(Queryable, Selectable, Identifiable))]
+#[cfg_attr(feature = "ssr", diesel(table_name = person, check_for_backend(diesel::pg::Pg)))]
+pub struct DbPerson {
+    pub id: i32,
+    pub username: String,
+    #[cfg(feature = "ssr")]
+    pub ap_id: ObjectId<DbPerson>,
+    #[cfg(not(feature = "ssr"))]
+    pub ap_id: String,
+    pub inbox_url: String,
+    #[serde(skip)]
+    pub public_key: String,
+    #[serde(skip)]
+    pub private_key: Option<String>,
+    #[serde(skip)]
+    pub last_refreshed_at: DateTime<Utc>,
+    pub local: bool,
 }
