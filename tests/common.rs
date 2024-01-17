@@ -1,12 +1,12 @@
 use anyhow::anyhow;
-use ibis_lib::backend::api::article::{CreateArticleData, EditArticleData, ForkArticleData};
+use ibis_lib::backend::api::article::ForkArticleData;
 use ibis_lib::backend::api::instance::FollowInstance;
 use ibis_lib::backend::api::ResolveObject;
 use ibis_lib::backend::database::conflict::ApiConflict;
 use ibis_lib::backend::database::instance::DbInstance;
 use ibis_lib::backend::start;
+use ibis_lib::common::ArticleView;
 use ibis_lib::common::RegisterUserData;
-use ibis_lib::common::{ArticleView, GetArticleData};
 use ibis_lib::frontend::api::ApiClient;
 use ibis_lib::frontend::api::{get_query, handle_json_res};
 use ibis_lib::frontend::error::MyResult;
@@ -166,75 +166,12 @@ impl Deref for IbisInstance {
 }
 pub const TEST_ARTICLE_DEFAULT_TEXT: &str = "some\nexample\ntext\n";
 
-pub async fn create_article(instance: &IbisInstance, title: String) -> MyResult<ArticleView> {
-    let create_form = CreateArticleData {
-        title: title.clone(),
-    };
-    let req = instance
-        .api_client
-        .client
-        .post(format!(
-            "http://{}/api/v1/article",
-            &instance.api_client.hostname
-        ))
-        .form(&create_form);
-    let article: ArticleView = handle_json_res(req).await?;
-
-    // create initial edit to ensure that conflicts are generated (there are no conflicts on empty file)
-    let edit_form = EditArticleData {
-        article_id: article.article.id,
-        new_text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
-        previous_version_id: article.latest_version,
-        resolve_conflict_id: None,
-    };
-    Ok(edit_article(instance, &edit_form).await.unwrap())
-}
-
-pub async fn edit_article_with_conflict(
-    instance: &IbisInstance,
-    edit_form: &EditArticleData,
-) -> MyResult<Option<ApiConflict>> {
-    let req = instance
-        .api_client
-        .client
-        .patch(format!(
-            "http://{}/api/v1/article",
-            instance.api_client.hostname
-        ))
-        .form(edit_form);
-    handle_json_res(req).await
-}
-
 pub async fn get_conflicts(instance: &IbisInstance) -> MyResult<Vec<ApiConflict>> {
     let req = instance.api_client.client.get(format!(
         "http://{}/api/v1/edit_conflicts",
         &instance.api_client.hostname
     ));
     Ok(handle_json_res(req).await.unwrap())
-}
-
-pub async fn edit_article(
-    instance: &IbisInstance,
-    edit_form: &EditArticleData,
-) -> MyResult<ArticleView> {
-    let edit_res = edit_article_with_conflict(instance, edit_form).await?;
-    assert!(edit_res.is_none());
-
-    instance
-        .api_client
-        .get_article(GetArticleData {
-            title: None,
-            instance_id: None,
-            id: Some(edit_form.article_id),
-        })
-        .await
-}
-
-pub async fn get<T>(hostname: &str, endpoint: &str) -> MyResult<T>
-where
-    T: for<'de> Deserialize<'de>,
-{
-    Ok(get_query(hostname, endpoint, None::<i32>).await.unwrap())
 }
 
 pub async fn fork_article(
@@ -250,41 +187,4 @@ pub async fn fork_article(
         ))
         .form(form);
     Ok(handle_json_res(req).await.unwrap())
-}
-
-pub async fn follow_instance(
-    instance: &IbisInstance,
-    follow_instance: &str,
-) -> MyResult<DbInstance> {
-    // fetch beta instance on alpha
-    let resolve_form = ResolveObject {
-        id: Url::parse(&format!("http://{}", follow_instance))?,
-    };
-    let instance_resolved: DbInstance = get_query(
-        &instance.api_client.hostname,
-        "instance/resolve",
-        Some(resolve_form),
-    )
-    .await?;
-
-    // send follow
-    let follow_form = FollowInstance {
-        id: instance_resolved.id,
-    };
-    // cant use post helper because follow doesnt return json
-    let res = instance
-        .api_client
-        .client
-        .post(format!(
-            "http://{}/api/v1/instance/follow",
-            instance.api_client.hostname
-        ))
-        .form(&follow_form)
-        .send()
-        .await?;
-    if res.status() == StatusCode::OK {
-        Ok(instance_resolved)
-    } else {
-        Err(anyhow!("API error: {}", res.text().await?).into())
-    }
 }

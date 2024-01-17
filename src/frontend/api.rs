@@ -1,11 +1,17 @@
-use crate::common::GetArticleData;
+use crate::backend::api::article::{CreateArticleData, EditArticleData};
+use crate::backend::api::instance::FollowInstance;
+use crate::backend::api::{ResolveObject, SearchArticleData};
+use crate::backend::database::conflict::ApiConflict;
+use crate::backend::database::instance::{DbInstance, InstanceView};
 use crate::common::LocalUserView;
 use crate::common::{ArticleView, LoginUserData, RegisterUserData};
+use crate::common::{DbArticle, GetArticleData};
 use crate::frontend::error::MyResult;
 use anyhow::anyhow;
 use once_cell::sync::Lazy;
-use reqwest::{Client, RequestBuilder};
+use reqwest::{Client, RequestBuilder, StatusCode};
 use serde::{Deserialize, Serialize};
+use url::Url;
 
 pub static CLIENT: Lazy<Client> = Lazy::new(Client::new);
 
@@ -55,6 +61,84 @@ impl ApiClient {
             .form(&login_form);
         handle_json_res::<LocalUserView>(req).await
     }
+
+    pub async fn create_article(&self, title: String, new_text: String) -> MyResult<ArticleView> {
+        let create_form = CreateArticleData {
+            title: title.clone(),
+        };
+        let req = self
+            .client
+            .post(format!("http://{}/api/v1/article", &self.hostname))
+            .form(&create_form);
+        let article: ArticleView = handle_json_res(req).await?;
+
+        // create initial edit to ensure that conflicts are generated (there are no conflicts on empty file)
+        // TODO: maybe take initial text directly in create article, no reason to have empty article
+        let edit_form = EditArticleData {
+            article_id: article.article.id,
+            new_text,
+            previous_version_id: article.latest_version,
+            resolve_conflict_id: None,
+        };
+        Ok(self.edit_article(&edit_form).await.unwrap())
+    }
+
+    pub async fn edit_article_with_conflict(
+        &self,
+        edit_form: &EditArticleData,
+    ) -> MyResult<Option<ApiConflict>> {
+        let req = self
+            .client
+            .patch(format!("http://{}/api/v1/article", self.hostname))
+            .form(edit_form);
+        handle_json_res(req).await
+    }
+
+    pub async fn edit_article(&self, edit_form: &EditArticleData) -> MyResult<ArticleView> {
+        let edit_res = self.edit_article_with_conflict(edit_form).await?;
+        assert!(edit_res.is_none());
+
+        self.get_article(GetArticleData {
+            title: None,
+            instance_id: None,
+            id: Some(edit_form.article_id),
+        })
+        .await
+    }
+
+    pub async fn search(&self, search_form: &SearchArticleData) -> MyResult<Vec<DbArticle>> {
+        self.get_query("search", Some(search_form)).await
+    }
+
+    pub async fn get_local_instance(&self) -> MyResult<InstanceView> {
+        self.get_query("instance", None::<i32>).await
+    }
+
+    pub async fn follow_instance(&self, follow_instance: &str) -> MyResult<DbInstance> {
+        // fetch beta instance on alpha
+        let resolve_form = ResolveObject {
+            id: Url::parse(&format!("http://{}", follow_instance))?,
+        };
+        let instance_resolved: DbInstance =
+            get_query(&self.hostname, "instance/resolve", Some(resolve_form)).await?;
+
+        // send follow
+        let follow_form = FollowInstance {
+            id: instance_resolved.id,
+        };
+        // cant use post helper because follow doesnt return json
+        let res = self
+            .client
+            .post(format!("http://{}/api/v1/instance/follow", self.hostname))
+            .form(&follow_form)
+            .send()
+            .await?;
+        if res.status() == StatusCode::OK {
+            Ok(instance_resolved)
+        } else {
+            Err(anyhow!("API error: {}", res.text().await?).into())
+        }
+    }
 }
 
 pub async fn get_query<T, R>(hostname: &str, endpoint: &str, query: Option<R>) -> MyResult<T>
@@ -83,11 +167,13 @@ where
     }
 }
 
+// TODO: cover in integration test
 pub async fn my_profile(hostname: &str) -> MyResult<LocalUserView> {
     let req = CLIENT.get(format!("http://{}/api/v1/account/my_profile", hostname));
     handle_json_res::<LocalUserView>(req).await
 }
 
+// TODO: cover in integration test
 pub async fn logout(hostname: &str) -> MyResult<()> {
     CLIENT
         .get(format!("http://{}/api/v1/account/logout", hostname))
