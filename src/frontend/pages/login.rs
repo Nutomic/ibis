@@ -1,5 +1,4 @@
 use crate::common::LoginUserData;
-use crate::frontend::api::login;
 use crate::frontend::app::GlobalState;
 use crate::frontend::components::credentials::*;
 use leptos::*;
@@ -17,7 +16,7 @@ pub fn Login() -> impl IntoView {
         let credentials = LoginUserData { username, password };
         async move {
             set_wait_for_response.update(|w| *w = true);
-            let result = login(&GlobalState::read_hostname(), credentials).await;
+            let result = GlobalState::api_client().login(credentials).await;
             set_wait_for_response.update(|w| *w = false);
             match result {
                 Ok(res) => {

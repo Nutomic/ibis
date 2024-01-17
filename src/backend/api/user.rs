@@ -60,7 +60,7 @@ pub(in crate::backend::api) async fn register_user(
 ) -> MyResult<(CookieJar, Json<LocalUserView>)> {
     let user = DbPerson::create_local(form.username, form.password, &data)?;
     let token = generate_login_token(&user.local_user, &data)?;
-    let jar = jar.add(create_cookie(token));
+    let jar = jar.add(create_cookie(token, &data));
     Ok((jar, Json(user)))
 }
 
@@ -76,13 +76,18 @@ pub(in crate::backend::api) async fn login_user(
         return Err(anyhow!("Invalid login").into());
     }
     let token = generate_login_token(&user.local_user, &data)?;
-    let jar = jar.add(create_cookie(token));
+    let jar = jar.add(create_cookie(token, &data));
     Ok((jar, Json(user)))
 }
 
-fn create_cookie(jwt: String) -> Cookie<'static> {
+fn create_cookie(jwt: String, data: &Data<MyDataHandle>) -> Cookie<'static> {
+    let mut domain = data.domain().to_string();
+    // remove port from domain
+    if domain.contains(':') {
+        domain = domain.split(':').collect::<Vec<_>>()[0].to_string();
+    }
     Cookie::build(AUTH_COOKIE, jwt)
-        .domain("localhost")
+        .domain(domain)
         .same_site(SameSite::Strict)
         .path("/")
         .http_only(true)

@@ -66,7 +66,7 @@ impl DbArticle {
             article::table.find(id).get_result(conn.deref_mut())?
         };
         let latest_version = article.latest_edit_version(conn)?;
-        let edits: Vec<DbEdit> = DbEdit::read_for_article(&article, conn)?;
+        let edits = DbEdit::read_for_article(&article, conn)?;
         Ok(ArticleView {
             article,
             edits,
@@ -74,15 +74,25 @@ impl DbArticle {
         })
     }
 
-    pub fn read_view_title(title: &str, conn: &Mutex<PgConnection>) -> MyResult<ArticleView> {
+    pub fn read_view_title(
+        title: &str,
+        instance_id: &Option<i32>,
+        conn: &Mutex<PgConnection>,
+    ) -> MyResult<ArticleView> {
         let article: DbArticle = {
             let mut conn = conn.lock().unwrap();
-            article::table
-                .filter(article::dsl::title.eq(title))
-                .get_result(conn.deref_mut())?
+            let query = article::table
+                .into_boxed()
+                .filter(article::dsl::title.eq(title));
+            let query = if let Some(instance_id) = instance_id {
+                query.filter(article::dsl::instance_id.eq(instance_id))
+            } else {
+                query.filter(article::dsl::local.eq(true))
+            };
+            query.get_result(conn.deref_mut())?
         };
         let latest_version = article.latest_edit_version(conn)?;
-        let edits: Vec<DbEdit> = DbEdit::read_for_article(&article, conn)?;
+        let edits = DbEdit::read_for_article(&article, conn)?;
         Ok(ArticleView {
             article,
             edits,

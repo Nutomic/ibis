@@ -8,9 +8,12 @@ use {
     diesel::{Identifiable, Queryable, Selectable},
 };
 
+/// Should be an enum Title/Id but fails due to https://github.com/nox/serde_urlencoded/issues/66
 #[derive(Deserialize, Serialize, Clone)]
 pub struct GetArticleData {
-    pub title: String,
+    pub title: Option<String>,
+    pub instance_id: Option<i32>,
+    pub id: Option<i32>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]

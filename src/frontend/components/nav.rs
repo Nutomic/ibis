@@ -7,7 +7,6 @@ use leptos_router::*;
 #[component]
 pub fn Nav() -> impl IntoView {
     let global_state = use_context::<RwSignal<GlobalState>>().unwrap();
-    // TODO: use `<Show when` based on auth token for login/register/logout
     view! {
         <nav class="inner">
             <li>

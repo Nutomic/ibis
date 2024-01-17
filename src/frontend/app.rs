@@ -1,5 +1,5 @@
 use crate::common::LocalUserView;
-use crate::frontend::api::my_profile;
+use crate::frontend::api::{my_profile, ApiClient};
 use crate::frontend::components::nav::Nav;
 use crate::frontend::pages::article::Article;
 use crate::frontend::pages::login::Login;
@@ -14,11 +14,14 @@ use leptos_meta::*;
 use leptos_router::Route;
 use leptos_router::Router;
 use leptos_router::Routes;
+use reqwest::Client;
 
 // https://book.leptos.dev/15_global_state.html
 #[derive(Clone)]
 pub struct GlobalState {
+    // TODO: remove
     backend_hostname: String,
+    api_client: ApiClient,
     pub(crate) my_profile: Option<LocalUserView>,
 }
 
@@ -28,6 +31,12 @@ impl GlobalState {
             .expect("backend hostname is provided")
             .get_untracked()
             .backend_hostname
+    }
+    pub fn api_client() -> ApiClient {
+        use_context::<RwSignal<GlobalState>>()
+            .expect("global state is provided")
+            .get_untracked()
+            .api_client
     }
 
     pub fn update_my_profile(&self) {
@@ -50,7 +59,8 @@ pub fn App() -> impl IntoView {
 
     provide_meta_context();
     let backend_hostname = GlobalState {
-        backend_hostname,
+        backend_hostname: backend_hostname.clone(),
+        api_client: ApiClient::new(Client::new(), backend_hostname.clone()),
         my_profile: None,
     };
     // Load user profile in case we are already logged in

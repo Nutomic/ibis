@@ -9,9 +9,52 @@ use serde::{Deserialize, Serialize};
 
 pub static CLIENT: Lazy<Client> = Lazy::new(Client::new);
 
-pub async fn get_article(hostname: &str, title: String) -> MyResult<ArticleView> {
-    let get_article = GetArticleData { title };
-    get_query::<ArticleView, _>(hostname, "article", Some(get_article.clone())).await
+#[derive(Clone)]
+pub struct ApiClient {
+    // TODO: make these private
+    pub client: Client,
+    pub hostname: String,
+}
+
+impl ApiClient {
+    pub fn new(client: Client, hostname: String) -> Self {
+        Self { client, hostname }
+    }
+
+    async fn get_query<T, R>(&self, endpoint: &str, query: Option<R>) -> MyResult<T>
+    where
+        T: for<'de> Deserialize<'de>,
+        R: Serialize,
+    {
+        let mut req = self
+            .client
+            .get(format!("http://{}/api/v1/{}", &self.hostname, endpoint));
+        if let Some(query) = query {
+            req = req.query(&query);
+        }
+        handle_json_res::<T>(req).await
+    }
+
+    pub async fn get_article(&self, data: GetArticleData) -> MyResult<ArticleView> {
+        self.get_query::<ArticleView, _>("article", Some(data))
+            .await
+    }
+
+    pub async fn register(&self, register_form: RegisterUserData) -> MyResult<LocalUserView> {
+        let req = self
+            .client
+            .post(format!("http://{}/api/v1/account/register", self.hostname))
+            .form(&register_form);
+        handle_json_res::<LocalUserView>(req).await
+    }
+
+    pub async fn login(&self, login_form: LoginUserData) -> MyResult<LocalUserView> {
+        let req = self
+            .client
+            .post(format!("http://{}/api/v1/account/login", self.hostname))
+            .form(&login_form);
+        handle_json_res::<LocalUserView>(req).await
+    }
 }
 
 pub async fn get_query<T, R>(hostname: &str, endpoint: &str, query: Option<R>) -> MyResult<T>
@@ -38,20 +81,6 @@ where
     } else {
         Err(anyhow!("API error: {text}").into())
     }
-}
-
-pub async fn register(hostname: &str, register_form: RegisterUserData) -> MyResult<LocalUserView> {
-    let req = CLIENT
-        .post(format!("http://{}/api/v1/account/register", hostname))
-        .form(&register_form);
-    handle_json_res::<LocalUserView>(req).await
-}
-
-pub async fn login(hostname: &str, login_form: LoginUserData) -> MyResult<LocalUserView> {
-    let req = CLIENT
-        .post(format!("http://{}/api/v1/account/login", hostname))
-        .form(&login_form);
-    handle_json_res::<LocalUserView>(req).await
 }
 
 pub async fn my_profile(hostname: &str) -> MyResult<LocalUserView> {

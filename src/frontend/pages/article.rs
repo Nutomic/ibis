@@ -1,4 +1,5 @@
-use crate::frontend::api::get_article;
+use crate::common::GetArticleData;
+use crate::frontend::app::GlobalState;
 use leptos::*;
 use leptos_router::*;
 
@@ -13,7 +14,16 @@ pub fn Article() -> impl IntoView {
                 .cloned()
                 .unwrap_or("Main Page".to_string())
         },
-        move |title| async move { get_article("localhost:8131", title).await.unwrap() },
+        move |title| async move {
+            GlobalState::api_client()
+                .get_article(GetArticleData {
+                    title: Some(title),
+                    instance_id: None,
+                    id: None,
+                })
+                .await
+                .unwrap()
+        },
     );
 
     view! {

@@ -1,9 +1,12 @@
+use crate::backend::api::ResolveObject;
 use crate::backend::database::instance::{DbInstance, InstanceView};
 use crate::backend::database::MyDataHandle;
 use crate::backend::error::MyResult;
 use crate::backend::federation::activities::follow::Follow;
 use crate::common::LocalUserView;
 use activitypub_federation::config::Data;
+use activitypub_federation::fetch::object_id::ObjectId;
+use axum::extract::Query;
 use axum::Extension;
 use axum::{Form, Json};
 use axum_macros::debug_handler;
@@ -37,4 +40,17 @@ pub(in crate::backend::api) async fn follow_instance(
     let instance = DbInstance::read(query.id, &data.db_connection)?;
     Follow::send(user.person, instance, &data).await?;
     Ok(())
+}
+
+/// Fetch a remote instance actor. This automatically synchronizes the remote articles collection to
+/// the local instance, and allows for interactions such as following.
+#[debug_handler]
+pub(super) async fn resolve_instance(
+    Query(query): Query<ResolveObject>,
+    data: Data<MyDataHandle>,
+) -> MyResult<Json<DbInstance>> {
+    // TODO: workaround because axum makes it hard to have multiple routes on /
+    let id = format!("{}instance", query.id);
+    let instance: DbInstance = ObjectId::parse(&id)?.dereference(&data).await?;
+    Ok(Json(instance))
 }

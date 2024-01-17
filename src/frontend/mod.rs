@@ -1,7 +1,7 @@
 pub mod api;
 pub mod app;
 mod components;
-mod error;
+pub mod error;
 mod pages;
 
 #[cfg(feature = "hydrate")]

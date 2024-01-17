@@ -1,3 +1,4 @@
+use crate::backend::api::ResolveObject;
 use crate::backend::database::article::DbArticleForm;
 use crate::backend::database::conflict::{ApiConflict, DbConflict, DbConflictForm};
 use crate::backend::database::edit::DbEditForm;
@@ -13,6 +14,7 @@ use crate::common::LocalUserView;
 use crate::common::{ArticleView, DbArticle, DbEdit};
 use activitypub_federation::config::Data;
 use activitypub_federation::fetch::object_id::ObjectId;
+use anyhow::anyhow;
 use axum::extract::Query;
 use axum::Extension;
 use axum::Form;
@@ -126,10 +128,20 @@ pub(in crate::backend::api) async fn get_article(
     Query(query): Query<GetArticleData>,
     data: Data<MyDataHandle>,
 ) -> MyResult<Json<ArticleView>> {
-    Ok(Json(DbArticle::read_view_title(
-        &query.title,
-        &data.db_connection,
-    )?))
+    match (query.title, query.id) {
+        (Some(title), None) => Ok(Json(DbArticle::read_view_title(
+            &title,
+            &query.instance_id,
+            &data.db_connection,
+        )?)),
+        (None, Some(id)) => {
+            if query.instance_id.is_some() {
+                return Err(anyhow!("Cant combine id and instance_id").into());
+            }
+            Ok(Json(DbArticle::read_view(id, &data.db_connection)?))
+        }
+        _ => Err(anyhow!("Must pass exactly one of title, id").into()),
+    }
 }
 
 #[derive(Deserialize, Serialize)]
@@ -186,4 +198,21 @@ pub(in crate::backend::api) async fn fork_article(
     CreateArticle::send_to_followers(article.clone(), &data).await?;
 
     Ok(Json(DbArticle::read_view(article.id, &data.db_connection)?))
+}
+
+/// Fetch a remote article, including edits collection. Allows viewing and editing. Note that new
+/// article changes can only be received if we follow the instance, or if it is refetched manually.
+#[debug_handler]
+pub(super) async fn resolve_article(
+    Query(query): Query<ResolveObject>,
+    data: Data<MyDataHandle>,
+) -> MyResult<Json<ArticleView>> {
+    let article: DbArticle = ObjectId::from(query.id).dereference(&data).await?;
+    let edits = DbEdit::read_for_article(&article, &data.db_connection)?;
+    let latest_version = edits.last().unwrap().hash.clone();
+    Ok(Json(ArticleView {
+        article,
+        edits,
+        latest_version,
+    }))
 }

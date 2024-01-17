@@ -71,9 +71,9 @@ pub async fn start(hostname: &str, database_url: &str) -> MyResult<()> {
 
         // Create the main page which is shown by default
         let form = DbArticleForm {
-            title: "Main Page".to_string(),
+            title: "Main_Page".to_string(),
             text: "Hello world!".to_string(),
-            ap_id: ObjectId::parse("http://{hostname}/article/Main_Page")?,
+            ap_id: ObjectId::parse(&format!("http://{hostname}/article/Main_Page"))?,
             instance_id: instance.id,
             local: true,
         };
