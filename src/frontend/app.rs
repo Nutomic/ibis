@@ -1,5 +1,5 @@
 use crate::common::LocalUserView;
-use crate::frontend::api::{my_profile, ApiClient};
+use crate::frontend::api::ApiClient;
 use crate::frontend::components::nav::Nav;
 use crate::frontend::pages::article::Article;
 use crate::frontend::pages::login::Login;
@@ -40,11 +40,10 @@ impl GlobalState {
     }
 
     pub fn update_my_profile(&self) {
-        let backend_hostname_ = self.backend_hostname.clone();
         create_local_resource(
-            move || backend_hostname_.clone(),
-            |backend_hostname| async move {
-                if let Ok(my_profile) = my_profile(&backend_hostname).await {
+            move || (),
+            |_| async move {
+                if let Ok(my_profile) = GlobalState::api_client().my_profile().await {
                     expect_context::<RwSignal<GlobalState>>()
                         .update(|state| state.my_profile = Some(my_profile.clone()))
                 };

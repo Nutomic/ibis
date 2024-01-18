@@ -1,4 +1,3 @@
-use crate::frontend::api::logout;
 use crate::frontend::app::GlobalState;
 use leptos::*;
 use leptos::{component, use_context, view, IntoView, RwSignal, SignalWith};
@@ -46,7 +45,7 @@ fn do_logout() {
     dbg!("do logout");
     create_action(move |()| async move {
         dbg!("run logout action");
-        logout(&GlobalState::read_hostname()).await.unwrap();
+        GlobalState::api_client().logout().await.unwrap();
         expect_context::<RwSignal<GlobalState>>()
             .get()
             .update_my_profile();

@@ -111,7 +111,10 @@ pub(in crate::backend::api) async fn my_profile(
 }
 
 #[debug_handler]
-pub(in crate::backend::api) async fn logout_user(jar: CookieJar) -> MyResult<CookieJar> {
-    let jar = jar.remove(Cookie::named(AUTH_COOKIE));
+pub(in crate::backend::api) async fn logout_user(
+    data: Data<MyDataHandle>,
+    jar: CookieJar,
+) -> MyResult<CookieJar> {
+    let jar = jar.remove(create_cookie(String::new(), &data));
     Ok(jar)
 }

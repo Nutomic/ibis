@@ -2,16 +2,11 @@ extern crate ibis_lib;
 
 mod common;
 
-use crate::common::fork_article;
-use crate::common::get_conflicts;
 use crate::common::{TestData, TEST_ARTICLE_DEFAULT_TEXT};
-use ibis_lib::backend::api::article::{CreateArticleData, EditArticleData, ForkArticleData};
-use ibis_lib::backend::api::{ResolveObject, SearchArticleData};
-use ibis_lib::backend::database::instance::{DbInstance, InstanceView};
+use ibis_lib::backend::api::article::{EditArticleData, ForkArticleData};
+use ibis_lib::backend::api::SearchArticleData;
 use ibis_lib::common::{ArticleView, GetArticleData};
-use ibis_lib::common::{DbArticle, LoginUserData, RegisterUserData};
-use ibis_lib::frontend::api::get_query;
-use ibis_lib::frontend::api::handle_json_res;
+use ibis_lib::common::{LoginUserData, RegisterUserData};
 use ibis_lib::frontend::error::MyResult;
 use pretty_assertions::{assert_eq, assert_ne};
 use url::Url;
@@ -146,15 +141,10 @@ async fn test_synchronize_articles() -> MyResult<()> {
     data.alpha.edit_article(&edit_form).await?;
 
     // fetch alpha instance on beta, articles are also fetched automatically
-    let resolve_object = ResolveObject {
-        id: Url::parse(&format!("http://{}", &data.alpha.hostname))?,
-    };
-    let instance: DbInstance = get_query::<DbInstance, _>(
-        &data.beta.hostname,
-        "instance/resolve",
-        Some(resolve_object),
-    )
-    .await?;
+    let instance = data
+        .beta
+        .resolve_instance(Url::parse(&format!("http://{}", &data.alpha.hostname))?)
+        .await?;
 
     let mut get_article_data = GetArticleData {
         title: Some(create_res.article.title),
@@ -338,7 +328,7 @@ async fn test_local_edit_conflict() -> MyResult<()> {
         .unwrap();
     assert_eq!("<<<<<<< ours\nIpsum Lorem\n||||||| original\nsome\nexample\ntext\n=======\nLorem Ipsum\n>>>>>>> theirs\n", edit_res.three_way_merge);
 
-    let conflicts = get_conflicts(&data.alpha).await?;
+    let conflicts = data.alpha.get_conflicts().await?;
     assert_eq!(1, conflicts.len());
     assert_eq!(conflicts[0], edit_res);
 
@@ -351,7 +341,7 @@ async fn test_local_edit_conflict() -> MyResult<()> {
     let edit_res = data.alpha.edit_article(&edit_form).await?;
     assert_eq!(edit_form.new_text, edit_res.article.text);
 
-    let conflicts = get_conflicts(&data.alpha).await?;
+    let conflicts = data.alpha.get_conflicts().await?;
     assert_eq!(0, conflicts.len());
 
     data.stop()
@@ -373,15 +363,10 @@ async fn test_federated_edit_conflict() -> MyResult<()> {
     assert!(create_res.article.local);
 
     // fetch article to gamma
-    let resolve_object = ResolveObject {
-        id: create_res.article.ap_id.inner().clone(),
-    };
-    let resolve_res: ArticleView = get_query(
-        &data.gamma.hostname,
-        "article/resolve",
-        Some(resolve_object),
-    )
-    .await?;
+    let resolve_res: ArticleView = data
+        .gamma
+        .resolve_article(create_res.article.ap_id.inner().clone())
+        .await?;
     assert_eq!(create_res.article.text, resolve_res.article.text);
 
     // alpha edits article
@@ -421,7 +406,7 @@ async fn test_federated_edit_conflict() -> MyResult<()> {
     assert_eq!(1, edit_res.edits.len());
     assert!(!edit_res.article.local);
 
-    let conflicts = get_conflicts(&data.gamma).await?;
+    let conflicts = data.gamma.get_conflicts().await?;
     assert_eq!(1, conflicts.len());
 
     // resolve the conflict
@@ -435,7 +420,7 @@ async fn test_federated_edit_conflict() -> MyResult<()> {
     assert_eq!(edit_form.new_text, edit_res.article.text);
     assert_eq!(3, edit_res.edits.len());
 
-    let conflicts = get_conflicts(&data.gamma).await?;
+    let conflicts = data.gamma.get_conflicts().await?;
     assert_eq!(0, conflicts.len());
 
     data.stop()
@@ -473,7 +458,7 @@ async fn test_overlapping_edits_no_conflict() -> MyResult<()> {
         resolve_conflict_id: None,
     };
     let edit_res = data.alpha.edit_article(&edit_form).await?;
-    let conflicts = get_conflicts(&data.alpha).await?;
+    let conflicts = data.alpha.get_conflicts().await?;
     assert_eq!(0, conflicts.len());
     assert_eq!(3, edit_res.edits.len());
     assert_eq!("my\nexample\narticle\n", edit_res.article.text);
@@ -495,11 +480,10 @@ async fn test_fork_article() -> MyResult<()> {
     assert!(create_res.article.local);
 
     // fetch on beta
-    let resolve_object = ResolveObject {
-        id: create_res.article.ap_id.into_inner(),
-    };
-    let resolve_res: ArticleView =
-        get_query(&data.beta.hostname, "article/resolve", Some(resolve_object)).await?;
+    let resolve_res = data
+        .beta
+        .resolve_article(create_res.article.ap_id.into_inner())
+        .await?;
     let resolved_article = resolve_res.article;
     assert_eq!(create_res.edits.len(), resolve_res.edits.len());
 
@@ -507,7 +491,7 @@ async fn test_fork_article() -> MyResult<()> {
     let fork_form = ForkArticleData {
         article_id: resolved_article.id,
     };
-    let fork_res = fork_article(&data.beta, &fork_form).await?;
+    let fork_res = data.beta.fork_article(&fork_form).await?;
     let forked_article = fork_res.article;
     assert_eq!(resolved_article.title, forked_article.title);
     assert_eq!(resolved_article.text, forked_article.text);
@@ -556,19 +540,13 @@ async fn test_user_registration_login() -> MyResult<()> {
     };
     data.alpha.login(login_data).await?;
 
-    let title = "Manu_Chao".to_string();
-    let create_form = CreateArticleData {
-        title: title.clone(),
-    };
+    let my_profile = data.alpha.my_profile().await?;
+    assert_eq!(username, my_profile.person.username);
 
-    let req = data
-        .alpha
-        .api_client
-        .client
-        .post(format!("http://{}/api/v1/article", &data.alpha.hostname))
-        .form(&create_form);
-    let create_res: ArticleView = handle_json_res(req).await?;
-    assert_eq!(title, create_res.article.title);
+    data.alpha.logout().await?;
+
+    let my_profile_after_logout = data.alpha.my_profile().await;
+    assert!(my_profile_after_logout.is_err());
 
     data.stop()
 }

@@ -1,4 +1,4 @@
-use crate::backend::api::article::{CreateArticleData, EditArticleData};
+use crate::backend::api::article::{CreateArticleData, EditArticleData, ForkArticleData};
 use crate::backend::api::instance::FollowInstance;
 use crate::backend::api::{ResolveObject, SearchArticleData};
 use crate::backend::database::conflict::ApiConflict;
@@ -17,8 +17,7 @@ pub static CLIENT: Lazy<Client> = Lazy::new(Client::new);
 
 #[derive(Clone)]
 pub struct ApiClient {
-    // TODO: make these private
-    pub client: Client,
+    client: Client,
     pub hostname: String,
 }
 
@@ -139,9 +138,50 @@ impl ApiClient {
             Err(anyhow!("API error: {}", res.text().await?).into())
         }
     }
+
+    pub async fn my_profile(&self) -> MyResult<LocalUserView> {
+        let req = self.client.get(format!(
+            "http://{}/api/v1/account/my_profile",
+            self.hostname
+        ));
+        handle_json_res::<LocalUserView>(req).await
+    }
+
+    pub async fn logout(&self) -> MyResult<()> {
+        self.client
+            .get(format!("http://{}/api/v1/account/logout", self.hostname))
+            .send()
+            .await?;
+        Ok(())
+    }
+
+    pub async fn fork_article(&self, form: &ForkArticleData) -> MyResult<ArticleView> {
+        let req = self
+            .client
+            .post(format!("http://{}/api/v1/article/fork", self.hostname))
+            .form(form);
+        Ok(handle_json_res(req).await.unwrap())
+    }
+
+    pub async fn get_conflicts(&self) -> MyResult<Vec<ApiConflict>> {
+        let req = self
+            .client
+            .get(format!("http://{}/api/v1/edit_conflicts", &self.hostname));
+        Ok(handle_json_res(req).await.unwrap())
+    }
+
+    pub async fn resolve_article(&self, id: Url) -> MyResult<ArticleView> {
+        let resolve_object = ResolveObject { id };
+        get_query(&self.hostname, "article/resolve", Some(resolve_object)).await
+    }
+
+    pub async fn resolve_instance(&self, id: Url) -> MyResult<DbInstance> {
+        let resolve_object = ResolveObject { id };
+        get_query(&self.hostname, "instance/resolve", Some(resolve_object)).await
+    }
 }
 
-pub async fn get_query<T, R>(hostname: &str, endpoint: &str, query: Option<R>) -> MyResult<T>
+async fn get_query<T, R>(hostname: &str, endpoint: &str, query: Option<R>) -> MyResult<T>
 where
     T: for<'de> Deserialize<'de>,
     R: Serialize,
@@ -153,7 +193,7 @@ where
     handle_json_res::<T>(req).await
 }
 
-pub async fn handle_json_res<T>(req: RequestBuilder) -> MyResult<T>
+async fn handle_json_res<T>(req: RequestBuilder) -> MyResult<T>
 where
     T: for<'de> Deserialize<'de>,
 {
@@ -165,19 +205,4 @@ where
     } else {
         Err(anyhow!("API error: {text}").into())
     }
-}
-
-// TODO: cover in integration test
-pub async fn my_profile(hostname: &str) -> MyResult<LocalUserView> {
-    let req = CLIENT.get(format!("http://{}/api/v1/account/my_profile", hostname));
-    handle_json_res::<LocalUserView>(req).await
-}
-
-// TODO: cover in integration test
-pub async fn logout(hostname: &str) -> MyResult<()> {
-    CLIENT
-        .get(format!("http://{}/api/v1/account/logout", hostname))
-        .send()
-        .await?;
-    Ok(())
 }

@@ -1,19 +1,12 @@
-use anyhow::anyhow;
-use ibis_lib::backend::api::article::ForkArticleData;
-use ibis_lib::backend::api::instance::FollowInstance;
-use ibis_lib::backend::api::ResolveObject;
-use ibis_lib::backend::database::conflict::ApiConflict;
-use ibis_lib::backend::database::instance::DbInstance;
 use ibis_lib::backend::start;
-use ibis_lib::common::ArticleView;
+
 use ibis_lib::common::RegisterUserData;
 use ibis_lib::frontend::api::ApiClient;
-use ibis_lib::frontend::api::{get_query, handle_json_res};
 use ibis_lib::frontend::error::MyResult;
 
 use reqwest::cookie::Jar;
-use reqwest::{ClientBuilder, StatusCode};
-use serde::de::Deserialize;
+use reqwest::ClientBuilder;
+
 use std::env::current_dir;
 use std::fs::create_dir_all;
 use std::ops::Deref;
@@ -25,7 +18,6 @@ use std::thread::{sleep, spawn};
 use std::time::Duration;
 use tokio::task::JoinHandle;
 use tracing::log::LevelFilter;
-use url::Url;
 
 pub struct TestData {
     pub alpha: IbisInstance,
@@ -164,27 +156,5 @@ impl Deref for IbisInstance {
         &self.api_client
     }
 }
+
 pub const TEST_ARTICLE_DEFAULT_TEXT: &str = "some\nexample\ntext\n";
-
-pub async fn get_conflicts(instance: &IbisInstance) -> MyResult<Vec<ApiConflict>> {
-    let req = instance.api_client.client.get(format!(
-        "http://{}/api/v1/edit_conflicts",
-        &instance.api_client.hostname
-    ));
-    Ok(handle_json_res(req).await.unwrap())
-}
-
-pub async fn fork_article(
-    instance: &IbisInstance,
-    form: &ForkArticleData,
-) -> MyResult<ArticleView> {
-    let req = instance
-        .api_client
-        .client
-        .post(format!(
-            "http://{}/api/v1/article/fork",
-            instance.api_client.hostname
-        ))
-        .form(form);
-    Ok(handle_json_res(req).await.unwrap())
-}
