@@ -8,7 +8,7 @@ pub async fn main() -> ibis_lib::backend::error::MyResult<()> {
         .filter_module("ibis", LevelFilter::Info)
         .init();
     let database_url = "postgres://ibis:password@localhost:5432/ibis";
-    ibis_lib::backend::start("localhost:8131", database_url).await?;
+    ibis_lib::backend::start("127.0.0.1:8131", database_url).await?;
     Ok(())
 }
 

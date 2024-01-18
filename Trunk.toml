@@ -3,4 +3,4 @@ filehash = false
 target = "assets/index.html"
 
 [[proxy]]
-backend = "http://[::1]:8131"
+backend = "http://127.0.0.1:8131"

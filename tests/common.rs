@@ -115,16 +115,7 @@ impl IbisInstance {
             username: username.to_string(),
             password: "hunter2".to_string(),
         };
-        // use a separate http client for each backend instance, with cookie store for auth
-        // how to pass the client/hostname to api client methods?
-        // probably create a struct ApiClient(hostname, client) with all api methods in impl
-        // TODO: seems that cookie isnt being stored? or maybe wrong hostname?
-        let jar = Arc::new(Jar::default());
-        let client = ClientBuilder::new()
-            .cookie_store(true)
-            .cookie_provider(jar.clone())
-            .build()
-            .unwrap();
+        let client = ClientBuilder::new().cookie_store(true).build().unwrap();
         let api_client = ApiClient::new(client, hostname.clone());
         api_client.register(form).await.unwrap();
         Self {

@@ -6,12 +6,9 @@ use crate::common::{DbArticle, GetArticleData};
 use crate::common::{DbInstance, FollowInstance, InstanceView, SearchArticleData};
 use crate::frontend::error::MyResult;
 use anyhow::anyhow;
-use once_cell::sync::Lazy;
 use reqwest::{Client, RequestBuilder, StatusCode};
 use serde::{Deserialize, Serialize};
 use url::Url;
-
-pub static CLIENT: Lazy<Client> = Lazy::new(Client::new);
 
 #[derive(Clone)]
 pub struct ApiClient {
@@ -116,8 +113,9 @@ impl ApiClient {
         let resolve_form = ResolveObject {
             id: Url::parse(&format!("http://{}", follow_instance))?,
         };
-        let instance_resolved: DbInstance =
-            get_query(&self.hostname, "instance/resolve", Some(resolve_form)).await?;
+        let instance_resolved: DbInstance = self
+            .get_query("instance/resolve", Some(resolve_form))
+            .await?;
 
         // send follow
         let follow_form = FollowInstance {
@@ -170,35 +168,29 @@ impl ApiClient {
 
     pub async fn resolve_article(&self, id: Url) -> MyResult<ArticleView> {
         let resolve_object = ResolveObject { id };
-        get_query(&self.hostname, "article/resolve", Some(resolve_object)).await
+        self.get_query("article/resolve", Some(resolve_object))
+            .await
     }
 
     pub async fn resolve_instance(&self, id: Url) -> MyResult<DbInstance> {
         let resolve_object = ResolveObject { id };
-        get_query(&self.hostname, "instance/resolve", Some(resolve_object)).await
+        self.get_query("instance/resolve", Some(resolve_object))
+            .await
     }
 }
 
-async fn get_query<T, R>(hostname: &str, endpoint: &str, query: Option<R>) -> MyResult<T>
+async fn handle_json_res<T>(#[allow(unused_mut)] mut req: RequestBuilder) -> MyResult<T>
 where
     T: for<'de> Deserialize<'de>,
-    R: Serialize,
 {
-    let mut req = CLIENT.get(format!("http://{}/api/v1/{}", hostname, endpoint));
-    if let Some(query) = query {
-        req = req.query(&query);
+    #[cfg(not(feature = "ssr"))]
+    {
+        req = req.fetch_credentials_include();
     }
-    handle_json_res::<T>(req).await
-}
-
-async fn handle_json_res<T>(req: RequestBuilder) -> MyResult<T>
-where
-    T: for<'de> Deserialize<'de>,
-{
     let res = req.send().await?;
     let status = res.status();
     let text = res.text().await?;
-    if status == reqwest::StatusCode::OK {
+    if status == StatusCode::OK {
         Ok(serde_json::from_str(&text).map_err(|e| anyhow!("Json error on {text}: {e}"))?)
     } else {
         Err(anyhow!("API error: {text}").into())

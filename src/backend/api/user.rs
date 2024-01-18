@@ -91,6 +91,7 @@ fn create_cookie(jwt: String, data: &Data<MyDataHandle>) -> Cookie<'static> {
         .same_site(SameSite::Strict)
         .path("/")
         .http_only(true)
+        .secure(true)
         .expires(Expiration::DateTime(
             OffsetDateTime::now_utc() + Duration::weeks(52),
         ))

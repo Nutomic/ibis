@@ -43,10 +43,9 @@ impl GlobalState {
         create_local_resource(
             move || (),
             |_| async move {
-                if let Ok(my_profile) = GlobalState::api_client().my_profile().await {
-                    expect_context::<RwSignal<GlobalState>>()
-                        .update(|state| state.my_profile = Some(my_profile.clone()))
-                };
+                let my_profile = GlobalState::api_client().my_profile().await.ok();
+                expect_context::<RwSignal<GlobalState>>()
+                    .update(|state| state.my_profile = my_profile.clone());
             },
         );
     }
@@ -54,7 +53,7 @@ impl GlobalState {
 
 #[component]
 pub fn App() -> impl IntoView {
-    let backend_hostname = "localhost:8080".to_string();
+    let backend_hostname = "127.0.0.1:8080".to_string();
 
     provide_meta_context();
     let backend_hostname = GlobalState {

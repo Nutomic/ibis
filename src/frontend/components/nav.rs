@@ -6,6 +6,12 @@ use leptos_router::*;
 #[component]
 pub fn Nav() -> impl IntoView {
     let global_state = use_context::<RwSignal<GlobalState>>().unwrap();
+    let logout_action = create_action(move |_| async move {
+        GlobalState::api_client().logout().await.unwrap();
+        expect_context::<RwSignal<GlobalState>>()
+            .get_untracked()
+            .update_my_profile();
+    });
     view! {
         <nav class="inner">
             <li>
@@ -19,11 +25,7 @@ pub fn Nav() -> impl IntoView {
                             {
                                 move || global_state.with(|state| state.my_profile.clone().unwrap().person.username)
                             }
-                            <button on:click=move |_| {
-                                // TODO: not executed
-                                dbg!(1);
-                                do_logout()
-                            }>
+                            <button on:click=move |_| logout_action.dispatch(())>
                                 Logout
                             </button>
                         </p>
@@ -39,15 +41,4 @@ pub fn Nav() -> impl IntoView {
         </Show>
         </nav>
     }
-}
-
-fn do_logout() {
-    dbg!("do logout");
-    create_action(move |()| async move {
-        dbg!("run logout action");
-        GlobalState::api_client().logout().await.unwrap();
-        expect_context::<RwSignal<GlobalState>>()
-            .get()
-            .update_my_profile();
-    });
 }
