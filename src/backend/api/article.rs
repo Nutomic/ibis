@@ -1,17 +1,17 @@
-use crate::backend::api::ResolveObject;
 use crate::backend::database::article::DbArticleForm;
-use crate::backend::database::conflict::{ApiConflict, DbConflict, DbConflictForm};
+use crate::backend::database::conflict::{DbConflict, DbConflictForm};
 use crate::backend::database::edit::DbEditForm;
-use crate::backend::database::instance::DbInstance;
 use crate::backend::database::MyDataHandle;
 use crate::backend::error::MyResult;
 use crate::backend::federation::activities::create_article::CreateArticle;
 use crate::backend::federation::activities::submit_article_update;
 use crate::backend::utils::generate_article_version;
-use crate::common::EditVersion;
+use crate::common::DbInstance;
 use crate::common::GetArticleData;
 use crate::common::LocalUserView;
+use crate::common::{ApiConflict, ResolveObject};
 use crate::common::{ArticleView, DbArticle, DbEdit};
+use crate::common::{CreateArticleData, EditArticleData, EditVersion, ForkArticleData};
 use activitypub_federation::config::Data;
 use activitypub_federation::fetch::object_id::ObjectId;
 use anyhow::anyhow;
@@ -21,12 +21,6 @@ use axum::Form;
 use axum::Json;
 use axum_macros::debug_handler;
 use diffy::create_patch;
-use serde::{Deserialize, Serialize};
-
-#[derive(Deserialize, Serialize)]
-pub struct CreateArticleData {
-    pub title: String,
-}
 
 /// Create a new article with empty text, and federate it to followers.
 #[debug_handler]
@@ -54,20 +48,6 @@ pub(in crate::backend::api) async fn create_article(
     CreateArticle::send_to_followers(article.clone(), &data).await?;
 
     Ok(Json(DbArticle::read_view(article.id, &data.db_connection)?))
-}
-
-#[derive(Deserialize, Serialize, Debug)]
-pub struct EditArticleData {
-    /// Id of the article to edit
-    pub article_id: i32,
-    /// Full, new text of the article. A diff against `previous_version` is generated on the backend
-    /// side to handle conflicts.
-    pub new_text: String,
-    /// The version that this edit is based on, ie [DbArticle.latest_version] or
-    /// [ApiConflict.previous_version]
-    pub previous_version_id: EditVersion,
-    /// If you are resolving a conflict, pass the id to delete conflict from the database
-    pub resolve_conflict_id: Option<EditVersion>,
 }
 
 /// Edit an existing article (local or remote).
@@ -142,14 +122,6 @@ pub(in crate::backend::api) async fn get_article(
         }
         _ => Err(anyhow!("Must pass exactly one of title, id").into()),
     }
-}
-
-#[derive(Deserialize, Serialize)]
-pub struct ForkArticleData {
-    // TODO: could add optional param new_title so there is no problem with title collision
-    //       in case local article with same title exists. however that makes it harder to discover
-    //       variants of same article.
-    pub article_id: i32,
 }
 
 /// Fork a remote article to local instance. This is useful if there are disagreements about

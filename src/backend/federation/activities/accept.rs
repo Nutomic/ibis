@@ -1,8 +1,8 @@
-use crate::backend::database::instance::DbInstance;
 use crate::backend::error::MyResult;
 use crate::backend::federation::send_activity;
 use crate::backend::utils::generate_activity_id;
 use crate::backend::{database::MyDataHandle, federation::activities::follow::Follow};
+use crate::common::DbInstance;
 use activitypub_federation::traits::Actor;
 use activitypub_federation::{
     config::Data, fetch::object_id::ObjectId, kinds::activity::AcceptType, traits::ActivityHandler,

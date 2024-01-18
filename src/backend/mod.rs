@@ -1,10 +1,10 @@
 use crate::backend::database::article::DbArticleForm;
-use crate::backend::database::instance::{DbInstance, DbInstanceForm};
+use crate::backend::database::instance::DbInstanceForm;
 use crate::backend::database::MyData;
 use crate::backend::error::MyResult;
 use crate::backend::federation::routes::federation_routes;
 use crate::backend::utils::generate_activity_id;
-use crate::common::DbArticle;
+use crate::common::{DbArticle, DbInstance};
 use crate::frontend::app::App;
 use activitypub_federation::config::{FederationConfig, FederationMiddleware};
 use activitypub_federation::fetch::collection_id::CollectionId;

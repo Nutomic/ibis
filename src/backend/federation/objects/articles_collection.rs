@@ -1,7 +1,7 @@
-use crate::backend::database::instance::DbInstance;
 use crate::backend::database::MyDataHandle;
 use crate::backend::error::Error;
 use crate::backend::federation::objects::article::ApubArticle;
+use crate::common::DbInstance;
 
 use crate::common::DbArticle;
 use activitypub_federation::kinds::collection::CollectionType;

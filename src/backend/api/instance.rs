@@ -1,16 +1,14 @@
-use crate::backend::api::ResolveObject;
-use crate::backend::database::instance::{DbInstance, InstanceView};
 use crate::backend::database::MyDataHandle;
 use crate::backend::error::MyResult;
 use crate::backend::federation::activities::follow::Follow;
-use crate::common::LocalUserView;
+use crate::common::{DbInstance, InstanceView, ResolveObject};
+use crate::common::{FollowInstance, LocalUserView};
 use activitypub_federation::config::Data;
 use activitypub_federation::fetch::object_id::ObjectId;
 use axum::extract::Query;
 use axum::Extension;
 use axum::{Form, Json};
 use axum_macros::debug_handler;
-use serde::{Deserialize, Serialize};
 
 /// Retrieve the local instance info.
 #[debug_handler]
@@ -19,11 +17,6 @@ pub(in crate::backend::api) async fn get_local_instance(
 ) -> MyResult<Json<InstanceView>> {
     let local_instance = DbInstance::read_local_view(&data.db_connection)?;
     Ok(Json(local_instance))
-}
-
-#[derive(Deserialize, Serialize, Debug)]
-pub struct FollowInstance {
-    pub id: i32,
 }
 
 /// Make the local instance follow a given remote instance, to receive activities about new and

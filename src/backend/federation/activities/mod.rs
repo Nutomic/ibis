@@ -1,9 +1,9 @@
 use crate::backend::database::edit::DbEditForm;
-use crate::backend::database::instance::DbInstance;
 use crate::backend::database::MyDataHandle;
 use crate::backend::error::Error;
 use crate::backend::federation::activities::update_local_article::UpdateLocalArticle;
 use crate::backend::federation::activities::update_remote_article::UpdateRemoteArticle;
+use crate::common::DbInstance;
 use crate::common::EditVersion;
 use crate::common::{DbArticle, DbEdit};
 use activitypub_federation::config::Data;

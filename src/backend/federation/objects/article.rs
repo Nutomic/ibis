@@ -1,9 +1,9 @@
 use crate::backend::database::article::DbArticleForm;
-use crate::backend::database::instance::DbInstance;
 use crate::backend::database::MyDataHandle;
 use crate::backend::error::Error;
 use crate::backend::federation::objects::edits_collection::DbEditCollection;
 use crate::common::DbArticle;
+use crate::common::DbInstance;
 use crate::common::EditVersion;
 use activitypub_federation::config::Data;
 use activitypub_federation::fetch::collection_id::CollectionId;

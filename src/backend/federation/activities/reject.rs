@@ -1,9 +1,9 @@
 use crate::backend::database::conflict::{DbConflict, DbConflictForm};
-use crate::backend::database::instance::DbInstance;
 use crate::backend::database::MyDataHandle;
 use crate::backend::error::MyResult;
 use crate::backend::federation::objects::edit::ApubEdit;
 use crate::backend::utils::generate_activity_id;
+use crate::common::DbInstance;
 use crate::common::EditVersion;
 use activitypub_federation::kinds::activity::RejectType;
 use activitypub_federation::{

@@ -1,4 +1,4 @@
-use crate::backend::database::instance::{DbInstance, DbInstanceForm};
+use crate::backend::database::instance::DbInstanceForm;
 use crate::backend::database::MyDataHandle;
 use crate::backend::error::Error;
 use crate::backend::federation::objects::articles_collection::DbArticleCollection;
@@ -8,6 +8,7 @@ use activitypub_federation::fetch::collection_id::CollectionId;
 use activitypub_federation::kinds::actor::ServiceType;
 
 use crate::backend::error::MyResult;
+use crate::common::DbInstance;
 use activitypub_federation::traits::ActivityHandler;
 use activitypub_federation::{
     config::Data,

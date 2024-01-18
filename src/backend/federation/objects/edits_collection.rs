@@ -3,8 +3,8 @@ use crate::backend::error::Error;
 use crate::backend::federation::objects::edit::ApubEdit;
 use crate::common::DbArticle;
 
-use crate::backend::database::instance::DbInstance;
 use crate::common::DbEdit;
+use crate::common::DbInstance;
 use activitypub_federation::kinds::collection::OrderedCollectionType;
 use activitypub_federation::{
     config::Data,

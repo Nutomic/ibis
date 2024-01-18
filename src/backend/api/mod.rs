@@ -6,11 +6,11 @@ use crate::backend::api::user::register_user;
 use crate::backend::api::user::validate;
 use crate::backend::api::user::{login_user, logout_user};
 use crate::backend::api::user::{my_profile, AUTH_COOKIE};
-use crate::backend::database::conflict::{ApiConflict, DbConflict};
+use crate::backend::database::conflict::DbConflict;
 use crate::backend::database::MyDataHandle;
 use crate::backend::error::MyResult;
-use crate::common::DbArticle;
 use crate::common::LocalUserView;
+use crate::common::{ApiConflict, DbArticle, SearchArticleData};
 use activitypub_federation::config::Data;
 use axum::extract::Query;
 use axum::routing::{get, post};
@@ -26,8 +26,6 @@ use axum_extra::extract::CookieJar;
 use axum_macros::debug_handler;
 use futures::future::try_join_all;
 use log::warn;
-use serde::{Deserialize, Serialize};
-use url::Url;
 
 pub mod article;
 pub mod instance;
@@ -70,11 +68,6 @@ async fn auth<B>(
     Ok(response)
 }
 
-#[derive(Deserialize, Serialize)]
-pub struct ResolveObject {
-    pub id: Url,
-}
-
 /// Get a list of all unresolved edit conflicts.
 #[debug_handler]
 async fn edit_conflicts(
@@ -91,11 +84,6 @@ async fn edit_conflicts(
     .flatten()
     .collect();
     Ok(Json(conflicts))
-}
-
-#[derive(Deserialize, Serialize, Clone)]
-pub struct SearchArticleData {
-    pub query: String,
 }
 
 /// Search articles for matching title or body text.

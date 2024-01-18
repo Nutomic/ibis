@@ -3,10 +3,8 @@ use ibis_lib::backend::start;
 use ibis_lib::common::RegisterUserData;
 use ibis_lib::frontend::api::ApiClient;
 use ibis_lib::frontend::error::MyResult;
-
 use reqwest::cookie::Jar;
 use reqwest::ClientBuilder;
-
 use std::env::current_dir;
 use std::fs::create_dir_all;
 use std::ops::Deref;

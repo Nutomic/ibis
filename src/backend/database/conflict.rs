@@ -3,10 +3,10 @@ use crate::backend::database::MyDataHandle;
 use crate::backend::error::MyResult;
 use crate::backend::federation::activities::submit_article_update;
 use crate::backend::utils::generate_article_version;
-use crate::common::DbArticle;
 use crate::common::DbEdit;
 use crate::common::DbLocalUser;
 use crate::common::EditVersion;
+use crate::common::{ApiConflict, DbArticle};
 use activitypub_federation::config::Data;
 use diesel::ExpressionMethods;
 use diesel::{
@@ -26,14 +26,6 @@ pub struct DbConflict {
     pub id: EditVersion,
     pub diff: String,
     pub creator_id: i32,
-    pub article_id: i32,
-    pub previous_version_id: EditVersion,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
-pub struct ApiConflict {
-    pub id: EditVersion,
-    pub three_way_merge: String,
     pub article_id: i32,
     pub previous_version_id: EditVersion,
 }

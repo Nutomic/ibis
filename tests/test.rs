@@ -3,9 +3,8 @@ extern crate ibis_lib;
 mod common;
 
 use crate::common::{TestData, TEST_ARTICLE_DEFAULT_TEXT};
-use ibis_lib::backend::api::article::{EditArticleData, ForkArticleData};
-use ibis_lib::backend::api::SearchArticleData;
-use ibis_lib::common::{ArticleView, GetArticleData};
+use ibis_lib::common::SearchArticleData;
+use ibis_lib::common::{ArticleView, EditArticleData, ForkArticleData, GetArticleData};
 use ibis_lib::common::{LoginUserData, RegisterUserData};
 use ibis_lib::frontend::error::MyResult;
 use pretty_assertions::{assert_eq, assert_ne};

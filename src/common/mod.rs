@@ -1,10 +1,14 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use url::Url;
 use uuid::Uuid;
 #[cfg(feature = "ssr")]
 use {
-    crate::backend::database::schema::{article, edit, local_user, person},
-    activitypub_federation::fetch::object_id::ObjectId,
+    crate::backend::{
+        database::schema::{article, edit, instance, local_user, person},
+        federation::objects::articles_collection::DbArticleCollection,
+    },
+    activitypub_federation::fetch::{collection_id::CollectionId, object_id::ObjectId},
     diesel::{Identifiable, Queryable, Selectable},
 };
 
@@ -116,4 +120,86 @@ pub struct DbPerson {
     #[serde(skip)]
     pub last_refreshed_at: DateTime<Utc>,
     pub local: bool,
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct CreateArticleData {
+    pub title: String,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct EditArticleData {
+    /// Id of the article to edit
+    pub article_id: i32,
+    /// Full, new text of the article. A diff against `previous_version` is generated on the backend
+    /// side to handle conflicts.
+    pub new_text: String,
+    /// The version that this edit is based on, ie [DbArticle.latest_version] or
+    /// [ApiConflict.previous_version]
+    pub previous_version_id: EditVersion,
+    /// If you are resolving a conflict, pass the id to delete conflict from the database
+    pub resolve_conflict_id: Option<EditVersion>,
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct ForkArticleData {
+    // TODO: could add optional param new_title so there is no problem with title collision
+    //       in case local article with same title exists. however that makes it harder to discover
+    //       variants of same article.
+    pub article_id: i32,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct FollowInstance {
+    pub id: i32,
+}
+
+#[derive(Deserialize, Serialize, Clone)]
+pub struct SearchArticleData {
+    pub query: String,
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct ResolveObject {
+    pub id: Url,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct ApiConflict {
+    pub id: EditVersion,
+    pub three_way_merge: String,
+    pub article_id: i32,
+    pub previous_version_id: EditVersion,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[cfg_attr(feature = "ssr", derive(Queryable, Selectable, Identifiable))]
+#[cfg_attr(feature = "ssr", diesel(table_name = instance, check_for_backend(diesel::pg::Pg)))]
+pub struct DbInstance {
+    pub id: i32,
+    #[cfg(feature = "ssr")]
+    pub ap_id: ObjectId<DbInstance>,
+    #[cfg(not(feature = "ssr"))]
+    pub ap_id: String,
+    #[cfg(feature = "ssr")]
+    pub articles_url: CollectionId<DbArticleCollection>,
+    #[cfg(not(feature = "ssr"))]
+    pub articles_url: String,
+    pub inbox_url: String,
+    #[serde(skip)]
+    pub public_key: String,
+    #[serde(skip)]
+    pub private_key: Option<String>,
+    #[serde(skip)]
+    pub last_refreshed_at: DateTime<Utc>,
+    pub local: bool,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[cfg_attr(feature = "ssr", derive(Queryable))]
+#[cfg_attr(feature = "ssr", diesel(table_name = article, check_for_backend(diesel::pg::Pg)))]
+pub struct InstanceView {
+    pub instance: DbInstance,
+    pub followers: Vec<DbPerson>,
+    pub following: Vec<DbInstance>,
 }

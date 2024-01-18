@@ -1,9 +1,9 @@
-use crate::backend::database::instance::DbInstance;
 use crate::backend::database::MyDataHandle;
 use crate::backend::error::MyResult;
 use crate::backend::federation::objects::article::ApubArticle;
 use crate::backend::utils::generate_activity_id;
 use crate::common::DbArticle;
+use crate::common::DbInstance;
 use activitypub_federation::kinds::activity::CreateType;
 use activitypub_federation::{
     config::Data,

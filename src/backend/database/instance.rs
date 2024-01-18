@@ -2,36 +2,18 @@ use crate::backend::database::schema::{instance, instance_follow};
 use crate::backend::database::MyDataHandle;
 use crate::backend::error::MyResult;
 use crate::backend::federation::objects::articles_collection::DbArticleCollection;
-use crate::common::DbPerson;
+use crate::common::{DbInstance, DbPerson, InstanceView};
 use activitypub_federation::config::Data;
 use activitypub_federation::fetch::collection_id::CollectionId;
 use activitypub_federation::fetch::object_id::ObjectId;
 use chrono::{DateTime, Utc};
 use diesel::ExpressionMethods;
 use diesel::{
-    insert_into, AsChangeset, Identifiable, Insertable, JoinOnDsl, PgConnection, QueryDsl,
-    Queryable, RunQueryDsl, Selectable,
+    insert_into, AsChangeset, Insertable, JoinOnDsl, PgConnection, QueryDsl, RunQueryDsl,
 };
-use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 use std::ops::DerefMut;
 use std::sync::Mutex;
-
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Queryable, Selectable, Identifiable)]
-#[diesel(table_name = instance, check_for_backend(diesel::pg::Pg))]
-pub struct DbInstance {
-    pub id: i32,
-    pub ap_id: ObjectId<DbInstance>,
-    pub articles_url: CollectionId<DbArticleCollection>,
-    pub inbox_url: String,
-    #[serde(skip)]
-    pub public_key: String,
-    #[serde(skip)]
-    pub private_key: Option<String>,
-    #[serde(skip)]
-    pub last_refreshed_at: DateTime<Utc>,
-    pub local: bool,
-}
 
 #[derive(Debug, Clone, Insertable, AsChangeset)]
 #[diesel(table_name = instance, check_for_backend(diesel::pg::Pg))]
@@ -43,14 +25,6 @@ pub struct DbInstanceForm {
     pub private_key: Option<String>,
     pub last_refreshed_at: DateTime<Utc>,
     pub local: bool,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Queryable)]
-#[diesel(table_name = article, check_for_backend(diesel::pg::Pg))]
-pub struct InstanceView {
-    pub instance: DbInstance,
-    pub followers: Vec<DbPerson>,
-    pub following: Vec<DbInstance>,
 }
 
 impl DbInstance {

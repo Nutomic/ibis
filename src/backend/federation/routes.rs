@@ -1,4 +1,3 @@
-use crate::backend::database::instance::DbInstance;
 use crate::backend::database::MyDataHandle;
 use crate::backend::error::Error;
 use crate::backend::error::MyResult;
@@ -16,6 +15,7 @@ use crate::backend::federation::objects::edits_collection::{ApubEditCollection, 
 use crate::backend::federation::objects::instance::ApubInstance;
 use crate::backend::federation::objects::user::ApubUser;
 use crate::common::DbArticle;
+use crate::common::DbInstance;
 use crate::common::DbPerson;
 use activitypub_federation::axum::inbox::{receive_activity, ActivityData};
 use activitypub_federation::axum::json::FederationJson;
