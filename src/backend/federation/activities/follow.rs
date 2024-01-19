@@ -33,7 +33,6 @@ impl Follow {
             kind: Default::default(),
             id,
         };
-
         send_activity(&actor, follow, vec![to.shared_inbox_or_inbox()], data).await?;
         Ok(())
     }

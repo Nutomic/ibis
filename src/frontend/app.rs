@@ -1,8 +1,9 @@
 use crate::common::LocalUserView;
 use crate::frontend::api::ApiClient;
 use crate::frontend::components::nav::Nav;
-use crate::frontend::pages::article::Article;
+use crate::frontend::pages::edit_article::EditArticle;
 use crate::frontend::pages::login::Login;
+use crate::frontend::pages::read_article::ReadArticle;
 use crate::frontend::pages::register::Register;
 use crate::frontend::pages::Page;
 use leptos::{
@@ -73,7 +74,9 @@ pub fn App() -> impl IntoView {
                 <Nav />
                 <main>
                     <Routes>
-                        <Route path={Page::Home.path()} view=Article/>
+                        <Route path={Page::Home.path()} view=ReadArticle/>
+                        <Route path="/article/:title" view=ReadArticle/>
+                        <Route path="/article/:title/edit" view=EditArticle/>
                         <Route path={Page::Login.path()} view=Login/>
                         <Route path={Page::Register.path()} view=Register/>
                     </Routes>

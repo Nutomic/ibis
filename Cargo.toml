@@ -65,6 +65,7 @@ wasm-bindgen = "0.2.89"
 console_error_panic_hook = "0.1.7"
 console_log = "1.0.0"
 time = "0.3.31"
+tower = "0.4.13"
 
 [dev-dependencies]
 pretty_assertions = "1.4.0"

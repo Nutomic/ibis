@@ -3,14 +3,14 @@ use ibis_lib::backend::start;
 use ibis_lib::common::RegisterUserData;
 use ibis_lib::frontend::api::ApiClient;
 use ibis_lib::frontend::error::MyResult;
-use reqwest::cookie::Jar;
+
 use reqwest::ClientBuilder;
 use std::env::current_dir;
 use std::fs::create_dir_all;
 use std::ops::Deref;
 use std::process::{Command, Stdio};
 use std::sync::atomic::{AtomicI32, Ordering};
-use std::sync::Arc;
+
 use std::sync::Once;
 use std::thread::{sleep, spawn};
 use std::time::Duration;

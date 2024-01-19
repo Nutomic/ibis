@@ -35,9 +35,7 @@ use url::Url;
 
 pub fn federation_routes() -> Router {
     Router::new()
-        // TODO: would be nice if this could be at / but axum doesnt properly support routing by headers
-        //       https://github.com/tokio-rs/axum/issues/1654
-        .route("/instance", get(http_get_instance))
+        .route("/", get(http_get_instance))
         .route("/user/:name", get(http_get_person))
         .route("/all_articles", get(http_get_all_articles))
         .route("/article/:title", get(http_get_article))

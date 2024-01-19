@@ -13,6 +13,8 @@ You need to install [cargo](https://rustup.rs/) and [trunk](https://trunkrs.dev)
 ```
 # start backend, with separate target folder to avoid rebuilds from arch change
 cargo run --target-dir target/backend
+# or with automatic rebuild on changes using cargo-watch
+CARGO_TARGET_DIR=target/backend cargo watch -c -x run
 
 # start frontend, automatic rebuild on changes
 trunk serve -w src/frontend/

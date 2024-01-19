@@ -11,7 +11,10 @@ use activitypub_federation::fetch::collection_id::CollectionId;
 use activitypub_federation::fetch::object_id::ObjectId;
 use activitypub_federation::http_signatures::generate_actor_keypair;
 use api::api_routes;
-use axum::{Router, Server};
+use axum::http::{HeaderValue, Request};
+use axum::Server;
+use axum::ServiceExt;
+use axum::{middleware::Next, response::Response, Router};
 use chrono::Local;
 use diesel::Connection;
 use diesel::PgConnection;
@@ -23,6 +26,7 @@ use leptos_axum::{generate_route_list, LeptosRoutes};
 use log::info;
 use std::net::ToSocketAddrs;
 use std::sync::{Arc, Mutex};
+use tower::Layer;
 use tower_http::cors::CorsLayer;
 use tower_http::services::{ServeDir, ServeFile};
 
@@ -33,6 +37,8 @@ pub mod federation;
 mod utils;
 
 const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
+
+const FEDERATION_ROUTES_PREFIX: &str = "/federation_routes";
 
 pub async fn start(hostname: &str, database_url: &str) -> MyResult<()> {
     let db_connection = Arc::new(Mutex::new(PgConnection::establish(database_url)?));
@@ -53,8 +59,7 @@ pub async fn start(hostname: &str, database_url: &str) -> MyResult<()> {
     // Create local instance if it doesnt exist yet
     // TODO: Move this into setup api call
     if DbInstance::read_local_instance(&config.db_connection).is_err() {
-        // TODO: workaround because axum makes it hard to have multiple routes on /
-        let ap_id = ObjectId::parse(&format!("http://{}/instance", hostname))?;
+        let ap_id = ObjectId::parse(&format!("http://{hostname}"))?;
         let articles_url = CollectionId::parse(&format!("http://{}/all_articles", hostname))?;
         let inbox_url = format!("http://{}/inbox", hostname);
         let keypair = generate_actor_keypair()?;
@@ -102,13 +107,44 @@ pub async fn start(hostname: &str, database_url: &str) -> MyResult<()> {
             "/pkg/ibis_bg.wasm",
             ServeFile::new_with_mime("assets/dist/ibis_bg.wasm", &"application/wasm".parse()?),
         )
-        .nest("", federation_routes())
+        .nest(FEDERATION_ROUTES_PREFIX, federation_routes())
         .nest("/api/v1", api_routes())
         .layer(FederationMiddleware::new(config))
         .layer(CorsLayer::permissive());
 
+    // Rewrite federation routes
+    // https://docs.rs/axum/0.7.4/axum/middleware/index.html#rewriting-request-uri-in-middleware
+    let middleware = axum::middleware::from_fn(federation_routes_middleware);
+    let app_with_middleware = middleware.layer(app);
+
     info!("{addr}");
-    Server::bind(&addr).serve(app.into_make_service()).await?;
+    Server::bind(&addr)
+        .serve(app_with_middleware.into_make_service())
+        .await?;
 
     Ok(())
+}
+
+/// Rewrite federation routes to use `FEDERATION_ROUTES_PREFIX`, to avoid conflicts
+/// with frontend routes. If a request is an Activitypub fetch as indicated by
+/// `Accept: application/activity+json` header, use the federation routes. Otherwise
+/// leave the path unchanged so it can go to frontend.
+async fn federation_routes_middleware<B>(request: Request<B>, next: Next<B>) -> Response {
+    let (mut parts, body) = request.into_parts();
+    // rewrite uri based on accept header
+    let mut uri = parts.uri.to_string();
+    let accept_value = HeaderValue::from_static("application/activity+json");
+    if Some(&accept_value) == parts.headers.get("Accept")
+        || Some(&accept_value) == parts.headers.get("Content-Type")
+    {
+        uri = format!("{FEDERATION_ROUTES_PREFIX}{uri}");
+    }
+    // drop trailing slash
+    if uri.ends_with('/') {
+        uri.pop();
+    }
+    parts.uri = uri.parse().unwrap();
+    let request = Request::from_parts(parts, body);
+
+    next.run(request).await
 }
