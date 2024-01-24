@@ -16,6 +16,7 @@ diesel::table! {
     conflict (id) {
         id -> Uuid,
         diff -> Text,
+        summary -> Text,
         creator_id -> Int4,
         article_id -> Int4,
         previous_version_id -> Uuid,
@@ -30,8 +31,10 @@ diesel::table! {
         #[max_length = 255]
         ap_id -> Varchar,
         diff -> Text,
+        summary -> Text,
         article_id -> Int4,
         previous_version_id -> Uuid,
+        created -> Timestamptz,
     }
 }
 
@@ -88,13 +91,6 @@ diesel::table! {
     }
 }
 
-diesel::table! {
-    secret (id) {
-        id -> Int4,
-        jwt_secret -> Varchar,
-    }
-}
-
 diesel::joinable!(article -> instance (instance_id));
 diesel::joinable!(conflict -> article (article_id));
 diesel::joinable!(conflict -> local_user (creator_id));
@@ -113,5 +109,4 @@ diesel::allow_tables_to_appear_in_same_query!(
     jwt_secret,
     local_user,
     person,
-    secret,
 );

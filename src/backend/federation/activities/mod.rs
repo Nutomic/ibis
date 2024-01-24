@@ -7,6 +7,7 @@ use crate::common::DbInstance;
 use crate::common::EditVersion;
 use crate::common::{DbArticle, DbEdit};
 use activitypub_federation::config::Data;
+use chrono::Utc;
 
 pub mod accept;
 pub mod create_article;
@@ -17,12 +18,19 @@ pub mod update_remote_article;
 
 pub async fn submit_article_update(
     new_text: String,
+    summary: String,
     previous_version: EditVersion,
     original_article: &DbArticle,
     creator_id: i32,
     data: &Data<MyDataHandle>,
 ) -> Result<(), Error> {
-    let form = DbEditForm::new(original_article, creator_id, &new_text, previous_version)?;
+    let form = DbEditForm::new(
+        original_article,
+        creator_id,
+        &new_text,
+        summary,
+        previous_version,
+    )?;
     if original_article.local {
         let edit = DbEdit::create(&form, &data.db_connection)?;
         let updated_article =
@@ -37,8 +45,10 @@ pub async fn submit_article_update(
             hash: form.hash,
             ap_id: form.ap_id,
             diff: form.diff,
+            summary: form.summary,
             article_id: form.article_id,
             previous_version_id: form.previous_version_id,
+            created: Utc::now(),
         };
         let instance = DbInstance::read(original_article.instance_id, &data.db_connection)?;
         UpdateRemoteArticle::send(edit, instance, data).await?;

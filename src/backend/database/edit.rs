@@ -3,6 +3,7 @@ use crate::backend::error::MyResult;
 use crate::common::EditVersion;
 use crate::common::{DbArticle, DbEdit};
 use activitypub_federation::fetch::object_id::ObjectId;
+use chrono::{DateTime, Utc};
 use diesel::ExpressionMethods;
 use diesel::{insert_into, AsChangeset, Insertable, PgConnection, QueryDsl, RunQueryDsl};
 use diffy::create_patch;
@@ -16,8 +17,10 @@ pub struct DbEditForm {
     pub hash: EditVersion,
     pub ap_id: ObjectId<DbEdit>,
     pub diff: String,
+    pub summary: String,
     pub article_id: i32,
     pub previous_version_id: EditVersion,
+    pub created: DateTime<Utc>,
 }
 
 impl DbEditForm {
@@ -25,6 +28,7 @@ impl DbEditForm {
         original_article: &DbArticle,
         creator_id: i32,
         updated_text: &str,
+        summary: String,
         previous_version_id: EditVersion,
     ) -> MyResult<Self> {
         let diff = create_patch(&original_article.text, updated_text);
@@ -37,6 +41,8 @@ impl DbEditForm {
             creator_id,
             article_id: original_article.id,
             previous_version_id,
+            summary,
+            created: Utc::now(),
         })
     }
 

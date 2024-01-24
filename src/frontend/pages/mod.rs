@@ -1,7 +1,10 @@
-pub mod article;
-pub mod edit_article;
+use crate::common::{ArticleView, GetArticleData};
+use crate::frontend::app::GlobalState;
+use leptos::{create_resource, Resource};
+
+pub(crate) mod article;
+pub(crate) mod diff;
 pub mod login;
-pub mod read_article;
 pub mod register;
 
 #[derive(Debug, Clone, Copy, Default)]
@@ -20,4 +23,20 @@ impl Page {
             Self::Register => "/register",
         }
     }
+}
+
+fn article_resource(title: String) -> Resource<String, ArticleView> {
+    create_resource(
+        move || title.clone(),
+        move |title| async move {
+            GlobalState::api_client()
+                .get_article(GetArticleData {
+                    title: Some(title),
+                    instance_id: None,
+                    id: None,
+                })
+                .await
+                .unwrap()
+        },
+    )
 }

@@ -49,13 +49,16 @@ create table edit (
     hash uuid not null,
     ap_id varchar(255) not null unique,
     diff text not null,
+    summary text not null,
     article_id int REFERENCES article ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
-    previous_version_id uuid not null
+    previous_version_id uuid not null,
+    created timestamptz not null
 );
 
 create table conflict (
     id uuid primary key,
     diff text not null,
+    summary text not null,
     creator_id int REFERENCES local_user ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
     article_id int REFERENCES article ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
     previous_version_id uuid not null

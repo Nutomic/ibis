@@ -65,10 +65,9 @@ pub fn CredentialsForm(
             <div>
                 <button
                     prop:disabled=move || button_is_disabled.get()
-                    on:click=move |_| dispatch_action()
-                >
+                    on:click=move |_| dispatch_action()>
                     {action_label}
-            </button>
+                </button>
             </div>
         </form>
     }

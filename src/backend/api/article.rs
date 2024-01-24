@@ -20,6 +20,7 @@ use axum::Extension;
 use axum::Form;
 use axum::Json;
 use axum_macros::debug_handler;
+use chrono::Utc;
 use diffy::create_patch;
 
 /// Create a new article with empty text, and federate it to followers.
@@ -70,11 +71,19 @@ pub(in crate::backend::api) async fn edit_article(
         DbConflict::delete(resolve_conflict_id, &data.db_connection)?;
     }
     let original_article = DbArticle::read_view(edit_form.article_id, &data.db_connection)?;
+    dbg!(&edit_form.new_text, &original_article.article.text);
+    if edit_form.new_text == original_article.article.text {
+        return Err(anyhow!("Edit contains no changes").into());
+    }
+    if edit_form.summary.is_empty() {
+        return Err(anyhow!("No summary given").into());
+    }
 
     if edit_form.previous_version_id == original_article.latest_version {
         // No intermediate changes, simply submit new version
         submit_article_update(
             edit_form.new_text.clone(),
+            edit_form.summary.clone(),
             edit_form.previous_version_id,
             &original_article.article,
             user.person.id,
@@ -93,6 +102,7 @@ pub(in crate::backend::api) async fn edit_article(
         let form = DbConflictForm {
             id: EditVersion::new(&patch.to_string())?,
             diff: patch.to_string(),
+            summary: edit_form.summary.clone(),
             creator_id: user.local_user.id,
             article_id: original_article.article.id,
             previous_version_id: previous_version.hash,
@@ -159,10 +169,12 @@ pub(in crate::backend::api) async fn fork_article(
         let form = DbEditForm {
             ap_id,
             diff: e.diff,
+            summary: e.summary,
             creator_id: e.creator_id,
             article_id: article.id,
             hash: e.hash,
             previous_version_id: e.previous_version_id,
+            created: Utc::now(),
         };
         DbEdit::create(&form, &data.db_connection)?;
     }

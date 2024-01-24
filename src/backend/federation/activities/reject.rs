@@ -77,6 +77,7 @@ impl ActivityHandler for RejectEdit {
         let form = DbConflictForm {
             id: EditVersion::new(&self.object.content)?,
             diff: self.object.content,
+            summary: self.object.summary,
             creator_id: creator.id,
             article_id: article.id,
             previous_version_id: self.object.previous_version,

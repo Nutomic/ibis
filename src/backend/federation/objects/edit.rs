@@ -7,6 +7,7 @@ use crate::common::{DbArticle, DbEdit};
 use activitypub_federation::config::Data;
 use activitypub_federation::fetch::object_id::ObjectId;
 use activitypub_federation::traits::Object;
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use url::Url;
 
@@ -24,10 +25,12 @@ pub struct ApubEdit {
     kind: PatchType,
     pub id: ObjectId<DbEdit>,
     pub content: String,
+    pub summary: String,
     pub version: EditVersion,
     pub previous_version: EditVersion,
     pub object: ObjectId<DbArticle>,
     pub attributed_to: ObjectId<DbPerson>,
+    pub published: DateTime<Utc>,
 }
 
 #[async_trait::async_trait]
@@ -50,10 +53,12 @@ impl Object for DbEdit {
             kind: PatchType::Patch,
             id: self.ap_id,
             content: self.diff,
+            summary: self.summary,
             version: self.hash,
             previous_version: self.previous_version_id,
             object: article.ap_id,
             attributed_to: creator.ap_id,
+            published: self.created,
         })
     }
 
@@ -72,9 +77,11 @@ impl Object for DbEdit {
             creator_id: creator.id,
             ap_id: json.id,
             diff: json.content,
+            summary: json.summary,
             article_id: article.id,
             hash: json.version,
             previous_version_id: json.previous_version,
+            created: json.published,
         };
         let edit = DbEdit::create(&form, &data.db_connection)?;
         Ok(edit)

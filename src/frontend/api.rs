@@ -71,6 +71,7 @@ impl ApiClient {
         let edit_form = EditArticleData {
             article_id: article.article.id,
             new_text,
+            summary: "initial text".to_string(),
             previous_version_id: article.latest_version,
             resolve_conflict_id: None,
         };

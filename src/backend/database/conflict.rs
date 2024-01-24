@@ -25,6 +25,7 @@ use std::sync::Mutex;
 pub struct DbConflict {
     pub id: EditVersion,
     pub diff: String,
+    pub summary: String,
     pub creator_id: i32,
     pub article_id: i32,
     pub previous_version_id: EditVersion,
@@ -35,6 +36,7 @@ pub struct DbConflict {
 pub struct DbConflictForm {
     pub id: EditVersion,
     pub diff: String,
+    pub summary: String,
     pub creator_id: i32,
     pub article_id: i32,
     pub previous_version_id: EditVersion,
@@ -82,6 +84,7 @@ impl DbConflict {
                 // federate the change
                 submit_article_update(
                     new_text,
+                    self.summary.clone(),
                     self.previous_version_id.clone(),
                     &original_article,
                     self.creator_id,
