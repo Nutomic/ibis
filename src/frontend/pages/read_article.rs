@@ -33,7 +33,7 @@ pub fn ReadArticle() -> impl IntoView {
             {move || article.get().map(|article|
                 view! {
                     <div class="item-view">
-                        <h1>{article.article.title}</h1>
+                        <h1>{article.article.title.replace('_', " ")}</h1>
                         <Show when=move || global_state.with(|state| state.my_profile.is_some())>
                             <button on:click=move |_| {
                                 set_count.update(|n| *n += 1);

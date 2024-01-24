@@ -140,7 +140,7 @@ async fn federation_routes_middleware<B>(request: Request<B>, next: Next<B>) -> 
         uri = format!("{FEDERATION_ROUTES_PREFIX}{uri}");
     }
     // drop trailing slash
-    if uri.ends_with('/') {
+    if uri.ends_with('/') && uri.len() > 1 {
         uri.pop();
     }
     parts.uri = uri.parse().unwrap();
