@@ -71,7 +71,6 @@ pub(in crate::backend::api) async fn edit_article(
         DbConflict::delete(resolve_conflict_id, &data.db_connection)?;
     }
     let original_article = DbArticle::read_view(edit_form.article_id, &data.db_connection)?;
-    dbg!(&edit_form.new_text, &original_article.article.text);
     if edit_form.new_text == original_article.article.text {
         return Err(anyhow!("Edit contains no changes").into());
     }
