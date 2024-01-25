@@ -64,7 +64,7 @@ pub(in crate::backend::api) async fn create_article(
 pub(in crate::backend::api) async fn edit_article(
     Extension(user): Extension<LocalUserView>,
     data: Data<MyDataHandle>,
-    Form(edit_form): Form<EditArticleData>,
+    Form(mut edit_form): Form<EditArticleData>,
 ) -> MyResult<Json<Option<ApiConflict>>> {
     // resolve conflict if any
     if let Some(resolve_conflict_id) = edit_form.resolve_conflict_id {
@@ -76,6 +76,10 @@ pub(in crate::backend::api) async fn edit_article(
     }
     if edit_form.summary.is_empty() {
         return Err(anyhow!("No summary given").into());
+    }
+    // ensure trailing newline for clean diffs
+    if !edit_form.new_text.ends_with('\n') {
+        edit_form.new_text.push('\n');
     }
 
     if edit_form.previous_version_id == original_article.latest_version {
