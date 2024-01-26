@@ -8,15 +8,13 @@ steps:
       LEMMY_DATABASE_URL: postgres://ibis:password@database:5432/ibis
       CARGO_HOME: .cargo_home
     commands:
-      - which cargo
       - apt-get update
       - apt-get install postgresql sudo -y --no-install-recommends --no-install-suggests
       - adduser testuser
-      - cp -r /usr/local/cargo/bin .
+      - cp ~/.cargo /home/testuser -r
       - chown testuser:testuser . -R
-      - pwd
+      - chown testuser:testuser /home/testuser -R
       - export PATH="/usr/lib/postgresql/15/bin:/usr/local/cargo/bin:$PATH"
-      - ls -la bin
       - sudo -u testuser env "PATH=$PATH" env | /bin/grep PATH
       - sudo -u testuser env "PATH=$PATH" cargo test --no-fail-fast
 
