@@ -15,7 +15,8 @@ steps:
       - cp -r /usr/local/cargo/bin .
       - chown testuser:testuser . -R
       - pwd
-      - export PATH="/usr/lib/postgresql/15/bin:./bin:$PATH"
+      - export PATH="/usr/lib/postgresql/15/bin:/woodpecker/src/github.com/Nutomic/ibis/bin:$PATH"
+      - ls -la bin
       - sudo -E -u testuser echo $PATH
       - sudo -E -u testuser cargo test --no-fail-fast
 
