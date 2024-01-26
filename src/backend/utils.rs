@@ -42,6 +42,7 @@ pub fn generate_article_version(edits: &Vec<DbEdit>, version: &EditVersion) -> M
 mod test {
     use super::*;
     use activitypub_federation::fetch::object_id::ObjectId;
+    use chrono::Utc;
     use diffy::create_patch;
 
     fn create_edits() -> MyResult<Vec<DbEdit>> {
@@ -53,8 +54,10 @@ mod test {
                 hash: EditVersion::new(&diff)?,
                 ap_id: ObjectId::parse("http://example.com")?,
                 diff,
+                summary: String::new(),
                 article_id: 0,
                 previous_version_id: Default::default(),
+                created: Utc::now(),
             })
         };
         Ok([

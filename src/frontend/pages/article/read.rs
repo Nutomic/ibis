@@ -15,7 +15,7 @@ pub fn ReadArticle() -> impl IntoView {
     let article = article_resource(title);
 
     view! {
-        <ArticleNav article=article.clone()/>
+        <ArticleNav article=article/>
         <Suspense fallback=|| view! {  "Loading..." }> {
             let parser = markdown_parser();
             move || article.get().map(|article|
