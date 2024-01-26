@@ -11,12 +11,11 @@ steps:
       - which cargo
       - apt-get update
       - apt-get install postgresql sudo -y --no-install-recommends --no-install-suggests
-      - useradd testuser
+      - adduser testuser
+      - cp /usr/local/cargo/bin .
       - chown testuser:testuser . -R
-      - chown testuser:testuser /usr/local/cargo/bin -R
-      - export PATH="/usr/lib/postgresql/15/bin:$PATH"
-      - ls -la /usr/local/cargo/bin
-      - sudo ls -la /usr/local/cargo/bin
+      - pwd
+      - export PATH="/usr/lib/postgresql/15/bin:./bin:$PATH"
       - sudo -E -u testuser echo $PATH
       - sudo -E -u testuser cargo test --no-fail-fast
 
