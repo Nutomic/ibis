@@ -44,7 +44,8 @@ steps:
       RUST_BACKTRACE: "1"
       CARGO_HOME: .cargo_home
     commands:
-      - apt install postgresql
+      - apt-get update
+      - apt-get install postgresql
       - cargo test --no-fail-fast
 
 services:
