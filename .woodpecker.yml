@@ -12,7 +12,7 @@ steps:
       - apt-get update
       - apt-get install postgresql sudo -y --no-install-recommends --no-install-suggests
       - adduser testuser
-      - cp /usr/local/cargo/bin .
+      - cp -r /usr/local/cargo/bin .
       - chown testuser:testuser . -R
       - pwd
       - export PATH="/usr/lib/postgresql/15/bin:./bin:$PATH"
