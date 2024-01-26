@@ -2,6 +2,18 @@ variables:
   - &rust_image "rust:1.75"
 
 steps:
+  cargo_test:
+    image: *rust_image
+    environment:
+      LEMMY_DATABASE_URL: postgres://ibis:password@database:5432/ibis
+      RUST_BACKTRACE: "1"
+      CARGO_HOME: .cargo_home
+    commands:
+      - apt-get update
+      - apt-get install postgresql sudo -y --no-install-recommends --no-install-suggests
+      - adduser testuser
+      - PATH="/usr/lib/postgresql/15/bin:$PATH" sudo -u testuser cargo test --no-fail-fast
+
   cargo_fmt:
     image: *rust_image
     environment:
@@ -36,18 +48,6 @@ steps:
     commands:
       - rustup component add clippy
       - cargo clippy --tests --all-targets --all-features
-
-  cargo_test:
-    image: *rust_image
-    environment:
-      LEMMY_DATABASE_URL: postgres://ibis:password@database:5432/ibis
-      RUST_BACKTRACE: "1"
-      CARGO_HOME: .cargo_home
-    commands:
-      - apt-get update
-      - apt-get install postgresql -y --no-install-recommends --no-install-suggests
-      - adduser testuser
-      - PATH="/usr/lib/postgresql/15/bin:$PATH" sudo -u testuser cargo test --no-fail-fast
 
 services:
   database:
