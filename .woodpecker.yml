@@ -17,7 +17,7 @@ steps:
       - pwd
       - export PATH="/usr/lib/postgresql/15/bin:/woodpecker/src/github.com/Nutomic/ibis/bin:$PATH"
       - ls -la bin
-      - sudo -E -u testuser echo $PATH
+      - sudo -E -u testuser env | /bin/grep PATH
       - sudo -E -u testuser cargo test --no-fail-fast
 
   cargo_fmt:
