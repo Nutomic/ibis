@@ -11,11 +11,12 @@ steps:
       - apt-get update
       - apt-get install postgresql sudo -y --no-install-recommends --no-install-suggests
       - adduser testuser
-      - cp /usr/local/rustup /home/testuser -r
+      - cp /usr/local/rustup /home/testuser/.rustup -r
+      - ls -la /home/testuser/.rustup
       - chown testuser:testuser . -R
       - chown testuser:testuser /home/testuser -R
       - export PATH="/usr/lib/postgresql/15/bin:/usr/local/cargo/bin:$PATH"
-      - sudo -u testuser env "PATH=$PATH" rustup default stable
+      - #sudo -u testuser env "PATH=$PATH" rustup default stable
       - sudo -u testuser env "PATH=$PATH" cargo test --no-fail-fast
 
   cargo_fmt:
