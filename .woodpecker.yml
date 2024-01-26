@@ -1,7 +1,9 @@
-steps:
+variables:
+  - &rust_image "rust:1.75"
 
+steps:
   cargo_fmt:
-    image: rust:1.75
+    image: *rust_image
     environment:
       # store cargo data in repo folder so that it gets cached between steps
       CARGO_HOME: .cargo_home
@@ -10,7 +12,7 @@ steps:
       - cargo fmt -- --check
 
   frontend_wasm_build:
-    image: rust:1.75
+    image: *rust_image
     environment:
       CARGO_HOME: .cargo_home
     commands:
@@ -28,7 +30,7 @@ steps:
       - diff tmp.schema src/backend/database/schema.rs
 
   cargo_clippy:
-    image: rust:1.75
+    image: *rust_image
     environment:
       CARGO_HOME: .cargo_home
     commands:
@@ -36,12 +38,13 @@ steps:
       - cargo clippy --tests --all-targets --all-features
 
   cargo_test:
-    image: rust:1.75
+    image: *rust_image
     environment:
       LEMMY_DATABASE_URL: postgres://ibis:password@database:5432/ibis
       RUST_BACKTRACE: "1"
       CARGO_HOME: .cargo_home
     commands:
+      - apt install postgresql
       - cargo test --no-fail-fast
 
 services:
