@@ -2,23 +2,6 @@ variables:
   - &rust_image "rust:1.75"
 
 steps:
-  cargo_test:
-    image: *rust_image
-    environment:
-      LEMMY_DATABASE_URL: postgres://ibis:password@database:5432/ibis
-      CARGO_HOME: .cargo_home
-    commands:
-      - apt-get update
-      - apt-get install postgresql sudo -y --no-install-recommends --no-install-suggests
-      - adduser testuser
-      - cp /usr/local/rustup /home/testuser/.rustup -r
-      - ls -la /home/testuser/.rustup
-      - chown testuser:testuser . -R
-      - chown testuser:testuser /home/testuser -R
-      - export PATH="/usr/lib/postgresql/15/bin:/usr/local/cargo/bin:$PATH"
-      #- sudo -u testuser env "PATH=$PATH" rustup default stable
-      - sudo -u testuser env "PATH=$PATH" cargo test --no-fail-fast
-
   cargo_fmt:
     image: *rust_image
     environment:
@@ -53,6 +36,22 @@ steps:
     commands:
       - rustup component add clippy
       - cargo clippy --tests --all-targets --all-features
+
+  cargo_test:
+    image: *rust_image
+    environment:
+      LEMMY_DATABASE_URL: postgres://ibis:password@database:5432/ibis
+      CARGO_HOME: .cargo_home
+    commands:
+      - apt-get update
+      - apt-get install postgresql sudo -y --no-install-recommends --no-install-suggests
+      # dbinit (used by tests to create temp db) refuses to run as root so we need to setup another user
+      - adduser testuser
+      - cp /usr/local/rustup /home/testuser/.rustup -r
+      - chown testuser:testuser . -R
+      - chown testuser:testuser /home/testuser -R
+      - export PATH="/usr/lib/postgresql/15/bin:/usr/local/cargo/bin:$PATH"
+      - sudo -u testuser env "PATH=$PATH" cargo test --no-fail-fast
 
 services:
   database:
