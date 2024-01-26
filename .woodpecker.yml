@@ -6,9 +6,9 @@ steps:
     image: *rust_image
     environment:
       LEMMY_DATABASE_URL: postgres://ibis:password@database:5432/ibis
-      RUST_BACKTRACE: "1"
       CARGO_HOME: .cargo_home
     commands:
+      - which cargo
       - apt-get update
       - apt-get install postgresql sudo -y --no-install-recommends --no-install-suggests
       - adduser testuser
