@@ -45,10 +45,9 @@ steps:
       CARGO_HOME: .cargo_home
     commands:
       - apt-get update
-      - apt-get install -y postgresql
-      - ls -la /usr/lib/postgresql/15/bin
-      - export PATH="/usr/lib/postgresql/15/bin:$PATH"
-      - cargo test --no-fail-fast
+      - apt-get install postgresql -y --no-install-recommends --no-install-suggests
+      - adduser testuser
+      - PATH="/usr/lib/postgresql/15/bin:$PATH" sudo -u testuser cargo test --no-fail-fast
 
 services:
   database:
