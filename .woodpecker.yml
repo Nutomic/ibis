@@ -12,7 +12,7 @@ steps:
       - apt-get update
       - apt-get install postgresql sudo -y --no-install-recommends --no-install-suggests
       - adduser testuser
-      - PATH="/usr/lib/postgresql/15/bin:/usr/local/cargo/bin/:$PATH" sudo -u testuser cargo test --no-fail-fast
+      - PATH="/usr/lib/postgresql/15/bin:/usr/local/cargo/bin:$PATH" sudo -u testuser cargo test --no-fail-fast
 
   cargo_fmt:
     image: *rust_image
