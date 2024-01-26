@@ -45,7 +45,7 @@ steps:
       CARGO_HOME: .cargo_home
     commands:
       - apt-get update
-      - apt-get install postgresql
+      - apt-get install -y postgresql
       - cargo test --no-fail-fast
 
 services:
