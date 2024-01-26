@@ -95,8 +95,8 @@ impl IbisInstance {
         spawn(move || {
             Command::new("./tests/scripts/start_dev_db.sh")
                 .arg(&db_path)
-                .stdout(Stdio::null())
-                .stderr(Stdio::null())
+                .stdout(Stdio::inherit())
+                .stderr(Stdio::inherit())
                 .output()
                 .unwrap();
         })

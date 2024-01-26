@@ -50,7 +50,7 @@ pub fn EditArticle() -> impl IntoView {
     );
 
     view! {
-        <ArticleNav article=article.clone()/>
+        <ArticleNav article=article/>
         <Show
             when=move || edit_response.get().is_some()
             fallback=move || {

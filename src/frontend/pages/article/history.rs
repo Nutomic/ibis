@@ -10,7 +10,7 @@ pub fn ArticleHistory() -> impl IntoView {
     let article = article_resource(title.unwrap());
 
     view! {
-        <ArticleNav article=article.clone()/>
+        <ArticleNav article=article/>
         <Suspense fallback=|| view! {  "Loading..." }> {
             move || article.get().map(|article| {
                 let title = article.article.title;

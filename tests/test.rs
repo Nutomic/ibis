@@ -41,13 +41,15 @@ async fn test_create_read_and_edit_local_article() -> MyResult<()> {
     // edit article
     let edit_form = EditArticleData {
         article_id: create_res.article.id,
-        new_text: "Lorem Ipsum 2".to_string(),
+        new_text: "Lorem Ipsum 2\n".to_string(),
+        summary: "summary".to_string(),
         previous_version_id: get_res.latest_version,
         resolve_conflict_id: None,
     };
     let edit_res = data.alpha.edit_article(&edit_form).await?;
     assert_eq!(edit_form.new_text, edit_res.article.text);
     assert_eq!(2, edit_res.edits.len());
+    assert_eq!(edit_form.summary, edit_res.edits[1].summary);
 
     let search_form = SearchArticleData {
         query: title.clone(),
@@ -134,6 +136,7 @@ async fn test_synchronize_articles() -> MyResult<()> {
     let edit_form = EditArticleData {
         article_id: create_res.article.id,
         new_text: "Lorem Ipsum 2\n".to_string(),
+        summary: "summary".to_string(),
         previous_version_id: create_res.latest_version,
         resolve_conflict_id: None,
     };
@@ -197,7 +200,8 @@ async fn test_edit_local_article() -> MyResult<()> {
     // edit the article
     let edit_form = EditArticleData {
         article_id: create_res.article.id,
-        new_text: "Lorem Ipsum 2".to_string(),
+        new_text: "Lorem Ipsum 2\n".to_string(),
+        summary: "summary".to_string(),
         previous_version_id: get_res.latest_version,
         resolve_conflict_id: None,
     };
@@ -262,7 +266,8 @@ async fn test_edit_remote_article() -> MyResult<()> {
 
     let edit_form = EditArticleData {
         article_id: get_res.article.id,
-        new_text: "Lorem Ipsum 2".to_string(),
+        new_text: "Lorem Ipsum 2\n".to_string(),
+        summary: "summary".to_string(),
         previous_version_id: get_res.latest_version,
         resolve_conflict_id: None,
     };
@@ -306,6 +311,7 @@ async fn test_local_edit_conflict() -> MyResult<()> {
     let edit_form = EditArticleData {
         article_id: create_res.article.id,
         new_text: "Lorem Ipsum\n".to_string(),
+        summary: "summary".to_string(),
         previous_version_id: create_res.latest_version.clone(),
         resolve_conflict_id: None,
     };
@@ -317,6 +323,7 @@ async fn test_local_edit_conflict() -> MyResult<()> {
     let edit_form = EditArticleData {
         article_id: create_res.article.id,
         new_text: "Ipsum Lorem\n".to_string(),
+        summary: "summary".to_string(),
         previous_version_id: create_res.latest_version,
         resolve_conflict_id: None,
     };
@@ -334,6 +341,7 @@ async fn test_local_edit_conflict() -> MyResult<()> {
     let edit_form = EditArticleData {
         article_id: create_res.article.id,
         new_text: "Lorem Ipsum and Ipsum Lorem\n".to_string(),
+        summary: "summary".to_string(),
         previous_version_id: edit_res.previous_version_id,
         resolve_conflict_id: Some(edit_res.id),
     };
@@ -380,6 +388,7 @@ async fn test_federated_edit_conflict() -> MyResult<()> {
     let edit_form = EditArticleData {
         article_id: get_res.article.id,
         new_text: "Lorem Ipsum\n".to_string(),
+        summary: "summary".to_string(),
         previous_version_id: create_res.latest_version.clone(),
         resolve_conflict_id: None,
     };
@@ -397,6 +406,7 @@ async fn test_federated_edit_conflict() -> MyResult<()> {
     let edit_form = EditArticleData {
         article_id: resolve_res.article.id,
         new_text: "aaaa\n".to_string(),
+        summary: "summary".to_string(),
         previous_version_id: create_res.latest_version,
         resolve_conflict_id: None,
     };
@@ -412,6 +422,7 @@ async fn test_federated_edit_conflict() -> MyResult<()> {
     let edit_form = EditArticleData {
         article_id: resolve_res.article.id,
         new_text: "aaaa\n".to_string(),
+        summary: "summary".to_string(),
         previous_version_id: conflicts[0].previous_version_id.clone(),
         resolve_conflict_id: Some(conflicts[0].id.clone()),
     };
@@ -442,6 +453,7 @@ async fn test_overlapping_edits_no_conflict() -> MyResult<()> {
     let edit_form = EditArticleData {
         article_id: create_res.article.id,
         new_text: "my\nexample\ntext\n".to_string(),
+        summary: "summary".to_string(),
         previous_version_id: create_res.latest_version.clone(),
         resolve_conflict_id: None,
     };
@@ -453,6 +465,7 @@ async fn test_overlapping_edits_no_conflict() -> MyResult<()> {
     let edit_form = EditArticleData {
         article_id: create_res.article.id,
         new_text: "some\nexample\narticle\n".to_string(),
+        summary: "summary".to_string(),
         previous_version_id: create_res.latest_version,
         resolve_conflict_id: None,
     };

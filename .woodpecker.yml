@@ -1,0 +1,61 @@
+variables:
+  - &rust_image "rust:1.75"
+
+steps:
+  cargo_fmt:
+    image: *rust_image
+    environment:
+      # store cargo data in repo folder so that it gets cached between steps
+      CARGO_HOME: .cargo_home
+    commands:
+      - rustup component add rustfmt
+      - cargo fmt -- --check
+
+  frontend_wasm_build:
+    image: *rust_image
+    environment:
+      CARGO_HOME: .cargo_home
+    commands:
+      - "rustup target add wasm32-unknown-unknown"
+      - "cargo check --target wasm32-unknown-unknown --features csr,hydrate --no-default-features"
+
+  check_diesel_schema:
+    image: willsquire/diesel-cli
+    environment:
+      CARGO_HOME: .cargo_home
+      DATABASE_URL: postgres://ibis:password@database:5432/ibis
+    commands:
+      - diesel migration run
+      - diesel print-schema --config-file=diesel.toml > tmp.schema
+      - diff tmp.schema src/backend/database/schema.rs
+
+  cargo_clippy:
+    image: *rust_image
+    environment:
+      CARGO_HOME: .cargo_home
+    commands:
+      - rustup component add clippy
+      - cargo clippy --tests --all-targets --all-features
+
+  cargo_test:
+    image: *rust_image
+    environment:
+      LEMMY_DATABASE_URL: postgres://ibis:password@database:5432/ibis
+      CARGO_HOME: .cargo_home
+    commands:
+      - apt-get update
+      - apt-get install postgresql sudo -y --no-install-recommends --no-install-suggests
+      # dbinit (used by tests to create temp db) refuses to run as root so we need to setup another user
+      - adduser testuser
+      - cp /usr/local/rustup /home/testuser/.rustup -r
+      - chown testuser:testuser . -R
+      - chown testuser:testuser /home/testuser -R
+      - export PATH="/usr/lib/postgresql/15/bin:/usr/local/cargo/bin:$PATH"
+      - sudo -u testuser env "PATH=$PATH" cargo test --no-fail-fast
+
+services:
+  database:
+    image: postgres:15.2-alpine
+    environment:
+      POSTGRES_USER: ibis
+      POSTGRES_PASSWORD: password
