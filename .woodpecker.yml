@@ -46,8 +46,8 @@ steps:
     commands:
       - apt-get update
       - apt-get install -y postgresql
-      - ls -la /usr/lib/postgresql/
-      - export PATH="/usr/lib/postgresql/15.1/bin:$PATH"
+      - ls -la /usr/lib/postgresql/bin
+      - export PATH="/usr/lib/postgresql/15/bin:$PATH"
       - cargo test --no-fail-fast
 
 services:
