@@ -12,6 +12,7 @@ steps:
       - apt-get install postgresql sudo -y --no-install-recommends --no-install-suggests
       - adduser testuser
       - ls -la ~
+      - cat ~/*
       - cp ~/.cargo /home/testuser -r
       - chown testuser:testuser . -R
       - chown testuser:testuser /home/testuser -R
