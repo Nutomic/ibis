@@ -6,7 +6,7 @@ use leptos_router::*;
 #[component]
 pub fn ArticleHistory() -> impl IntoView {
     let params = use_params_map();
-    let title = params.get().get("title").cloned();
+    let title = params.get_untracked().get("title").cloned();
     let article = article_resource(title.unwrap());
 
     view! {

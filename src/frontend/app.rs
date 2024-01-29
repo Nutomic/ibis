@@ -22,19 +22,11 @@ use reqwest::Client;
 // https://book.leptos.dev/15_global_state.html
 #[derive(Clone)]
 pub struct GlobalState {
-    // TODO: remove
-    backend_hostname: String,
     api_client: ApiClient,
     pub(crate) my_profile: Option<LocalUserView>,
 }
 
 impl GlobalState {
-    pub fn read_hostname() -> String {
-        use_context::<RwSignal<GlobalState>>()
-            .expect("backend hostname is provided")
-            .get_untracked()
-            .backend_hostname
-    }
     pub fn api_client() -> ApiClient {
         use_context::<RwSignal<GlobalState>>()
             .expect("global state is provided")
@@ -60,7 +52,6 @@ pub fn App() -> impl IntoView {
 
     provide_meta_context();
     let backend_hostname = GlobalState {
-        backend_hostname: backend_hostname.clone(),
         api_client: ApiClient::new(Client::new(), backend_hostname.clone()),
         my_profile: None,
     };
