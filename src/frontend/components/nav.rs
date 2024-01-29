@@ -12,10 +12,27 @@ pub fn Nav() -> impl IntoView {
             .get_untracked()
             .update_my_profile();
     });
+    let (search_query, set_search_query) = create_signal(String::new());
     view! {
         <nav class="inner">
             <li>
                 <A href="/">"Main Page"</A>
+            </li>
+            <li>
+                <form on:submit=move |ev| {
+                    ev.prevent_default();
+                    let navigate = leptos_router::use_navigate();
+                    let query = search_query.get();
+                    navigate(&format!("/search?query={query}"), Default::default());
+                }>
+                    <input type="text" placeholder="Search"
+                        prop:value=search_query
+                        on:keyup=move |ev: ev::KeyboardEvent| {
+                            let val = event_target_value(&ev);
+                            set_search_query.update(|v| *v = val);
+                        } />
+                    <button>Go</button>
+                </form>
             </li>
             <Show
                 when=move || global_state.with(|state| state.my_profile.is_none())

@@ -61,7 +61,7 @@ pub fn EditArticle() -> impl IntoView {
                             set_text.set(article.article.text.clone());
                             view! {
                                 <div class="item-view">
-                                    <h1>{article.article.title.replace('_', " ")}</h1>
+                                    <h1>{article.article.title()}</h1>
                                     <textarea on:keyup=move |ev| {
                                         let val = event_target_value(&ev);
                                         set_text.update(|p| *p = val);

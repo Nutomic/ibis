@@ -13,13 +13,12 @@ pub fn ArticleHistory() -> impl IntoView {
         <ArticleNav article=article/>
         <Suspense fallback=|| view! {  "Loading..." }> {
             move || article.get().map(|article| {
-                let title = article.article.title;
                 view! {
                     <div class="item-view">
-                        <h1>{title.replace('_', " ")}</h1>
+                        <h1>{article.article.title()}</h1>
                         {
                             article.edits.into_iter().rev().map(|edit| {
-                                let path = format!("/article/{title}/diff/{}", edit.hash.0);
+                                let path = format!("/article/{}/diff/{}", article.article.title, edit.hash.0);
                                 // TODO: need to return username from backend and show it
                                 let label = format!("{} ({})", edit.summary, edit.created.to_rfc2822());
                                 view! {<li><a href={path}>{label}</a></li> }

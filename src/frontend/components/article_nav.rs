@@ -7,7 +7,7 @@ use leptos_router::*;
 pub fn ArticleNav(article: Resource<String, ArticleView>) -> impl IntoView {
     let global_state = use_context::<RwSignal<GlobalState>>().unwrap();
     view! {
-        <Suspense fallback=|| view! {  "Loading..." }>
+        <Suspense>
             {move || article.get().map(|article| {
                 let title = article.article.title;
                 view!{

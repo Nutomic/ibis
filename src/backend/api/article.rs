@@ -6,12 +6,12 @@ use crate::backend::error::MyResult;
 use crate::backend::federation::activities::create_article::CreateArticle;
 use crate::backend::federation::activities::submit_article_update;
 use crate::backend::utils::generate_article_version;
-use crate::common::DbInstance;
 use crate::common::GetArticleData;
 use crate::common::LocalUserView;
 use crate::common::{ApiConflict, ResolveObject};
 use crate::common::{ArticleView, DbArticle, DbEdit};
 use crate::common::{CreateArticleData, EditArticleData, EditVersion, ForkArticleData};
+use crate::common::{DbInstance, SearchArticleData};
 use activitypub_federation::config::Data;
 use activitypub_federation::fetch::object_id::ObjectId;
 use anyhow::anyhow;
@@ -202,4 +202,14 @@ pub(super) async fn resolve_article(
         edits,
         latest_version,
     }))
+}
+
+/// Search articles for matching title or body text.
+#[debug_handler]
+pub(super) async fn search_article(
+    Query(query): Query<SearchArticleData>,
+    data: Data<MyDataHandle>,
+) -> MyResult<Json<Vec<DbArticle>>> {
+    let article = DbArticle::search(&query.query, &data.db_connection)?;
+    Ok(Json(article))
 }

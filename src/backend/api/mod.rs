@@ -1,4 +1,4 @@
-use crate::backend::api::article::{create_article, resolve_article};
+use crate::backend::api::article::{create_article, resolve_article, search_article};
 use crate::backend::api::article::{edit_article, fork_article, get_article};
 use crate::backend::api::instance::get_local_instance;
 use crate::backend::api::instance::{follow_instance, resolve_instance};
@@ -9,10 +9,9 @@ use crate::backend::api::user::{my_profile, AUTH_COOKIE};
 use crate::backend::database::conflict::DbConflict;
 use crate::backend::database::MyDataHandle;
 use crate::backend::error::MyResult;
+use crate::common::ApiConflict;
 use crate::common::LocalUserView;
-use crate::common::{ApiConflict, DbArticle, SearchArticleData};
 use activitypub_federation::config::Data;
-use axum::extract::Query;
 use axum::routing::{get, post};
 use axum::{
     http::Request,
@@ -84,14 +83,4 @@ async fn edit_conflicts(
     .flatten()
     .collect();
     Ok(Json(conflicts))
-}
-
-/// Search articles for matching title or body text.
-#[debug_handler]
-async fn search_article(
-    Query(query): Query<SearchArticleData>,
-    data: Data<MyDataHandle>,
-) -> MyResult<Json<Vec<DbArticle>>> {
-    let article = DbArticle::search(&query.query, &data.db_connection)?;
-    Ok(Json(article))
 }

@@ -7,6 +7,7 @@ use crate::frontend::pages::article::read::ReadArticle;
 use crate::frontend::pages::diff::EditDiff;
 use crate::frontend::pages::login::Login;
 use crate::frontend::pages::register::Register;
+use crate::frontend::pages::search::Search;
 use crate::frontend::pages::Page;
 use leptos::{
     component, create_local_resource, create_rw_signal, expect_context, provide_context,
@@ -74,6 +75,7 @@ pub fn App() -> impl IntoView {
                         <Route path="/article/:title/diff/:hash" view=EditDiff/>
                         <Route path={Page::Login.path()} view=Login/>
                         <Route path={Page::Register.path()} view=Register/>
+                        <Route path="/search" view=Search/>
                     </Routes>
                 </main>
             </Router>

@@ -21,7 +21,7 @@ pub fn ReadArticle() -> impl IntoView {
             move || article.get().map(|article|
             view! {
                 <div class="item-view">
-                    <h1>{article.article.title.replace('_', " ")}</h1>
+                    <h1>{article.article.title()}</h1>
                     <div inner_html={parser.parse(&article.article.text).render()}/>
                 </div>
             })

@@ -44,6 +44,12 @@ pub struct DbArticle {
     pub local: bool,
 }
 
+impl DbArticle {
+    pub fn title(&self) -> String {
+        self.title.replace('_', " ")
+    }
+}
+
 /// Represents a single change to the article.
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[cfg_attr(feature = "ssr", derive(Queryable, Selectable))]

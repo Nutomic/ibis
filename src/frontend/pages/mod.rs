@@ -6,6 +6,7 @@ pub(crate) mod article;
 pub(crate) mod diff;
 pub mod login;
 pub mod register;
+pub(crate) mod search;
 
 #[derive(Debug, Clone, Copy, Default)]
 pub enum Page {

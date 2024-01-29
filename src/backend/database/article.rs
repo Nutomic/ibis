@@ -131,6 +131,7 @@ impl DbArticle {
             .replace('%', "\\%")
             .replace('_', "\\_")
             .replace(' ', "%");
+        let replaced = format!("%{replaced}%");
         Ok(article::table
             .filter(
                 article::dsl::title
