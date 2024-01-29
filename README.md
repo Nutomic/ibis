@@ -19,6 +19,9 @@ CARGO_TARGET_DIR=target/backend cargo watch -c -x run
 # start frontend, automatic rebuild on changes
 trunk serve -w src/frontend/
 ```
+
+Then open the site at [127.0.0.1:8080](http://127.0.0.1:8080/).
+
 ## License
 
 [AGPL](LICENSE)
