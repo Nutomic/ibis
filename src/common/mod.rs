@@ -1,5 +1,6 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use url::Url;
 use uuid::Uuid;
 #[cfg(feature = "ssr")]
@@ -79,6 +80,26 @@ pub struct DbEdit {
 #[cfg_attr(feature = "ssr", derive(diesel_derive_newtype::DieselNewType))]
 pub struct EditVersion(pub(crate) Uuid);
 
+impl EditVersion {
+    pub fn new(diff: &str) -> Self {
+        let mut sha256 = Sha256::new();
+        sha256.update(diff);
+        let hash_bytes = sha256.finalize();
+        let uuid = Uuid::from_slice(&hash_bytes.as_slice()[..16]).unwrap();
+        EditVersion(uuid)
+    }
+
+    pub fn hash(&self) -> String {
+        hex::encode(self.0.into_bytes())
+    }
+}
+
+impl Default for EditVersion {
+    fn default() -> Self {
+        EditVersion::new("")
+    }
+}
+
 #[derive(Deserialize, Serialize, Clone)]
 pub struct RegisterUserData {
     pub username: String,
@@ -133,6 +154,8 @@ pub struct DbPerson {
 #[derive(Deserialize, Serialize)]
 pub struct CreateArticleData {
     pub title: String,
+    pub text: String,
+    pub summary: String,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -212,4 +235,13 @@ pub struct InstanceView {
     pub instance: DbInstance,
     pub followers: Vec<DbPerson>,
     pub following: Vec<DbInstance>,
+}
+
+#[test]
+fn test_edit_versions() {
+    let default = EditVersion::default();
+    assert_eq!("e3b0c44298fc1c149afbf4c8996fb924", default.hash());
+
+    let version = EditVersion::new("test");
+    assert_eq!("9f86d081884c7d659a2feaa0c55ad015", version.hash());
 }

@@ -18,6 +18,12 @@ pub fn Nav() -> impl IntoView {
             <li>
                 <A href="/">"Main Page"</A>
             </li>
+            <Show
+                when=move || global_state.with(|state| state.my_profile.is_some())>
+                <li>
+                    <A href="/article/create">"Create Article"</A>
+                </li>
+            </Show>
             <li>
                 <form on:submit=move |ev| {
                     ev.prevent_default();

@@ -32,7 +32,7 @@ impl DbEditForm {
         previous_version_id: EditVersion,
     ) -> MyResult<Self> {
         let diff = create_patch(&original_article.text, updated_text);
-        let version = EditVersion::new(&diff.to_string())?;
+        let version = EditVersion::new(&diff.to_string());
         let ap_id = Self::generate_ap_id(original_article, &version)?;
         Ok(DbEditForm {
             hash: version,

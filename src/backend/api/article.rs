@@ -26,14 +26,14 @@ use diffy::create_patch;
 /// Create a new article with empty text, and federate it to followers.
 #[debug_handler]
 pub(in crate::backend::api) async fn create_article(
-    Extension(_user): Extension<LocalUserView>,
+    Extension(user): Extension<LocalUserView>,
     data: Data<MyDataHandle>,
     Form(create_article): Form<CreateArticleData>,
 ) -> MyResult<Json<ArticleView>> {
     let local_instance = DbInstance::read_local_instance(&data.db_connection)?;
     let ap_id = ObjectId::parse(&format!(
         "http://{}:{}/article/{}",
-        local_instance.ap_id.inner().domain().unwrap(),
+        local_instance.ap_id.inner().host_str().unwrap(),
         local_instance.ap_id.inner().port().unwrap(),
         create_article.title
     ))?;
@@ -46,9 +46,19 @@ pub(in crate::backend::api) async fn create_article(
     };
     let article = DbArticle::create(&form, &data.db_connection)?;
 
-    CreateArticle::send_to_followers(article.clone(), &data).await?;
+    let edit_data = EditArticleData {
+        article_id: article.id,
+        new_text: create_article.text,
+        summary: create_article.summary,
+        previous_version_id: article.latest_edit_version(&data.db_connection)?,
+        resolve_conflict_id: None,
+    };
+    let _ = edit_article(Extension(user), data.reset_request_count(), Form(edit_data)).await?;
 
-    Ok(Json(DbArticle::read_view(article.id, &data.db_connection)?))
+    let article_view = DbArticle::read_view(article.id, &data.db_connection)?;
+    CreateArticle::send_to_followers(article_view.article.clone(), &data).await?;
+
+    Ok(Json(article_view))
 }
 
 /// Edit an existing article (local or remote).
@@ -103,7 +113,7 @@ pub(in crate::backend::api) async fn edit_article(
 
         let previous_version = DbEdit::read(&edit_form.previous_version_id, &data.db_connection)?;
         let form = DbConflictForm {
-            id: EditVersion::new(&patch.to_string())?,
+            id: EditVersion::new(&patch.to_string()),
             diff: patch.to_string(),
             summary: edit_form.summary.clone(),
             creator_id: user.local_user.id,

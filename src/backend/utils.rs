@@ -51,7 +51,7 @@ mod test {
             Ok(DbEdit {
                 id: 0,
                 creator_id: 0,
-                hash: EditVersion::new(&diff)?,
+                hash: EditVersion::new(&diff),
                 ap_id: ObjectId::parse("http://example.com")?,
                 diff,
                 summary: String::new(),
@@ -79,7 +79,7 @@ mod test {
     #[test]
     fn test_generate_invalid_version() -> MyResult<()> {
         let edits = create_edits()?;
-        let generated = generate_article_version(&edits, &EditVersion::new("invalid")?);
+        let generated = generate_article_version(&edits, &EditVersion::new("invalid"));
         assert!(generated.is_err());
         Ok(())
     }

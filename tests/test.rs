@@ -3,8 +3,8 @@ extern crate ibis_lib;
 mod common;
 
 use crate::common::{TestData, TEST_ARTICLE_DEFAULT_TEXT};
-use ibis_lib::common::SearchArticleData;
 use ibis_lib::common::{ArticleView, EditArticleData, ForkArticleData, GetArticleData};
+use ibis_lib::common::{CreateArticleData, SearchArticleData};
 use ibis_lib::common::{LoginUserData, RegisterUserData};
 use ibis_lib::frontend::error::MyResult;
 use pretty_assertions::{assert_eq, assert_ne};
@@ -15,12 +15,13 @@ async fn test_create_read_and_edit_local_article() -> MyResult<()> {
     let data = TestData::start().await;
 
     // create article
-    let title = "Manu_Chao".to_string();
-    let create_res = data
-        .alpha
-        .create_article(title.clone(), TEST_ARTICLE_DEFAULT_TEXT.to_string())
-        .await?;
-    assert_eq!(title, create_res.article.title);
+    let create_form = CreateArticleData {
+        title: "Manu_Chao".to_string(),
+        text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
+        summary: "create article".to_string(),
+    };
+    let create_res = data.alpha.create_article(&create_form).await?;
+    assert_eq!(create_form.title, create_res.article.title);
     assert!(create_res.article.local);
 
     // now article can be read
@@ -30,7 +31,7 @@ async fn test_create_read_and_edit_local_article() -> MyResult<()> {
         id: None,
     };
     let get_res = data.alpha.get_article(get_article_data.clone()).await?;
-    assert_eq!(title, get_res.article.title);
+    assert_eq!(create_form.title, get_res.article.title);
     assert_eq!(TEST_ARTICLE_DEFAULT_TEXT, get_res.article.text);
     assert!(get_res.article.local);
 
@@ -52,7 +53,7 @@ async fn test_create_read_and_edit_local_article() -> MyResult<()> {
     assert_eq!(edit_form.summary, edit_res.edits[1].summary);
 
     let search_form = SearchArticleData {
-        query: title.clone(),
+        query: create_form.title.clone(),
     };
     let search_res = data.alpha.search(&search_form).await?;
     assert_eq!(1, search_res.len());
@@ -66,18 +67,16 @@ async fn test_create_duplicate_article() -> MyResult<()> {
     let data = TestData::start().await;
 
     // create article
-    let title = "Manu_Chao".to_string();
-    let create_res = data
-        .alpha
-        .create_article(title.clone(), TEST_ARTICLE_DEFAULT_TEXT.to_string())
-        .await?;
-    assert_eq!(title, create_res.article.title);
+    let create_form = CreateArticleData {
+        title: "Manu_Chao".to_string(),
+        text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
+        summary: "create article".to_string(),
+    };
+    let create_res = data.alpha.create_article(&create_form).await?;
+    assert_eq!(create_form.title, create_res.article.title);
     assert!(create_res.article.local);
 
-    let create_res = data
-        .alpha
-        .create_article(title.clone(), TEST_ARTICLE_DEFAULT_TEXT.to_string())
-        .await;
+    let create_res = data.alpha.create_article(&create_form).await;
     assert!(create_res.is_err());
 
     data.stop()
@@ -123,12 +122,13 @@ async fn test_synchronize_articles() -> MyResult<()> {
     let data = TestData::start().await;
 
     // create article on alpha
-    let title = "Manu_Chao".to_string();
-    let create_res = data
-        .alpha
-        .create_article(title.clone(), TEST_ARTICLE_DEFAULT_TEXT.to_string())
-        .await?;
-    assert_eq!(title, create_res.article.title);
+    let create_form = CreateArticleData {
+        title: "Manu_Chao".to_string(),
+        text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
+        summary: "create article".to_string(),
+    };
+    let create_res = data.alpha.create_article(&create_form).await?;
+    assert_eq!(create_form.title, create_res.article.title);
     assert_eq!(1, create_res.edits.len());
     assert!(create_res.article.local);
 
@@ -162,7 +162,7 @@ async fn test_synchronize_articles() -> MyResult<()> {
     get_article_data.instance_id = Some(instance.id);
     let get_res = data.beta.get_article(get_article_data).await?;
     assert_eq!(create_res.article.ap_id, get_res.article.ap_id);
-    assert_eq!(title, get_res.article.title);
+    assert_eq!(create_form.title, get_res.article.title);
     assert_eq!(2, get_res.edits.len());
     assert_eq!(edit_form.new_text, get_res.article.text);
     assert!(!get_res.article.local);
@@ -177,12 +177,13 @@ async fn test_edit_local_article() -> MyResult<()> {
     let beta_instance = data.alpha.follow_instance(&data.beta.hostname).await?;
 
     // create new article
-    let title = "Manu_Chao".to_string();
-    let create_res = data
-        .beta
-        .create_article(title.clone(), TEST_ARTICLE_DEFAULT_TEXT.to_string())
-        .await?;
-    assert_eq!(title, create_res.article.title);
+    let create_form = CreateArticleData {
+        title: "Manu_Chao".to_string(),
+        text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
+        summary: "create article".to_string(),
+    };
+    let create_res = data.beta.create_article(&create_form).await?;
+    assert_eq!(create_form.title, create_res.article.title);
     assert!(create_res.article.local);
 
     // article should be federated to alpha
@@ -230,12 +231,13 @@ async fn test_edit_remote_article() -> MyResult<()> {
     let beta_id_on_gamma = data.gamma.follow_instance(&data.beta.hostname).await?;
 
     // create new article
-    let title = "Manu_Chao".to_string();
-    let create_res = data
-        .beta
-        .create_article(title.clone(), TEST_ARTICLE_DEFAULT_TEXT.to_string())
-        .await?;
-    assert_eq!(&title, &create_res.article.title);
+    let create_form = CreateArticleData {
+        title: "Manu_Chao".to_string(),
+        text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
+        summary: "create article".to_string(),
+    };
+    let create_res = data.beta.create_article(&create_form).await?;
+    assert_eq!(&create_form.title, &create_res.article.title);
     assert!(create_res.article.local);
 
     // article should be federated to alpha and gamma
@@ -299,12 +301,13 @@ async fn test_local_edit_conflict() -> MyResult<()> {
     let data = TestData::start().await;
 
     // create new article
-    let title = "Manu_Chao".to_string();
-    let create_res = data
-        .alpha
-        .create_article(title.clone(), TEST_ARTICLE_DEFAULT_TEXT.to_string())
-        .await?;
-    assert_eq!(title, create_res.article.title);
+    let create_form = CreateArticleData {
+        title: "Manu_Chao".to_string(),
+        text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
+        summary: "create article".to_string(),
+    };
+    let create_res = data.alpha.create_article(&create_form).await?;
+    assert_eq!(create_form.title, create_res.article.title);
     assert!(create_res.article.local);
 
     // one user edits article
@@ -361,12 +364,13 @@ async fn test_federated_edit_conflict() -> MyResult<()> {
     let beta_id_on_alpha = data.alpha.follow_instance(&data.beta.hostname).await?;
 
     // create new article
-    let title = "Manu_Chao".to_string();
-    let create_res = data
-        .beta
-        .create_article(title.clone(), TEST_ARTICLE_DEFAULT_TEXT.to_string())
-        .await?;
-    assert_eq!(title, create_res.article.title);
+    let create_form = CreateArticleData {
+        title: "Manu_Chao".to_string(),
+        text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
+        summary: "create article".to_string(),
+    };
+    let create_res = data.beta.create_article(&create_form).await?;
+    assert_eq!(create_form.title, create_res.article.title);
     assert!(create_res.article.local);
 
     // fetch article to gamma
@@ -378,7 +382,7 @@ async fn test_federated_edit_conflict() -> MyResult<()> {
 
     // alpha edits article
     let get_article_data = GetArticleData {
-        title: Some(title.to_string()),
+        title: Some(create_form.title.to_string()),
         instance_id: Some(beta_id_on_alpha.id),
         id: None,
     };
@@ -441,12 +445,13 @@ async fn test_overlapping_edits_no_conflict() -> MyResult<()> {
     let data = TestData::start().await;
 
     // create new article
-    let title = "Manu_Chao".to_string();
-    let create_res = data
-        .alpha
-        .create_article(title.clone(), TEST_ARTICLE_DEFAULT_TEXT.to_string())
-        .await?;
-    assert_eq!(title, create_res.article.title);
+    let create_form = CreateArticleData {
+        title: "Manu_Chao".to_string(),
+        text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
+        summary: "create article".to_string(),
+    };
+    let create_res = data.alpha.create_article(&create_form).await?;
+    assert_eq!(create_form.title, create_res.article.title);
     assert!(create_res.article.local);
 
     // one user edits article
@@ -483,12 +488,13 @@ async fn test_fork_article() -> MyResult<()> {
     let data = TestData::start().await;
 
     // create article
-    let title = "Manu_Chao".to_string();
-    let create_res = data
-        .alpha
-        .create_article(title.clone(), TEST_ARTICLE_DEFAULT_TEXT.to_string())
-        .await?;
-    assert_eq!(title, create_res.article.title);
+    let create_form = CreateArticleData {
+        title: "Manu_Chao".to_string(),
+        text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
+        summary: "create article".to_string(),
+    };
+    let create_res = data.alpha.create_article(&create_form).await?;
+    assert_eq!(create_form.title, create_res.article.title);
     assert!(create_res.article.local);
 
     // fetch on beta
@@ -520,7 +526,7 @@ async fn test_fork_article() -> MyResult<()> {
 
     // now search returns two articles for this title (original and forked)
     let search_form = SearchArticleData {
-        query: title.clone(),
+        query: create_form.title.clone(),
     };
     let search_res = data.beta.search(&search_form).await?;
     assert_eq!(2, search_res.len());

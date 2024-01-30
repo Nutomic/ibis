@@ -56,26 +56,12 @@ impl ApiClient {
         handle_json_res::<LocalUserView>(req).await
     }
 
-    pub async fn create_article(&self, title: String, new_text: String) -> MyResult<ArticleView> {
-        let create_form = CreateArticleData {
-            title: title.clone(),
-        };
+    pub async fn create_article(&self, data: &CreateArticleData) -> MyResult<ArticleView> {
         let req = self
             .client
             .post(format!("http://{}/api/v1/article", &self.hostname))
-            .form(&create_form);
-        let article: ArticleView = handle_json_res(req).await?;
-
-        // create initial edit to ensure that conflicts are generated (there are no conflicts on empty file)
-        // TODO: maybe take initial text directly in create article, no reason to have empty article
-        let edit_form = EditArticleData {
-            article_id: article.article.id,
-            new_text,
-            summary: "initial text".to_string(),
-            previous_version_id: article.latest_version,
-            resolve_conflict_id: None,
-        };
-        Ok(self.edit_article(&edit_form).await.unwrap())
+            .form(data);
+        handle_json_res(req).await
     }
 
     pub async fn edit_article_with_conflict(
