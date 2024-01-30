@@ -11,16 +11,14 @@ The Ibis is a [bird which is related to the Egyptian god of knowledge and scienc
 
 You need to install [cargo](https://rustup.rs/) and [trunk](https://trunkrs.dev). Then run the following commands in separate terminals:
 ```
-# start backend, with separate target folder to avoid rebuilds from arch change
-cargo run --target-dir target/backend
-# or with automatic rebuild on changes using cargo-watch
-CARGO_TARGET_DIR=target/backend cargo watch -c -x run
+# start backend
+cargo run
 
-# start frontend, automatic rebuild on changes
+# start frontend with automatic rebuild on changes
 trunk serve -w src/frontend/
 ```
 
-Then open the site at [127.0.0.1:8080](http://127.0.0.1:8080/).
+Then open the site at [127.0.0.1:8080](http://127.0.0.1:8080/). Alternatively you can run `./scripts/watch.sh` to rebuild backend and frontend automatically on code changes (requires [cargo-watch](https://crates.io/crates/cargo-watch)).
 
 ## License
 
