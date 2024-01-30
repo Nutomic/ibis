@@ -7,8 +7,10 @@ pub async fn main() -> ibis_lib::backend::error::MyResult<()> {
         .filter_module("activitypub_federation", LevelFilter::Info)
         .filter_module("ibis", LevelFilter::Info)
         .init();
-    let database_url = "postgres://ibis:password@localhost:5432/ibis";
-    ibis_lib::backend::start("127.0.0.1:8131", database_url).await?;
+    let database_url = std::env::var("IBIS_DATABASE_URL")
+        .unwrap_or("postgres://ibis:password@localhost:5432/ibis".to_string());
+    let port = std::env::var("IBIS_BACKEND_PORT").unwrap_or("8081".to_string());
+    ibis_lib::backend::start(&format!("127.0.0.1:{port}"), &database_url).await?;
     Ok(())
 }
 

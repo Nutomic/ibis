@@ -76,7 +76,6 @@ pretty_assertions = "1.4.0"
 output-name = "ibis"
 bin-features = ["ssr"]
 lib-features = ["csr"]
-site-addr = "127.0.0.1:8131"
 
 [lib]
 name = "ibis_lib"

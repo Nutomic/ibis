@@ -20,6 +20,8 @@ trunk serve -w src/frontend/
 
 Then open the site at [127.0.0.1:8080](http://127.0.0.1:8080/). Alternatively you can run `./scripts/watch.sh` to rebuild backend and frontend automatically on code changes (requires [cargo-watch](https://crates.io/crates/cargo-watch)).
 
+By default the frontend runs on port 8080, which can be changed with env var `TRUNK_SERVE_PORT`. The backend port is 8081 and can be changed with `IBIS_BACKEND_PORT`.
+
 ## License
 
 [AGPL](LICENSE)

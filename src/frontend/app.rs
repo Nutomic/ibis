@@ -49,7 +49,8 @@ impl GlobalState {
 
 #[component]
 pub fn App() -> impl IntoView {
-    let backend_hostname = "127.0.0.1:8080".to_string();
+    let port = option_env!("TRUNK_SERVE_PORT").unwrap_or("8080");
+    let backend_hostname = format!("127.0.0.1:{port}");
 
     provide_meta_context();
     let backend_hostname = GlobalState {
