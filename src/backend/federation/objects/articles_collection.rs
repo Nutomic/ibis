@@ -37,7 +37,7 @@ impl Collection for DbArticleCollection {
         owner: &Self::Owner,
         data: &Data<Self::DataType>,
     ) -> Result<Self::Kind, Self::Error> {
-        let local_articles = DbArticle::read_all_local(&data.db_connection)?;
+        let local_articles = DbArticle::read_all(true, &data.db_connection)?;
         let articles = future::try_join_all(
             local_articles
                 .into_iter()

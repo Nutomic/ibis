@@ -21,6 +21,11 @@ pub struct GetArticleData {
     pub id: Option<i32>,
 }
 
+#[derive(Deserialize, Serialize, Clone)]
+pub struct ListArticlesData {
+    pub only_local: Option<bool>,
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[cfg_attr(feature = "ssr", derive(Queryable))]
 #[cfg_attr(feature = "ssr", diesel(table_name = article, check_for_backend(diesel::pg::Pg)))]

@@ -18,6 +18,9 @@ pub fn Nav() -> impl IntoView {
             <li>
                 <A href="/">"Main Page"</A>
             </li>
+            <li>
+                <A href="/article/list">"List Articles"</A>
+            </li>
             <Show
                 when=move || global_state.with(|state| state.my_profile.is_some())>
                 <li>

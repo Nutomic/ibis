@@ -1,4 +1,6 @@
-use crate::backend::api::article::{create_article, resolve_article, search_article};
+use crate::backend::api::article::{
+    create_article, list_articles, resolve_article, search_article,
+};
 use crate::backend::api::article::{edit_article, fork_article, get_article};
 use crate::backend::api::instance::get_local_instance;
 use crate::backend::api::instance::{follow_instance, resolve_instance};
@@ -36,6 +38,7 @@ pub fn api_routes() -> Router {
             "/article",
             get(get_article).post(create_article).patch(edit_article),
         )
+        .route("/article/list", get(list_articles))
         .route("/article/fork", post(fork_article))
         .route("/article/resolve", get(resolve_article))
         .route("/edit_conflicts", get(edit_conflicts))

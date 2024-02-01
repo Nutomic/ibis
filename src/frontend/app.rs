@@ -4,6 +4,7 @@ use crate::frontend::components::nav::Nav;
 use crate::frontend::pages::article::create::CreateArticle;
 use crate::frontend::pages::article::edit::EditArticle;
 use crate::frontend::pages::article::history::ArticleHistory;
+use crate::frontend::pages::article::list::ListArticles;
 use crate::frontend::pages::article::read::ReadArticle;
 use crate::frontend::pages::diff::EditDiff;
 use crate::frontend::pages::login::Login;
@@ -76,6 +77,7 @@ pub fn App() -> impl IntoView {
                         <Route path="/article/:title/history" view=ArticleHistory/>
                         <Route path="/article/:title/diff/:hash" view=EditDiff/>
                         <Route path="/article/create" view=CreateArticle/>
+                        <Route path="/article/list" view=ListArticles/>
                         <Route path={Page::Login.path()} view=Login/>
                         <Route path={Page::Register.path()} view=Register/>
                         <Route path="/search" view=Search/>

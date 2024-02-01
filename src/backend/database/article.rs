@@ -118,11 +118,16 @@ impl DbArticle {
             .get_result(conn.deref_mut())?)
     }
 
-    pub fn read_all_local(conn: &Mutex<PgConnection>) -> MyResult<Vec<Self>> {
+    pub fn read_all(only_local: bool, conn: &Mutex<PgConnection>) -> MyResult<Vec<Self>> {
         let mut conn = conn.lock().unwrap();
-        Ok(article::table
-            .filter(article::dsl::local.eq(true))
-            .get_results(conn.deref_mut())?)
+        let query = article::table.into_boxed();
+        Ok(if only_local {
+            query
+                .filter(article::dsl::local.eq(true))
+                .get_results(conn.deref_mut())?
+        } else {
+            query.get_results(conn.deref_mut())?
+        })
     }
 
     pub fn search(query: &str, conn: &Mutex<PgConnection>) -> MyResult<Vec<Self>> {

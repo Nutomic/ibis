@@ -6,12 +6,12 @@ use crate::backend::error::MyResult;
 use crate::backend::federation::activities::create_article::CreateArticle;
 use crate::backend::federation::activities::submit_article_update;
 use crate::backend::utils::generate_article_version;
-use crate::common::GetArticleData;
 use crate::common::LocalUserView;
 use crate::common::{ApiConflict, ResolveObject};
 use crate::common::{ArticleView, DbArticle, DbEdit};
 use crate::common::{CreateArticleData, EditArticleData, EditVersion, ForkArticleData};
 use crate::common::{DbInstance, SearchArticleData};
+use crate::common::{GetArticleData, ListArticlesData};
 use activitypub_federation::config::Data;
 use activitypub_federation::fetch::object_id::ObjectId;
 use anyhow::anyhow;
@@ -30,6 +30,10 @@ pub(in crate::backend::api) async fn create_article(
     data: Data<MyDataHandle>,
     Form(create_article): Form<CreateArticleData>,
 ) -> MyResult<Json<ArticleView>> {
+    if create_article.title.is_empty() {
+        return Err(anyhow!("Title must not be empty").into());
+    }
+
     let local_instance = DbInstance::read_local_instance(&data.db_connection)?;
     let ap_id = ObjectId::parse(&format!(
         "http://{}:{}/article/{}",
@@ -145,6 +149,15 @@ pub(in crate::backend::api) async fn get_article(
         }
         _ => Err(anyhow!("Must pass exactly one of title, id").into()),
     }
+}
+
+#[debug_handler]
+pub(in crate::backend::api) async fn list_articles(
+    Query(query): Query<ListArticlesData>,
+    data: Data<MyDataHandle>,
+) -> MyResult<Json<Vec<DbArticle>>> {
+    let only_local = query.only_local.unwrap_or(false);
+    Ok(Json(DbArticle::read_all(only_local, &data.db_connection)?))
 }
 
 /// Fork a remote article to local instance. This is useful if there are disagreements about

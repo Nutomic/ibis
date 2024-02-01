@@ -1,5 +1,5 @@
-use crate::common::ApiConflict;
 use crate::common::ResolveObject;
+use crate::common::{ApiConflict, ListArticlesData};
 use crate::common::{ArticleView, LoginUserData, RegisterUserData};
 use crate::common::{CreateArticleData, EditArticleData, ForkArticleData, LocalUserView};
 use crate::common::{DbArticle, GetArticleData};
@@ -36,8 +36,11 @@ impl ApiClient {
     }
 
     pub async fn get_article(&self, data: GetArticleData) -> MyResult<ArticleView> {
-        self.get_query::<ArticleView, _>("article", Some(data))
-            .await
+        self.get_query("article", Some(data)).await
+    }
+
+    pub async fn list_articles(&self, data: ListArticlesData) -> MyResult<Vec<DbArticle>> {
+        self.get_query("article/list", Some(data)).await
     }
 
     pub async fn register(&self, register_form: RegisterUserData) -> MyResult<LocalUserView> {
