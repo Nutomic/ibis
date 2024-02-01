@@ -6,6 +6,7 @@ use crate::common::EditVersion;
 use crate::common::{ArticleView, DbArticle};
 use activitypub_federation::fetch::collection_id::CollectionId;
 use activitypub_federation::fetch::object_id::ObjectId;
+use diesel::dsl::max;
 use diesel::pg::PgConnection;
 use diesel::ExpressionMethods;
 use diesel::{
@@ -118,9 +119,14 @@ impl DbArticle {
             .get_result(conn.deref_mut())?)
     }
 
+    /// Read all articles, ordered by most recently edited first.
     pub fn read_all(only_local: bool, conn: &Mutex<PgConnection>) -> MyResult<Vec<Self>> {
         let mut conn = conn.lock().unwrap();
-        let query = article::table.into_boxed();
+        let query = article::table
+            .inner_join(edit::table)
+            .group_by(article::dsl::id)
+            .order_by(max(edit::dsl::created).desc())
+            .select(article::all_columns);
         Ok(if only_local {
             query
                 .filter(article::dsl::local.eq(true))
