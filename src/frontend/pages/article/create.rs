@@ -41,6 +41,7 @@ pub fn CreateArticle() -> impl IntoView {
     });
 
     view! {
+        <h1>Create new Article</h1>
         <Show
             when=move || create_response.get().is_some()
             fallback=move || {

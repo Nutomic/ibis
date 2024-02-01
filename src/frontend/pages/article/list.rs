@@ -19,6 +19,7 @@ pub fn ListArticles() -> impl IntoView {
     );
 
     view! {
+        <h1>Most recently edited Articles</h1>
         <Suspense fallback=|| view! {  "Loading..." }>
             <fieldset on:input=move |ev| {
                 let val = ev

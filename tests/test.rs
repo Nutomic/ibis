@@ -3,7 +3,9 @@ extern crate ibis_lib;
 mod common;
 
 use crate::common::{TestData, TEST_ARTICLE_DEFAULT_TEXT};
-use ibis_lib::common::{ArticleView, EditArticleData, ForkArticleData, GetArticleData, ListArticlesData};
+use ibis_lib::common::{
+    ArticleView, EditArticleData, ForkArticleData, GetArticleData, ListArticlesData,
+};
 use ibis_lib::common::{CreateArticleData, SearchArticleData};
 use ibis_lib::common::{LoginUserData, RegisterUserData};
 use ibis_lib::frontend::error::MyResult;
@@ -59,9 +61,12 @@ async fn test_create_read_and_edit_local_article() -> MyResult<()> {
     assert_eq!(1, search_res.len());
     assert_eq!(edit_res.article, search_res[0]);
 
-    let list_articles = data.alpha.list_articles(ListArticlesData {
-        only_local: Some(false),
-    }).await?;
+    let list_articles = data
+        .alpha
+        .list_articles(ListArticlesData {
+            only_local: Some(false),
+        })
+        .await?;
     assert_eq!(1, list_articles.len());
     assert_eq!(edit_res.article, list_articles[0]);
 
