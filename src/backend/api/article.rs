@@ -216,15 +216,9 @@ pub(in crate::backend::api) async fn fork_article(
 pub(super) async fn resolve_article(
     Query(query): Query<ResolveObject>,
     data: Data<MyDataHandle>,
-) -> MyResult<Json<ArticleView>> {
-    let article: DbArticle = ObjectId::from(query.id).dereference(&data).await?;
-    let edits = DbEdit::read_for_article(&article, &data.db_connection)?;
-    let latest_version = edits.last().unwrap().hash.clone();
-    Ok(Json(ArticleView {
-        article,
-        edits,
-        latest_version,
-    }))
+) -> MyResult<Json<DbArticle>> {
+    let article = ObjectId::from(query.id).dereference(&data).await?;
+    Ok(Json(article))
 }
 
 /// Search articles for matching title or body text.

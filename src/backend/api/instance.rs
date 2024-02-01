@@ -42,7 +42,6 @@ pub(super) async fn resolve_instance(
     Query(query): Query<ResolveObject>,
     data: Data<MyDataHandle>,
 ) -> MyResult<Json<DbInstance>> {
-    // TODO: workaround because axum makes it hard to have multiple routes on /
     let instance: DbInstance = ObjectId::from(query.id).dereference(&data).await?;
     Ok(Json(instance))
 }
