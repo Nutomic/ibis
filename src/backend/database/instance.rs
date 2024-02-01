@@ -19,6 +19,7 @@ use std::sync::Mutex;
 #[diesel(table_name = instance, check_for_backend(diesel::pg::Pg))]
 pub struct DbInstanceForm {
     pub ap_id: ObjectId<DbInstance>,
+    pub description: Option<String>,
     pub articles_url: CollectionId<DbArticleCollection>,
     pub inbox_url: String,
     pub public_key: String,

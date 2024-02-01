@@ -4,7 +4,7 @@ use leptos::*;
 use leptos_router::*;
 
 #[component]
-pub fn ArticleNav(article: Resource<String, ArticleView>) -> impl IntoView {
+pub fn ArticleNav(article: Resource<Option<String>, ArticleView>) -> impl IntoView {
     let global_state = use_context::<RwSignal<GlobalState>>().unwrap();
     view! {
         <Suspense>

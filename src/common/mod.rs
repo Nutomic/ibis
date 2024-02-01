@@ -133,6 +133,7 @@ pub struct DbLocalUser {
     pub id: i32,
     pub password_encrypted: String,
     pub person_id: i32,
+    pub admin: bool,
 }
 
 /// Federation related data from a local or remote user.
@@ -219,6 +220,7 @@ pub struct DbInstance {
     pub ap_id: ObjectId<DbInstance>,
     #[cfg(not(feature = "ssr"))]
     pub ap_id: String,
+    pub description: Option<String>,
     #[cfg(feature = "ssr")]
     pub articles_url: CollectionId<DbArticleCollection>,
     #[cfg(not(feature = "ssr"))]

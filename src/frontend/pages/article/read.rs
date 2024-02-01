@@ -7,11 +7,7 @@ use markdown_it::MarkdownIt;
 #[component]
 pub fn ReadArticle() -> impl IntoView {
     let params = use_params_map();
-    let title = params
-        .get_untracked()
-        .get("title")
-        .cloned()
-        .unwrap_or("Main_Page".to_string());
+    let title = move || params.get().get("title").cloned();
     let article = article_resource(title);
 
     view! {

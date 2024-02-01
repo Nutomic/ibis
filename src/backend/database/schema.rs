@@ -43,6 +43,7 @@ diesel::table! {
         id -> Int4,
         #[max_length = 255]
         ap_id -> Varchar,
+        description -> Nullable<Text>,
         inbox_url -> Text,
         #[max_length = 255]
         articles_url -> Varchar,
@@ -74,6 +75,7 @@ diesel::table! {
         id -> Int4,
         password_encrypted -> Text,
         person_id -> Int4,
+        admin -> Bool,
     }
 }
 

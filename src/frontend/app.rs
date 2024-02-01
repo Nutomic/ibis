@@ -7,13 +7,13 @@ use crate::frontend::pages::article::history::ArticleHistory;
 use crate::frontend::pages::article::list::ListArticles;
 use crate::frontend::pages::article::read::ReadArticle;
 use crate::frontend::pages::diff::EditDiff;
+use crate::frontend::pages::instance_details::InstanceDetails;
 use crate::frontend::pages::login::Login;
 use crate::frontend::pages::register::Register;
 use crate::frontend::pages::search::Search;
-use crate::frontend::pages::Page;
 use leptos::{
     component, create_local_resource, create_rw_signal, expect_context, provide_context,
-    use_context, view, IntoView, RwSignal, SignalGetUntracked, SignalUpdate,
+    use_context, view, IntoView, RwSignal, SignalGet, SignalGetUntracked, SignalUpdate,
 };
 use leptos_meta::provide_meta_context;
 use leptos_meta::*;
@@ -47,6 +47,17 @@ impl GlobalState {
             },
         );
     }
+
+    pub fn is_admin() -> fn() -> bool {
+        move || {
+            use_context::<RwSignal<GlobalState>>()
+                .expect("global state is provided")
+                .get()
+                .my_profile
+                .map(|p| p.local_user.admin)
+                .unwrap_or(false)
+        }
+    }
 }
 
 #[component]
@@ -71,15 +82,16 @@ pub fn App() -> impl IntoView {
                 <Nav />
                 <main>
                     <Routes>
-                        <Route path={Page::Home.path()} view=ReadArticle/>
+                        <Route path="/" view=ReadArticle/>
                         <Route path="/article/:title" view=ReadArticle/>
                         <Route path="/article/:title/edit" view=EditArticle/>
                         <Route path="/article/:title/history" view=ArticleHistory/>
                         <Route path="/article/:title/diff/:hash" view=EditDiff/>
                         <Route path="/article/create" view=CreateArticle/>
                         <Route path="/article/list" view=ListArticles/>
-                        <Route path={Page::Login.path()} view=Login/>
-                        <Route path={Page::Register.path()} view=Register/>
+                        <Route path="/instance/:hostname" view=InstanceDetails/>
+                        <Route path="/login" view=Login/>
+                        <Route path="/register" view=Register/>
                         <Route path="/search" view=Search/>
                     </Routes>
                 </main>

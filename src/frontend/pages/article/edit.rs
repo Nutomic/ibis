@@ -8,8 +8,8 @@ use leptos_router::use_params_map;
 #[component]
 pub fn EditArticle() -> impl IntoView {
     let params = use_params_map();
-    let title = params.get_untracked().get("title").cloned();
-    let article = article_resource(title.unwrap());
+    let title = move || params.get().get("title").cloned();
+    let article = article_resource(title);
 
     let (text, set_text) = create_signal(String::new());
     let (summary, set_summary) = create_signal(String::new());

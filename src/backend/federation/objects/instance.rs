@@ -27,6 +27,7 @@ pub struct ApubInstance {
     #[serde(rename = "type")]
     kind: ServiceType,
     id: ObjectId<DbInstance>,
+    content: Option<String>,
     articles: CollectionId<DbArticleCollection>,
     inbox: Url,
     public_key: PublicKey,
@@ -90,6 +91,7 @@ impl Object for DbInstance {
         Ok(ApubInstance {
             kind: Default::default(),
             id: self.ap_id.clone(),
+            content: self.description.clone(),
             articles: self.articles_url.clone(),
             inbox: Url::parse(&self.inbox_url)?,
             public_key: self.public_key(),
@@ -108,6 +110,7 @@ impl Object for DbInstance {
     async fn from_json(json: Self::Kind, data: &Data<Self::DataType>) -> Result<Self, Self::Error> {
         let form = DbInstanceForm {
             ap_id: json.id,
+            description: json.content,
             articles_url: json.articles,
             inbox_url: json.inbox.to_string(),
             public_key: json.public_key.public_key_pem,

@@ -1,6 +1,7 @@
 create table instance (
     id serial primary key,
     ap_id varchar(255) not null unique,
+    description text,
     inbox_url text not null,
     articles_url varchar(255) not null unique,
     public_key text not null,
@@ -23,7 +24,8 @@ create table person (
 create table local_user (
     id serial primary key,
     password_encrypted text not null,
-    person_id int REFERENCES person ON UPDATE CASCADE ON DELETE CASCADE NOT NULL
+    person_id int REFERENCES person ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
+    admin bool not null
 );
 
 create table instance_follow (

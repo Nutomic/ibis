@@ -65,6 +65,7 @@ pub async fn start(hostname: &str, database_url: &str) -> MyResult<()> {
         let keypair = generate_actor_keypair()?;
         let form = DbInstanceForm {
             ap_id,
+            description: Some("New Ibis instance".to_string()),
             articles_url,
             inbox_url,
             public_key: keypair.public_key,

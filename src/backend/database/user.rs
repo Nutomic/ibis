@@ -19,6 +19,7 @@ use std::sync::Mutex;
 pub struct DbLocalUserForm {
     pub password_encrypted: String,
     pub person_id: i32,
+    pub admin: bool,
 }
 
 #[derive(Debug, Clone, Insertable, AsChangeset)]
@@ -52,6 +53,7 @@ impl DbPerson {
     pub fn create_local(
         username: String,
         password: String,
+        admin: bool,
         data: &Data<MyDataHandle>,
     ) -> MyResult<LocalUserView> {
         let mut conn = data.db_connection.lock().unwrap();
@@ -76,6 +78,7 @@ impl DbPerson {
         let local_user_form = DbLocalUserForm {
             password_encrypted: hash(password, DEFAULT_COST)?,
             person_id: person.id,
+            admin,
         };
 
         let local_user = insert_into(local_user::table)
