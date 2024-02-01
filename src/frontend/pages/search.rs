@@ -31,7 +31,7 @@ pub fn Search() -> impl IntoView {
                 join!(search, resolve_article, resolve_instance);
             search_results.instance = resolve_instance.ok();
             if let Ok(article) = resolve_article {
-                search_results.articles.push(article);
+                search_results.articles.push(article.article);
             }
             search_results.articles.append(&mut search.unwrap())
         } else {

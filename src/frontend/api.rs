@@ -156,7 +156,7 @@ impl ApiClient {
         Ok(handle_json_res(req).await.unwrap())
     }
 
-    pub async fn resolve_article(&self, id: Url) -> MyResult<DbArticle> {
+    pub async fn resolve_article(&self, id: Url) -> MyResult<ArticleView> {
         let resolve_object = ResolveObject { id };
         self.get_query("article/resolve", Some(resolve_object))
             .await
