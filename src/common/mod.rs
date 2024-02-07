@@ -13,6 +13,8 @@ use {
     diesel::{Identifiable, Queryable, Selectable},
 };
 
+pub const MAIN_PAGE_NAME: &str = "Main_Page";
+
 /// Should be an enum Title/Id but fails due to https://github.com/nox/serde_urlencoded/issues/66
 #[derive(Deserialize, Serialize, Clone)]
 pub struct GetArticleData {
@@ -123,6 +125,7 @@ pub struct LoginUserData {
 pub struct LocalUserView {
     pub person: DbPerson,
     pub local_user: DbLocalUser,
+    pub following: Vec<DbInstance>,
 }
 
 /// A user with account registered on local instance.
@@ -241,7 +244,6 @@ pub struct DbInstance {
 pub struct InstanceView {
     pub instance: DbInstance,
     pub followers: Vec<DbPerson>,
-    pub following: Vec<DbInstance>,
 }
 
 #[test]

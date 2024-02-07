@@ -13,6 +13,7 @@ pub fn Nav() -> impl IntoView {
             .update_my_profile();
     });
     let (search_query, set_search_query) = create_signal(String::new());
+    // TODO: hide register button if disabled in config
     view! {
         <nav class="inner">
             <li>

@@ -58,7 +58,9 @@ pub(in crate::backend::api) async fn register_user(
     jar: CookieJar,
     Form(form): Form<RegisterUserData>,
 ) -> MyResult<(CookieJar, Json<LocalUserView>)> {
-    // TODO: make admin if its the first user account
+    if !data.config.registration_open {
+        return Err(anyhow!("Registration is closed").into());
+    }
     let user = DbPerson::create_local(form.username, form.password, false, &data)?;
     let token = generate_login_token(&user.local_user, &data)?;
     let jar = jar.add(create_cookie(token, &data));

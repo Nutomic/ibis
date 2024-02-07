@@ -5,6 +5,7 @@ use crate::backend::{
 };
 use crate::common::DbInstance;
 use crate::common::DbPerson;
+use activitypub_federation::protocol::verification::verify_urls_match;
 use activitypub_federation::{
     config::Data,
     fetch::object_id::ObjectId,
@@ -58,6 +59,7 @@ impl ActivityHandler for Follow {
     async fn receive(self, data: &Data<Self::DataType>) -> Result<(), Self::Error> {
         let actor = self.actor.dereference(data).await?;
         let local_instance = DbInstance::read_local_instance(&data.db_connection)?;
+        verify_urls_match(self.object.inner(), local_instance.ap_id.inner())?;
         DbInstance::follow(&actor, &local_instance, false, data)?;
 
         // send back an accept

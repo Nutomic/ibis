@@ -25,5 +25,5 @@ echo "$PGHOST/.s.PGSQL.5432"
 pg_ctl start --options="-c listen_addresses= -c unix_socket_directories=$PGHOST"
 
 # Setup database
-psql -c "CREATE USER lemmy WITH PASSWORD 'password' SUPERUSER;" -U postgres
-psql -c "CREATE DATABASE lemmy WITH OWNER lemmy;" -U postgres
+psql -c "CREATE USER ibis WITH PASSWORD 'password' SUPERUSER;" -U postgres
+psql -c "CREATE DATABASE ibis WITH OWNER ibis;" -U postgres

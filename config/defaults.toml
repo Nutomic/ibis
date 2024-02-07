@@ -1,0 +1,25 @@
+# Address where ibis should listen for incoming requests
+bind = "127.0.0.1:8081"
+
+# Database connection url
+database_url = "postgres://ibis:password@localhost:5432/ibis"
+
+# Whether users can create new accounts
+registration_open = true
+
+# Details of the initial admin account
+[setup]
+admin_username = "admin"
+admin_password = "hunter2"
+
+[federation]
+# Domain name of the instance, mandatory for federation
+domain = "example.com"
+
+# Comma separated list of instances which are allowed for federation. If set, federation
+# with other domains is blocked
+# Optional
+allowlist = "good.com,friends.org"
+
+# Comma separated list of instances which are blocked for federation; optional
+blocklist = "evil.com,bad.org"

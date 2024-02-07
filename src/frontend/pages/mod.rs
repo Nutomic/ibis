@@ -1,4 +1,4 @@
-use crate::common::{ArticleView, GetArticleData};
+use crate::common::{ArticleView, GetArticleData, MAIN_PAGE_NAME};
 use crate::frontend::app::GlobalState;
 use leptos::{create_resource, Resource};
 
@@ -13,7 +13,7 @@ fn article_resource(
     title: impl Fn() -> Option<String> + 'static,
 ) -> Resource<Option<String>, ArticleView> {
     create_resource(title, move |title| async move {
-        let title = title.unwrap_or("Main_Page".to_string());
+        let title = title.unwrap_or(MAIN_PAGE_NAME.to_string());
         GlobalState::api_client()
             .get_article(GetArticleData {
                 title: Some(title),

@@ -64,12 +64,10 @@ impl DbInstance {
     pub fn read_local_view(conn: &Mutex<PgConnection>) -> MyResult<InstanceView> {
         let instance = DbInstance::read_local_instance(conn)?;
         let followers = DbInstance::read_followers(instance.id, conn)?;
-        let following = DbInstance::read_following(instance.id, conn)?;
 
         Ok(InstanceView {
             instance,
             followers,
-            following,
         })
     }
 
@@ -104,16 +102,6 @@ impl DbInstance {
             .inner_join(person::table.on(follower_id.eq(person::dsl::id)))
             .filter(instance_id.eq(id_))
             .select(person::all_columns)
-            .get_results(conn.deref_mut())?)
-    }
-
-    pub fn read_following(id_: i32, conn: &Mutex<PgConnection>) -> MyResult<Vec<Self>> {
-        use instance_follow::dsl::{follower_id, instance_id};
-        let mut conn = conn.lock().unwrap();
-        Ok(instance_follow::table
-            .inner_join(instance::table.on(instance_id.eq(instance::dsl::id)))
-            .filter(follower_id.eq(id_))
-            .select(instance::all_columns)
             .get_results(conn.deref_mut())?)
     }
 }

@@ -1,10 +1,13 @@
 use crate::backend::database::article::DbArticleForm;
 use crate::backend::database::instance::DbInstanceForm;
-use crate::backend::database::MyData;
+use crate::backend::database::IbisData;
+use crate::backend::error::Error;
 use crate::backend::error::MyResult;
 use crate::backend::federation::routes::federation_routes;
+use crate::backend::federation::VerifyUrlData;
 use crate::backend::utils::generate_activity_id;
-use crate::common::{DbArticle, DbInstance};
+use crate::common::{DbArticle, DbInstance, DbPerson, MAIN_PAGE_NAME};
+use crate::config::IbisConfig;
 use crate::frontend::app::App;
 use activitypub_federation::config::{FederationConfig, FederationMiddleware};
 use activitypub_federation::fetch::collection_id::CollectionId;
@@ -24,7 +27,6 @@ use diesel_migrations::MigrationHarness;
 use leptos::*;
 use leptos_axum::{generate_route_list, LeptosRoutes};
 use log::info;
-use std::net::ToSocketAddrs;
 use std::sync::{Arc, Mutex};
 use tower::Layer;
 use tower_http::cors::CorsLayer;
@@ -40,62 +42,37 @@ const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
 
 const FEDERATION_ROUTES_PREFIX: &str = "/federation_routes";
 
-pub async fn start(hostname: &str, database_url: &str) -> MyResult<()> {
-    let db_connection = Arc::new(Mutex::new(PgConnection::establish(database_url)?));
+pub async fn start(config: IbisConfig) -> MyResult<()> {
+    let db_connection = Arc::new(Mutex::new(PgConnection::establish(&config.database_url)?));
     db_connection
         .lock()
         .unwrap()
         .run_pending_migrations(MIGRATIONS)
         .unwrap();
 
-    let data = MyData { db_connection };
-    let config = FederationConfig::builder()
-        .domain(hostname)
+    let data = IbisData {
+        db_connection,
+        config,
+    };
+    let data = FederationConfig::builder()
+        .domain(data.config.federation.domain.clone())
+        .url_verifier(Box::new(VerifyUrlData(data.config.clone())))
         .app_data(data)
         .debug(true)
         .build()
         .await?;
 
     // Create local instance if it doesnt exist yet
-    // TODO: Move this into setup api call
-    if DbInstance::read_local_instance(&config.db_connection).is_err() {
-        let ap_id = ObjectId::parse(&format!("http://{hostname}"))?;
-        let articles_url = CollectionId::parse(&format!("http://{}/all_articles", hostname))?;
-        let inbox_url = format!("http://{}/inbox", hostname);
-        let keypair = generate_actor_keypair()?;
-        let form = DbInstanceForm {
-            ap_id,
-            description: Some("New Ibis instance".to_string()),
-            articles_url,
-            inbox_url,
-            public_key: keypair.public_key,
-            private_key: Some(keypair.private_key),
-            last_refreshed_at: Local::now().into(),
-            local: true,
-        };
-        let instance = DbInstance::create(&form, &config.db_connection)?;
-
-        // Create the main page which is shown by default
-        let form = DbArticleForm {
-            title: "Main_Page".to_string(),
-            text: "Hello world!".to_string(),
-            ap_id: ObjectId::parse(&format!("http://{hostname}/article/Main_Page"))?,
-            instance_id: instance.id,
-            local: true,
-        };
-        DbArticle::create(&form, &config.db_connection)?;
+    if DbInstance::read_local_instance(&data.db_connection).is_err() {
+        setup(&data)?;
     }
 
     let conf = get_configuration(Some("Cargo.toml")).await.unwrap();
     let mut leptos_options = conf.leptos_options;
-    let addr = hostname
-        .to_socket_addrs()?
-        .next()
-        .expect("Failed to lookup domain name");
-    leptos_options.site_addr = addr;
+    leptos_options.site_addr = data.config.bind;
     let routes = generate_route_list(App);
 
-    let config = config.clone();
+    let config = data.clone();
     let app = Router::new()
         .leptos_routes(&leptos_options, routes, || view! {  <App/> })
         .with_state(leptos_options)
@@ -118,11 +95,48 @@ pub async fn start(hostname: &str, database_url: &str) -> MyResult<()> {
     let middleware = axum::middleware::from_fn(federation_routes_middleware);
     let app_with_middleware = middleware.layer(app);
 
-    info!("{addr}");
-    Server::bind(&addr)
+    info!("Listening on {}", &data.config.bind);
+    Server::bind(&data.config.bind)
         .serve(app_with_middleware.into_make_service())
         .await?;
 
+    Ok(())
+}
+
+fn setup(data: &IbisData) -> Result<(), Error> {
+    let domain = &data.config.federation.domain;
+    let ap_id = ObjectId::parse(&format!("http://{domain}"))?;
+    let articles_url = CollectionId::parse(&format!("http://{domain}/all_articles"))?;
+    let inbox_url = format!("http://{domain}/inbox");
+    let keypair = generate_actor_keypair()?;
+    let form = DbInstanceForm {
+        ap_id,
+        description: Some("New Ibis instance".to_string()),
+        articles_url,
+        inbox_url,
+        public_key: keypair.public_key,
+        private_key: Some(keypair.private_key),
+        last_refreshed_at: Local::now().into(),
+        local: true,
+    };
+    let instance = DbInstance::create(&form, &data.db_connection)?;
+
+    // Create the main page which is shown by default
+    let form = DbArticleForm {
+        title: MAIN_PAGE_NAME.to_string(),
+        text: "Hello world!".to_string(),
+        ap_id: ObjectId::parse(&format!("http://{domain}/article/{MAIN_PAGE_NAME}"))?,
+        instance_id: instance.id,
+        local: true,
+    };
+    DbArticle::create(&form, &data.db_connection)?;
+
+    DbPerson::create_local(
+        data.config.setup.admin_username.clone(),
+        data.config.setup.admin_password.clone(),
+        true,
+        data,
+    )?;
     Ok(())
 }
 

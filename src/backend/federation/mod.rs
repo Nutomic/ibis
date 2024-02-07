@@ -1,8 +1,11 @@
 use crate::backend::database::MyDataHandle;
+use crate::config::IbisConfig;
 use activitypub_federation::activity_sending::SendActivityTask;
-use activitypub_federation::config::Data;
+use activitypub_federation::config::{Data, UrlVerifier};
+use activitypub_federation::error::Error as ActivityPubError;
 use activitypub_federation::protocol::context::WithContext;
 use activitypub_federation::traits::{ActivityHandler, Actor};
+use async_trait::async_trait;
 use log::warn;
 use serde::Serialize;
 use std::fmt::Debug;
@@ -31,4 +34,32 @@ where
         }
     }
     Ok(())
+}
+
+#[derive(Clone)]
+pub struct VerifyUrlData(pub IbisConfig);
+
+#[async_trait]
+impl UrlVerifier for VerifyUrlData {
+    /// Check domain against allowlist and blocklist from config file.
+    async fn verify(&self, url: &Url) -> Result<(), ActivityPubError> {
+        let domain = url.domain().unwrap();
+        if let Some(allowlist) = &self.0.federation.allowlist {
+            let allowlist = allowlist.split(',').collect::<Vec<_>>();
+            if !allowlist.contains(&domain) {
+                return Err(ActivityPubError::Other(format!(
+                    "Domain {domain} is not allowed"
+                )));
+            }
+        }
+        if let Some(blocklist) = &self.0.federation.blocklist {
+            let blocklist = blocklist.split(',').collect::<Vec<_>>();
+            if blocklist.contains(&domain) {
+                return Err(ActivityPubError::Other(format!(
+                    "Domain {domain} is blocked"
+                )));
+            }
+        }
+        Ok(())
+    }
 }

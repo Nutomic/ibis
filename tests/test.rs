@@ -98,32 +98,23 @@ async fn test_follow_instance() -> MyResult<()> {
     let data = TestData::start().await;
 
     // check initial state
-    let alpha_instance = data.alpha.get_local_instance().await?;
-    assert_eq!(0, alpha_instance.followers.len());
-    assert_eq!(0, alpha_instance.following.len());
+    let alpha_user = data.alpha.my_profile().await?;
+    assert_eq!(0, alpha_user.following.len());
     let beta_instance = data.beta.get_local_instance().await?;
     assert_eq!(0, beta_instance.followers.len());
-    assert_eq!(0, beta_instance.following.len());
 
     data.alpha.follow_instance(&data.beta.hostname).await?;
+    dbg!(&data.alpha.hostname, &data.beta.hostname);
 
     // check that follow was federated
-    let alpha_instance = data.alpha.get_local_instance().await?;
-    assert_eq!(1, alpha_instance.following.len());
-    assert_eq!(0, alpha_instance.followers.len());
-    assert_eq!(
-        beta_instance.instance.ap_id,
-        alpha_instance.following[0].ap_id
-    );
+    let alpha_user = data.alpha.my_profile().await?;
+    dbg!(&alpha_user);
+    assert_eq!(1, alpha_user.following.len());
+    assert_eq!(beta_instance.instance.ap_id, alpha_user.following[0].ap_id);
 
     let beta_instance = data.beta.get_local_instance().await?;
-    assert_eq!(0, beta_instance.following.len());
     assert_eq!(1, beta_instance.followers.len());
-    // TODO: compare full ap_id of alpha user, but its not available through api yet
-    assert_eq!(
-        alpha_instance.instance.ap_id.inner().domain(),
-        beta_instance.followers[0].ap_id.inner().domain()
-    );
+    assert_eq!(alpha_user.person.ap_id, beta_instance.followers[0].ap_id);
 
     data.stop()
 }

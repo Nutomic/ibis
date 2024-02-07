@@ -1,16 +1,14 @@
 use ibis_lib::backend::start;
-
 use ibis_lib::common::RegisterUserData;
+use ibis_lib::config::{IbisConfig, IbisConfigFederation};
 use ibis_lib::frontend::api::ApiClient;
 use ibis_lib::frontend::error::MyResult;
-
 use reqwest::ClientBuilder;
 use std::env::current_dir;
 use std::fs::create_dir_all;
 use std::ops::Deref;
 use std::process::{Command, Stdio};
 use std::sync::atomic::{AtomicI32, Ordering};
-
 use std::sync::Once;
 use std::thread::{sleep, spawn};
 use std::time::Duration;
@@ -103,11 +101,21 @@ impl IbisInstance {
     }
 
     async fn start(db_path: String, port: i32, username: &str) -> Self {
-        let db_url = format!("postgresql://lemmy:password@/lemmy?host={db_path}");
+        let database_url = format!("postgresql://ibis:password@/ibis?host={db_path}");
         let hostname = format!("localhost:{port}");
-        let hostname_ = hostname.clone();
+        let bind = format!("127.0.0.1:{port}").parse().unwrap();
+        let config = IbisConfig {
+            bind,
+            database_url,
+            registration_open: true,
+            federation: IbisConfigFederation {
+                domain: hostname.clone(),
+                ..Default::default()
+            },
+            ..Default::default()
+        };
         let handle = tokio::task::spawn(async move {
-            start(&hostname_, &db_url).await.unwrap();
+            start(config).await.unwrap();
         });
         // wait a moment for the backend to start
         tokio::time::sleep(Duration::from_millis(100)).await;

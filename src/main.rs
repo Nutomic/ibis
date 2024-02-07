@@ -1,16 +1,29 @@
 #[cfg(feature = "ssr")]
 #[tokio::main]
 pub async fn main() -> ibis_lib::backend::error::MyResult<()> {
+    use config::Config;
+    use ibis_lib::config::IbisConfig;
     use log::LevelFilter;
+
+    if std::env::args().collect::<Vec<_>>().get(1) == Some(&"--print-config".to_string()) {
+        println!("{}", doku::to_toml::<IbisConfig>());
+        std::process::exit(0);
+    }
+
     env_logger::builder()
         .filter_level(LevelFilter::Warn)
         .filter_module("activitypub_federation", LevelFilter::Info)
         .filter_module("ibis", LevelFilter::Info)
         .init();
-    let database_url = std::env::var("IBIS_DATABASE_URL")
-        .unwrap_or("postgres://ibis:password@localhost:5432/ibis".to_string());
-    let port = std::env::var("IBIS_BACKEND_PORT").unwrap_or("8081".to_string());
-    ibis_lib::backend::start(&format!("127.0.0.1:{port}"), &database_url).await?;
+
+    let config = Config::builder()
+        .add_source(config::File::with_name("config/config.toml"))
+        .add_source(config::Environment::with_prefix("IBIS"))
+        .build()
+        .unwrap();
+
+    let ibis_config: IbisConfig = config.try_deserialize().unwrap();
+    ibis_lib::backend::start(ibis_config).await?;
     Ok(())
 }
 
