@@ -1,5 +1,5 @@
+use crate::backend::config::IbisConfig;
 use crate::backend::database::IbisData;
-use crate::config::IbisConfig;
 use activitypub_federation::activity_sending::SendActivityTask;
 use activitypub_federation::config::{Data, UrlVerifier};
 use activitypub_federation::error::Error as ActivityPubError;

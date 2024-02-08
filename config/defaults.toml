@@ -9,8 +9,8 @@ registration_open = true
 
 # Details of the initial admin account
 [setup]
-admin_username = "admin"
-admin_password = "hunter2"
+admin_username = "ibis"
+admin_password = "ibis"
 
 [federation]
 # Domain name of the instance, mandatory for federation

@@ -1,6 +1,6 @@
+use crate::backend::config::IbisConfig;
 use crate::backend::database::schema::jwt_secret;
 use crate::backend::error::MyResult;
-use crate::config::IbisConfig;
 use diesel::PgConnection;
 use diesel::{QueryDsl, RunQueryDsl};
 use std::ops::Deref;

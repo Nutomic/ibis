@@ -12,6 +12,7 @@ use activitypub_federation::{
     traits::{ActivityHandler, Object},
 };
 
+use crate::common::validation::can_edit_article;
 use crate::common::DbArticle;
 use serde::{Deserialize, Serialize};
 use url::Url;
@@ -67,7 +68,9 @@ impl ActivityHandler for UpdateLocalArticle {
         self.actor.inner()
     }
 
-    async fn verify(&self, _data: &Data<Self::DataType>) -> Result<(), Self::Error> {
+    async fn verify(&self, data: &Data<Self::DataType>) -> Result<(), Self::Error> {
+        let article = DbArticle::read_from_ap_id(&self.object.id, &data.db_connection)?;
+        can_edit_article(&article, false)?;
         Ok(())
     }
 

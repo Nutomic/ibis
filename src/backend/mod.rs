@@ -1,3 +1,4 @@
+use crate::backend::config::IbisConfig;
 use crate::backend::database::article::DbArticleForm;
 use crate::backend::database::instance::DbInstanceForm;
 use crate::backend::database::IbisData;
@@ -7,7 +8,6 @@ use crate::backend::federation::routes::federation_routes;
 use crate::backend::federation::VerifyUrlData;
 use crate::backend::utils::generate_activity_id;
 use crate::common::{DbArticle, DbInstance, DbPerson, MAIN_PAGE_NAME};
-use crate::config::IbisConfig;
 use crate::frontend::app::App;
 use activitypub_federation::config::{FederationConfig, FederationMiddleware};
 use activitypub_federation::fetch::collection_id::CollectionId;
@@ -33,6 +33,7 @@ use tower_http::cors::CorsLayer;
 use tower_http::services::{ServeDir, ServeFile};
 
 pub mod api;
+pub mod config;
 pub mod database;
 pub mod error;
 pub mod federation;
@@ -103,6 +104,11 @@ pub async fn start(config: IbisConfig) -> MyResult<()> {
     Ok(())
 }
 
+const MAIN_PAGE_DEFAULT_TEXT: &str = "Welcome to Ibis, the federated Wikipedia alternative!
+
+This main page can only be edited by the admin. Use it as an introduction for new users, \
+and to list interesting articles.";
+
 fn setup(data: &IbisData) -> Result<(), Error> {
     let domain = &data.config.federation.domain;
     let ap_id = ObjectId::parse(&format!("http://{domain}"))?;
@@ -124,7 +130,7 @@ fn setup(data: &IbisData) -> Result<(), Error> {
     // Create the main page which is shown by default
     let form = DbArticleForm {
         title: MAIN_PAGE_NAME.to_string(),
-        text: "Hello world!".to_string(),
+        text: MAIN_PAGE_DEFAULT_TEXT.to_string(),
         ap_id: ObjectId::parse(&format!("http://{domain}/article/{MAIN_PAGE_NAME}"))?,
         instance_id: instance.id,
         local: true,

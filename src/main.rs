@@ -2,7 +2,7 @@
 #[tokio::main]
 pub async fn main() -> ibis_lib::backend::error::MyResult<()> {
     use config::Config;
-    use ibis_lib::config::IbisConfig;
+    use ibis_lib::backend::config::IbisConfig;
     use log::LevelFilter;
 
     if std::env::args().collect::<Vec<_>>().get(1) == Some(&"--print-config".to_string()) {

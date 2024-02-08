@@ -1,6 +1,6 @@
+use ibis_lib::backend::config::{IbisConfig, IbisConfigFederation};
 use ibis_lib::backend::start;
 use ibis_lib::common::RegisterUserData;
-use ibis_lib::config::{IbisConfig, IbisConfigFederation};
 use ibis_lib::frontend::api::ApiClient;
 use ibis_lib::frontend::error::MyResult;
 use reqwest::ClientBuilder;

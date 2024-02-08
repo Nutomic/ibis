@@ -26,9 +26,11 @@ pub struct IbisConfig {
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone, Document, SmartDefault)]
 #[serde(default)]
 pub struct IbisConfigSetup {
-    #[doku(example = "admin")]
+    #[default("ibis")]
+    #[doku(example = "ibis")]
     pub admin_username: String,
-    #[doku(example = "hunter2")]
+    #[default("ibis")]
+    #[doku(example = "ibis")]
     pub admin_password: String,
 }
 

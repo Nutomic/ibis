@@ -6,12 +6,13 @@ use crate::backend::error::MyResult;
 use crate::backend::federation::activities::create_article::CreateArticle;
 use crate::backend::federation::activities::submit_article_update;
 use crate::backend::utils::generate_article_version;
+use crate::common::validation::can_edit_article;
+use crate::common::LocalUserView;
 use crate::common::{ApiConflict, ResolveObject};
 use crate::common::{ArticleView, DbArticle, DbEdit};
 use crate::common::{CreateArticleData, EditArticleData, EditVersion, ForkArticleData};
 use crate::common::{DbInstance, SearchArticleData};
 use crate::common::{GetArticleData, ListArticlesData};
-use crate::common::{LocalUserView, MAIN_PAGE_NAME};
 use activitypub_federation::config::Data;
 use activitypub_federation::fetch::object_id::ObjectId;
 use anyhow::anyhow;
@@ -91,12 +92,7 @@ pub(in crate::backend::api) async fn edit_article(
     if edit_form.summary.is_empty() {
         return Err(anyhow!("No summary given").into());
     }
-    if original_article.article.local
-        && original_article.article.title == MAIN_PAGE_NAME
-        && !user.local_user.admin
-    {
-        return Err(anyhow!("Only admin can edit main page").into());
-    }
+    can_edit_article(&original_article.article, user.local_user.admin)?;
     // ensure trailing newline for clean diffs
     if !edit_form.new_text.ends_with('\n') {
         edit_form.new_text.push('\n');

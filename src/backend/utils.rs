@@ -8,14 +8,17 @@ use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use url::{ParseError, Url};
 
 pub fn generate_activity_id(domain: &Url) -> Result<Url, ParseError> {
-    let port = domain.port().unwrap();
+    let port = match domain.port() {
+        Some(p) => format!(":{p}"),
+        None => String::new(),
+    };
     let domain = domain.host_str().unwrap();
     let id: String = thread_rng()
         .sample_iter(&Alphanumeric)
         .take(7)
         .map(char::from)
         .collect();
-    Url::parse(&format!("http://{}:{}/objects/{}", domain, port, id))
+    Url::parse(&format!("http://{}{}/objects/{}", domain, port, id))
 }
 
 /// Starting from empty string, apply edits until the specified version is reached. If no version is
