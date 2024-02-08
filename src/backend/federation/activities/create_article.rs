@@ -1,4 +1,4 @@
-use crate::backend::database::MyDataHandle;
+use crate::backend::database::IbisData;
 use crate::backend::error::MyResult;
 use crate::backend::federation::objects::article::ApubArticle;
 use crate::backend::utils::generate_activity_id;
@@ -27,7 +27,7 @@ pub struct CreateArticle {
 }
 
 impl CreateArticle {
-    pub async fn send_to_followers(article: DbArticle, data: &Data<MyDataHandle>) -> MyResult<()> {
+    pub async fn send_to_followers(article: DbArticle, data: &Data<IbisData>) -> MyResult<()> {
         let local_instance = DbInstance::read_local_instance(&data.db_connection)?;
         let object = article.clone().into_json(data).await?;
         let id = generate_activity_id(local_instance.ap_id.inner())?;
@@ -47,7 +47,7 @@ impl CreateArticle {
 }
 #[async_trait::async_trait]
 impl ActivityHandler for CreateArticle {
-    type DataType = MyDataHandle;
+    type DataType = IbisData;
     type Error = crate::backend::error::Error;
 
     fn id(&self) -> &Url {

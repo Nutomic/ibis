@@ -1,5 +1,5 @@
 use crate::backend::database::article::DbArticleForm;
-use crate::backend::database::MyDataHandle;
+use crate::backend::database::IbisData;
 use crate::backend::error::Error;
 use crate::backend::federation::objects::edits_collection::DbEditCollection;
 use crate::common::DbArticle;
@@ -33,7 +33,7 @@ pub struct ApubArticle {
 
 #[async_trait::async_trait]
 impl Object for DbArticle {
-    type DataType = MyDataHandle;
+    type DataType = IbisData;
     type Kind = ApubArticle;
     type Error = Error;
 

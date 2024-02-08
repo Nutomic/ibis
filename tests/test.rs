@@ -104,11 +104,9 @@ async fn test_follow_instance() -> MyResult<()> {
     assert_eq!(0, beta_instance.followers.len());
 
     data.alpha.follow_instance(&data.beta.hostname).await?;
-    dbg!(&data.alpha.hostname, &data.beta.hostname);
 
     // check that follow was federated
     let alpha_user = data.alpha.my_profile().await?;
-    dbg!(&alpha_user);
     assert_eq!(1, alpha_user.following.len());
     assert_eq!(beta_instance.instance.ap_id, alpha_user.following[0].ap_id);
 

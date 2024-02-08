@@ -1,5 +1,5 @@
 use crate::backend::database::schema::conflict;
-use crate::backend::database::MyDataHandle;
+use crate::backend::database::IbisData;
 use crate::backend::error::MyResult;
 use crate::backend::federation::activities::submit_article_update;
 use crate::backend::utils::generate_article_version;
@@ -63,10 +63,7 @@ impl DbConflict {
         Ok(delete(conflict::table.find(id)).get_result(conn.deref_mut())?)
     }
 
-    pub async fn to_api_conflict(
-        &self,
-        data: &Data<MyDataHandle>,
-    ) -> MyResult<Option<ApiConflict>> {
+    pub async fn to_api_conflict(&self, data: &Data<IbisData>) -> MyResult<Option<ApiConflict>> {
         let article = DbArticle::read(self.article_id, &data.db_connection)?;
         // Make sure to get latest version from origin so that all conflicts can be resolved
         let original_article = article.ap_id.dereference_forced(data).await?;

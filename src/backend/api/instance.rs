@@ -1,4 +1,4 @@
-use crate::backend::database::MyDataHandle;
+use crate::backend::database::IbisData;
 use crate::backend::error::MyResult;
 use crate::backend::federation::activities::follow::Follow;
 use crate::common::{DbInstance, InstanceView, ResolveObject};
@@ -13,7 +13,7 @@ use axum_macros::debug_handler;
 /// Retrieve the local instance info.
 #[debug_handler]
 pub(in crate::backend::api) async fn get_local_instance(
-    data: Data<MyDataHandle>,
+    data: Data<IbisData>,
 ) -> MyResult<Json<InstanceView>> {
     let local_instance = DbInstance::read_local_view(&data.db_connection)?;
     Ok(Json(local_instance))
@@ -24,7 +24,7 @@ pub(in crate::backend::api) async fn get_local_instance(
 #[debug_handler]
 pub(in crate::backend::api) async fn follow_instance(
     Extension(user): Extension<LocalUserView>,
-    data: Data<MyDataHandle>,
+    data: Data<IbisData>,
     Form(query): Form<FollowInstance>,
 ) -> MyResult<()> {
     let target = DbInstance::read(query.id, &data.db_connection)?;
@@ -40,7 +40,7 @@ pub(in crate::backend::api) async fn follow_instance(
 #[debug_handler]
 pub(super) async fn resolve_instance(
     Query(query): Query<ResolveObject>,
-    data: Data<MyDataHandle>,
+    data: Data<IbisData>,
 ) -> MyResult<Json<DbInstance>> {
     let instance: DbInstance = ObjectId::from(query.id).dereference(&data).await?;
     Ok(Json(instance))

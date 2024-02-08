@@ -1,4 +1,4 @@
-use crate::backend::database::{read_jwt_secret, MyDataHandle};
+use crate::backend::database::{read_jwt_secret, IbisData};
 use crate::backend::error::MyResult;
 use crate::common::{DbLocalUser, DbPerson, LocalUserView, LoginUserData, RegisterUserData};
 use activitypub_federation::config::Data;
@@ -29,7 +29,7 @@ struct Claims {
     pub exp: u64,
 }
 
-fn generate_login_token(local_user: &DbLocalUser, data: &Data<MyDataHandle>) -> MyResult<String> {
+fn generate_login_token(local_user: &DbLocalUser, data: &Data<IbisData>) -> MyResult<String> {
     let hostname = data.domain().to_string();
     let claims = Claims {
         sub: local_user.id.to_string(),
@@ -44,7 +44,7 @@ fn generate_login_token(local_user: &DbLocalUser, data: &Data<MyDataHandle>) -> 
     Ok(jwt)
 }
 
-pub async fn validate(jwt: &str, data: &Data<MyDataHandle>) -> MyResult<LocalUserView> {
+pub async fn validate(jwt: &str, data: &Data<IbisData>) -> MyResult<LocalUserView> {
     let validation = Validation::default();
     let secret = read_jwt_secret(data)?;
     let key = DecodingKey::from_secret(secret.as_bytes());
@@ -54,7 +54,7 @@ pub async fn validate(jwt: &str, data: &Data<MyDataHandle>) -> MyResult<LocalUse
 
 #[debug_handler]
 pub(in crate::backend::api) async fn register_user(
-    data: Data<MyDataHandle>,
+    data: Data<IbisData>,
     jar: CookieJar,
     Form(form): Form<RegisterUserData>,
 ) -> MyResult<(CookieJar, Json<LocalUserView>)> {
@@ -69,7 +69,7 @@ pub(in crate::backend::api) async fn register_user(
 
 #[debug_handler]
 pub(in crate::backend::api) async fn login_user(
-    data: Data<MyDataHandle>,
+    data: Data<IbisData>,
     jar: CookieJar,
     Form(form): Form<LoginUserData>,
 ) -> MyResult<(CookieJar, Json<LocalUserView>)> {
@@ -83,7 +83,7 @@ pub(in crate::backend::api) async fn login_user(
     Ok((jar, Json(user)))
 }
 
-fn create_cookie(jwt: String, data: &Data<MyDataHandle>) -> Cookie<'static> {
+fn create_cookie(jwt: String, data: &Data<IbisData>) -> Cookie<'static> {
     let mut domain = data.domain().to_string();
     // remove port from domain
     if domain.contains(':') {
@@ -103,7 +103,7 @@ fn create_cookie(jwt: String, data: &Data<MyDataHandle>) -> Cookie<'static> {
 
 #[debug_handler]
 pub(in crate::backend::api) async fn my_profile(
-    data: Data<MyDataHandle>,
+    data: Data<IbisData>,
     jar: CookieJar,
 ) -> MyResult<Json<LocalUserView>> {
     let jwt = jar.get(AUTH_COOKIE).map(|c| c.value());
@@ -116,7 +116,7 @@ pub(in crate::backend::api) async fn my_profile(
 
 #[debug_handler]
 pub(in crate::backend::api) async fn logout_user(
-    data: Data<MyDataHandle>,
+    data: Data<IbisData>,
     jar: CookieJar,
 ) -> MyResult<CookieJar> {
     let jar = jar.remove(create_cookie(String::new(), &data));

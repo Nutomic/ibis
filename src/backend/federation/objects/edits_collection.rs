@@ -1,4 +1,4 @@
-use crate::backend::database::MyDataHandle;
+use crate::backend::database::IbisData;
 use crate::backend::error::Error;
 use crate::backend::federation::objects::edit::ApubEdit;
 use crate::common::DbArticle;
@@ -30,7 +30,7 @@ pub struct DbEditCollection(pub Vec<DbEdit>);
 #[async_trait::async_trait]
 impl Collection for DbEditCollection {
     type Owner = DbArticle;
-    type DataType = MyDataHandle;
+    type DataType = IbisData;
     type Kind = ApubEditCollection;
     type Error = Error;
 

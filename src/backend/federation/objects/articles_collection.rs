@@ -1,4 +1,4 @@
-use crate::backend::database::MyDataHandle;
+use crate::backend::database::IbisData;
 use crate::backend::error::Error;
 use crate::backend::federation::objects::article::ApubArticle;
 use crate::common::DbInstance;
@@ -29,7 +29,7 @@ pub struct DbArticleCollection(Vec<DbArticle>);
 #[async_trait::async_trait]
 impl Collection for DbArticleCollection {
     type Owner = DbInstance;
-    type DataType = MyDataHandle;
+    type DataType = IbisData;
     type Kind = ArticleCollection;
     type Error = Error;
 

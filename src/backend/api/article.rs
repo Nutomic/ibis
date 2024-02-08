@@ -1,7 +1,7 @@
 use crate::backend::database::article::DbArticleForm;
 use crate::backend::database::conflict::{DbConflict, DbConflictForm};
 use crate::backend::database::edit::DbEditForm;
-use crate::backend::database::MyDataHandle;
+use crate::backend::database::IbisData;
 use crate::backend::error::MyResult;
 use crate::backend::federation::activities::create_article::CreateArticle;
 use crate::backend::federation::activities::submit_article_update;
@@ -27,7 +27,7 @@ use diffy::create_patch;
 #[debug_handler]
 pub(in crate::backend::api) async fn create_article(
     Extension(user): Extension<LocalUserView>,
-    data: Data<MyDataHandle>,
+    data: Data<IbisData>,
     Form(create_article): Form<CreateArticleData>,
 ) -> MyResult<Json<ArticleView>> {
     if create_article.title.is_empty() {
@@ -77,7 +77,7 @@ pub(in crate::backend::api) async fn create_article(
 #[debug_handler]
 pub(in crate::backend::api) async fn edit_article(
     Extension(user): Extension<LocalUserView>,
-    data: Data<MyDataHandle>,
+    data: Data<IbisData>,
     Form(mut edit_form): Form<EditArticleData>,
 ) -> MyResult<Json<Option<ApiConflict>>> {
     // resolve conflict if any
@@ -139,7 +139,7 @@ pub(in crate::backend::api) async fn edit_article(
 #[debug_handler]
 pub(in crate::backend::api) async fn get_article(
     Query(query): Query<GetArticleData>,
-    data: Data<MyDataHandle>,
+    data: Data<IbisData>,
 ) -> MyResult<Json<ArticleView>> {
     match (query.title, query.id) {
         (Some(title), None) => Ok(Json(DbArticle::read_view_title(
@@ -160,7 +160,7 @@ pub(in crate::backend::api) async fn get_article(
 #[debug_handler]
 pub(in crate::backend::api) async fn list_articles(
     Query(query): Query<ListArticlesData>,
-    data: Data<MyDataHandle>,
+    data: Data<IbisData>,
 ) -> MyResult<Json<Vec<DbArticle>>> {
     let only_local = query.only_local.unwrap_or(false);
     Ok(Json(DbArticle::read_all(only_local, &data.db_connection)?))
@@ -171,7 +171,7 @@ pub(in crate::backend::api) async fn list_articles(
 #[debug_handler]
 pub(in crate::backend::api) async fn fork_article(
     Extension(_user): Extension<LocalUserView>,
-    data: Data<MyDataHandle>,
+    data: Data<IbisData>,
     Form(fork_form): Form<ForkArticleData>,
 ) -> MyResult<Json<ArticleView>> {
     // TODO: lots of code duplicated from create_article(), can move it into helper
@@ -221,7 +221,7 @@ pub(in crate::backend::api) async fn fork_article(
 #[debug_handler]
 pub(super) async fn resolve_article(
     Query(query): Query<ResolveObject>,
-    data: Data<MyDataHandle>,
+    data: Data<IbisData>,
 ) -> MyResult<Json<ArticleView>> {
     let article: DbArticle = ObjectId::from(query.id).dereference(&data).await?;
     let edits = DbEdit::read_for_article(&article, &data.db_connection)?;
@@ -237,7 +237,7 @@ pub(super) async fn resolve_article(
 #[debug_handler]
 pub(super) async fn search_article(
     Query(query): Query<SearchArticleData>,
-    data: Data<MyDataHandle>,
+    data: Data<IbisData>,
 ) -> MyResult<Json<Vec<DbArticle>>> {
     let article = DbArticle::search(&query.query, &data.db_connection)?;
     Ok(Json(article))

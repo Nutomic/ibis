@@ -1,6 +1,6 @@
 use crate::backend::database::schema::{instance, instance_follow};
 use crate::backend::database::schema::{local_user, person};
-use crate::backend::database::{IbisData, MyDataHandle};
+use crate::backend::database::IbisData;
 use crate::backend::error::MyResult;
 use crate::common::{DbInstance, DbLocalUser, DbPerson, LocalUserView};
 use activitypub_federation::config::Data;
@@ -46,7 +46,7 @@ impl DbPerson {
             .get_result::<DbPerson>(conn.deref_mut())?)
     }
 
-    pub fn read(id: i32, data: &Data<MyDataHandle>) -> MyResult<DbPerson> {
+    pub fn read(id: i32, data: &Data<IbisData>) -> MyResult<DbPerson> {
         let mut conn = data.db_connection.lock().unwrap();
         Ok(person::table.find(id).get_result(conn.deref_mut())?)
     }
@@ -95,7 +95,7 @@ impl DbPerson {
 
     pub fn read_from_ap_id(
         ap_id: &ObjectId<DbPerson>,
-        data: &Data<MyDataHandle>,
+        data: &Data<IbisData>,
     ) -> MyResult<DbPerson> {
         let mut conn = data.db_connection.lock().unwrap();
         Ok(person::table
@@ -103,10 +103,7 @@ impl DbPerson {
             .get_result(conn.deref_mut())?)
     }
 
-    pub fn read_local_from_name(
-        username: &str,
-        data: &Data<MyDataHandle>,
-    ) -> MyResult<LocalUserView> {
+    pub fn read_local_from_name(username: &str, data: &Data<IbisData>) -> MyResult<LocalUserView> {
         let mut conn = data.db_connection.lock().unwrap();
         let (person, local_user) = person::table
             .inner_join(local_user::table)
@@ -122,7 +119,7 @@ impl DbPerson {
         })
     }
 
-    pub fn read_local_from_id(id: i32, data: &Data<MyDataHandle>) -> MyResult<LocalUserView> {
+    pub fn read_local_from_id(id: i32, data: &Data<IbisData>) -> MyResult<LocalUserView> {
         let mut conn = data.db_connection.lock().unwrap();
         let (person, local_user) = person::table
             .inner_join(local_user::table)

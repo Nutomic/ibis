@@ -1,7 +1,7 @@
 use crate::backend::error::MyResult;
 use crate::backend::federation::send_activity;
 use crate::backend::utils::generate_activity_id;
-use crate::backend::{database::MyDataHandle, federation::activities::follow::Follow};
+use crate::backend::{database::IbisData, federation::activities::follow::Follow};
 use crate::common::DbInstance;
 use activitypub_federation::traits::Actor;
 use activitypub_federation::{
@@ -24,7 +24,7 @@ impl Accept {
     pub async fn send(
         local_instance: DbInstance,
         object: Follow,
-        data: &Data<MyDataHandle>,
+        data: &Data<IbisData>,
     ) -> MyResult<()> {
         let id = generate_activity_id(local_instance.ap_id.inner())?;
         let follower = object.actor.dereference(data).await?;
@@ -47,7 +47,7 @@ impl Accept {
 
 #[async_trait::async_trait]
 impl ActivityHandler for Accept {
-    type DataType = MyDataHandle;
+    type DataType = IbisData;
     type Error = crate::backend::error::Error;
 
     fn id(&self) -> &Url {

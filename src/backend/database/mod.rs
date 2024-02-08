@@ -1,13 +1,11 @@
-use diesel::PgConnection;
-use std::ops::Deref;
-use std::sync::{Arc, Mutex};
-// TODO: can remove this
-pub type MyDataHandle = IbisData;
 use crate::backend::database::schema::jwt_secret;
 use crate::backend::error::MyResult;
 use crate::config::IbisConfig;
+use diesel::PgConnection;
 use diesel::{QueryDsl, RunQueryDsl};
+use std::ops::Deref;
 use std::ops::DerefMut;
+use std::sync::{Arc, Mutex};
 
 pub mod article;
 pub mod conflict;

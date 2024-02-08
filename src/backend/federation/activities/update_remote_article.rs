@@ -1,4 +1,4 @@
-use crate::backend::database::MyDataHandle;
+use crate::backend::database::IbisData;
 use crate::backend::error::MyResult;
 
 use crate::backend::federation::activities::reject::RejectEdit;
@@ -37,7 +37,7 @@ impl UpdateRemoteArticle {
     pub async fn send(
         edit: DbEdit,
         article_instance: DbInstance,
-        data: &Data<MyDataHandle>,
+        data: &Data<IbisData>,
     ) -> MyResult<()> {
         let local_instance = DbInstance::read_local_instance(&data.db_connection)?;
         let id = generate_activity_id(local_instance.ap_id.inner())?;
@@ -61,7 +61,7 @@ impl UpdateRemoteArticle {
 
 #[async_trait::async_trait]
 impl ActivityHandler for UpdateRemoteArticle {
-    type DataType = MyDataHandle;
+    type DataType = IbisData;
     type Error = crate::backend::error::Error;
 
     fn id(&self) -> &Url {

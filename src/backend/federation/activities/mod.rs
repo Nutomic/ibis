@@ -1,5 +1,5 @@
 use crate::backend::database::edit::DbEditForm;
-use crate::backend::database::MyDataHandle;
+use crate::backend::database::IbisData;
 use crate::backend::error::Error;
 use crate::backend::federation::activities::update_local_article::UpdateLocalArticle;
 use crate::backend::federation::activities::update_remote_article::UpdateRemoteArticle;
@@ -22,7 +22,7 @@ pub async fn submit_article_update(
     previous_version: EditVersion,
     original_article: &DbArticle,
     creator_id: i32,
-    data: &Data<MyDataHandle>,
+    data: &Data<IbisData>,
 ) -> Result<(), Error> {
     let form = DbEditForm::new(
         original_article,

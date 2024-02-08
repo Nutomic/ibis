@@ -1,5 +1,5 @@
 use crate::backend::database::edit::DbEditForm;
-use crate::backend::database::MyDataHandle;
+use crate::backend::database::IbisData;
 use crate::backend::error::Error;
 use crate::common::DbPerson;
 use crate::common::EditVersion;
@@ -35,7 +35,7 @@ pub struct ApubEdit {
 
 #[async_trait::async_trait]
 impl Object for DbEdit {
-    type DataType = MyDataHandle;
+    type DataType = IbisData;
     type Kind = ApubEdit;
     type Error = Error;
 

@@ -1,5 +1,5 @@
 use crate::backend::database::instance::DbInstanceForm;
-use crate::backend::database::MyDataHandle;
+use crate::backend::database::IbisData;
 use crate::backend::error::Error;
 use crate::backend::federation::objects::articles_collection::DbArticleCollection;
 use crate::backend::federation::send_activity;
@@ -38,7 +38,7 @@ impl DbInstance {
         Ok(Url::parse(&format!("{}/followers", self.ap_id.inner()))?)
     }
 
-    pub fn follower_ids(&self, data: &Data<MyDataHandle>) -> MyResult<Vec<Url>> {
+    pub fn follower_ids(&self, data: &Data<IbisData>) -> MyResult<Vec<Url>> {
         Ok(DbInstance::read_followers(self.id, &data.db_connection)?
             .into_iter()
             .map(|f| f.ap_id.into())
@@ -49,7 +49,7 @@ impl DbInstance {
         &self,
         activity: Activity,
         extra_recipients: Vec<DbInstance>,
-        data: &Data<MyDataHandle>,
+        data: &Data<IbisData>,
     ) -> Result<(), <Activity as ActivityHandler>::Error>
     where
         Activity: ActivityHandler + Serialize + Debug + Send + Sync,
@@ -72,7 +72,7 @@ impl DbInstance {
 
 #[async_trait::async_trait]
 impl Object for DbInstance {
-    type DataType = MyDataHandle;
+    type DataType = IbisData;
     type Kind = ApubInstance;
     type Error = Error;
 

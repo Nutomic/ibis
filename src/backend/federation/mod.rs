@@ -1,4 +1,4 @@
-use crate::backend::database::MyDataHandle;
+use crate::backend::database::IbisData;
 use crate::config::IbisConfig;
 use activitypub_federation::activity_sending::SendActivityTask;
 use activitypub_federation::config::{Data, UrlVerifier};
@@ -19,7 +19,7 @@ pub async fn send_activity<Activity, ActorType: Actor>(
     actor: &ActorType,
     activity: Activity,
     recipients: Vec<Url>,
-    data: &Data<MyDataHandle>,
+    data: &Data<IbisData>,
 ) -> Result<(), <Activity as ActivityHandler>::Error>
 where
     Activity: ActivityHandler + Serialize + Debug + Send + Sync,

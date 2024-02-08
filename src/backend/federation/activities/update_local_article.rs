@@ -1,4 +1,4 @@
-use crate::backend::database::MyDataHandle;
+use crate::backend::database::IbisData;
 use crate::backend::error::MyResult;
 use crate::backend::federation::objects::article::ApubArticle;
 
@@ -33,7 +33,7 @@ impl UpdateLocalArticle {
     pub async fn send(
         article: DbArticle,
         extra_recipients: Vec<DbInstance>,
-        data: &Data<MyDataHandle>,
+        data: &Data<IbisData>,
     ) -> MyResult<()> {
         debug_assert!(article.local);
         let local_instance = DbInstance::read_local_instance(&data.db_connection)?;
@@ -56,7 +56,7 @@ impl UpdateLocalArticle {
 
 #[async_trait::async_trait]
 impl ActivityHandler for UpdateLocalArticle {
-    type DataType = MyDataHandle;
+    type DataType = IbisData;
     type Error = crate::backend::error::Error;
 
     fn id(&self) -> &Url {

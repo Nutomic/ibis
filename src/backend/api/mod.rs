@@ -9,7 +9,7 @@ use crate::backend::api::user::validate;
 use crate::backend::api::user::{login_user, logout_user};
 use crate::backend::api::user::{my_profile, AUTH_COOKIE};
 use crate::backend::database::conflict::DbConflict;
-use crate::backend::database::MyDataHandle;
+use crate::backend::database::IbisData;
 use crate::backend::error::MyResult;
 use crate::common::ApiConflict;
 use crate::common::LocalUserView;
@@ -54,7 +54,7 @@ pub fn api_routes() -> Router {
 }
 
 async fn auth<B>(
-    data: Data<MyDataHandle>,
+    data: Data<IbisData>,
     jar: CookieJar,
     mut request: Request<B>,
     next: Next<B>,
@@ -74,7 +74,7 @@ async fn auth<B>(
 #[debug_handler]
 async fn edit_conflicts(
     Extension(user): Extension<LocalUserView>,
-    data: Data<MyDataHandle>,
+    data: Data<IbisData>,
 ) -> MyResult<Json<Vec<ApiConflict>>> {
     let conflicts = DbConflict::list(&user.local_user, &data.db_connection)?;
     let conflicts: Vec<ApiConflict> = try_join_all(conflicts.into_iter().map(|c| {

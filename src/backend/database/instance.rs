@@ -1,5 +1,5 @@
 use crate::backend::database::schema::{instance, instance_follow};
-use crate::backend::database::MyDataHandle;
+use crate::backend::database::IbisData;
 use crate::backend::error::MyResult;
 use crate::backend::federation::objects::articles_collection::DbArticleCollection;
 use crate::common::{DbInstance, DbPerson, InstanceView};
@@ -46,7 +46,7 @@ impl DbInstance {
 
     pub fn read_from_ap_id(
         ap_id: &ObjectId<DbInstance>,
-        data: &Data<MyDataHandle>,
+        data: &Data<IbisData>,
     ) -> MyResult<DbInstance> {
         let mut conn = data.db_connection.lock().unwrap();
         Ok(instance::table
@@ -75,7 +75,7 @@ impl DbInstance {
         follower: &DbPerson,
         instance: &DbInstance,
         pending_: bool,
-        data: &Data<MyDataHandle>,
+        data: &Data<IbisData>,
     ) -> MyResult<()> {
         use instance_follow::dsl::{follower_id, instance_id, pending};
         let mut conn = data.db_connection.lock().unwrap();

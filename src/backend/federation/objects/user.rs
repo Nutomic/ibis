@@ -1,5 +1,5 @@
 use crate::backend::database::user::DbPersonForm;
-use crate::backend::database::MyDataHandle;
+use crate::backend::database::IbisData;
 use crate::backend::error::Error;
 use crate::common::DbPerson;
 use activitypub_federation::kinds::actor::PersonType;
@@ -27,7 +27,7 @@ pub struct ApubUser {
 
 #[async_trait::async_trait]
 impl Object for DbPerson {
-    type DataType = MyDataHandle;
+    type DataType = IbisData;
     type Kind = ApubUser;
     type Error = Error;
 

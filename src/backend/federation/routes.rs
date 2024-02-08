@@ -1,4 +1,4 @@
-use crate::backend::database::MyDataHandle;
+use crate::backend::database::IbisData;
 use crate::backend::error::Error;
 use crate::backend::error::MyResult;
 use crate::backend::federation::activities::accept::Accept;
@@ -45,7 +45,7 @@ pub fn federation_routes() -> Router {
 
 #[debug_handler]
 async fn http_get_instance(
-    data: Data<MyDataHandle>,
+    data: Data<IbisData>,
 ) -> MyResult<FederationJson<WithContext<ApubInstance>>> {
     let local_instance = DbInstance::read_local_instance(&data.db_connection)?;
     let json_instance = local_instance.into_json(&data).await?;
@@ -55,7 +55,7 @@ async fn http_get_instance(
 #[debug_handler]
 async fn http_get_person(
     Path(name): Path<String>,
-    data: Data<MyDataHandle>,
+    data: Data<IbisData>,
 ) -> MyResult<FederationJson<WithContext<ApubUser>>> {
     let person = DbPerson::read_local_from_name(&name, &data)?.person;
     let json_person = person.into_json(&data).await?;
@@ -64,7 +64,7 @@ async fn http_get_person(
 
 #[debug_handler]
 async fn http_get_all_articles(
-    data: Data<MyDataHandle>,
+    data: Data<IbisData>,
 ) -> MyResult<FederationJson<WithContext<ArticleCollection>>> {
     let local_instance = DbInstance::read_local_instance(&data.db_connection)?;
     let collection = DbArticleCollection::read_local(&local_instance, &data).await?;
@@ -74,7 +74,7 @@ async fn http_get_all_articles(
 #[debug_handler]
 async fn http_get_article(
     Path(title): Path<String>,
-    data: Data<MyDataHandle>,
+    data: Data<IbisData>,
 ) -> MyResult<FederationJson<WithContext<ApubArticle>>> {
     let article = DbArticle::read_local_title(&title, &data.db_connection)?;
     let json = article.into_json(&data).await?;
@@ -84,7 +84,7 @@ async fn http_get_article(
 #[debug_handler]
 async fn http_get_article_edits(
     Path(title): Path<String>,
-    data: Data<MyDataHandle>,
+    data: Data<IbisData>,
 ) -> MyResult<FederationJson<WithContext<ApubEditCollection>>> {
     let article = DbArticle::read_local_title(&title, &data.db_connection)?;
     let json = DbEditCollection::read_local(&article, &data).await?;
@@ -106,14 +106,11 @@ pub enum InboxActivities {
 
 #[debug_handler]
 pub async fn http_post_inbox(
-    data: Data<MyDataHandle>,
+    data: Data<IbisData>,
     activity_data: ActivityData,
 ) -> impl IntoResponse {
-    receive_activity::<WithContext<InboxActivities>, UserOrInstance, MyDataHandle>(
-        activity_data,
-        &data,
-    )
-    .await
+    receive_activity::<WithContext<InboxActivities>, UserOrInstance, IbisData>(activity_data, &data)
+        .await
 }
 
 #[derive(Clone, Debug)]
@@ -137,7 +134,7 @@ pub enum PersonOrInstanceType {
 
 #[async_trait::async_trait]
 impl Object for UserOrInstance {
-    type DataType = MyDataHandle;
+    type DataType = IbisData;
     type Kind = PersonOrInstance;
     type Error = Error;
 
