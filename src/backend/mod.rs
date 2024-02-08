@@ -4,12 +4,13 @@ use crate::backend::database::instance::DbInstanceForm;
 use crate::backend::database::IbisData;
 use crate::backend::error::Error;
 use crate::backend::error::MyResult;
+use crate::backend::federation::activities::submit_article_update;
 use crate::backend::federation::routes::federation_routes;
 use crate::backend::federation::VerifyUrlData;
 use crate::backend::utils::generate_activity_id;
-use crate::common::{DbArticle, DbInstance, DbPerson, MAIN_PAGE_NAME};
+use crate::common::{DbArticle, DbInstance, DbPerson, EditVersion, MAIN_PAGE_NAME};
 use crate::frontend::app::App;
-use activitypub_federation::config::{FederationConfig, FederationMiddleware};
+use activitypub_federation::config::{Data, FederationConfig, FederationMiddleware};
 use activitypub_federation::fetch::collection_id::CollectionId;
 use activitypub_federation::fetch::object_id::ObjectId;
 use activitypub_federation::http_signatures::generate_actor_keypair;
@@ -65,7 +66,7 @@ pub async fn start(config: IbisConfig) -> MyResult<()> {
 
     // Create local instance if it doesnt exist yet
     if DbInstance::read_local_instance(&data.db_connection).is_err() {
-        setup(&data)?;
+        setup(&data.to_request_data()).await?;
     }
 
     let conf = get_configuration(Some("Cargo.toml")).await.unwrap();
@@ -109,7 +110,7 @@ const MAIN_PAGE_DEFAULT_TEXT: &str = "Welcome to Ibis, the federated Wikipedia a
 This main page can only be edited by the admin. Use it as an introduction for new users, \
 and to list interesting articles.";
 
-fn setup(data: &IbisData) -> Result<(), Error> {
+async fn setup(data: &Data<IbisData>) -> Result<(), Error> {
     let domain = &data.config.federation.domain;
     let ap_id = ObjectId::parse(&format!("http://{domain}"))?;
     let articles_url = CollectionId::parse(&format!("http://{domain}/all_articles"))?;
@@ -127,22 +128,33 @@ fn setup(data: &IbisData) -> Result<(), Error> {
     };
     let instance = DbInstance::create(&form, &data.db_connection)?;
 
-    // Create the main page which is shown by default
-    let form = DbArticleForm {
-        title: MAIN_PAGE_NAME.to_string(),
-        text: MAIN_PAGE_DEFAULT_TEXT.to_string(),
-        ap_id: ObjectId::parse(&format!("http://{domain}/article/{MAIN_PAGE_NAME}"))?,
-        instance_id: instance.id,
-        local: true,
-    };
-    DbArticle::create(&form, &data.db_connection)?;
-
-    DbPerson::create_local(
+    let person = DbPerson::create_local(
         data.config.setup.admin_username.clone(),
         data.config.setup.admin_password.clone(),
         true,
         data,
     )?;
+
+    // Create the main page which is shown by default
+    let form = DbArticleForm {
+        title: MAIN_PAGE_NAME.to_string(),
+        text: String::new(),
+        ap_id: ObjectId::parse(&format!("http://{domain}/article/{MAIN_PAGE_NAME}"))?,
+        instance_id: instance.id,
+        local: true,
+    };
+    let article = DbArticle::create(&form, &data.db_connection)?;
+    // also create an article so its included in most recently edited list
+    submit_article_update(
+        MAIN_PAGE_DEFAULT_TEXT.to_string(),
+        "Default main page".to_string(),
+        EditVersion::default(),
+        &article,
+        person.person.id,
+        data,
+    )
+    .await?;
+
     Ok(())
 }
 
