@@ -18,7 +18,8 @@ pub async fn main() -> ibis_lib::backend::error::MyResult<()> {
 
     let config = Config::builder()
         .add_source(config::File::with_name("config/config.toml"))
-        .add_source(config::Environment::with_prefix("IBIS"))
+        // Cant use _ as separator due to https://github.com/mehcode/config-rs/issues/391
+        .add_source(config::Environment::with_prefix("IBIS").separator("__"))
         .build()
         .unwrap();
 

@@ -136,6 +136,7 @@ pub struct LocalUserView {
 #[cfg_attr(feature = "ssr", diesel(table_name = local_user, check_for_backend(diesel::pg::Pg)))]
 pub struct DbLocalUser {
     pub id: i32,
+    #[serde(skip)]
     pub password_encrypted: String,
     pub person_id: i32,
     pub admin: bool,

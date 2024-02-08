@@ -62,8 +62,12 @@ impl GlobalState {
 
 #[component]
 pub fn App() -> impl IntoView {
-    let port = option_env!("TRUNK_SERVE_PORT").unwrap_or("8080");
-    let backend_hostname = format!("127.0.0.1:{port}");
+    #[allow(unused_mut, unused_assignments)]
+    let mut backend_hostname = "127.0.0.1:8080".to_string();
+    #[cfg(not(feature = "ssr"))]
+    {
+        backend_hostname = web_sys::window().unwrap().location().host().unwrap();
+    }
 
     provide_meta_context();
     let backend_hostname = GlobalState {

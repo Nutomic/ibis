@@ -94,7 +94,8 @@ fn create_cookie(jwt: String, data: &Data<IbisData>) -> Cookie<'static> {
         .same_site(SameSite::Strict)
         .path("/")
         .http_only(true)
-        .secure(true)
+        // TODO: not in debug mode
+        //.secure(true)
         .expires(Expiration::DateTime(
             OffsetDateTime::now_utc() + Duration::weeks(52),
         ))

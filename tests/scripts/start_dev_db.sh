@@ -1,7 +1,7 @@
 #!/bin/bash
-set -e
+set -ex
 
-export PGHOST=$1
+export PGHOST="$1"
 export PGDATA="$1/dev_pgdata"
 
 # If cluster exists, stop the backend
@@ -19,7 +19,6 @@ rm -rf $1
 initdb --username=postgres --auth=trust --no-instructions
 
 touch "$PGHOST/.s.PGSQL.5432"
-echo "$PGHOST/.s.PGSQL.5432"
 
 # Start backend that only listens to socket in current directory
 pg_ctl start --options="-c listen_addresses= -c unix_socket_directories=$PGHOST"
