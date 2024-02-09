@@ -61,13 +61,14 @@ impl DbInstance {
             .get_result(conn.deref_mut())?)
     }
 
-    pub fn read_local_view(conn: &Mutex<PgConnection>) -> MyResult<InstanceView> {
-        let instance = DbInstance::read_local_instance(conn)?;
-        let followers = DbInstance::read_followers(instance.id, conn)?;
+    pub fn read_local_view(data: &Data<IbisData>) -> MyResult<InstanceView> {
+        let instance = DbInstance::read_local_instance(&data.db_connection)?;
+        let followers = DbInstance::read_followers(instance.id, &data.db_connection)?;
 
         Ok(InstanceView {
             instance,
             followers,
+            registration_open: data.config.registration_open,
         })
     }
 

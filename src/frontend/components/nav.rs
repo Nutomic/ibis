@@ -12,8 +12,18 @@ pub fn Nav() -> impl IntoView {
             .get_untracked()
             .update_my_profile();
     });
+    let registration_open = create_local_resource(
+        || (),
+        move |_| async move {
+            GlobalState::api_client()
+                .get_local_instance()
+                .await
+                .unwrap()
+                .registration_open
+        },
+    );
+
     let (search_query, set_search_query) = create_signal(String::new());
-    // TODO: hide register button if disabled in config
     view! {
         <nav class="inner">
             <li>
@@ -62,9 +72,11 @@ pub fn Nav() -> impl IntoView {
             <li>
                 <A href="/login">"Login"</A>
             </li>
-            <li>
-                <A href="/register">"Register"</A>
-            </li>
+            <Show when=move || registration_open.get().unwrap_or_default()>
+                <li>
+                    <A href="/register">"Register"</A>
+                </li>
+            </Show>
         </Show>
         </nav>
     }

@@ -15,7 +15,7 @@ use axum_macros::debug_handler;
 pub(in crate::backend::api) async fn get_local_instance(
     data: Data<IbisData>,
 ) -> MyResult<Json<InstanceView>> {
-    let local_instance = DbInstance::read_local_view(&data.db_connection)?;
+    let local_instance = DbInstance::read_local_view(&data)?;
     Ok(Json(local_instance))
 }
 

@@ -247,6 +247,7 @@ pub struct DbInstance {
 pub struct InstanceView {
     pub instance: DbInstance,
     pub followers: Vec<DbPerson>,
+    pub registration_open: bool,
 }
 
 #[test]
