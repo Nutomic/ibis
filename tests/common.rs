@@ -6,7 +6,6 @@ use ibis_lib::frontend::error::MyResult;
 use reqwest::ClientBuilder;
 use std::env::current_dir;
 use std::fs::{create_dir_all, remove_dir_all};
-use std::net::ToSocketAddrs;
 use std::ops::Deref;
 use std::process::{Command, Stdio};
 use std::sync::atomic::{AtomicI32, Ordering};
@@ -38,7 +37,7 @@ impl TestData {
         let current_run = COUNTER.fetch_add(1, Ordering::Relaxed);
 
         // Give each test a moment to start its postgres databases
-        sleep(Duration::from_millis(current_run as u64 * 500));
+        sleep(Duration::from_millis(current_run as u64 * 1000));
 
         let first_port = 8000 + (current_run * 3);
         let port_alpha = first_port;
@@ -107,7 +106,7 @@ impl IbisInstance {
 
     async fn start(db_path: String, port: i32, username: &str) -> Self {
         let database_url = format!("postgresql://ibis:password@/ibis?host={db_path}");
-        let hostname = format!("127.0.0.1:{port}");
+        let hostname = format!("localhost:{port}");
         dbg!(&hostname);
         let bind = format!("127.0.0.1:{port}").parse().unwrap();
         let config = IbisConfig {
@@ -121,10 +120,11 @@ impl IbisInstance {
             ..Default::default()
         };
         let handle = tokio::task::spawn(async move {
+            dbg!("do start");
             dbg!(start(config).await).unwrap();
         });
         // wait a moment for the backend to start
-        tokio::time::sleep(Duration::from_millis(100)).await;
+        tokio::time::sleep(Duration::from_millis(2000)).await;
         let form = RegisterUserData {
             username: username.to_string(),
             password: "hunter2".to_string(),
