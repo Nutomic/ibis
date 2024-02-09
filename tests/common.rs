@@ -37,7 +37,7 @@ impl TestData {
         let current_run = COUNTER.fetch_add(1, Ordering::Relaxed);
 
         // Give each test a moment to start its postgres databases
-        sleep(Duration::from_millis(current_run as u64 * 500));
+        sleep(Duration::from_millis(current_run as u64 * 2000));
 
         let first_port = 8000 + (current_run * 3);
         let port_alpha = first_port;
@@ -106,7 +106,7 @@ impl IbisInstance {
 
     async fn start(db_path: String, port: i32, username: &str) -> Self {
         let database_url = format!("postgresql://ibis:password@/ibis?host={db_path}");
-        let hostname = format!("127.0.0.1:{port}");
+        let hostname = format!("localhost:{port}");
         let bind = format!("127.0.0.1:{port}").parse().unwrap();
         let config = IbisConfig {
             bind,
@@ -122,7 +122,7 @@ impl IbisInstance {
             start(config).await.unwrap();
         });
         // wait a moment for the backend to start
-        tokio::time::sleep(Duration::from_millis(100)).await;
+        tokio::time::sleep(Duration::from_millis(5000)).await;
         let form = RegisterUserData {
             username: username.to_string(),
             password: "hunter2".to_string(),
