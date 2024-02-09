@@ -107,7 +107,6 @@ impl IbisInstance {
     async fn start(db_path: String, port: i32, username: &str) -> Self {
         let database_url = format!("postgresql://ibis:password@/ibis?host={db_path}");
         let hostname = format!("localhost:{port}");
-        dbg!(&hostname);
         let bind = format!("127.0.0.1:{port}").parse().unwrap();
         let config = IbisConfig {
             bind,
@@ -120,8 +119,7 @@ impl IbisInstance {
             ..Default::default()
         };
         let handle = tokio::task::spawn(async move {
-            dbg!("do start");
-            dbg!(start(config).await).unwrap();
+            start(config).await.unwrap();
         });
         // wait a moment for the backend to start
         tokio::time::sleep(Duration::from_millis(2000)).await;
@@ -131,7 +129,6 @@ impl IbisInstance {
         };
         let client = ClientBuilder::new().cookie_store(true).build().unwrap();
         let api_client = ApiClient::new(client, hostname.clone());
-        dbg!("do register");
         api_client.register(form).await.unwrap();
         Self {
             api_client,
