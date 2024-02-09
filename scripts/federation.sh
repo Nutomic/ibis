@@ -24,12 +24,11 @@ echo $ALPHA_DB_URL
 # get rid of processes leftover from previous runs
 killall ibis || true
 
+CARGO_TARGET_DIR=target/frontend trunk build
+
 # launch a couple of local instances to test federation
 # sometimes ctrl+c doesnt work properly, so you have to kill trunk, cargo-watch and ibis manually
-# TODO: somehow instances use wrong port resulting in cors errors
 (trap 'kill 0' SIGINT;
-  sh -c "CARGO_TARGET_DIR=target/frontend trunk serve -w src/frontend/ --proxy-backend http://127.0.0.1:8071 --port 8070" &
-  sh -c "IBIS__BIND=127.0.0.1:8071 IBIS__FEDERATION__DOMAIN=ibis-alpha:8070 IBIS__DATABASE_URL=$ALPHA_DB_URL cargo run" &
-  sh -c "CARGO_TARGET_DIR=target/frontend trunk serve -w src/frontend/ --proxy-backend http://127.0.0.1:8081 --port 8080" &
-  sh -c "IBIS__BIND=127.0.0.1:8081 IBIS__FEDERATION__DOMAIN=ibis-beta:8080 IBIS__DATABASE_URL=$BETA_DB_URL cargo run" &
+  sh -c "IBIS__BIND=127.0.0.1:8070 IBIS__FEDERATION__DOMAIN=ibis-alpha:8070 IBIS__DATABASE_URL=$ALPHA_DB_URL cargo run" &
+  sh -c "IBIS__BIND=127.0.0.1:8080 IBIS__FEDERATION__DOMAIN=ibis-beta:8080 IBIS__DATABASE_URL=$BETA_DB_URL cargo run" &
 )

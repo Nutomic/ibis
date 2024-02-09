@@ -26,7 +26,6 @@ use axum::{Json, Router};
 use axum_extra::extract::CookieJar;
 use axum_macros::debug_handler;
 use futures::future::try_join_all;
-use log::warn;
 
 pub mod article;
 pub mod instance;
@@ -60,11 +59,9 @@ async fn auth<B>(
     next: Next<B>,
 ) -> Result<Response, StatusCode> {
     if let Some(auth) = jar.get(AUTH_COOKIE) {
-        let user = validate(auth.value(), &data).await.map_err(|e| {
-            warn!("Failed to validate auth token: {e}");
-            StatusCode::UNAUTHORIZED
-        })?;
-        request.extensions_mut().insert(user);
+        if let Ok(user) = validate(auth.value(), &data).await {
+            request.extensions_mut().insert(user);
+        }
     }
     let response = next.run(request).await;
     Ok(response)
