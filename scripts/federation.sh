@@ -10,8 +10,8 @@ set -e
 
 function cleanup {
     echo "stop postgres"
-    ./scripts/stop_dev_db.sh $ALPHA_DB_PATH
-    ./scripts/stop_dev_db.sh $BETA_DB_PATH
+    ./scripts/stop_dev_db.sh $ALPHA_DB_PATH >/dev/null
+    ./scripts/stop_dev_db.sh $BETA_DB_PATH >/dev/null
 }
 trap cleanup EXIT
 
@@ -22,14 +22,14 @@ BETA_DB_PATH="$DB_FOLDER/beta"
 
 # create db folders if they dont exist
 if [ ! -d $ALPHA_DB_PATH ]; then
-    ./scripts/start_dev_db.sh $ALPHA_DB_PATH
+    ./scripts/start_dev_db.sh $ALPHA_DB_PATH >/dev/null
 else
-  pg_ctl start --options="-c listen_addresses= -c unix_socket_directories=$ALPHA_DB_PATH" -D "$ALPHA_DB_PATH/dev_pgdata"
+  pg_ctl start --options="-c listen_addresses= -c unix_socket_directories=$ALPHA_DB_PATH" -D "$ALPHA_DB_PATH/dev_pgdata" >/dev/null
 fi
 if [ ! -d $BETA_DB_PATH ]; then
-    ./scripts/start_dev_db.sh $BETA_DB_PATH
+    ./scripts/start_dev_db.sh $BETA_DB_PATH >/dev/null
 else
-  pg_ctl start --options="-c listen_addresses= -c unix_socket_directories=$BETA_DB_PATH" -D "$BETA_DB_PATH/dev_pgdata"
+  pg_ctl start --options="-c listen_addresses= -c unix_socket_directories=$BETA_DB_PATH" -D "$BETA_DB_PATH/dev_pgdata" >/dev/null
 fi
 
 ALPHA_DB_URL="postgresql://ibis:password@/ibis?host=$ALPHA_DB_PATH"

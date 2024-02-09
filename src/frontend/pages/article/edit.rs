@@ -1,5 +1,6 @@
 use crate::common::{ArticleView, EditArticleData};
 use crate::frontend::app::GlobalState;
+use crate::frontend::article_title;
 use crate::frontend::components::article_nav::ArticleNav;
 use crate::frontend::pages::article_resource;
 use leptos::*;
@@ -61,7 +62,7 @@ pub fn EditArticle() -> impl IntoView {
                             set_text.set(article.article.text.clone());
                             view! {
                                 <div class="item-view">
-                                    <h1>{article.article.title()}</h1>
+                                    <h1>{article_title(&article.article)}</h1>
                                     <textarea on:keyup=move |ev| {
                                         let val = event_target_value(&ev);
                                         set_text.update(|p| *p = val);

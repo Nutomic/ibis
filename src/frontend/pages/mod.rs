@@ -13,11 +13,16 @@ fn article_resource(
     title: impl Fn() -> Option<String> + 'static,
 ) -> Resource<Option<String>, ArticleView> {
     create_resource(title, move |title| async move {
-        let title = title.unwrap_or(MAIN_PAGE_NAME.to_string());
+        let mut title = title.unwrap_or(MAIN_PAGE_NAME.to_string());
+        let mut domain = None;
+        if let Some((title_, domain_)) = title.clone().split_once('@') {
+            title = title_.to_string();
+            domain = Some(domain_.to_string());
+        }
         GlobalState::api_client()
             .get_article(GetArticleData {
                 title: Some(title),
-                instance_id: None,
+                instance_domain: domain,
                 id: None,
             })
             .await

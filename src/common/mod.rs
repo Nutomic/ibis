@@ -21,7 +21,7 @@ pub const MAIN_PAGE_NAME: &str = "Main_Page";
 #[derive(Deserialize, Serialize, Clone)]
 pub struct GetArticleData {
     pub title: Option<String>,
-    pub instance_id: Option<i32>,
+    pub instance_domain: Option<String>,
     pub id: Option<i32>,
 }
 
@@ -52,12 +52,6 @@ pub struct DbArticle {
     pub ap_id: String,
     pub instance_id: i32,
     pub local: bool,
-}
-
-impl DbArticle {
-    pub fn title(&self) -> String {
-        self.title.replace('_', " ")
-    }
 }
 
 /// Represents a single change to the article.

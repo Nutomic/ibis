@@ -84,7 +84,7 @@ impl ApiClient {
 
         self.get_article(GetArticleData {
             title: None,
-            instance_id: None,
+            instance_domain: None,
             id: Some(edit_form.article_id),
         })
         .await
