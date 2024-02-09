@@ -119,7 +119,7 @@ impl IbisInstance {
             ..Default::default()
         };
         let handle = tokio::task::spawn(async move {
-            start(config).await.unwrap();
+            dbg!(start(config).await).unwrap();
         });
         // wait a moment for the backend to start
         tokio::time::sleep(Duration::from_millis(100)).await;
