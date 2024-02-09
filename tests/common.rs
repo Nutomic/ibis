@@ -95,10 +95,10 @@ impl IbisInstance {
         // remove old db
         remove_dir_all(&db_path).unwrap();
         spawn(move || {
-            Command::new("./tests/scripts/start_dev_db.sh")
+            Command::new("./scripts/start_dev_db.sh")
                 .arg(&db_path)
-                .stdout(Stdio::inherit())
-                .stderr(Stdio::inherit())
+                .stdout(Stdio::null())
+                .stderr(Stdio::null())
                 .output()
                 .unwrap();
         })
@@ -144,7 +144,7 @@ impl IbisInstance {
 
     fn stop_internal(db_path: String) -> std::thread::JoinHandle<()> {
         spawn(move || {
-            Command::new("./tests/scripts/stop_dev_db.sh")
+            Command::new("./scripts/stop_dev_db.sh")
                 .arg(db_path)
                 .stdout(Stdio::null())
                 .stderr(Stdio::null())
