@@ -122,7 +122,7 @@ impl IbisInstance {
             start(config).await.unwrap();
         });
         // wait a moment for the backend to start
-        tokio::time::sleep(Duration::from_millis(2000)).await;
+        tokio::time::sleep(Duration::from_millis(5000)).await;
         let form = RegisterUserData {
             username: username.to_string(),
             password: "hunter2".to_string(),
