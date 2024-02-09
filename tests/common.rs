@@ -106,7 +106,7 @@ impl IbisInstance {
 
     async fn start(db_path: String, port: i32, username: &str) -> Self {
         let database_url = format!("postgresql://ibis:password@/ibis?host={db_path}");
-        let hostname = format!("localhost:{port}");
+        let hostname = format!("127.0.0.1:{port}");
         let bind = format!("127.0.0.1:{port}").parse().unwrap();
         let config = IbisConfig {
             bind,
