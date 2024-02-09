@@ -12,9 +12,6 @@ then
   pg_ctl stop
 fi
 
-# Remove any leftover data from revious run
-rm -rf $1
-
 # Create cluster
 initdb --username=postgres --auth=trust --no-instructions
 

@@ -5,7 +5,7 @@ use ibis_lib::frontend::api::ApiClient;
 use ibis_lib::frontend::error::MyResult;
 use reqwest::ClientBuilder;
 use std::env::current_dir;
-use std::fs::create_dir_all;
+use std::fs::{create_dir_all, remove_dir_all};
 use std::ops::Deref;
 use std::process::{Command, Stdio};
 use std::sync::atomic::{AtomicI32, Ordering};
@@ -90,11 +90,15 @@ pub struct IbisInstance {
 
 impl IbisInstance {
     fn prepare_db(db_path: String) -> std::thread::JoinHandle<()> {
+        // stop any db leftover from previous run
+        Self::stop_internal(db_path.clone());
+        // remove old db
+        remove_dir_all(&db_path).unwrap();
         spawn(move || {
             Command::new("./tests/scripts/start_dev_db.sh")
                 .arg(&db_path)
-                .stdout(Stdio::null())
-                .stderr(Stdio::null())
+                .stdout(Stdio::inherit())
+                .stderr(Stdio::inherit())
                 .output()
                 .unwrap();
         })
@@ -135,9 +139,13 @@ impl IbisInstance {
 
     fn stop(self) -> std::thread::JoinHandle<()> {
         self.db_handle.abort();
+        Self::stop_internal(self.db_path)
+    }
+
+    fn stop_internal(db_path: String) -> std::thread::JoinHandle<()> {
         spawn(move || {
             Command::new("./tests/scripts/stop_dev_db.sh")
-                .arg(&self.db_path)
+                .arg(db_path)
                 .stdout(Stdio::null())
                 .stderr(Stdio::null())
                 .output()

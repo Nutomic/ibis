@@ -19,7 +19,6 @@ BETA_DB_PATH="$DB_FOLDER/beta"
 
 ALPHA_DB_URL="postgresql://ibis:password@/ibis?host=$ALPHA_DB_PATH"
 BETA_DB_URL="postgresql://ibis:password@/ibis?host=$BETA_DB_PATH"
-echo $ALPHA_DB_URL
 
 # get rid of processes leftover from previous runs
 killall ibis || true
@@ -32,3 +31,6 @@ CARGO_TARGET_DIR=target/frontend trunk build
   sh -c "IBIS__BIND=127.0.0.1:8070 IBIS__FEDERATION__DOMAIN=ibis-alpha:8070 IBIS__DATABASE_URL=$ALPHA_DB_URL cargo run" &
   sh -c "IBIS__BIND=127.0.0.1:8080 IBIS__FEDERATION__DOMAIN=ibis-beta:8080 IBIS__DATABASE_URL=$BETA_DB_URL cargo run" &
 )
+
+./tests/scripts/stop_dev_db.sh $ALPHA_DB_PATH
+./tests/scripts/stop_dev_db.sh $BETA_DB_PATH
