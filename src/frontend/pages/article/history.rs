@@ -1,3 +1,4 @@
+use crate::frontend::article_title;
 use crate::frontend::components::article_nav::ArticleNav;
 use crate::frontend::pages::article_resource;
 use leptos::*;
@@ -15,7 +16,7 @@ pub fn ArticleHistory() -> impl IntoView {
             move || article.get().map(|article| {
                 view! {
                     <div class="item-view">
-                        <h1>{article.article.title()}</h1>
+                        <h1>{article_title(&article.article)}</h1>
                         {
                             article.edits.into_iter().rev().map(|edit| {
                                 let path = format!("/article/{}/diff/{}", article.article.title, edit.hash.0);

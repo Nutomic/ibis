@@ -1,5 +1,6 @@
 use crate::common::ListArticlesData;
 use crate::frontend::app::GlobalState;
+use crate::frontend::{article_link, article_title};
 use leptos::*;
 use web_sys::wasm_bindgen::JsCast;
 
@@ -38,7 +39,7 @@ pub fn ListArticles() -> impl IntoView {
             <ul> {
                 move || articles.get().map(|a|
                     a.into_iter().map(|a| view! {
-                    <li><a href=format!("/article/{}", a.title)>{a.title()}</a></li>
+                    <li><a href=article_link(&a)>{article_title(&a)}</a></li>
                 }).collect::<Vec<_>>())
             } </ul>
         </Suspense>

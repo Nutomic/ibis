@@ -1,7 +1,6 @@
 #[cfg(feature = "ssr")]
 #[tokio::main]
 pub async fn main() -> ibis_lib::backend::error::MyResult<()> {
-    use config::Config;
     use ibis_lib::backend::config::IbisConfig;
     use log::LevelFilter;
 
@@ -16,14 +15,7 @@ pub async fn main() -> ibis_lib::backend::error::MyResult<()> {
         .filter_module("ibis", LevelFilter::Info)
         .init();
 
-    let config = Config::builder()
-        .add_source(config::File::with_name("config/config.toml"))
-        // Cant use _ as separator due to https://github.com/mehcode/config-rs/issues/391
-        .add_source(config::Environment::with_prefix("IBIS").separator("__"))
-        .build()
-        .unwrap();
-
-    let ibis_config: IbisConfig = config.try_deserialize().unwrap();
+    let ibis_config = IbisConfig::read();
     ibis_lib::backend::start(ibis_config).await?;
     Ok(())
 }

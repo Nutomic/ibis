@@ -1,4 +1,4 @@
-use crate::backend::database::schema::{article, edit};
+use crate::backend::database::schema::{article, edit, instance};
 use crate::backend::error::MyResult;
 use crate::backend::federation::objects::edits_collection::DbEditCollection;
 use crate::common::DbEdit;
@@ -77,20 +77,29 @@ impl DbArticle {
 
     pub fn read_view_title(
         title: &str,
-        instance_id: &Option<i32>,
+        instance_domain: Option<String>,
         conn: &Mutex<PgConnection>,
     ) -> MyResult<ArticleView> {
         let article: DbArticle = {
             let mut conn = conn.lock().unwrap();
             let query = article::table
-                .into_boxed()
-                .filter(article::dsl::title.eq(title));
-            let query = if let Some(instance_id) = instance_id {
-                query.filter(article::dsl::instance_id.eq(instance_id))
+                .inner_join(instance::table)
+                .filter(article::dsl::title.eq(title))
+                .into_boxed();
+            let query = if let Some(mut instance_domain) = instance_domain {
+                // TODO: fragile
+                if !instance_domain.starts_with("http") {
+                    instance_domain = format!("http://{instance_domain}/");
+                }
+                query
+                    .filter(instance::dsl::ap_id.eq(instance_domain))
+                    .filter(instance::dsl::local.eq(false))
             } else {
                 query.filter(article::dsl::local.eq(true))
             };
-            query.get_result(conn.deref_mut())?
+            query
+                .select(article::all_columns)
+                .get_result(conn.deref_mut())?
         };
         let latest_version = article.latest_edit_version(conn)?;
         let edits = DbEdit::read_for_article(&article, conn)?;

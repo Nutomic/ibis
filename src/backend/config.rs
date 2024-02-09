@@ -1,3 +1,4 @@
+use config::Config;
 use doku::Document;
 use serde::Deserialize;
 use smart_default::SmartDefault;
@@ -21,6 +22,19 @@ pub struct IbisConfig {
     /// Details of the initial admin account
     pub setup: IbisConfigSetup,
     pub federation: IbisConfigFederation,
+}
+
+impl IbisConfig {
+    pub fn read() -> Self {
+        let config = Config::builder()
+            .add_source(config::File::with_name("config/config.toml"))
+            // Cant use _ as separator due to https://github.com/mehcode/config-rs/issues/391
+            .add_source(config::Environment::with_prefix("IBIS").separator("__"))
+            .build()
+            .unwrap();
+
+        config.try_deserialize().unwrap()
+    }
 }
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone, Document, SmartDefault)]

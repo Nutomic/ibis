@@ -1,5 +1,6 @@
 use crate::common::{DbArticle, DbInstance, SearchArticleData};
 use crate::frontend::app::GlobalState;
+use crate::frontend::{article_link, article_title};
 use futures::join;
 use leptos::*;
 use leptos_router::use_query_map;
@@ -63,7 +64,7 @@ pub fn Search() -> impl IntoView {
                             search_results.articles
                                 .iter()
                                 .map(|a| view! { <li>
-                                    <a href={format!("/article/{}", a.title)}>{a.title()}</a>
+                                    <a href={article_link(a)}>{article_title(a)}</a>
                                 </li>})
                                 .collect::<Vec<_>>()
                         }

@@ -62,11 +62,14 @@ impl GlobalState {
 
 #[component]
 pub fn App() -> impl IntoView {
-    #[allow(unused_mut, unused_assignments)]
-    let mut backend_hostname = "127.0.0.1:8080".to_string();
+    let backend_hostname;
     #[cfg(not(feature = "ssr"))]
     {
         backend_hostname = web_sys::window().unwrap().location().host().unwrap();
+    }
+    #[cfg(feature = "ssr")]
+    {
+        backend_hostname = crate::backend::config::IbisConfig::read().bind.to_string();
     }
 
     provide_meta_context();

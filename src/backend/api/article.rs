@@ -140,12 +140,12 @@ pub(in crate::backend::api) async fn get_article(
     match (query.title, query.id) {
         (Some(title), None) => Ok(Json(DbArticle::read_view_title(
             &title,
-            &query.instance_id,
+            query.instance_domain,
             &data.db_connection,
         )?)),
         (None, Some(id)) => {
-            if query.instance_id.is_some() {
-                return Err(anyhow!("Cant combine id and instance_id").into());
+            if query.instance_domain.is_some() {
+                return Err(anyhow!("Cant combine id and instance_domain").into());
             }
             Ok(Json(DbArticle::read_view(id, &data.db_connection)?))
         }
