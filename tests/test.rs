@@ -67,7 +67,7 @@ async fn test_create_read_and_edit_local_article() -> MyResult<()> {
             only_local: Some(false),
         })
         .await?;
-    assert_eq!(1, list_articles.len());
+    assert_eq!(2, list_articles.len());
     assert_eq!(edit_res.article, list_articles[0]);
 
     data.stop()
