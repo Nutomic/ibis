@@ -6,6 +6,7 @@ use ibis_lib::frontend::error::MyResult;
 use reqwest::ClientBuilder;
 use std::env::current_dir;
 use std::fs::{create_dir_all, remove_dir_all};
+use std::net::ToSocketAddrs;
 use std::ops::Deref;
 use std::process::{Command, Stdio};
 use std::sync::atomic::{AtomicI32, Ordering};
@@ -107,6 +108,7 @@ impl IbisInstance {
     async fn start(db_path: String, port: i32, username: &str) -> Self {
         let database_url = format!("postgresql://ibis:password@/ibis?host={db_path}");
         let hostname = format!("127.0.0.1:{port}");
+        dbg!(&hostname);
         let bind = format!("127.0.0.1:{port}").parse().unwrap();
         let config = IbisConfig {
             bind,
@@ -129,6 +131,7 @@ impl IbisInstance {
         };
         let client = ClientBuilder::new().cookie_store(true).build().unwrap();
         let api_client = ApiClient::new(client, hostname.clone());
+        dbg!("do register");
         api_client.register(form).await.unwrap();
         Self {
             api_client,
