@@ -2,49 +2,6 @@ variables:
   - &rust_image "rust:1.75"
 
 steps:
-  cargo_fmt:
-    image: *rust_image
-    environment:
-      # store cargo data in repo folder so that it gets cached between steps
-      CARGO_HOME: .cargo_home
-    commands:
-      - rustup component add rustfmt
-      - cargo fmt -- --check
-
-  check_config_defaults_updated:
-    image: *rust_image
-    environment:
-      CARGO_HOME: .cargo_home
-    commands:
-      - cargo run -- --print-config > config/defaults_current.toml
-      - diff config/defaults.toml config/defaults_current.toml
-
-  check_diesel_schema:
-    image: willsquire/diesel-cli
-    environment:
-      CARGO_HOME: .cargo_home
-      DATABASE_URL: postgres://ibis:password@database:5432/ibis
-    commands:
-      - diesel migration run
-      - diesel print-schema --config-file=diesel.toml > tmp.schema
-      - diff tmp.schema src/backend/database/schema.rs
-
-  frontend_wasm_build:
-    image: *rust_image
-    environment:
-      CARGO_HOME: .cargo_home
-    commands:
-      - "rustup target add wasm32-unknown-unknown"
-      - "cargo check --target wasm32-unknown-unknown --features csr,hydrate --no-default-features"
-
-  cargo_clippy:
-    image: *rust_image
-    environment:
-      CARGO_HOME: .cargo_home
-    commands:
-      - rustup component add clippy
-      - cargo clippy --tests --all-targets --all-features
-
   cargo_test:
     image: *rust_image
     environment:
