@@ -37,7 +37,7 @@ impl GlobalState {
             .api_client
     }
 
-    pub fn update_my_profile(&self) {
+    pub fn update_my_profile() {
         create_local_resource(
             move || (),
             |_| async move {
@@ -78,7 +78,7 @@ pub fn App() -> impl IntoView {
         my_profile: None,
     };
     // Load user profile in case we are already logged in
-    backend_hostname.update_my_profile();
+    GlobalState::update_my_profile();
     provide_context(create_rw_signal(backend_hostname));
 
     view! {

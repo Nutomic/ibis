@@ -8,9 +8,7 @@ pub fn Nav() -> impl IntoView {
     let global_state = use_context::<RwSignal<GlobalState>>().unwrap();
     let logout_action = create_action(move |_| async move {
         GlobalState::api_client().logout().await.unwrap();
-        expect_context::<RwSignal<GlobalState>>()
-            .get_untracked()
-            .update_my_profile();
+        GlobalState::update_my_profile();
     });
     let registration_open = create_local_resource(
         || (),

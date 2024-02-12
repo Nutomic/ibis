@@ -216,6 +216,7 @@ pub struct ApiConflict {
 #[cfg_attr(feature = "ssr", diesel(table_name = instance, check_for_backend(diesel::pg::Pg)))]
 pub struct DbInstance {
     pub id: i32,
+    pub domain: String,
     #[cfg(feature = "ssr")]
     pub ap_id: ObjectId<DbInstance>,
     #[cfg(not(feature = "ssr"))]

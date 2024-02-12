@@ -71,9 +71,9 @@ pub fn Search() -> impl IntoView {
                         {
                             // render resolved instance
                             if let Some(instance) = &search_results.instance {
-                                let ap_id = instance.ap_id.to_string();
+                                let domain = &instance.domain;
                                 vec![view! { <li>
-                                    <a href={format!("/instance/{ap_id}")}>{ap_id}</a>
+                                    <a href={format!("/instance/{domain}")}>{domain}</a>
                                 </li>}]
                             } else { vec![] }
                         }

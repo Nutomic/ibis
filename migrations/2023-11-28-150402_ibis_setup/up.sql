@@ -1,5 +1,6 @@
 create table instance (
     id serial primary key,
+    domain text not null unique,
     ap_id varchar(255) not null unique,
     description text,
     inbox_url text not null,

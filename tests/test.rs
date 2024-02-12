@@ -103,7 +103,9 @@ async fn test_follow_instance() -> MyResult<()> {
     let beta_instance = data.beta.get_local_instance().await?;
     assert_eq!(0, beta_instance.followers.len());
 
-    data.alpha.follow_instance(&data.beta.hostname).await?;
+    data.alpha
+        .follow_instance_with_resolve(&data.beta.hostname)
+        .await?;
 
     // check that follow was federated
     let alpha_user = data.alpha.my_profile().await?;
@@ -159,7 +161,7 @@ async fn test_synchronize_articles() -> MyResult<()> {
     assert!(get_res.is_err());
 
     // get the article with instance id and compare
-    get_article_data.instance_domain = Some(instance.ap_id.to_string());
+    get_article_data.instance_domain = Some(instance.domain);
     let get_res = data.beta.get_article(get_article_data).await?;
     assert_eq!(create_res.article.ap_id, get_res.article.ap_id);
     assert_eq!(create_form.title, get_res.article.title);
@@ -174,7 +176,10 @@ async fn test_synchronize_articles() -> MyResult<()> {
 async fn test_edit_local_article() -> MyResult<()> {
     let data = TestData::start().await;
 
-    let beta_instance = data.alpha.follow_instance(&data.beta.hostname).await?;
+    let beta_instance = data
+        .alpha
+        .follow_instance_with_resolve(&data.beta.hostname)
+        .await?;
 
     // create new article
     let create_form = CreateArticleData {
@@ -189,8 +194,7 @@ async fn test_edit_local_article() -> MyResult<()> {
     // article should be federated to alpha
     let get_article_data = GetArticleData {
         title: Some(create_res.article.title.to_string()),
-        // TODO: this is wrong
-        instance_domain: Some(beta_instance.ap_id.to_string()),
+        instance_domain: Some(beta_instance.domain),
         id: None,
     };
     let get_res = data.alpha.get_article(get_article_data.clone()).await?;
@@ -228,8 +232,14 @@ async fn test_edit_local_article() -> MyResult<()> {
 async fn test_edit_remote_article() -> MyResult<()> {
     let data = TestData::start().await;
 
-    let beta_id_on_alpha = data.alpha.follow_instance(&data.beta.hostname).await?;
-    let beta_id_on_gamma = data.gamma.follow_instance(&data.beta.hostname).await?;
+    let beta_id_on_alpha = data
+        .alpha
+        .follow_instance_with_resolve(&data.beta.hostname)
+        .await?;
+    let beta_id_on_gamma = data
+        .gamma
+        .follow_instance_with_resolve(&data.beta.hostname)
+        .await?;
 
     // create new article
     let create_form = CreateArticleData {
@@ -244,8 +254,7 @@ async fn test_edit_remote_article() -> MyResult<()> {
     // article should be federated to alpha and gamma
     let get_article_data_alpha = GetArticleData {
         title: Some(create_res.article.title.to_string()),
-        // TODO: wrong
-        instance_domain: Some(beta_id_on_alpha.ap_id.to_string()),
+        instance_domain: Some(beta_id_on_alpha.domain),
         id: None,
     };
     let get_res = data
@@ -258,8 +267,7 @@ async fn test_edit_remote_article() -> MyResult<()> {
 
     let get_article_data_gamma = GetArticleData {
         title: Some(create_res.article.title.to_string()),
-        // TODO: wrong
-        instance_domain: Some(beta_id_on_gamma.ap_id.to_string()),
+        instance_domain: Some(beta_id_on_gamma.domain),
         id: None,
     };
     let get_res = data
@@ -364,7 +372,10 @@ async fn test_local_edit_conflict() -> MyResult<()> {
 async fn test_federated_edit_conflict() -> MyResult<()> {
     let data = TestData::start().await;
 
-    let beta_id_on_alpha = data.alpha.follow_instance(&data.beta.hostname).await?;
+    let beta_id_on_alpha = data
+        .alpha
+        .follow_instance_with_resolve(&data.beta.hostname)
+        .await?;
 
     // create new article
     let create_form = CreateArticleData {
@@ -386,8 +397,7 @@ async fn test_federated_edit_conflict() -> MyResult<()> {
     // alpha edits article
     let get_article_data = GetArticleData {
         title: Some(create_form.title.to_string()),
-        // TODO: wrong
-        instance_domain: Some(beta_id_on_alpha.ap_id.to_string()),
+        instance_domain: Some(beta_id_on_alpha.domain),
         id: None,
     };
     let get_res = data.alpha.get_article(get_article_data).await?;

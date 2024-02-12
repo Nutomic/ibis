@@ -26,7 +26,7 @@ pub struct Follow {
 }
 
 impl Follow {
-    pub async fn send(actor: DbPerson, to: DbInstance, data: &Data<IbisData>) -> MyResult<()> {
+    pub async fn send(actor: DbPerson, to: &DbInstance, data: &Data<IbisData>) -> MyResult<()> {
         let id = generate_activity_id(actor.ap_id.inner())?;
         let follow = Follow {
             actor: actor.ap_id.clone(),

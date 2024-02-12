@@ -31,7 +31,7 @@ pub(in crate::backend::api) async fn follow_instance(
     let pending = !target.local;
     DbInstance::follow(&user.person, &target, pending, &data)?;
     let instance = DbInstance::read(query.id, &data.db_connection)?;
-    Follow::send(user.person, instance, &data).await?;
+    Follow::send(user.person, &instance, &data).await?;
     Ok(())
 }
 

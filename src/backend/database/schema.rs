@@ -41,6 +41,7 @@ diesel::table! {
 diesel::table! {
     instance (id) {
         id -> Int4,
+        domain -> Text,
         #[max_length = 255]
         ap_id -> Varchar,
         description -> Nullable<Text>,

@@ -108,7 +108,12 @@ impl Object for DbInstance {
     }
 
     async fn from_json(json: Self::Kind, data: &Data<Self::DataType>) -> Result<Self, Self::Error> {
+        let mut domain = json.id.inner().host_str().unwrap().to_string();
+        if let Some(port) = json.id.inner().port() {
+            domain = format!("{domain}:{port}");
+        }
         let form = DbInstanceForm {
+            domain,
             ap_id: json.id,
             description: json.content,
             articles_url: json.articles,

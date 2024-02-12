@@ -98,7 +98,10 @@ impl ApiClient {
         self.get_query("instance", None::<i32>).await
     }
 
-    pub async fn follow_instance(&self, follow_instance: &str) -> MyResult<DbInstance> {
+    pub async fn follow_instance_with_resolve(
+        &self,
+        follow_instance: &str,
+    ) -> MyResult<DbInstance> {
         // fetch beta instance on alpha
         let resolve_form = ResolveObject {
             id: Url::parse(&format!("http://{}", follow_instance))?,
@@ -111,6 +114,11 @@ impl ApiClient {
         let follow_form = FollowInstance {
             id: instance_resolved.id,
         };
+        self.follow_instance(follow_form).await?;
+        Ok(instance_resolved)
+    }
+
+    pub async fn follow_instance(&self, follow_form: FollowInstance) -> MyResult<()> {
         // cant use post helper because follow doesnt return json
         let res = self
             .client
@@ -119,7 +127,7 @@ impl ApiClient {
             .send()
             .await?;
         if res.status() == StatusCode::OK {
-            Ok(instance_resolved)
+            Ok(())
         } else {
             Err(anyhow!("API error: {}", res.text().await?).into())
         }
@@ -130,7 +138,7 @@ impl ApiClient {
             "http://{}/api/v1/account/my_profile",
             self.hostname
         ));
-        handle_json_res::<LocalUserView>(req).await
+        handle_json_res(req).await
     }
 
     pub async fn logout(&self) -> MyResult<()> {

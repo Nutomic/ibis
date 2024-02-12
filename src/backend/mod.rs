@@ -117,6 +117,7 @@ async fn setup(data: &Data<IbisData>) -> Result<(), Error> {
     let inbox_url = format!("http://{domain}/inbox");
     let keypair = generate_actor_keypair()?;
     let form = DbInstanceForm {
+        domain: domain.to_string(),
         ap_id,
         description: Some("New Ibis instance".to_string()),
         articles_url,

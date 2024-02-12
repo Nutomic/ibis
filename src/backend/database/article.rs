@@ -86,13 +86,9 @@ impl DbArticle {
                 .inner_join(instance::table)
                 .filter(article::dsl::title.eq(title))
                 .into_boxed();
-            let query = if let Some(mut instance_domain) = instance_domain {
-                // TODO: fragile
-                if !instance_domain.starts_with("http") {
-                    instance_domain = format!("http://{instance_domain}/");
-                }
+            let query = if let Some(instance_domain) = instance_domain {
                 query
-                    .filter(instance::dsl::ap_id.eq(instance_domain))
+                    .filter(instance::dsl::domain.eq(instance_domain))
                     .filter(instance::dsl::local.eq(false))
             } else {
                 query.filter(article::dsl::local.eq(true))

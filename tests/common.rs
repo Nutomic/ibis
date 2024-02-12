@@ -39,7 +39,7 @@ impl TestData {
         // Give each test a moment to start its postgres databases
         sleep(Duration::from_millis(current_run as u64 * 2000));
 
-        let first_port = 8000 + (current_run * 3);
+        let first_port = 8100 + (current_run * 3);
         let port_alpha = first_port;
         let port_beta = first_port + 1;
         let port_gamma = first_port + 2;
