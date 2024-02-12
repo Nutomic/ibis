@@ -235,6 +235,9 @@ pub(super) async fn search_article(
     Query(query): Query<SearchArticleData>,
     data: Data<IbisData>,
 ) -> MyResult<Json<Vec<DbArticle>>> {
+    if query.query.is_empty() {
+        return Err(anyhow!("Query is empty").into());
+    }
     let article = DbArticle::search(&query.query, &data.db_connection)?;
     Ok(Json(article))
 }

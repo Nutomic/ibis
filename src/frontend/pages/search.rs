@@ -1,42 +1,51 @@
 use crate::common::{DbArticle, DbInstance, SearchArticleData};
 use crate::frontend::app::GlobalState;
 use crate::frontend::{article_link, article_title};
-use futures::join;
 use leptos::*;
 use leptos_router::use_query_map;
 use serde::{Deserialize, Serialize};
 use url::Url;
 
-#[derive(Default, Clone, Deserialize, Serialize)]
+#[derive(Default, Clone, Deserialize, Serialize, Debug)]
 struct SearchResults {
     articles: Vec<DbArticle>,
     instance: Option<DbInstance>,
+}
+
+impl SearchResults {
+    pub fn is_empty(&self) -> bool {
+        self.articles.is_empty() && self.instance.is_none()
+    }
 }
 
 #[component]
 pub fn Search() -> impl IntoView {
     let params = use_query_map();
     let query = move || params.get().get("query").cloned().unwrap();
+    let (error, set_error) = create_signal(None::<String>);
     let search_results = create_resource(query, move |query| async move {
+        set_error.set(None);
         let mut search_results = SearchResults::default();
         let api_client = GlobalState::api_client();
         let url = Url::parse(&query);
         let search_data = SearchArticleData { query };
         let search = api_client.search(&search_data);
 
+        match search.await {
+            Ok(mut a) => search_results.articles.append(&mut a),
+            Err(e) => set_error.set(Some(e.0.to_string())),
+        }
+
         // If its a valid url, also attempt to resolve as federation object
         if let Ok(url) = url {
-            let resolve_article = api_client.resolve_article(url.clone());
-            let resolve_instance = api_client.resolve_instance(url);
-            let (search, resolve_article, resolve_instance) =
-                join!(search, resolve_article, resolve_instance);
-            search_results.instance = resolve_instance.ok();
-            if let Ok(article) = resolve_article {
-                search_results.articles.push(article.article);
+            match api_client.resolve_article(url.clone()).await {
+                Ok(a) => search_results.articles.push(a.article),
+                Err(e) => set_error.set(Some(e.0.to_string())),
             }
-            search_results.articles.append(&mut search.unwrap())
-        } else {
-            search_results.articles.append(&mut search.await.unwrap())
+            match api_client.resolve_instance(url).await {
+                Ok(a) => search_results.instance = Some(a),
+                Err(e) => set_error.set(Some(e.0.to_string())),
+            }
         }
         search_results
     });
@@ -44,11 +53,20 @@ pub fn Search() -> impl IntoView {
     view! {
         <h1>"Search results for "{query}</h1>
         <Suspense fallback=|| view! {  "Loading..." }> {
-            move || search_results.get().map(|search_results| {
-                let is_empty = search_results.articles.is_empty() && search_results.instance.is_none();
+            move || search_results.get().map(move |search_results| {
+                let is_empty = search_results.is_empty();
                 view! {
                 <Show when=move || !is_empty
-                        fallback=|| view! { <p>No results found</p> }>
+                    fallback=move || {
+                        let error_view = move || {
+                            error.get().map(|err| {
+                                view! { <p style="color:red;">{err}</p> }
+                            })
+                        };
+                    view! {
+                        {error_view}
+                        <p>No results found</p>
+                    }}>
                     <ul>
                         {
                             // render resolved instance

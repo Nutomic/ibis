@@ -18,8 +18,8 @@ pub fn Nav() -> impl IntoView {
             GlobalState::api_client()
                 .get_local_instance()
                 .await
-                .unwrap()
-                .registration_open
+                .map(|i| i.registration_open)
+                .unwrap_or_default()
         },
     );
 
@@ -43,7 +43,9 @@ pub fn Nav() -> impl IntoView {
                     ev.prevent_default();
                     let navigate = leptos_router::use_navigate();
                     let query = search_query.get();
-                    navigate(&format!("/search?query={query}"), Default::default());
+                    if !query.is_empty() {
+                        navigate(&format!("/search?query={query}"), Default::default());
+                    }
                 }>
                     <input type="text" placeholder="Search"
                         prop:value=search_query
