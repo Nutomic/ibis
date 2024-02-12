@@ -31,9 +31,9 @@ pub fn ListArticles() -> impl IntoView {
                 let is_local_only = val == "only-local";
                 set_only_local.update(|p| *p = is_local_only);
             }>
-                <input type="radio" name="listing-type" id="only-local" checked />
+                <input type="radio" name="listing-type" id="only-local" />
                 <label for="only-local">Only Local</label>
-                <input type="radio" name="listing-type" id="all"/>
+                <input type="radio" name="listing-type" id="all" checked/>
                 <label for="all">All</label>
             </fieldset>
             <ul> {

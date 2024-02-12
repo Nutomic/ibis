@@ -16,16 +16,15 @@ pub fn InstanceDetails() -> impl IntoView {
             .unwrap()
     });
 
-    // TODO: display list of articles from instance?
     view! {
         <Suspense fallback=|| view! {  "Loading..." }> {
             move || instance_profile.get().map(|instance: DbInstance| {
                 view! {
                     <h1>{instance.ap_id.to_string()}</h1>
-                    <Show when=GlobalState::is_admin()>
-                        <button text="Follow"/>
-                    </Show>
+                    <button text="Follow"/>
+                    <p>Follow the instance so that new edits are federated to your instance.</p>
                     <div>{instance.description}</div>
+                    <p>TODO: show a list of articles from the instance. For now you can use the <a href="/article/list">Article list</a>.</p>
                 }
             })
         }</Suspense>
