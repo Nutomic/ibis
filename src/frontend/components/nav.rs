@@ -23,7 +23,7 @@ pub fn Nav() -> impl IntoView {
 
     let (search_query, set_search_query) = create_signal(String::new());
     view! {
-        <nav class="inner">
+        <nav class="inner" style="min-width: 250px;">
             <li>
                 <A href="/">"Main Page"</A>
             </li>

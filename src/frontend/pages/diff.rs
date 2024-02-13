@@ -1,5 +1,6 @@
 use crate::frontend::components::article_nav::ArticleNav;
 use crate::frontend::pages::article_resource;
+use crate::frontend::user_link;
 use leptos::*;
 use leptos_router::*;
 
@@ -17,12 +18,15 @@ pub fn EditDiff() -> impl IntoView {
                     .get_untracked()
                     .get("hash")
                     .cloned().unwrap();
-                let edit = article.edits.iter().find(|e| e.hash.0.to_string() == hash).unwrap();
-                // TODO: need to show username
+                let edit = article.edits.iter().find(|e| e.edit.hash.0.to_string() == hash).unwrap();
+                let label = format!("{} ({})", edit.edit.summary, edit.edit.created.to_rfc2822());
+
                 view! {
                     <div class="item-view">
                         <h1>{article.article.title.replace('_', " ")}</h1>
-                        <pre>{edit.diff.clone()}</pre>
+                        <h2>{label}</h2>
+                        <p>"by "{user_link(&edit.creator)}</p>
+                        <pre>{edit.edit.diff.clone()}</pre>
                     </div>
                 }
             })

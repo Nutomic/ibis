@@ -1,6 +1,6 @@
 use crate::backend::error::MyResult;
-use crate::common::DbEdit;
 use crate::common::EditVersion;
+use crate::common::EditView;
 use activitypub_federation::fetch::object_id::ObjectId;
 use activitypub_federation::traits::Object;
 use anyhow::anyhow;
@@ -30,15 +30,15 @@ where
 ///
 /// TODO: testing
 /// TODO: should cache all these generated versions
-pub fn generate_article_version(edits: &Vec<DbEdit>, version: &EditVersion) -> MyResult<String> {
+pub fn generate_article_version(edits: &Vec<EditView>, version: &EditVersion) -> MyResult<String> {
     let mut generated = String::new();
     if version == &EditVersion::default() {
         return Ok(generated);
     }
     for e in edits {
-        let patch = Patch::from_str(&e.diff)?;
+        let patch = Patch::from_str(&e.edit.diff)?;
         generated = apply(&generated, &patch)?;
-        if &e.hash == version {
+        if &e.edit.hash == version {
             return Ok(generated);
         }
     }
@@ -48,23 +48,36 @@ pub fn generate_article_version(edits: &Vec<DbEdit>, version: &EditVersion) -> M
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::common::{DbEdit, DbPerson};
     use activitypub_federation::fetch::object_id::ObjectId;
     use chrono::Utc;
     use diffy::create_patch;
 
-    fn create_edits() -> MyResult<Vec<DbEdit>> {
-        let generate_edit = |a, b| -> MyResult<DbEdit> {
+    fn create_edits() -> MyResult<Vec<EditView>> {
+        let generate_edit = |a, b| -> MyResult<EditView> {
             let diff = create_patch(a, b).to_string();
-            Ok(DbEdit {
-                id: 0,
-                creator_id: 0,
-                hash: EditVersion::new(&diff),
-                ap_id: ObjectId::parse("http://example.com")?,
-                diff,
-                summary: String::new(),
-                article_id: 0,
-                previous_version_id: Default::default(),
-                created: Utc::now(),
+            Ok(EditView {
+                edit: DbEdit {
+                    id: 0,
+                    creator_id: 0,
+                    hash: EditVersion::new(&diff),
+                    ap_id: ObjectId::parse("http://example.com")?,
+                    diff,
+                    summary: String::new(),
+                    article_id: 0,
+                    previous_version_id: Default::default(),
+                    created: Utc::now(),
+                },
+                creator: DbPerson {
+                    id: 0,
+                    username: "".to_string(),
+                    ap_id: ObjectId::parse("http://example.com").unwrap(),
+                    inbox_url: "".to_string(),
+                    public_key: "".to_string(),
+                    private_key: None,
+                    last_refreshed_at: Default::default(),
+                    local: false,
+                },
             })
         };
         Ok([
@@ -78,7 +91,7 @@ mod test {
     #[test]
     fn test_generate_article_version() -> MyResult<()> {
         let edits = create_edits()?;
-        let generated = generate_article_version(&edits, &edits[1].hash)?;
+        let generated = generate_article_version(&edits, &edits[1].edit.hash)?;
         assert_eq!("sda\n", generated);
         Ok(())
     }

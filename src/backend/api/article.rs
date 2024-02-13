@@ -191,7 +191,10 @@ pub(in crate::backend::api) async fn fork_article(
 
     // copy edits to new article
     // this could also be done in sql
-    let edits = DbEdit::read_for_article(&original_article, &data.db_connection)?;
+    let edits = DbEdit::read_for_article(&original_article, &data.db_connection)?
+        .into_iter()
+        .map(|e| e.edit)
+        .collect::<Vec<_>>();
     for e in edits {
         let ap_id = DbEditForm::generate_ap_id(&article, &e.hash)?;
         let form = DbEditForm {
@@ -221,7 +224,7 @@ pub(super) async fn resolve_article(
 ) -> MyResult<Json<ArticleView>> {
     let article: DbArticle = ObjectId::from(query.id).dereference(&data).await?;
     let edits = DbEdit::read_for_article(&article, &data.db_connection)?;
-    let latest_version = edits.last().unwrap().hash.clone();
+    let latest_version = edits.last().unwrap().edit.hash.clone();
     Ok(Json(ArticleView {
         article,
         edits,

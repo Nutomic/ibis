@@ -52,7 +52,7 @@ async fn test_create_read_and_edit_local_article() -> MyResult<()> {
     let edit_res = data.alpha.edit_article(&edit_form).await?;
     assert_eq!(edit_form.new_text, edit_res.article.text);
     assert_eq!(2, edit_res.edits.len());
-    assert_eq!(edit_form.summary, edit_res.edits[1].summary);
+    assert_eq!(edit_form.summary, edit_res.edits[1].edit.summary);
 
     let search_form = SearchArticleData {
         query: create_form.title.clone(),
@@ -215,6 +215,7 @@ async fn test_edit_local_article() -> MyResult<()> {
     assert_eq!(edit_res.article.text, edit_form.new_text);
     assert_eq!(edit_res.edits.len(), 2);
     assert!(edit_res.edits[0]
+        .edit
         .ap_id
         .to_string()
         .starts_with(&edit_res.article.ap_id.to_string()));
@@ -289,6 +290,7 @@ async fn test_edit_remote_article() -> MyResult<()> {
     assert_eq!(2, edit_res.edits.len());
     assert!(!edit_res.article.local);
     assert!(edit_res.edits[0]
+        .edit
         .ap_id
         .to_string()
         .starts_with(&edit_res.article.ap_id.to_string()));
@@ -402,7 +404,7 @@ async fn test_federated_edit_conflict() -> MyResult<()> {
     };
     let get_res = data.alpha.get_article(get_article_data).await?;
     assert_eq!(&create_res.edits.len(), &get_res.edits.len());
-    assert_eq!(&create_res.edits[0].hash, &get_res.edits[0].hash);
+    assert_eq!(&create_res.edits[0].edit.hash, &get_res.edits[0].edit.hash);
     let edit_form = EditArticleData {
         article_id: get_res.article.id,
         new_text: "Lorem Ipsum\n".to_string(),
@@ -415,6 +417,7 @@ async fn test_federated_edit_conflict() -> MyResult<()> {
     assert_eq!(2, edit_res.edits.len());
     assert!(!edit_res.article.local);
     assert!(edit_res.edits[1]
+        .edit
         .ap_id
         .to_string()
         .starts_with(&edit_res.article.ap_id.to_string()));
@@ -528,9 +531,9 @@ async fn test_fork_article() -> MyResult<()> {
     assert_eq!(resolved_article.title, forked_article.title);
     assert_eq!(resolved_article.text, forked_article.text);
     assert_eq!(resolve_res.edits.len(), fork_res.edits.len());
-    assert_eq!(resolve_res.edits[0].diff, fork_res.edits[0].diff);
-    assert_eq!(resolve_res.edits[0].hash, fork_res.edits[0].hash);
-    assert_ne!(resolve_res.edits[0].id, fork_res.edits[0].id);
+    assert_eq!(resolve_res.edits[0].edit.diff, fork_res.edits[0].edit.diff);
+    assert_eq!(resolve_res.edits[0].edit.hash, fork_res.edits[0].edit.hash);
+    assert_ne!(resolve_res.edits[0].edit.id, fork_res.edits[0].edit.id);
     assert_eq!(resolve_res.latest_version, fork_res.latest_version);
     assert_ne!(resolved_article.ap_id, forked_article.ap_id);
     assert!(forked_article.local);

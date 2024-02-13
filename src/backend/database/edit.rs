@@ -1,7 +1,7 @@
-use crate::backend::database::schema::edit;
+use crate::backend::database::schema::{edit, person};
 use crate::backend::error::MyResult;
-use crate::common::EditVersion;
 use crate::common::{DbArticle, DbEdit};
+use crate::common::{EditVersion, EditView};
 use activitypub_federation::fetch::object_id::ObjectId;
 use chrono::{DateTime, Utc};
 use diesel::ExpressionMethods;
@@ -83,13 +83,15 @@ impl DbEdit {
             .get_result(conn.deref_mut())?)
     }
 
+    // TODO: create internal variant which doesnt return person?
     pub fn read_for_article(
         article: &DbArticle,
         conn: &Mutex<PgConnection>,
-    ) -> MyResult<Vec<Self>> {
+    ) -> MyResult<Vec<EditView>> {
         let mut conn = conn.lock().unwrap();
         Ok(edit::table
-            .filter(edit::dsl::article_id.eq(article.id))
+            .inner_join(person::table)
+            .filter(edit::article_id.eq(article.id))
             .get_results(conn.deref_mut())?)
     }
 }

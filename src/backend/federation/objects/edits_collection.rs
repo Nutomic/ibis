@@ -44,7 +44,7 @@ impl Collection for DbEditCollection {
             article
                 .edits
                 .into_iter()
-                .map(|a| a.into_json(data))
+                .map(|a| a.edit.into_json(data))
                 .collect::<Vec<_>>(),
         )
         .await?;

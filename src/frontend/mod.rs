@@ -1,5 +1,7 @@
 use crate::common::utils::extract_domain;
-use crate::common::DbArticle;
+use crate::common::{DbArticle, DbPerson};
+use leptos::IntoAttribute;
+use leptos::{view, IntoView};
 
 pub mod api;
 pub mod app;
@@ -29,5 +31,20 @@ fn article_title(article: &DbArticle) -> String {
         title
     } else {
         format!("{}@{}", title, extract_domain(&article.ap_id))
+    }
+}
+
+fn user_title(person: &DbPerson) -> String {
+    if person.local {
+        person.username.clone()
+    } else {
+        format!("{}@{}", person.username, extract_domain(&person.ap_id))
+    }
+}
+
+fn user_link(person: &DbPerson) -> impl IntoView {
+    let creator_path = format!("/user/{}", person.username);
+    view! {
+        <a href={creator_path}>{user_title(person)}</a>
     }
 }

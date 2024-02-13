@@ -1,6 +1,6 @@
 use crate::common::{DbPerson, GetUserData};
 use crate::frontend::app::GlobalState;
-use crate::frontend::extract_domain;
+use crate::frontend::user_title;
 use leptos::*;
 use leptos_router::use_params_map;
 
@@ -30,14 +30,9 @@ pub fn UserProfile() -> impl IntoView {
         }}
         <Suspense fallback=|| view! {  "Loading..." }> {
             move || user_profile.get().map(|person: DbPerson| {
-                let name =
-                if person.local {
-                    person.username
-                } else {
-                    format!("{}@{}", person.username, extract_domain(&person.ap_id))
-                };
                 view! {
-                    <h1>{name}</h1>
+                    <h1>{user_title(&person)}</h1>
+                    <p>TODO: create actual user profile</p>
                 }
             })
         }</Suspense>
