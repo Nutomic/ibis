@@ -34,7 +34,7 @@ impl DbInstance {
         let mut conn = conn.lock().unwrap();
         Ok(insert_into(instance::table)
             .values(form)
-            .on_conflict(instance::dsl::ap_id)
+            .on_conflict(instance::ap_id)
             .do_update()
             .set(form)
             .get_result(conn.deref_mut())?)
@@ -51,14 +51,14 @@ impl DbInstance {
     ) -> MyResult<DbInstance> {
         let mut conn = data.db_connection.lock().unwrap();
         Ok(instance::table
-            .filter(instance::dsl::ap_id.eq(ap_id))
+            .filter(instance::ap_id.eq(ap_id))
             .get_result(conn.deref_mut())?)
     }
 
     pub fn read_local_instance(conn: &Mutex<PgConnection>) -> MyResult<Self> {
         let mut conn = conn.lock().unwrap();
         Ok(instance::table
-            .filter(instance::dsl::local.eq(true))
+            .filter(instance::local.eq(true))
             .get_result(conn.deref_mut())?)
     }
 
@@ -101,7 +101,7 @@ impl DbInstance {
         use instance_follow::dsl::{follower_id, instance_id};
         let mut conn = conn.lock().unwrap();
         Ok(instance_follow::table
-            .inner_join(person::table.on(follower_id.eq(person::dsl::id)))
+            .inner_join(person::table.on(follower_id.eq(person::id)))
             .filter(instance_id.eq(id_))
             .select(person::all_columns)
             .get_results(conn.deref_mut())?)

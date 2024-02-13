@@ -9,9 +9,9 @@ use activitypub_federation::http_signatures::generate_actor_keypair;
 use bcrypt::hash;
 use bcrypt::DEFAULT_COST;
 use chrono::{DateTime, Local, Utc};
-use diesel::QueryDsl;
 use diesel::{insert_into, AsChangeset, Insertable, PgConnection, RunQueryDsl};
 use diesel::{ExpressionMethods, JoinOnDsl};
+use diesel::{PgTextExpressionMethods, QueryDsl};
 use std::ops::DerefMut;
 use std::sync::{Mutex, MutexGuard};
 
@@ -103,28 +103,33 @@ impl DbPerson {
             .get_result(conn.deref_mut())?)
     }
 
+    pub fn read_from_name(
+        username: &str,
+        domain: &Option<String>,
+        data: &Data<IbisData>,
+    ) -> MyResult<DbPerson> {
+        let mut conn = data.db_connection.lock().unwrap();
+        let mut query = person::table
+            .filter(person::username.eq(username))
+            .select(person::all_columns)
+            .into_boxed();
+        query = if let Some(domain) = domain {
+            let domain_pattern = format!("http://{domain}/%");
+            query
+                .filter(person::ap_id.ilike(domain_pattern))
+                .filter(person::local.eq(false))
+        } else {
+            query.filter(person::local.eq(true))
+        };
+        Ok(query.get_result(conn.deref_mut())?)
+    }
+
     pub fn read_local_from_name(username: &str, data: &Data<IbisData>) -> MyResult<LocalUserView> {
         let mut conn = data.db_connection.lock().unwrap();
         let (person, local_user) = person::table
             .inner_join(local_user::table)
             .filter(person::dsl::local)
             .filter(person::dsl::username.eq(username))
-            .get_result::<(DbPerson, DbLocalUser)>(conn.deref_mut())?;
-        // TODO: handle this in single query
-        let following = Self::read_following(person.id, conn)?;
-        Ok(LocalUserView {
-            person,
-            local_user,
-            following,
-        })
-    }
-
-    pub fn read_local_from_id(id: i32, data: &Data<IbisData>) -> MyResult<LocalUserView> {
-        let mut conn = data.db_connection.lock().unwrap();
-        let (person, local_user) = person::table
-            .inner_join(local_user::table)
-            .filter(person::dsl::local)
-            .filter(person::dsl::id.eq(id))
             .get_result::<(DbPerson, DbLocalUser)>(conn.deref_mut())?;
         // TODO: handle this in single query
         let following = Self::read_following(person.id, conn)?;

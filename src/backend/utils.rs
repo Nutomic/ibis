@@ -1,24 +1,28 @@
 use crate::backend::error::MyResult;
 use crate::common::DbEdit;
 use crate::common::EditVersion;
+use activitypub_federation::fetch::object_id::ObjectId;
+use activitypub_federation::traits::Object;
 use anyhow::anyhow;
 use diffy::{apply, Patch};
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
+use serde::Deserialize;
 
+use crate::common::utils::extract_domain;
 use url::{ParseError, Url};
 
-pub fn generate_activity_id(domain: &Url) -> Result<Url, ParseError> {
-    let port = match domain.port() {
-        Some(p) => format!(":{p}"),
-        None => String::new(),
-    };
-    let domain = domain.host_str().unwrap();
+pub fn generate_activity_id<T>(for_url: &ObjectId<T>) -> Result<Url, ParseError>
+where
+    T: Object + Send + 'static,
+    for<'de2> <T as Object>::Kind: Deserialize<'de2>,
+{
+    let domain = extract_domain(for_url);
     let id: String = thread_rng()
         .sample_iter(&Alphanumeric)
         .take(7)
         .map(char::from)
         .collect();
-    Url::parse(&format!("http://{}{}/objects/{}", domain, port, id))
+    Url::parse(&format!("http://{}/objects/{}", domain, id))
 }
 
 /// Starting from empty string, apply edits until the specified version is reached. If no version is

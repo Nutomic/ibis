@@ -55,29 +55,35 @@ pub fn Nav() -> impl IntoView {
                 </form>
             </li>
             <Show
-                when=move || global_state.with(|state| state.my_profile.is_none())
-                fallback=move || {
+                when=move || global_state.with(|state| state.my_profile.is_some())
+                fallback=move ||  {
                     view! {
-                        <p>"Logged in as: "
-                            {
-                                move || global_state.with(|state| state.my_profile.clone().unwrap().person.username)
-                            }
-                            <button on:click=move |_| logout_action.dispatch(())>
-                                Logout
-                            </button>
-                        </p>
+                        <li>
+                            <A href="/login">"Login"</A>
+                        </li>
+                        <Show when=move || registration_open.get().unwrap_or_default()>
+                            <li>
+                                <A href="/register">"Register"</A>
+                            </li>
+                        </Show>
                     }
                 }
             >
-            <li>
-                <A href="/login">"Login"</A>
-            </li>
-            <Show when=move || registration_open.get().unwrap_or_default()>
-                <li>
-                    <A href="/register">"Register"</A>
-                </li>
+                {
+                    let my_profile = global_state.with(|state| state.my_profile.clone().unwrap());
+                    let profile_link = format!("/user/{}", my_profile.person.username);
+                    view ! {
+                        <p>"Logged in as "
+                            <a href=profile_link style="border: none; padding: 0; color: var(--accent) !important;">
+                                {my_profile.person.username}
+                            </a>
+                        </p>
+                        <button on:click=move |_| logout_action.dispatch(())>
+                            Logout
+                        </button>
+                    }
+                }
             </Show>
-        </Show>
         </nav>
     }
 }

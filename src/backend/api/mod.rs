@@ -4,8 +4,8 @@ use crate::backend::api::article::{
 use crate::backend::api::article::{edit_article, fork_article, get_article};
 use crate::backend::api::instance::get_local_instance;
 use crate::backend::api::instance::{follow_instance, resolve_instance};
-use crate::backend::api::user::register_user;
 use crate::backend::api::user::validate;
+use crate::backend::api::user::{get_user, register_user};
 use crate::backend::api::user::{login_user, logout_user};
 use crate::backend::api::user::{my_profile, AUTH_COOKIE};
 use crate::backend::database::conflict::DbConflict;
@@ -45,6 +45,7 @@ pub fn api_routes() -> Router {
         .route("/instance/follow", post(follow_instance))
         .route("/instance/resolve", get(resolve_instance))
         .route("/search", get(search_article))
+        .route("/user", get(get_user))
         .route("/account/register", post(register_user))
         .route("/account/login", post(login_user))
         .route("/account/my_profile", get(my_profile))

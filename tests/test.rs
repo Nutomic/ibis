@@ -4,7 +4,7 @@ mod common;
 
 use crate::common::{TestData, TEST_ARTICLE_DEFAULT_TEXT};
 use ibis_lib::common::{
-    ArticleView, EditArticleData, ForkArticleData, GetArticleData, ListArticlesData,
+    ArticleView, EditArticleData, ForkArticleData, GetArticleData, GetUserData, ListArticlesData,
 };
 use ibis_lib::common::{CreateArticleData, SearchArticleData};
 use ibis_lib::common::{LoginUserData, RegisterUserData};
@@ -29,7 +29,7 @@ async fn test_create_read_and_edit_local_article() -> MyResult<()> {
     // now article can be read
     let get_article_data = GetArticleData {
         title: Some(create_res.article.title.clone()),
-        instance_domain: None,
+        domain: None,
         id: None,
     };
     let get_res = data.alpha.get_article(get_article_data.clone()).await?;
@@ -152,7 +152,7 @@ async fn test_synchronize_articles() -> MyResult<()> {
 
     let mut get_article_data = GetArticleData {
         title: Some(create_res.article.title),
-        instance_domain: None,
+        domain: None,
         id: None,
     };
 
@@ -161,7 +161,7 @@ async fn test_synchronize_articles() -> MyResult<()> {
     assert!(get_res.is_err());
 
     // get the article with instance id and compare
-    get_article_data.instance_domain = Some(instance.domain);
+    get_article_data.domain = Some(instance.domain);
     let get_res = data.beta.get_article(get_article_data).await?;
     assert_eq!(create_res.article.ap_id, get_res.article.ap_id);
     assert_eq!(create_form.title, get_res.article.title);
@@ -194,7 +194,7 @@ async fn test_edit_local_article() -> MyResult<()> {
     // article should be federated to alpha
     let get_article_data = GetArticleData {
         title: Some(create_res.article.title.to_string()),
-        instance_domain: Some(beta_instance.domain),
+        domain: Some(beta_instance.domain),
         id: None,
     };
     let get_res = data.alpha.get_article(get_article_data.clone()).await?;
@@ -254,7 +254,7 @@ async fn test_edit_remote_article() -> MyResult<()> {
     // article should be federated to alpha and gamma
     let get_article_data_alpha = GetArticleData {
         title: Some(create_res.article.title.to_string()),
-        instance_domain: Some(beta_id_on_alpha.domain),
+        domain: Some(beta_id_on_alpha.domain),
         id: None,
     };
     let get_res = data
@@ -267,7 +267,7 @@ async fn test_edit_remote_article() -> MyResult<()> {
 
     let get_article_data_gamma = GetArticleData {
         title: Some(create_res.article.title.to_string()),
-        instance_domain: Some(beta_id_on_gamma.domain),
+        domain: Some(beta_id_on_gamma.domain),
         id: None,
     };
     let get_res = data
@@ -397,7 +397,7 @@ async fn test_federated_edit_conflict() -> MyResult<()> {
     // alpha edits article
     let get_article_data = GetArticleData {
         title: Some(create_form.title.to_string()),
-        instance_domain: Some(beta_id_on_alpha.domain),
+        domain: Some(beta_id_on_alpha.domain),
         id: None,
     };
     let get_res = data.alpha.get_article(get_article_data).await?;
@@ -579,6 +579,33 @@ async fn test_user_registration_login() -> MyResult<()> {
 
     let my_profile_after_logout = data.alpha.my_profile().await;
     assert!(my_profile_after_logout.is_err());
+
+    data.stop()
+}
+
+#[tokio::test]
+async fn test_user_profile() -> MyResult<()> {
+    let data = TestData::start().await;
+
+    // Create an article and federate it, in order to federate the user who created it
+    let create_form = CreateArticleData {
+        title: "Manu_Chao".to_string(),
+        text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
+        summary: "create article".to_string(),
+    };
+    let create_res = data.alpha.create_article(&create_form).await?;
+    data.beta
+        .resolve_article(create_res.article.ap_id.into_inner())
+        .await?;
+
+    // Now we can fetch the remote user from local api
+    let params = GetUserData {
+        name: "alpha".to_string(),
+        domain: Some("localhost:8100".to_string()),
+    };
+    let user = data.beta.get_user(params).await?;
+    assert_eq!("alpha", user.username);
+    assert!(!user.local);
 
     data.stop()
 }

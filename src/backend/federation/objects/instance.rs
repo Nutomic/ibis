@@ -1,14 +1,13 @@
 use crate::backend::database::instance::DbInstanceForm;
 use crate::backend::database::IbisData;
 use crate::backend::error::Error;
+use crate::backend::error::MyResult;
 use crate::backend::federation::objects::articles_collection::DbArticleCollection;
 use crate::backend::federation::send_activity;
-
+use crate::common::utils::extract_domain;
+use crate::common::DbInstance;
 use activitypub_federation::fetch::collection_id::CollectionId;
 use activitypub_federation::kinds::actor::ServiceType;
-
-use crate::backend::error::MyResult;
-use crate::common::DbInstance;
 use activitypub_federation::traits::ActivityHandler;
 use activitypub_federation::{
     config::Data,
@@ -108,10 +107,7 @@ impl Object for DbInstance {
     }
 
     async fn from_json(json: Self::Kind, data: &Data<Self::DataType>) -> Result<Self, Self::Error> {
-        let mut domain = json.id.inner().host_str().unwrap().to_string();
-        if let Some(port) = json.id.inner().port() {
-            domain = format!("{domain}:{port}");
-        }
+        let domain = extract_domain(&json.id);
         let form = DbInstanceForm {
             domain,
             ap_id: json.id,

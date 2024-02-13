@@ -11,6 +11,7 @@ use crate::frontend::pages::instance_details::InstanceDetails;
 use crate::frontend::pages::login::Login;
 use crate::frontend::pages::register::Register;
 use crate::frontend::pages::search::Search;
+use crate::frontend::pages::user_profile::UserProfile;
 use leptos::{
     component, create_local_resource, create_rw_signal, expect_context, provide_context,
     use_context, view, IntoView, RwSignal, SignalGet, SignalGetUntracked, SignalUpdate,
@@ -97,6 +98,7 @@ pub fn App() -> impl IntoView {
                         <Route path="/article/create" view=CreateArticle/>
                         <Route path="/article/list" view=ListArticles/>
                         <Route path="/instance/:hostname" view=InstanceDetails/>
+                        <Route path="/user/:name" view=UserProfile/>
                         <Route path="/login" view=Login/>
                         <Route path="/register" view=Register/>
                         <Route path="/search" view=Search/>

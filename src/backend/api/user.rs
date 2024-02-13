@@ -1,8 +1,9 @@
 use crate::backend::database::{read_jwt_secret, IbisData};
 use crate::backend::error::MyResult;
-use crate::common::{DbLocalUser, DbPerson, LocalUserView, LoginUserData, RegisterUserData};
+use crate::common::{DbPerson, GetUserData, LocalUserView, LoginUserData, RegisterUserData};
 use activitypub_federation::config::Data;
 use anyhow::anyhow;
+use axum::extract::Query;
 use axum::{Form, Json};
 use axum_extra::extract::cookie::{Cookie, CookieJar, Expiration, SameSite};
 use axum_macros::debug_handler;
@@ -19,7 +20,7 @@ pub static AUTH_COOKIE: &str = "auth";
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Claims {
-    /// local_user.id
+    /// person.username
     pub sub: String,
     /// hostname
     pub iss: String,
@@ -29,10 +30,10 @@ struct Claims {
     pub exp: u64,
 }
 
-fn generate_login_token(local_user: &DbLocalUser, data: &Data<IbisData>) -> MyResult<String> {
+fn generate_login_token(person: &DbPerson, data: &Data<IbisData>) -> MyResult<String> {
     let hostname = data.domain().to_string();
     let claims = Claims {
-        sub: local_user.id.to_string(),
+        sub: person.username.clone(),
         iss: hostname,
         iat: Utc::now().timestamp(),
         exp: get_current_timestamp() + 60 * 60 * 24 * 365,
@@ -49,7 +50,7 @@ pub async fn validate(jwt: &str, data: &Data<IbisData>) -> MyResult<LocalUserVie
     let secret = read_jwt_secret(data)?;
     let key = DecodingKey::from_secret(secret.as_bytes());
     let claims = decode::<Claims>(jwt, &key, &validation)?;
-    DbPerson::read_local_from_id(claims.claims.sub.parse()?, data)
+    DbPerson::read_local_from_name(&claims.claims.sub, data)
 }
 
 #[debug_handler]
@@ -62,7 +63,7 @@ pub(in crate::backend::api) async fn register_user(
         return Err(anyhow!("Registration is closed").into());
     }
     let user = DbPerson::create_local(form.username, form.password, false, &data)?;
-    let token = generate_login_token(&user.local_user, &data)?;
+    let token = generate_login_token(&user.person, &data)?;
     let jar = jar.add(create_cookie(token, &data));
     Ok((jar, Json(user)))
 }
@@ -78,7 +79,7 @@ pub(in crate::backend::api) async fn login_user(
     if !valid {
         return Err(anyhow!("Invalid login").into());
     }
-    let token = generate_login_token(&user.local_user, &data)?;
+    let token = generate_login_token(&user.person, &data)?;
     let jar = jar.add(create_cookie(token, &data));
     Ok((jar, Json(user)))
 }
@@ -121,4 +122,16 @@ pub(in crate::backend::api) async fn logout_user(
 ) -> MyResult<CookieJar> {
     let jar = jar.remove(create_cookie(String::new(), &data));
     Ok(jar)
+}
+
+#[debug_handler]
+pub(in crate::backend::api) async fn get_user(
+    params: Query<GetUserData>,
+    data: Data<IbisData>,
+) -> MyResult<Json<DbPerson>> {
+    Ok(Json(DbPerson::read_from_name(
+        &params.name,
+        &params.domain,
+        &data,
+    )?))
 }

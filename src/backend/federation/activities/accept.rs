@@ -26,7 +26,7 @@ impl Accept {
         object: Follow,
         data: &Data<IbisData>,
     ) -> MyResult<()> {
-        let id = generate_activity_id(local_instance.ap_id.inner())?;
+        let id = generate_activity_id(&local_instance.ap_id)?;
         let follower = object.actor.dereference(data).await?;
         let accept = Accept {
             actor: local_instance.ap_id.clone(),

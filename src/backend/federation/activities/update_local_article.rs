@@ -38,7 +38,7 @@ impl UpdateLocalArticle {
     ) -> MyResult<()> {
         debug_assert!(article.local);
         let local_instance = DbInstance::read_local_instance(&data.db_connection)?;
-        let id = generate_activity_id(local_instance.ap_id.inner())?;
+        let id = generate_activity_id(&local_instance.ap_id)?;
         let mut to = local_instance.follower_ids(data)?;
         to.extend(extra_recipients.iter().map(|i| i.ap_id.inner().clone()));
         let update = UpdateLocalArticle {

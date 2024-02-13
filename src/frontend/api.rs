@@ -1,9 +1,9 @@
-use crate::common::ResolveObject;
 use crate::common::{ApiConflict, ListArticlesData};
 use crate::common::{ArticleView, LoginUserData, RegisterUserData};
 use crate::common::{CreateArticleData, EditArticleData, ForkArticleData, LocalUserView};
 use crate::common::{DbArticle, GetArticleData};
 use crate::common::{DbInstance, FollowInstance, InstanceView, SearchArticleData};
+use crate::common::{DbPerson, GetUserData, ResolveObject};
 use crate::frontend::error::MyResult;
 use anyhow::anyhow;
 use reqwest::{Client, RequestBuilder, StatusCode};
@@ -84,7 +84,7 @@ impl ApiClient {
 
         self.get_article(GetArticleData {
             title: None,
-            instance_domain: None,
+            domain: None,
             id: Some(edit_form.article_id),
         })
         .await
@@ -174,6 +174,9 @@ impl ApiClient {
         let resolve_object = ResolveObject { id };
         self.get_query("instance/resolve", Some(resolve_object))
             .await
+    }
+    pub async fn get_user(&self, data: GetUserData) -> MyResult<DbPerson> {
+        self.get_query("user", Some(data)).await
     }
 }
 

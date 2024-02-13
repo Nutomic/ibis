@@ -1,3 +1,4 @@
+pub mod utils;
 pub mod validation;
 
 use chrono::{DateTime, Utc};
@@ -21,7 +22,7 @@ pub const MAIN_PAGE_NAME: &str = "Main_Page";
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct GetArticleData {
     pub title: Option<String>,
-    pub instance_domain: Option<String>,
+    pub domain: Option<String>,
     pub id: Option<i32>,
 }
 
@@ -243,6 +244,12 @@ pub struct InstanceView {
     pub instance: DbInstance,
     pub followers: Vec<DbPerson>,
     pub registration_open: bool,
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug)]
+pub struct GetUserData {
+    pub name: String,
+    pub domain: Option<String>,
 }
 
 #[test]

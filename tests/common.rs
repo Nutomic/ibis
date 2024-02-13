@@ -56,6 +56,7 @@ impl TestData {
         ] {
             j.join().unwrap();
         }
+        dbg!(&alpha_db_path);
 
         Self {
             alpha: IbisInstance::start(alpha_db_path, port_alpha, "alpha").await,

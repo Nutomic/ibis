@@ -8,6 +8,7 @@ pub(crate) mod instance_details;
 pub(crate) mod login;
 pub(crate) mod register;
 pub(crate) mod search;
+pub(crate) mod user_profile;
 
 fn article_resource(
     title: impl Fn() -> Option<String> + 'static,
@@ -22,7 +23,7 @@ fn article_resource(
         GlobalState::api_client()
             .get_article(GetArticleData {
                 title: Some(title),
-                instance_domain: domain,
+                domain,
                 id: None,
             })
             .await

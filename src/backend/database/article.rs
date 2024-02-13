@@ -77,7 +77,7 @@ impl DbArticle {
 
     pub fn read_view_title(
         title: &str,
-        instance_domain: Option<String>,
+        domain: Option<String>,
         conn: &Mutex<PgConnection>,
     ) -> MyResult<ArticleView> {
         let article: DbArticle = {
@@ -86,9 +86,9 @@ impl DbArticle {
                 .inner_join(instance::table)
                 .filter(article::dsl::title.eq(title))
                 .into_boxed();
-            let query = if let Some(instance_domain) = instance_domain {
+            let query = if let Some(domain) = domain {
                 query
-                    .filter(instance::dsl::domain.eq(instance_domain))
+                    .filter(instance::dsl::domain.eq(domain))
                     .filter(instance::dsl::local.eq(false))
             } else {
                 query.filter(article::dsl::local.eq(true))
