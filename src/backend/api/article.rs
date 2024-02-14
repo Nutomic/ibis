@@ -49,7 +49,7 @@ pub(in crate::backend::api) async fn create_article(
         instance_id: local_instance.id,
         local: true,
     };
-    let article = DbArticle::create(&form, &data.db_connection)?;
+    let article = DbArticle::create(form, &data.db_connection)?;
 
     let edit_data = EditArticleData {
         article_id: article.id,
@@ -178,16 +178,16 @@ pub(in crate::backend::api) async fn fork_article(
         "http://{}:{}/article/{}",
         local_instance.ap_id.inner().domain().unwrap(),
         local_instance.ap_id.inner().port().unwrap(),
-        original_article.title
+        &fork_form.new_title
     ))?;
     let form = DbArticleForm {
-        title: original_article.title.clone(),
+        title: fork_form.new_title,
         text: original_article.text.clone(),
         ap_id,
         instance_id: local_instance.id,
         local: true,
     };
-    let article = DbArticle::create(&form, &data.db_connection)?;
+    let article = DbArticle::create(form, &data.db_connection)?;
 
     // copy edits to new article
     // this could also be done in sql

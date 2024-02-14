@@ -7,8 +7,7 @@ use leptos_router::*;
 #[component]
 pub fn EditDiff() -> impl IntoView {
     let params = use_params_map();
-    let title = move || params.get().get("title").cloned();
-    let article = article_resource(title);
+    let article = article_resource();
 
     view! {
         <ArticleNav article=article/>

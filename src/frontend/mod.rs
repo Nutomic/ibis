@@ -1,7 +1,6 @@
 use crate::common::utils::extract_domain;
 use crate::common::{DbArticle, DbPerson};
-use leptos::IntoAttribute;
-use leptos::{view, IntoView};
+use leptos::*;
 
 pub mod api;
 pub mod app;

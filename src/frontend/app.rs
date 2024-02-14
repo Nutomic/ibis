@@ -1,6 +1,7 @@
 use crate::common::LocalUserView;
 use crate::frontend::api::ApiClient;
 use crate::frontend::components::nav::Nav;
+use crate::frontend::pages::article::actions::ArticleActions;
 use crate::frontend::pages::article::create::CreateArticle;
 use crate::frontend::pages::article::edit::EditArticle;
 use crate::frontend::pages::article::history::ArticleHistory;
@@ -92,8 +93,9 @@ pub fn App() -> impl IntoView {
                     <Routes>
                         <Route path="/" view=ReadArticle/>
                         <Route path="/article/:title" view=ReadArticle/>
-                        <Route path="/article/:title/edit" view=EditArticle/>
                         <Route path="/article/:title/history" view=ArticleHistory/>
+                        <Route path="/article/:title/edit" view=EditArticle/>
+                        <Route path="/article/:title/actions" view=ArticleActions/>
                         <Route path="/article/:title/diff/:hash" view=EditDiff/>
                         <Route path="/article/create" view=CreateArticle/>
                         <Route path="/article/list" view=ListArticles/>

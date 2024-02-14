@@ -32,20 +32,22 @@ impl DbArticle {
         Ok(CollectionId::parse(&format!("{}/edits", self.ap_id))?)
     }
 
-    pub fn create(form: &DbArticleForm, conn: &Mutex<PgConnection>) -> MyResult<Self> {
+    pub fn create(mut form: DbArticleForm, conn: &Mutex<PgConnection>) -> MyResult<Self> {
+        form.title = form.title.replace(' ', "_");
         let mut conn = conn.lock().unwrap();
         Ok(insert_into(article::table)
             .values(form)
             .get_result(conn.deref_mut())?)
     }
 
-    pub fn create_or_update(form: &DbArticleForm, conn: &Mutex<PgConnection>) -> MyResult<Self> {
+    pub fn create_or_update(mut form: DbArticleForm, conn: &Mutex<PgConnection>) -> MyResult<Self> {
+        form.title = form.title.replace(' ', "_");
         let mut conn = conn.lock().unwrap();
         Ok(insert_into(article::table)
-            .values(form)
+            .values(&form)
             .on_conflict(article::dsl::ap_id)
             .do_update()
-            .set(form)
+            .set(&form)
             .get_result(conn.deref_mut())?)
     }
 

@@ -192,10 +192,8 @@ pub struct EditArticleData {
 
 #[derive(Deserialize, Serialize)]
 pub struct ForkArticleData {
-    // TODO: could add optional param new_title so there is no problem with title collision
-    //       in case local article with same title exists. however that makes it harder to discover
-    //       variants of same article.
     pub article_id: i32,
+    pub new_title: String,
 }
 
 #[derive(Deserialize, Serialize, Debug)]

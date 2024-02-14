@@ -6,7 +6,7 @@ use web_sys::wasm_bindgen::JsCast;
 
 #[component]
 pub fn ListArticles() -> impl IntoView {
-    let (only_local, set_only_local) = create_signal(true);
+    let (only_local, set_only_local) = create_signal(false);
     let articles = create_resource(
         move || only_local.get(),
         |only_local| async move {

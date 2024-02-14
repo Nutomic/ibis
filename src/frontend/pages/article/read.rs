@@ -2,14 +2,12 @@ use crate::frontend::article_title;
 use crate::frontend::components::article_nav::ArticleNav;
 use crate::frontend::pages::article_resource;
 use leptos::*;
-use leptos_router::*;
+
 use markdown_it::MarkdownIt;
 
 #[component]
 pub fn ReadArticle() -> impl IntoView {
-    let params = use_params_map();
-    let title = move || params.get().get("title").cloned();
-    let article = article_resource(title);
+    let article = article_resource();
 
     view! {
         <ArticleNav article=article/>

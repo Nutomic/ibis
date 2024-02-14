@@ -1,6 +1,7 @@
 use crate::common::{ArticleView, GetArticleData, MAIN_PAGE_NAME};
 use crate::frontend::app::GlobalState;
-use leptos::{create_resource, Resource};
+use leptos::{create_resource, Resource, SignalGet};
+use leptos_router::use_params_map;
 
 pub(crate) mod article;
 pub(crate) mod diff;
@@ -10,9 +11,9 @@ pub(crate) mod register;
 pub(crate) mod search;
 pub(crate) mod user_profile;
 
-fn article_resource(
-    title: impl Fn() -> Option<String> + 'static,
-) -> Resource<Option<String>, ArticleView> {
+fn article_resource() -> Resource<Option<String>, ArticleView> {
+    let params = use_params_map();
+    let title = move || params.get().get("title").cloned();
     create_resource(title, move |title| async move {
         let mut title = title.unwrap_or(MAIN_PAGE_NAME.to_string());
         let mut domain = None;

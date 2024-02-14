@@ -525,6 +525,7 @@ async fn test_fork_article() -> MyResult<()> {
     // fork the article to local instance
     let fork_form = ForkArticleData {
         article_id: resolved_article.id,
+        new_title: resolved_article.title.clone(),
     };
     let fork_res = data.beta.fork_article(&fork_form).await?;
     let forked_article = fork_res.article;

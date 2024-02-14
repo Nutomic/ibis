@@ -144,7 +144,7 @@ async fn setup(data: &Data<IbisData>) -> Result<(), Error> {
         instance_id: instance.id,
         local: true,
     };
-    let article = DbArticle::create(&form, &data.db_connection)?;
+    let article = DbArticle::create(form, &data.db_connection)?;
     // also create an article so its included in most recently edited list
     submit_article_update(
         MAIN_PAGE_DEFAULT_TEXT.to_string(),
