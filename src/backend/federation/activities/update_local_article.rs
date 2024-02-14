@@ -3,6 +3,7 @@ use crate::backend::error::MyResult;
 use crate::backend::federation::objects::article::ApubArticle;
 
 use crate::backend::utils::generate_activity_id;
+use crate::common::DbArticle;
 use crate::common::DbInstance;
 use activitypub_federation::kinds::activity::UpdateType;
 use activitypub_federation::{
@@ -11,9 +12,6 @@ use activitypub_federation::{
     protocol::helpers::deserialize_one_or_many,
     traits::{ActivityHandler, Object},
 };
-
-use crate::common::validation::can_edit_article;
-use crate::common::DbArticle;
 use serde::{Deserialize, Serialize};
 use url::Url;
 
@@ -68,9 +66,7 @@ impl ActivityHandler for UpdateLocalArticle {
         self.actor.inner()
     }
 
-    async fn verify(&self, data: &Data<Self::DataType>) -> Result<(), Self::Error> {
-        let article = DbArticle::read_from_ap_id(&self.object.id, &data.db_connection)?;
-        can_edit_article(&article, false)?;
+    async fn verify(&self, _data: &Data<Self::DataType>) -> Result<(), Self::Error> {
         Ok(())
     }
 

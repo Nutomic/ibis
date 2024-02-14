@@ -6,6 +6,7 @@ use crate::backend::federation::activities::update_local_article::UpdateLocalArt
 use crate::backend::federation::objects::edit::ApubEdit;
 use crate::backend::federation::send_activity;
 use crate::backend::utils::generate_activity_id;
+use crate::common::validation::can_edit_article;
 use crate::common::DbArticle;
 use crate::common::DbEdit;
 use crate::common::DbInstance;
@@ -72,7 +73,9 @@ impl ActivityHandler for UpdateRemoteArticle {
         self.actor.inner()
     }
 
-    async fn verify(&self, _data: &Data<Self::DataType>) -> Result<(), Self::Error> {
+    async fn verify(&self, data: &Data<Self::DataType>) -> Result<(), Self::Error> {
+        let article = DbArticle::read_from_ap_id(&self.object.object, &data.db_connection)?;
+        can_edit_article(&article, false)?;
         Ok(())
     }
 
