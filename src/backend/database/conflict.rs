@@ -99,7 +99,7 @@ impl DbConflict {
                     hash: self.hash.clone(),
                     three_way_merge,
                     summary: self.summary.clone(),
-                    article_id: original_article.id,
+                    article: original_article.clone(),
                     previous_version_id: original_article
                         .latest_edit_version(&data.db_connection)?,
                 }))

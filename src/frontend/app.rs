@@ -7,6 +7,7 @@ use crate::frontend::pages::article::edit::EditArticle;
 use crate::frontend::pages::article::history::ArticleHistory;
 use crate::frontend::pages::article::list::ListArticles;
 use crate::frontend::pages::article::read::ReadArticle;
+use crate::frontend::pages::conflicts::Conflicts;
 use crate::frontend::pages::diff::EditDiff;
 use crate::frontend::pages::instance_details::InstanceDetails;
 use crate::frontend::pages::login::Login;
@@ -94,7 +95,7 @@ pub fn App() -> impl IntoView {
                         <Route path="/" view=ReadArticle/>
                         <Route path="/article/:title" view=ReadArticle/>
                         <Route path="/article/:title/history" view=ArticleHistory/>
-                        <Route path="/article/:title/edit" view=EditArticle/>
+                        <Route path="/article/:title/edit/:conflict_id?" view=EditArticle/>
                         <Route path="/article/:title/actions" view=ArticleActions/>
                         <Route path="/article/:title/diff/:hash" view=EditDiff/>
                         <Route path="/article/create" view=CreateArticle/>
@@ -104,6 +105,7 @@ pub fn App() -> impl IntoView {
                         <Route path="/login" view=Login/>
                         <Route path="/register" view=Register/>
                         <Route path="/search" view=Search/>
+                        <Route path="/conflicts" view=Conflicts/>
                     </Routes>
                 </main>
             </Router>

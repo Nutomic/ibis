@@ -4,6 +4,7 @@ use crate::frontend::article_title;
 use crate::frontend::components::article_nav::ArticleNav;
 use crate::frontend::pages::article_resource;
 use leptos::*;
+use leptos_router::use_params_map;
 
 #[derive(Clone, PartialEq)]
 enum EditResponse {
@@ -12,14 +13,35 @@ enum EditResponse {
     Conflict(ApiConflict),
 }
 
+const CONFLICT_MESSAGE: &str = "There was an edit conflict. Resolve it manually and resubmit.";
+
 #[component]
 pub fn EditArticle() -> impl IntoView {
     let article = article_resource();
+    let (edit_response, set_edit_response) = create_signal(EditResponse::None);
+    let (edit_error, set_edit_error) = create_signal(None::<String>);
+
+    let conflict_id = move || use_params_map().get().get("conflict_id").cloned();
+    if let Some(conflict_id) = conflict_id() {
+        create_action(move |conflict_id: &String| {
+            let conflict_id: i32 = conflict_id.parse().unwrap();
+            async move {
+                let conflict = GlobalState::api_client()
+                    .get_conflicts()
+                    .await
+                    .unwrap()
+                    .into_iter()
+                    .find(|c| c.id == conflict_id)
+                    .unwrap();
+                set_edit_response.set(EditResponse::Conflict(conflict));
+                set_edit_error.set(Some(CONFLICT_MESSAGE.to_string()));
+            }
+        })
+        .dispatch(conflict_id);
+    }
 
     let (text, set_text) = create_signal(String::new());
     let (summary, set_summary) = create_signal(String::new());
-    let (edit_response, set_edit_response) = create_signal(EditResponse::None);
-    let (edit_error, set_edit_error) = create_signal(None::<String>);
     let (wait_for_response, set_wait_for_response) = create_signal(false);
     let button_is_disabled =
         Signal::derive(move || wait_for_response.get() || summary.get().is_empty());
@@ -58,12 +80,7 @@ pub fn EditArticle() -> impl IntoView {
                 match res {
                     Ok(Some(conflict)) => {
                         set_edit_response.update(|v| *v = EditResponse::Conflict(conflict));
-                        set_edit_error.update(|e| {
-                            *e = Some(
-                                "There was an edit conflict. Resolve it manually and resubmit."
-                                    .to_string(),
-                            )
-                        });
+                        set_edit_error.set(Some(CONFLICT_MESSAGE.to_string()));
                     }
                     Ok(None) => {
                         set_edit_response.update(|v| *v = EditResponse::Success);

@@ -35,6 +35,9 @@ pub fn Nav() -> impl IntoView {
                 <li>
                     <A href="/article/create">"Create Article"</A>
                 </li>
+                <li>
+                    <A href="/conflicts">"Edit Conflicts"</A>
+                </li>
             </Show>
             <li>
                 <form on:submit=move |ev| {

@@ -217,7 +217,7 @@ pub struct ApiConflict {
     pub hash: EditVersion,
     pub three_way_merge: String,
     pub summary: String,
-    pub article_id: i32,
+    pub article: DbArticle,
     pub previous_version_id: EditVersion,
 }
 

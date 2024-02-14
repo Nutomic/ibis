@@ -4,6 +4,7 @@ use leptos::{create_resource, Resource, SignalGet};
 use leptos_router::use_params_map;
 
 pub(crate) mod article;
+pub(crate) mod conflicts;
 pub(crate) mod diff;
 pub(crate) mod instance_details;
 pub(crate) mod login;
