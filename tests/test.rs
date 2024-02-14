@@ -446,7 +446,7 @@ async fn test_federated_edit_conflict() -> MyResult<()> {
         new_text: "aaaa\n".to_string(),
         summary: "summary".to_string(),
         previous_version_id: conflicts[0].previous_version_id.clone(),
-        resolve_conflict_id: Some(conflicts[0].id.clone()),
+        resolve_conflict_id: Some(conflicts[0].id),
     };
     let edit_res = data.gamma.edit_article(&edit_form).await?;
     assert_eq!(edit_form.new_text, edit_res.article.text);

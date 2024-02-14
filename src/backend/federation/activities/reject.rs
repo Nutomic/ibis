@@ -75,7 +75,7 @@ impl ActivityHandler for RejectEdit {
         let article = self.object.object.dereference(data).await?;
         let creator = self.object.attributed_to.dereference(data).await?;
         let form = DbConflictForm {
-            id: EditVersion::new(&self.object.content),
+            hash: EditVersion::new(&self.object.content),
             diff: self.object.content,
             summary: self.object.summary,
             creator_id: creator.id,

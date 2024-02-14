@@ -187,7 +187,7 @@ pub struct EditArticleData {
     /// [ApiConflict.previous_version]
     pub previous_version_id: EditVersion,
     /// If you are resolving a conflict, pass the id to delete conflict from the database
-    pub resolve_conflict_id: Option<EditVersion>,
+    pub resolve_conflict_id: Option<i32>,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -213,8 +213,10 @@ pub struct ResolveObject {
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct ApiConflict {
-    pub id: EditVersion,
+    pub id: i32,
+    pub hash: EditVersion,
     pub three_way_merge: String,
+    pub summary: String,
     pub article_id: i32,
     pub previous_version_id: EditVersion,
 }

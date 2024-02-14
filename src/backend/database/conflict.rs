@@ -23,7 +23,8 @@ use std::sync::Mutex;
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Queryable, Selectable, Identifiable)]
 #[diesel(table_name = conflict, check_for_backend(diesel::pg::Pg), belongs_to(DbArticle, foreign_key = article_id))]
 pub struct DbConflict {
-    pub id: EditVersion,
+    pub id: i32,
+    pub hash: EditVersion,
     pub diff: String,
     pub summary: String,
     pub creator_id: i32,
@@ -34,7 +35,7 @@ pub struct DbConflict {
 #[derive(Debug, Clone, Insertable)]
 #[diesel(table_name = conflict, check_for_backend(diesel::pg::Pg))]
 pub struct DbConflictForm {
-    pub id: EditVersion,
+    pub hash: EditVersion,
     pub diff: String,
     pub summary: String,
     pub creator_id: i32,
@@ -58,7 +59,7 @@ impl DbConflict {
     }
 
     /// Delete a merge conflict after it is resolved.
-    pub fn delete(id: EditVersion, conn: &Mutex<PgConnection>) -> MyResult<Self> {
+    pub fn delete(id: i32, conn: &Mutex<PgConnection>) -> MyResult<Self> {
         let mut conn = conn.lock().unwrap();
         Ok(delete(conflict::table.find(id)).get_result(conn.deref_mut())?)
     }
@@ -88,14 +89,16 @@ impl DbConflict {
                     data,
                 )
                 .await?;
-                DbConflict::delete(self.id.clone(), &data.db_connection)?;
+                DbConflict::delete(self.id, &data.db_connection)?;
                 Ok(None)
             }
             Err(three_way_merge) => {
                 // there is a merge conflict, user needs to do three-way-merge
                 Ok(Some(ApiConflict {
-                    id: self.id.clone(),
+                    id: self.id,
+                    hash: self.hash.clone(),
                     three_way_merge,
+                    summary: self.summary.clone(),
                     article_id: original_article.id,
                     previous_version_id: original_article
                         .latest_edit_version(&data.db_connection)?,

@@ -59,7 +59,8 @@ create table edit (
 );
 
 create table conflict (
-    id uuid primary key,
+    id serial primary key,
+    hash uuid not null,
     diff text not null,
     summary text not null,
     creator_id int REFERENCES local_user ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,

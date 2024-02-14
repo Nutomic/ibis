@@ -14,7 +14,8 @@ diesel::table! {
 
 diesel::table! {
     conflict (id) {
-        id -> Uuid,
+        id -> Int4,
+        hash -> Uuid,
         diff -> Text,
         summary -> Text,
         creator_id -> Int4,
