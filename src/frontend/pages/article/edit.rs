@@ -74,9 +74,11 @@ pub fn EditArticle() -> impl IntoView {
                                             view! { <p style="color:red;">{err}</p> }
                                         })
                                 }}
-                                <input type="text" on:keyup=move |ev| {
-                                    let val = event_target_value(&ev);
-                                    set_summary.update(|p| *p = val);
+                                <input type="text"
+                                    placeholder="Summary"
+                                    on:keyup=move |ev| {
+                                        let val = event_target_value(&ev);
+                                        set_summary.update(|p| *p = val);
                                 }/>
                                 <button
                                     prop:disabled=move || button_is_disabled.get()
