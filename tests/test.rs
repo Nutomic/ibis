@@ -3,6 +3,7 @@ extern crate ibis_lib;
 mod common;
 
 use crate::common::{TestData, TEST_ARTICLE_DEFAULT_TEXT};
+use ibis_lib::common::utils::extract_domain;
 use ibis_lib::common::{
     ArticleView, EditArticleData, ForkArticleData, GetArticleData, GetUserData, ListArticlesData,
 };
@@ -601,11 +602,12 @@ async fn test_user_profile() -> MyResult<()> {
     data.beta
         .resolve_article(create_res.article.ap_id.into_inner())
         .await?;
+    let domain = extract_domain(&data.alpha.my_profile().await?.person.ap_id);
 
     // Now we can fetch the remote user from local api
     let params = GetUserData {
         name: "alpha".to_string(),
-        domain: Some("localhost:8100".to_string()),
+        domain: Some(domain),
     };
     let user = data.beta.get_user(params).await?;
     assert_eq!("alpha", user.username);
