@@ -1,3 +1,4 @@
+use crate::common::utils::http_protocol_str;
 use crate::common::{DbInstance, FollowInstance};
 use crate::frontend::app::GlobalState;
 use leptos::*;
@@ -10,7 +11,7 @@ pub fn InstanceDetails() -> impl IntoView {
     let params = use_params_map();
     let hostname = move || params.get().get("hostname").cloned().unwrap();
     let instance_profile = create_resource(hostname, move |hostname| async move {
-        let url = Url::parse(&format!("http://{hostname}")).unwrap();
+        let url = Url::parse(&format!("{}://{hostname}", http_protocol_str())).unwrap();
         GlobalState::api_client()
             .resolve_instance(url)
             .await

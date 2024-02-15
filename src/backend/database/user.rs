@@ -2,6 +2,7 @@ use crate::backend::database::schema::{instance, instance_follow};
 use crate::backend::database::schema::{local_user, person};
 use crate::backend::database::IbisData;
 use crate::backend::error::MyResult;
+use crate::common::utils::http_protocol_str;
 use crate::common::{DbInstance, DbLocalUser, DbPerson, LocalUserView};
 use activitypub_federation::config::Data;
 use activitypub_federation::fetch::object_id::ObjectId;
@@ -59,8 +60,11 @@ impl DbPerson {
     ) -> MyResult<LocalUserView> {
         let mut conn = data.db_connection.lock().unwrap();
         let domain = &data.config.federation.domain;
-        let ap_id = ObjectId::parse(&format!("http://{domain}/user/{username}"))?;
-        let inbox_url = format!("http://{domain}/inbox");
+        let ap_id = ObjectId::parse(&format!(
+            "{}://{domain}/user/{username}",
+            http_protocol_str()
+        ))?;
+        let inbox_url = format!("{}://{domain}/inbox", http_protocol_str());
         let keypair = generate_actor_keypair()?;
         let person_form = DbPersonForm {
             username,
@@ -114,7 +118,7 @@ impl DbPerson {
             .select(person::all_columns)
             .into_boxed();
         query = if let Some(domain) = domain {
-            let domain_pattern = format!("http://{domain}/%");
+            let domain_pattern = format!("{}://{domain}/%", http_protocol_str());
             query
                 .filter(person::ap_id.ilike(domain_pattern))
                 .filter(person::local.eq(false))

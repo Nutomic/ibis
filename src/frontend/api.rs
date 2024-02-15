@@ -1,3 +1,4 @@
+use crate::common::utils::http_protocol_str;
 use crate::common::{ApiConflict, ListArticlesData};
 use crate::common::{ArticleView, LoginUserData, RegisterUserData};
 use crate::common::{CreateArticleData, EditArticleData, ForkArticleData, LocalUserView};
@@ -26,9 +27,7 @@ impl ApiClient {
         T: for<'de> Deserialize<'de>,
         R: Serialize,
     {
-        let mut req = self
-            .client
-            .get(format!("http://{}/api/v1/{}", &self.hostname, endpoint));
+        let mut req = self.client.get(self.request_endpoint(endpoint));
         if let Some(query) = query {
             req = req.query(&query);
         }
@@ -36,17 +35,17 @@ impl ApiClient {
     }
 
     pub async fn get_article(&self, data: GetArticleData) -> MyResult<ArticleView> {
-        self.get_query("article", Some(data)).await
+        self.get_query("/api/v1/article", Some(data)).await
     }
 
     pub async fn list_articles(&self, data: ListArticlesData) -> MyResult<Vec<DbArticle>> {
-        self.get_query("article/list", Some(data)).await
+        self.get_query("/api/v1/article/list", Some(data)).await
     }
 
     pub async fn register(&self, register_form: RegisterUserData) -> MyResult<LocalUserView> {
         let req = self
             .client
-            .post(format!("http://{}/api/v1/account/register", self.hostname))
+            .post(self.request_endpoint("/api/v1/account/register"))
             .form(&register_form);
         handle_json_res::<LocalUserView>(req).await
     }
@@ -54,7 +53,7 @@ impl ApiClient {
     pub async fn login(&self, login_form: LoginUserData) -> MyResult<LocalUserView> {
         let req = self
             .client
-            .post(format!("http://{}/api/v1/account/login", self.hostname))
+            .post(self.request_endpoint("/api/v1/account/login"))
             .form(&login_form);
         handle_json_res::<LocalUserView>(req).await
     }
@@ -62,7 +61,7 @@ impl ApiClient {
     pub async fn create_article(&self, data: &CreateArticleData) -> MyResult<ArticleView> {
         let req = self
             .client
-            .post(format!("http://{}/api/v1/article", &self.hostname))
+            .post(self.request_endpoint("/api/v1/article"))
             .form(data);
         handle_json_res(req).await
     }
@@ -73,7 +72,7 @@ impl ApiClient {
     ) -> MyResult<Option<ApiConflict>> {
         let req = self
             .client
-            .patch(format!("http://{}/api/v1/article", self.hostname))
+            .patch(self.request_endpoint("/api/v1/article"))
             .form(edit_form);
         handle_json_res(req).await
     }
@@ -91,11 +90,11 @@ impl ApiClient {
     }
 
     pub async fn search(&self, search_form: &SearchArticleData) -> MyResult<Vec<DbArticle>> {
-        self.get_query("search", Some(search_form)).await
+        self.get_query("/api/v1/search", Some(search_form)).await
     }
 
     pub async fn get_local_instance(&self) -> MyResult<InstanceView> {
-        self.get_query("instance", None::<i32>).await
+        self.get_query("/api/v1/instance", None::<i32>).await
     }
 
     pub async fn follow_instance_with_resolve(
@@ -104,10 +103,10 @@ impl ApiClient {
     ) -> MyResult<DbInstance> {
         // fetch beta instance on alpha
         let resolve_form = ResolveObject {
-            id: Url::parse(&format!("http://{}", follow_instance))?,
+            id: Url::parse(&format!("{}://{}", http_protocol_str(), follow_instance))?,
         };
         let instance_resolved: DbInstance = self
-            .get_query("instance/resolve", Some(resolve_form))
+            .get_query("/api/v1/instance/resolve", Some(resolve_form))
             .await?;
 
         // send follow
@@ -122,7 +121,7 @@ impl ApiClient {
         // cant use post helper because follow doesnt return json
         let res = self
             .client
-            .post(format!("http://{}/api/v1/instance/follow", self.hostname))
+            .post(self.request_endpoint("/api/v1/instance/follow"))
             .form(&follow_form)
             .send()
             .await?;
@@ -134,16 +133,15 @@ impl ApiClient {
     }
 
     pub async fn my_profile(&self) -> MyResult<LocalUserView> {
-        let req = self.client.get(format!(
-            "http://{}/api/v1/account/my_profile",
-            self.hostname
-        ));
+        let req = self
+            .client
+            .get(self.request_endpoint("/api/v1/account/my_profile"));
         handle_json_res(req).await
     }
 
     pub async fn logout(&self) -> MyResult<()> {
         self.client
-            .get(format!("http://{}/api/v1/account/logout", self.hostname))
+            .get(self.request_endpoint("/api/v1/account/logout"))
             .send()
             .await?;
         Ok(())
@@ -152,7 +150,7 @@ impl ApiClient {
     pub async fn fork_article(&self, form: &ForkArticleData) -> MyResult<ArticleView> {
         let req = self
             .client
-            .post(format!("http://{}/api/v1/article/fork", self.hostname))
+            .post(self.request_endpoint("/api/v1/article/fork"))
             .form(form);
         Ok(handle_json_res(req).await.unwrap())
     }
@@ -160,23 +158,27 @@ impl ApiClient {
     pub async fn get_conflicts(&self) -> MyResult<Vec<ApiConflict>> {
         let req = self
             .client
-            .get(format!("http://{}/api/v1/edit_conflicts", &self.hostname));
+            .get(self.request_endpoint("/api/v1/edit_conflicts"));
         Ok(handle_json_res(req).await.unwrap())
     }
 
     pub async fn resolve_article(&self, id: Url) -> MyResult<ArticleView> {
         let resolve_object = ResolveObject { id };
-        self.get_query("article/resolve", Some(resolve_object))
+        self.get_query("/api/v1/article/resolve", Some(resolve_object))
             .await
     }
 
     pub async fn resolve_instance(&self, id: Url) -> MyResult<DbInstance> {
         let resolve_object = ResolveObject { id };
-        self.get_query("instance/resolve", Some(resolve_object))
+        self.get_query("/api/v1/instance/resolve", Some(resolve_object))
             .await
     }
     pub async fn get_user(&self, data: GetUserData) -> MyResult<DbPerson> {
-        self.get_query("user", Some(data)).await
+        self.get_query("/api/v1/user", Some(data)).await
+    }
+
+    fn request_endpoint(&self, path: &str) -> String {
+        format!("{}://{}{path}", http_protocol_str(), &self.hostname)
     }
 }
 

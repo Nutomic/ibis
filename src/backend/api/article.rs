@@ -6,6 +6,7 @@ use crate::backend::error::MyResult;
 use crate::backend::federation::activities::create_article::CreateArticle;
 use crate::backend::federation::activities::submit_article_update;
 use crate::backend::utils::generate_article_version;
+use crate::common::utils::http_protocol_str;
 use crate::common::validation::can_edit_article;
 use crate::common::LocalUserView;
 use crate::common::{ApiConflict, ResolveObject};
@@ -37,7 +38,8 @@ pub(in crate::backend::api) async fn create_article(
 
     let local_instance = DbInstance::read_local_instance(&data.db_connection)?;
     let ap_id = ObjectId::parse(&format!(
-        "http://{}:{}/article/{}",
+        "{}://{}:{}/article/{}",
+        http_protocol_str(),
         local_instance.ap_id.inner().host_str().unwrap(),
         local_instance.ap_id.inner().port().unwrap(),
         create_article.title
@@ -175,7 +177,8 @@ pub(in crate::backend::api) async fn fork_article(
 
     let local_instance = DbInstance::read_local_instance(&data.db_connection)?;
     let ap_id = ObjectId::parse(&format!(
-        "http://{}:{}/article/{}",
+        "{}://{}:{}/article/{}",
+        http_protocol_str(),
         local_instance.ap_id.inner().domain().unwrap(),
         local_instance.ap_id.inner().port().unwrap(),
         &fork_form.new_title

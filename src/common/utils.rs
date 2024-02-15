@@ -20,3 +20,11 @@ pub fn extract_domain(url: &String) -> String {
     }
     format!("{}{port}", url.host_str().unwrap())
 }
+
+pub fn http_protocol_str() -> &'static str {
+    if cfg!(debug_assertions) {
+        "http"
+    } else {
+        "https"
+    }
+}

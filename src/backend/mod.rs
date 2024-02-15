@@ -8,6 +8,7 @@ use crate::backend::federation::activities::submit_article_update;
 use crate::backend::federation::routes::federation_routes;
 use crate::backend::federation::VerifyUrlData;
 use crate::backend::utils::generate_activity_id;
+use crate::common::utils::http_protocol_str;
 use crate::common::{DbArticle, DbInstance, DbPerson, EditVersion, MAIN_PAGE_NAME};
 use crate::frontend::app::App;
 use activitypub_federation::config::{Data, FederationConfig, FederationMiddleware};
@@ -112,9 +113,10 @@ and to list interesting articles.";
 
 async fn setup(data: &Data<IbisData>) -> Result<(), Error> {
     let domain = &data.config.federation.domain;
-    let ap_id = ObjectId::parse(&format!("http://{domain}"))?;
-    let articles_url = CollectionId::parse(&format!("http://{domain}/all_articles"))?;
-    let inbox_url = format!("http://{domain}/inbox");
+    let ap_id = ObjectId::parse(&format!("{}://{domain}", http_protocol_str()))?;
+    let articles_url =
+        CollectionId::parse(&format!("{}://{domain}/all_articles", http_protocol_str()))?;
+    let inbox_url = format!("{}://{domain}/inbox", http_protocol_str());
     let keypair = generate_actor_keypair()?;
     let form = DbInstanceForm {
         domain: domain.to_string(),
@@ -140,7 +142,10 @@ async fn setup(data: &Data<IbisData>) -> Result<(), Error> {
     let form = DbArticleForm {
         title: MAIN_PAGE_NAME.to_string(),
         text: String::new(),
-        ap_id: ObjectId::parse(&format!("http://{domain}/article/{MAIN_PAGE_NAME}"))?,
+        ap_id: ObjectId::parse(&format!(
+            "{}://{domain}/article/{MAIN_PAGE_NAME}",
+            http_protocol_str()
+        ))?,
         instance_id: instance.id,
         local: true,
     };

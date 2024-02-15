@@ -1,6 +1,6 @@
 use crate::backend::error::MyResult;
-use crate::common::EditVersion;
 use crate::common::EditView;
+use crate::common::{utils, EditVersion};
 use activitypub_federation::fetch::object_id::ObjectId;
 use activitypub_federation::traits::Object;
 use anyhow::anyhow;
@@ -22,7 +22,12 @@ where
         .take(7)
         .map(char::from)
         .collect();
-    Url::parse(&format!("http://{}/objects/{}", domain, id))
+    Url::parse(&format!(
+        "{}://{}/objects/{}",
+        utils::http_protocol_str(),
+        domain,
+        id
+    ))
 }
 
 /// Starting from empty string, apply edits until the specified version is reached. If no version is
