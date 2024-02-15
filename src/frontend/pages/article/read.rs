@@ -1,9 +1,8 @@
 use crate::frontend::article_title;
 use crate::frontend::components::article_nav::ArticleNav;
+use crate::frontend::markdown::markdown_parser;
 use crate::frontend::pages::article_resource;
 use leptos::*;
-
-use markdown_it::MarkdownIt;
 
 #[component]
 pub fn ReadArticle() -> impl IntoView {
@@ -23,11 +22,4 @@ pub fn ReadArticle() -> impl IntoView {
         }
         </Suspense>
     }
-}
-
-fn markdown_parser() -> MarkdownIt {
-    let mut parser = MarkdownIt::new();
-    markdown_it::plugins::cmark::add(&mut parser);
-    markdown_it::plugins::extra::add(&mut parser);
-    parser
 }

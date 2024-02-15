@@ -6,6 +6,7 @@ pub mod api;
 pub mod app;
 mod components;
 pub mod error;
+pub mod markdown;
 pub mod pages;
 
 #[cfg(feature = "hydrate")]
@@ -46,4 +47,17 @@ fn user_link(person: &DbPerson) -> impl IntoView {
     view! {
         <a href={creator_path}>{user_title(person)}</a>
     }
+}
+
+fn backend_hostname() -> String {
+    let backend_hostname;
+    #[cfg(not(feature = "ssr"))]
+    {
+        backend_hostname = web_sys::window().unwrap().location().host().unwrap();
+    }
+    #[cfg(feature = "ssr")]
+    {
+        backend_hostname = crate::backend::config::IbisConfig::read().bind.to_string();
+    }
+    backend_hostname
 }

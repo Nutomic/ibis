@@ -1,5 +1,6 @@
 use crate::common::LocalUserView;
 use crate::frontend::api::ApiClient;
+use crate::frontend::backend_hostname;
 use crate::frontend::components::nav::Nav;
 use crate::frontend::pages::article::actions::ArticleActions;
 use crate::frontend::pages::article::create::CreateArticle;
@@ -65,15 +66,7 @@ impl GlobalState {
 
 #[component]
 pub fn App() -> impl IntoView {
-    let backend_hostname;
-    #[cfg(not(feature = "ssr"))]
-    {
-        backend_hostname = web_sys::window().unwrap().location().host().unwrap();
-    }
-    #[cfg(feature = "ssr")]
-    {
-        backend_hostname = crate::backend::config::IbisConfig::read().bind.to_string();
-    }
+    let backend_hostname = backend_hostname();
 
     provide_meta_context();
     let backend_hostname = GlobalState {
