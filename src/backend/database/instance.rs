@@ -9,11 +9,11 @@ use activitypub_federation::fetch::object_id::ObjectId;
 use chrono::{DateTime, Utc};
 use diesel::ExpressionMethods;
 use diesel::{
-    insert_into, AsChangeset, Insertable, JoinOnDsl, PgConnection, QueryDsl, RunQueryDsl,
+    insert_into, AsChangeset, Insertable, JoinOnDsl, QueryDsl, RunQueryDsl,
 };
 use std::fmt::Debug;
 use std::ops::DerefMut;
-use std::sync::Mutex;
+
 
 #[derive(Debug, Clone, Insertable, AsChangeset)]
 #[diesel(table_name = instance, check_for_backend(diesel::pg::Pg))]
@@ -30,8 +30,8 @@ pub struct DbInstanceForm {
 }
 
 impl DbInstance {
-    pub fn create(form: &DbInstanceForm, conn: &Mutex<PgConnection>) -> MyResult<Self> {
-        let mut conn = conn.lock().unwrap();
+    pub fn create(form: &DbInstanceForm, data: &IbisData) -> MyResult<Self> {
+        let mut conn = data.db_pool.get()?;
         Ok(insert_into(instance::table)
             .values(form)
             .on_conflict(instance::ap_id)
@@ -40,8 +40,8 @@ impl DbInstance {
             .get_result(conn.deref_mut())?)
     }
 
-    pub fn read(id: i32, conn: &Mutex<PgConnection>) -> MyResult<Self> {
-        let mut conn = conn.lock().unwrap();
+    pub fn read(id: i32, data: &IbisData) -> MyResult<Self> {
+        let mut conn = data.db_pool.get()?;
         Ok(instance::table.find(id).get_result(conn.deref_mut())?)
     }
 
@@ -49,22 +49,22 @@ impl DbInstance {
         ap_id: &ObjectId<DbInstance>,
         data: &Data<IbisData>,
     ) -> MyResult<DbInstance> {
-        let mut conn = data.db_connection.lock().unwrap();
+        let mut conn = data.db_pool.get()?;
         Ok(instance::table
             .filter(instance::ap_id.eq(ap_id))
             .get_result(conn.deref_mut())?)
     }
 
-    pub fn read_local_instance(conn: &Mutex<PgConnection>) -> MyResult<Self> {
-        let mut conn = conn.lock().unwrap();
+    pub fn read_local_instance(data: &IbisData) -> MyResult<Self> {
+        let mut conn = data.db_pool.get()?;
         Ok(instance::table
             .filter(instance::local.eq(true))
             .get_result(conn.deref_mut())?)
     }
 
     pub fn read_local_view(data: &Data<IbisData>) -> MyResult<InstanceView> {
-        let instance = DbInstance::read_local_instance(&data.db_connection)?;
-        let followers = DbInstance::read_followers(instance.id, &data.db_connection)?;
+        let instance = DbInstance::read_local_instance(data)?;
+        let followers = DbInstance::read_followers(instance.id, data)?;
 
         Ok(InstanceView {
             instance,
@@ -80,7 +80,7 @@ impl DbInstance {
         data: &Data<IbisData>,
     ) -> MyResult<()> {
         use instance_follow::dsl::{follower_id, instance_id, pending};
-        let mut conn = data.db_connection.lock().unwrap();
+        let mut conn = data.db_pool.get()?;
         let form = (
             instance_id.eq(instance.id),
             follower_id.eq(follower.id),
@@ -96,10 +96,10 @@ impl DbInstance {
         Ok(())
     }
 
-    pub fn read_followers(id_: i32, conn: &Mutex<PgConnection>) -> MyResult<Vec<DbPerson>> {
+    pub fn read_followers(id_: i32, data: &IbisData) -> MyResult<Vec<DbPerson>> {
         use crate::backend::database::schema::person;
         use instance_follow::dsl::{follower_id, instance_id};
-        let mut conn = conn.lock().unwrap();
+        let mut conn = data.db_pool.get()?;
         Ok(instance_follow::table
             .inner_join(person::table.on(follower_id.eq(person::id)))
             .filter(instance_id.eq(id_))

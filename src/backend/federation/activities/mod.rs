@@ -32,9 +32,8 @@ pub async fn submit_article_update(
         previous_version,
     )?;
     if original_article.local {
-        let edit = DbEdit::create(&form, &data.db_connection)?;
-        let updated_article =
-            DbArticle::update_text(edit.article_id, &new_text, &data.db_connection)?;
+        let edit = DbEdit::create(&form, data)?;
+        let updated_article = DbArticle::update_text(edit.article_id, &new_text, data)?;
 
         UpdateLocalArticle::send(updated_article, vec![], data).await?;
     } else {
@@ -50,7 +49,7 @@ pub async fn submit_article_update(
             previous_version_id: form.previous_version_id,
             created: Utc::now(),
         };
-        let instance = DbInstance::read(original_article.instance_id, &data.db_connection)?;
+        let instance = DbInstance::read(original_article.instance_id, data)?;
         UpdateRemoteArticle::send(edit, instance, data).await?;
     }
     Ok(())

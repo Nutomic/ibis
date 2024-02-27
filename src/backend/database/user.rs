@@ -10,11 +10,11 @@ use activitypub_federation::http_signatures::generate_actor_keypair;
 use bcrypt::hash;
 use bcrypt::DEFAULT_COST;
 use chrono::{DateTime, Local, Utc};
-use diesel::{insert_into, AsChangeset, Insertable, PgConnection, RunQueryDsl};
+use diesel::{insert_into, AsChangeset, Insertable, RunQueryDsl};
 use diesel::{ExpressionMethods, JoinOnDsl};
 use diesel::{PgTextExpressionMethods, QueryDsl};
 use std::ops::DerefMut;
-use std::sync::{Mutex, MutexGuard};
+
 
 #[derive(Debug, Clone, Insertable, AsChangeset)]
 #[diesel(table_name = local_user, check_for_backend(diesel::pg::Pg))]
@@ -37,8 +37,8 @@ pub struct DbPersonForm {
 }
 
 impl DbPerson {
-    pub fn create(person_form: &DbPersonForm, conn: &Mutex<PgConnection>) -> MyResult<Self> {
-        let mut conn = conn.lock().unwrap();
+    pub fn create(person_form: &DbPersonForm, data: &Data<IbisData>) -> MyResult<Self> {
+        let mut conn = data.db_pool.get()?;
         Ok(insert_into(person::table)
             .values(person_form)
             .on_conflict(person::dsl::ap_id)
@@ -48,7 +48,7 @@ impl DbPerson {
     }
 
     pub fn read(id: i32, data: &Data<IbisData>) -> MyResult<DbPerson> {
-        let mut conn = data.db_connection.lock().unwrap();
+        let mut conn = data.db_pool.get()?;
         Ok(person::table.find(id).get_result(conn.deref_mut())?)
     }
 
@@ -58,7 +58,7 @@ impl DbPerson {
         admin: bool,
         data: &IbisData,
     ) -> MyResult<LocalUserView> {
-        let mut conn = data.db_connection.lock().unwrap();
+        let mut conn = data.db_pool.get()?;
         let domain = &data.config.federation.domain;
         let ap_id = ObjectId::parse(&format!(
             "{}://{domain}/user/{username}",
@@ -101,7 +101,7 @@ impl DbPerson {
         ap_id: &ObjectId<DbPerson>,
         data: &Data<IbisData>,
     ) -> MyResult<DbPerson> {
-        let mut conn = data.db_connection.lock().unwrap();
+        let mut conn = data.db_pool.get()?;
         Ok(person::table
             .filter(person::dsl::ap_id.eq(ap_id))
             .get_result(conn.deref_mut())?)
@@ -112,7 +112,7 @@ impl DbPerson {
         domain: &Option<String>,
         data: &Data<IbisData>,
     ) -> MyResult<DbPerson> {
-        let mut conn = data.db_connection.lock().unwrap();
+        let mut conn = data.db_pool.get()?;
         let mut query = person::table
             .filter(person::username.eq(username))
             .select(person::all_columns)
@@ -129,14 +129,14 @@ impl DbPerson {
     }
 
     pub fn read_local_from_name(username: &str, data: &Data<IbisData>) -> MyResult<LocalUserView> {
-        let mut conn = data.db_connection.lock().unwrap();
+        let mut conn = data.db_pool.get()?;
         let (person, local_user) = person::table
             .inner_join(local_user::table)
             .filter(person::dsl::local)
             .filter(person::dsl::username.eq(username))
             .get_result::<(DbPerson, DbLocalUser)>(conn.deref_mut())?;
         // TODO: handle this in single query
-        let following = Self::read_following(person.id, conn)?;
+        let following = Self::read_following(person.id, data)?;
         Ok(LocalUserView {
             person,
             local_user,
@@ -144,8 +144,9 @@ impl DbPerson {
         })
     }
 
-    fn read_following(id_: i32, mut conn: MutexGuard<PgConnection>) -> MyResult<Vec<DbInstance>> {
+    fn read_following(id_: i32, data: &Data<IbisData>) -> MyResult<Vec<DbInstance>> {
         use instance_follow::dsl::{follower_id, instance_id};
+        let mut conn = data.db_pool.get()?;
         Ok(instance_follow::table
             .inner_join(instance::table.on(instance_id.eq(instance::dsl::id)))
             .filter(follower_id.eq(id_))

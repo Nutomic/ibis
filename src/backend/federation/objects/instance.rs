@@ -38,7 +38,7 @@ impl DbInstance {
     }
 
     pub fn follower_ids(&self, data: &Data<IbisData>) -> MyResult<Vec<Url>> {
-        Ok(DbInstance::read_followers(self.id, &data.db_connection)?
+        Ok(DbInstance::read_followers(self.id, data)?
             .into_iter()
             .map(|f| f.ap_id.into())
             .collect())
@@ -55,7 +55,7 @@ impl DbInstance {
         <Activity as ActivityHandler>::Error: From<activitypub_federation::error::Error>,
         <Activity as ActivityHandler>::Error: From<Error>,
     {
-        let mut inboxes: Vec<_> = DbInstance::read_followers(self.id, &data.db_connection)?
+        let mut inboxes: Vec<_> = DbInstance::read_followers(self.id, data)?
             .iter()
             .map(|f| Url::parse(&f.inbox_url).unwrap())
             .collect();
@@ -119,7 +119,7 @@ impl Object for DbInstance {
             last_refreshed_at: Local::now().into(),
             local: false,
         };
-        let instance = DbInstance::create(&form, &data.db_connection)?;
+        let instance = DbInstance::create(&form, data)?;
         // TODO: very inefficient to sync all articles every time
         instance.articles_url.dereference(&instance, data).await?;
         Ok(instance)

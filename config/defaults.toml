@@ -1,11 +1,16 @@
 # Address where ibis should listen for incoming requests
 bind = "127.0.0.1:8081"
 
-# Database connection url
-database_url = "postgres://ibis:password@localhost:5432/ibis"
-
 # Whether users can create new accounts
 registration_open = true
+
+# Details about the PostgreSQL database connection
+[database]
+# Database connection url
+connection_url = "postgres://ibis:password@localhost:5432/ibis"
+
+# Database connection pool size
+pool_size = 5
 
 # Details of the initial admin account
 [setup]

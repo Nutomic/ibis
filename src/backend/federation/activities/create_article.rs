@@ -28,7 +28,7 @@ pub struct CreateArticle {
 
 impl CreateArticle {
     pub async fn send_to_followers(article: DbArticle, data: &Data<IbisData>) -> MyResult<()> {
-        let local_instance = DbInstance::read_local_instance(&data.db_connection)?;
+        let local_instance = DbInstance::read_local_instance(data)?;
         let object = article.clone().into_json(data).await?;
         let id = generate_activity_id(&local_instance.ap_id)?;
         let to = local_instance.follower_ids(data)?;
@@ -65,7 +65,7 @@ impl ActivityHandler for CreateArticle {
     async fn receive(self, data: &Data<Self::DataType>) -> Result<(), Self::Error> {
         let article = DbArticle::from_json(self.object.clone(), data).await?;
         if article.local {
-            let local_instance = DbInstance::read_local_instance(&data.db_connection)?;
+            let local_instance = DbInstance::read_local_instance(data)?;
             local_instance.send_to_followers(self, vec![], data).await?;
         }
         Ok(())

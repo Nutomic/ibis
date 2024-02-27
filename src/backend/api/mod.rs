@@ -74,7 +74,7 @@ async fn edit_conflicts(
     Extension(user): Extension<LocalUserView>,
     data: Data<IbisData>,
 ) -> MyResult<Json<Vec<ApiConflict>>> {
-    let conflicts = DbConflict::list(&user.local_user, &data.db_connection)?;
+    let conflicts = DbConflict::list(&user.local_user, &data)?;
     let conflicts: Vec<ApiConflict> = try_join_all(conflicts.into_iter().map(|c| {
         let data = data.reset_request_count();
         async move { c.to_api_conflict(&data).await }

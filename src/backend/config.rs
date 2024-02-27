@@ -3,18 +3,17 @@ use doku::Document;
 use serde::Deserialize;
 use smart_default::SmartDefault;
 use std::net::SocketAddr;
+use crate::backend::error::MyResult;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone, Document, SmartDefault)]
 #[serde(default)]
 pub struct IbisConfig {
     /// Address where ibis should listen for incoming requests
-    #[default("127.0.0.1:8081".parse().unwrap())]
+    #[default("127.0.0.1:8081".parse().expect("parse config bind"))]
     #[doku(as = "String", example = "127.0.0.1:8081")]
     pub bind: SocketAddr,
-    /// Database connection url
-    #[default("postgres://ibis:password@localhost:5432/ibis")]
-    #[doku(example = "postgres://ibis:password@localhost:5432/ibis")]
-    pub database_url: String,
+    /// Details about the PostgreSQL database connection
+    pub database: IbisConfigDatabase,
     /// Whether users can create new accounts
     #[default = true]
     #[doku(example = "true")]
@@ -25,16 +24,28 @@ pub struct IbisConfig {
 }
 
 impl IbisConfig {
-    pub fn read() -> Self {
+    pub fn read() -> MyResult<Self> {
         let config = Config::builder()
             .add_source(config::File::with_name("config/config.toml"))
             // Cant use _ as separator due to https://github.com/mehcode/config-rs/issues/391
             .add_source(config::Environment::with_prefix("IBIS").separator("__"))
-            .build()
-            .unwrap();
+            .build()?;
 
-        config.try_deserialize().unwrap()
+        Ok(config.try_deserialize()?)
     }
+}
+
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Document, SmartDefault)]
+#[serde(default)]
+pub struct IbisConfigDatabase {
+    /// Database connection url
+    #[default("postgres://ibis:password@localhost:5432/ibis")]
+    #[doku(example = "postgres://ibis:password@localhost:5432/ibis")]
+    pub connection_url: String,
+    /// Database connection pool size
+    #[default(5)]
+    #[doku(example = "5")]
+    pub pool_size: u32,
 }
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone, Document, SmartDefault)]

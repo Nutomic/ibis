@@ -1,4 +1,5 @@
 use crate::backend::database::schema::{article, edit, instance};
+use crate::backend::database::IbisData;
 use crate::backend::error::MyResult;
 use crate::backend::federation::objects::edits_collection::DbEditCollection;
 use crate::common::DbEdit;
@@ -7,14 +8,14 @@ use crate::common::{ArticleView, DbArticle};
 use activitypub_federation::fetch::collection_id::CollectionId;
 use activitypub_federation::fetch::object_id::ObjectId;
 use diesel::dsl::max;
-use diesel::pg::PgConnection;
+
 use diesel::ExpressionMethods;
 use diesel::{
     insert_into, AsChangeset, BoolExpressionMethods, Insertable, PgTextExpressionMethods, QueryDsl,
     RunQueryDsl,
 };
 use std::ops::DerefMut;
-use std::sync::Mutex;
+
 
 #[derive(Debug, Clone, Insertable, AsChangeset)]
 #[diesel(table_name = article, check_for_backend(diesel::pg::Pg))]
@@ -32,17 +33,17 @@ impl DbArticle {
         Ok(CollectionId::parse(&format!("{}/edits", self.ap_id))?)
     }
 
-    pub fn create(mut form: DbArticleForm, conn: &Mutex<PgConnection>) -> MyResult<Self> {
+    pub fn create(mut form: DbArticleForm, data: &IbisData) -> MyResult<Self> {
         form.title = form.title.replace(' ', "_");
-        let mut conn = conn.lock().unwrap();
+        let mut conn = data.db_pool.get()?;
         Ok(insert_into(article::table)
             .values(form)
             .get_result(conn.deref_mut())?)
     }
 
-    pub fn create_or_update(mut form: DbArticleForm, conn: &Mutex<PgConnection>) -> MyResult<Self> {
+    pub fn create_or_update(mut form: DbArticleForm, data: &IbisData) -> MyResult<Self> {
         form.title = form.title.replace(' ', "_");
-        let mut conn = conn.lock().unwrap();
+        let mut conn = data.db_pool.get()?;
         Ok(insert_into(article::table)
             .values(&form)
             .on_conflict(article::dsl::ap_id)
@@ -51,25 +52,23 @@ impl DbArticle {
             .get_result(conn.deref_mut())?)
     }
 
-    pub fn update_text(id: i32, text: &str, conn: &Mutex<PgConnection>) -> MyResult<Self> {
-        let mut conn = conn.lock().unwrap();
+    pub fn update_text(id: i32, text: &str, data: &IbisData) -> MyResult<Self> {
+        let mut conn = data.db_pool.get()?;
         Ok(diesel::update(article::dsl::article.find(id))
             .set(article::dsl::text.eq(text))
             .get_result::<Self>(conn.deref_mut())?)
     }
 
-    pub fn read(id: i32, conn: &Mutex<PgConnection>) -> MyResult<Self> {
-        let mut conn = conn.lock().unwrap();
+    pub fn read(id: i32, data: &IbisData) -> MyResult<Self> {
+        let mut conn = data.db_pool.get()?;
         Ok(article::table.find(id).get_result(conn.deref_mut())?)
     }
 
-    pub fn read_view(id: i32, conn: &Mutex<PgConnection>) -> MyResult<ArticleView> {
-        let article: DbArticle = {
-            let mut conn = conn.lock().unwrap();
-            article::table.find(id).get_result(conn.deref_mut())?
-        };
-        let latest_version = article.latest_edit_version(conn)?;
-        let edits = DbEdit::read_for_article(&article, conn)?;
+    pub fn read_view(id: i32, data: &IbisData) -> MyResult<ArticleView> {
+        let mut conn = data.db_pool.get()?;
+        let article: DbArticle = { article::table.find(id).get_result(conn.deref_mut())? };
+        let latest_version = article.latest_edit_version(data)?;
+        let edits = DbEdit::read_for_article(&article, data)?;
         Ok(ArticleView {
             article,
             edits,
@@ -80,10 +79,10 @@ impl DbArticle {
     pub fn read_view_title(
         title: &str,
         domain: Option<String>,
-        conn: &Mutex<PgConnection>,
+        data: &IbisData,
     ) -> MyResult<ArticleView> {
+        let mut conn = data.db_pool.get()?;
         let article: DbArticle = {
-            let mut conn = conn.lock().unwrap();
             let query = article::table
                 .inner_join(instance::table)
                 .filter(article::dsl::title.eq(title))
@@ -99,8 +98,8 @@ impl DbArticle {
                 .select(article::all_columns)
                 .get_result(conn.deref_mut())?
         };
-        let latest_version = article.latest_edit_version(conn)?;
-        let edits = DbEdit::read_for_article(&article, conn)?;
+        let latest_version = article.latest_edit_version(data)?;
+        let edits = DbEdit::read_for_article(&article, data)?;
         Ok(ArticleView {
             article,
             edits,
@@ -108,18 +107,15 @@ impl DbArticle {
         })
     }
 
-    pub fn read_from_ap_id(
-        ap_id: &ObjectId<DbArticle>,
-        conn: &Mutex<PgConnection>,
-    ) -> MyResult<Self> {
-        let mut conn = conn.lock().unwrap();
+    pub fn read_from_ap_id(ap_id: &ObjectId<DbArticle>, data: &IbisData) -> MyResult<Self> {
+        let mut conn = data.db_pool.get()?;
         Ok(article::table
             .filter(article::dsl::ap_id.eq(ap_id))
             .get_result(conn.deref_mut())?)
     }
 
-    pub fn read_local_title(title: &str, conn: &Mutex<PgConnection>) -> MyResult<Self> {
-        let mut conn = conn.lock().unwrap();
+    pub fn read_local_title(title: &str, data: &IbisData) -> MyResult<Self> {
+        let mut conn = data.db_pool.get()?;
         Ok(article::table
             .filter(article::dsl::title.eq(title))
             .filter(article::dsl::local.eq(true))
@@ -127,8 +123,8 @@ impl DbArticle {
     }
 
     /// Read all articles, ordered by most recently edited first.
-    pub fn read_all(only_local: bool, conn: &Mutex<PgConnection>) -> MyResult<Vec<Self>> {
-        let mut conn = conn.lock().unwrap();
+    pub fn read_all(only_local: bool, data: &IbisData) -> MyResult<Vec<Self>> {
+        let mut conn = data.db_pool.get()?;
         let query = article::table
             .inner_join(edit::table)
             .group_by(article::dsl::id)
@@ -137,14 +133,14 @@ impl DbArticle {
         Ok(if only_local {
             query
                 .filter(article::dsl::local.eq(true))
-                .get_results(conn.deref_mut())?
+                .get_results(&mut conn)?
         } else {
-            query.get_results(conn.deref_mut())?
+            query.get_results(&mut conn)?
         })
     }
 
-    pub fn search(query: &str, conn: &Mutex<PgConnection>) -> MyResult<Vec<Self>> {
-        let mut conn = conn.lock().unwrap();
+    pub fn search(query: &str, data: &IbisData) -> MyResult<Vec<Self>> {
+        let mut conn = data.db_pool.get()?;
         let replaced = query
             .replace('%', "\\%")
             .replace('_', "\\_")
@@ -159,8 +155,8 @@ impl DbArticle {
             .get_results(conn.deref_mut())?)
     }
 
-    pub fn latest_edit_version(&self, conn: &Mutex<PgConnection>) -> MyResult<EditVersion> {
-        let mut conn = conn.lock().unwrap();
+    pub fn latest_edit_version(&self, data: &IbisData) -> MyResult<EditVersion> {
+        let mut conn = data.db_pool.get()?;
         let latest_version: Option<EditVersion> = edit::table
             .filter(edit::dsl::article_id.eq(self.id))
             .order_by(edit::dsl::id.desc())

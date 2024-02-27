@@ -1,4 +1,4 @@
-use ibis_lib::backend::config::{IbisConfig, IbisConfigFederation};
+use ibis_lib::backend::config::{IbisConfig, IbisConfigDatabase, IbisConfigFederation};
 use ibis_lib::backend::start;
 use ibis_lib::common::RegisterUserData;
 use ibis_lib::frontend::api::ApiClient;
@@ -105,12 +105,15 @@ impl IbisInstance {
     }
 
     async fn start(db_path: String, port: i32, username: &str) -> Self {
-        let database_url = format!("postgresql://ibis:password@/ibis?host={db_path}");
+        let connection_url = format!("postgresql://ibis:password@/ibis?host={db_path}");
         let hostname = format!("localhost:{port}");
         let bind = format!("127.0.0.1:{port}").parse().unwrap();
         let config = IbisConfig {
             bind,
-            database_url,
+            database: IbisConfigDatabase {
+                connection_url,
+                ..Default::default()
+            },
             registration_open: true,
             federation: IbisConfigFederation {
                 domain: hostname.clone(),

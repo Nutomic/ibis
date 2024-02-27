@@ -1,14 +1,15 @@
 use crate::backend::database::schema::{edit, person};
 use crate::backend::error::MyResult;
+use crate::backend::IbisData;
 use crate::common::{DbArticle, DbEdit};
 use crate::common::{EditVersion, EditView};
 use activitypub_federation::fetch::object_id::ObjectId;
 use chrono::{DateTime, Utc};
 use diesel::ExpressionMethods;
-use diesel::{insert_into, AsChangeset, Insertable, PgConnection, QueryDsl, RunQueryDsl};
+use diesel::{insert_into, AsChangeset, Insertable, QueryDsl, RunQueryDsl};
 use diffy::create_patch;
 use std::ops::DerefMut;
-use std::sync::Mutex;
+
 
 #[derive(Debug, Clone, Insertable, AsChangeset)]
 #[diesel(table_name = edit, check_for_backend(diesel::pg::Pg))]
@@ -59,8 +60,8 @@ impl DbEditForm {
 }
 
 impl DbEdit {
-    pub fn create(form: &DbEditForm, conn: &Mutex<PgConnection>) -> MyResult<Self> {
-        let mut conn = conn.lock().unwrap();
+    pub fn create(form: &DbEditForm, data: &IbisData) -> MyResult<Self> {
+        let mut conn = data.db_pool.get()?;
         Ok(insert_into(edit::table)
             .values(form)
             .on_conflict(edit::dsl::ap_id)
@@ -69,26 +70,23 @@ impl DbEdit {
             .get_result(conn.deref_mut())?)
     }
 
-    pub fn read(version: &EditVersion, conn: &Mutex<PgConnection>) -> MyResult<Self> {
-        let mut conn = conn.lock().unwrap();
+    pub fn read(version: &EditVersion, data: &IbisData) -> MyResult<Self> {
+        let mut conn = data.db_pool.get()?;
         Ok(edit::table
             .filter(edit::dsl::hash.eq(version))
             .get_result(conn.deref_mut())?)
     }
 
-    pub fn read_from_ap_id(ap_id: &ObjectId<DbEdit>, conn: &Mutex<PgConnection>) -> MyResult<Self> {
-        let mut conn = conn.lock().unwrap();
+    pub fn read_from_ap_id(ap_id: &ObjectId<DbEdit>, data: &IbisData) -> MyResult<Self> {
+        let mut conn = data.db_pool.get()?;
         Ok(edit::table
             .filter(edit::dsl::ap_id.eq(ap_id))
             .get_result(conn.deref_mut())?)
     }
 
     // TODO: create internal variant which doesnt return person?
-    pub fn read_for_article(
-        article: &DbArticle,
-        conn: &Mutex<PgConnection>,
-    ) -> MyResult<Vec<EditView>> {
-        let mut conn = conn.lock().unwrap();
+    pub fn read_for_article(article: &DbArticle, data: &IbisData) -> MyResult<Vec<EditView>> {
+        let mut conn = data.db_pool.get()?;
         Ok(edit::table
             .inner_join(person::table)
             .filter(edit::article_id.eq(article.id))

@@ -40,7 +40,7 @@ impl UpdateRemoteArticle {
         article_instance: DbInstance,
         data: &Data<IbisData>,
     ) -> MyResult<()> {
-        let local_instance = DbInstance::read_local_instance(&data.db_connection)?;
+        let local_instance = DbInstance::read_local_instance(data)?;
         let id = generate_activity_id(&local_instance.ap_id)?;
         let update = UpdateRemoteArticle {
             actor: local_instance.ap_id.clone(),
@@ -74,21 +74,20 @@ impl ActivityHandler for UpdateRemoteArticle {
     }
 
     async fn verify(&self, data: &Data<Self::DataType>) -> Result<(), Self::Error> {
-        let article = DbArticle::read_from_ap_id(&self.object.object, &data.db_connection)?;
+        let article = DbArticle::read_from_ap_id(&self.object.object, data)?;
         can_edit_article(&article, false)?;
         Ok(())
     }
 
     /// Received on article origin instances
     async fn receive(self, data: &Data<Self::DataType>) -> Result<(), Self::Error> {
-        let local_article = DbArticle::read_from_ap_id(&self.object.object, &data.db_connection)?;
+        let local_article = DbArticle::read_from_ap_id(&self.object.object, data)?;
         let patch = Patch::from_str(&self.object.content)?;
 
         match apply(&local_article.text, &patch) {
             Ok(applied) => {
                 let edit = DbEdit::from_json(self.object.clone(), data).await?;
-                let article =
-                    DbArticle::update_text(edit.article_id, &applied, &data.db_connection)?;
+                let article = DbArticle::update_text(edit.article_id, &applied, data)?;
                 UpdateLocalArticle::send(article, vec![self.actor.dereference(data).await?], data)
                     .await?;
             }

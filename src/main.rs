@@ -15,7 +15,7 @@ pub async fn main() -> ibis_lib::backend::error::MyResult<()> {
         .filter_module("ibis", LevelFilter::Info)
         .init();
 
-    let ibis_config = IbisConfig::read();
+    let ibis_config = IbisConfig::read()?;
     ibis_lib::backend::start(ibis_config).await?;
     Ok(())
 }

@@ -21,6 +21,8 @@ use axum::Server;
 use axum::ServiceExt;
 use axum::{middleware::Next, response::Response, Router};
 use chrono::Local;
+use diesel::r2d2::ConnectionManager;
+use diesel::r2d2::Pool;
 use diesel::Connection;
 use diesel::PgConnection;
 use diesel_migrations::embed_migrations;
@@ -46,15 +48,17 @@ const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
 const FEDERATION_ROUTES_PREFIX: &str = "/federation_routes";
 
 pub async fn start(config: IbisConfig) -> MyResult<()> {
-    let db_connection = Arc::new(Mutex::new(PgConnection::establish(&config.database_url)?));
-    db_connection
-        .lock()
-        .unwrap()
-        .run_pending_migrations(MIGRATIONS)
-        .unwrap();
+    let manager = ConnectionManager::<PgConnection>::new(&config.database.connection_url);
+    let db_pool = Pool::builder()
+        .max_size(config.database.pool_size)
+        .build(manager)?;
 
+    db_pool
+        .get()?
+        .run_pending_migrations(MIGRATIONS)
+        .expect("run migrations");
     let data = IbisData {
-        db_connection,
+        db_pool,
         config,
     };
     let data = FederationConfig::builder()
@@ -66,7 +70,7 @@ pub async fn start(config: IbisConfig) -> MyResult<()> {
         .await?;
 
     // Create local instance if it doesnt exist yet
-    if DbInstance::read_local_instance(&data.db_connection).is_err() {
+    if DbInstance::read_local_instance(&data).is_err() {
         setup(&data.to_request_data()).await?;
     }
 
@@ -129,7 +133,7 @@ async fn setup(data: &Data<IbisData>) -> Result<(), Error> {
         last_refreshed_at: Local::now().into(),
         local: true,
     };
-    let instance = DbInstance::create(&form, &data.db_connection)?;
+    let instance = DbInstance::create(&form, data)?;
 
     let person = DbPerson::create_local(
         data.config.setup.admin_username.clone(),
@@ -149,7 +153,7 @@ async fn setup(data: &Data<IbisData>) -> Result<(), Error> {
         instance_id: instance.id,
         local: true,
     };
-    let article = DbArticle::create(form, &data.db_connection)?;
+    let article = DbArticle::create(form, data)?;
     // also create an article so its included in most recently edited list
     submit_article_update(
         MAIN_PAGE_DEFAULT_TEXT.to_string(),

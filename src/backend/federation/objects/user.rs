@@ -71,7 +71,7 @@ impl Object for DbPerson {
             last_refreshed_at: Local::now().into(),
             local: false,
         };
-        DbPerson::create(&form, &data.db_connection)
+        DbPerson::create(&form, data)
     }
 }
 

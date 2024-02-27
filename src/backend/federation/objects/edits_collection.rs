@@ -39,7 +39,7 @@ impl Collection for DbEditCollection {
         owner: &Self::Owner,
         data: &Data<Self::DataType>,
     ) -> Result<Self::Kind, Self::Error> {
-        let article = DbArticle::read_view(owner.id, &data.db_connection)?;
+        let article = DbArticle::read_view(owner.id, data)?;
 
         let edits = future::try_join_all(
             article
@@ -49,7 +49,7 @@ impl Collection for DbEditCollection {
                 .collect::<Vec<_>>(),
         )
         .await?;
-        let local_instance = DbInstance::read_local_instance(&data.db_connection)?;
+        let local_instance = DbInstance::read_local_instance(data)?;
         let collection = ApubEditCollection {
             r#type: Default::default(),
             id: Url::from(local_instance.articles_url),

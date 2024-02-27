@@ -27,10 +27,10 @@ pub(in crate::backend::api) async fn follow_instance(
     data: Data<IbisData>,
     Form(query): Form<FollowInstance>,
 ) -> MyResult<()> {
-    let target = DbInstance::read(query.id, &data.db_connection)?;
+    let target = DbInstance::read(query.id, &data)?;
     let pending = !target.local;
     DbInstance::follow(&user.person, &target, pending, &data)?;
-    let instance = DbInstance::read(query.id, &data.db_connection)?;
+    let instance = DbInstance::read(query.id, &data)?;
     Follow::send(user.person, &instance, &data).await?;
     Ok(())
 }

@@ -47,7 +47,7 @@ pub fn federation_routes() -> Router {
 async fn http_get_instance(
     data: Data<IbisData>,
 ) -> MyResult<FederationJson<WithContext<ApubInstance>>> {
-    let local_instance = DbInstance::read_local_instance(&data.db_connection)?;
+    let local_instance = DbInstance::read_local_instance(&data)?;
     let json_instance = local_instance.into_json(&data).await?;
     Ok(FederationJson(WithContext::new_default(json_instance)))
 }
@@ -66,7 +66,7 @@ async fn http_get_person(
 async fn http_get_all_articles(
     data: Data<IbisData>,
 ) -> MyResult<FederationJson<WithContext<ArticleCollection>>> {
-    let local_instance = DbInstance::read_local_instance(&data.db_connection)?;
+    let local_instance = DbInstance::read_local_instance(&data)?;
     let collection = DbArticleCollection::read_local(&local_instance, &data).await?;
     Ok(FederationJson(WithContext::new_default(collection)))
 }
@@ -76,7 +76,7 @@ async fn http_get_article(
     Path(title): Path<String>,
     data: Data<IbisData>,
 ) -> MyResult<FederationJson<WithContext<ApubArticle>>> {
-    let article = DbArticle::read_local_title(&title, &data.db_connection)?;
+    let article = DbArticle::read_local_title(&title, &data)?;
     let json = article.into_json(&data).await?;
     Ok(FederationJson(WithContext::new_default(json)))
 }
@@ -86,7 +86,7 @@ async fn http_get_article_edits(
     Path(title): Path<String>,
     data: Data<IbisData>,
 ) -> MyResult<FederationJson<WithContext<ApubEditCollection>>> {
-    let article = DbArticle::read_local_title(&title, &data.db_connection)?;
+    let article = DbArticle::read_local_title(&title, &data)?;
     let json = DbEditCollection::read_local(&article, &data).await?;
     Ok(FederationJson(WithContext::new_default(json)))
 }

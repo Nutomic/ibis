@@ -36,7 +36,7 @@ pub(in crate::backend::api) async fn create_article(
         return Err(anyhow!("Title must not be empty").into());
     }
 
-    let local_instance = DbInstance::read_local_instance(&data.db_connection)?;
+    let local_instance = DbInstance::read_local_instance(&data)?;
     let ap_id = ObjectId::parse(&format!(
         "{}://{}:{}/article/{}",
         http_protocol_str(),
@@ -51,18 +51,18 @@ pub(in crate::backend::api) async fn create_article(
         instance_id: local_instance.id,
         local: true,
     };
-    let article = DbArticle::create(form, &data.db_connection)?;
+    let article = DbArticle::create(form, &data)?;
 
     let edit_data = EditArticleData {
         article_id: article.id,
         new_text: create_article.text,
         summary: create_article.summary,
-        previous_version_id: article.latest_edit_version(&data.db_connection)?,
+        previous_version_id: article.latest_edit_version(&data)?,
         resolve_conflict_id: None,
     };
     let _ = edit_article(Extension(user), data.reset_request_count(), Form(edit_data)).await?;
 
-    let article_view = DbArticle::read_view(article.id, &data.db_connection)?;
+    let article_view = DbArticle::read_view(article.id, &data)?;
     CreateArticle::send_to_followers(article_view.article.clone(), &data).await?;
 
     Ok(Json(article_view))
@@ -85,9 +85,9 @@ pub(in crate::backend::api) async fn edit_article(
 ) -> MyResult<Json<Option<ApiConflict>>> {
     // resolve conflict if any
     if let Some(resolve_conflict_id) = edit_form.resolve_conflict_id {
-        DbConflict::delete(resolve_conflict_id, &data.db_connection)?;
+        DbConflict::delete(resolve_conflict_id, &data)?;
     }
-    let original_article = DbArticle::read_view(edit_form.article_id, &data.db_connection)?;
+    let original_article = DbArticle::read_view(edit_form.article_id, &data)?;
     if edit_form.new_text == original_article.article.text {
         return Err(anyhow!("Edit contains no changes").into());
     }
@@ -119,7 +119,7 @@ pub(in crate::backend::api) async fn edit_article(
             generate_article_version(&original_article.edits, &edit_form.previous_version_id)?;
         let patch = create_patch(&ancestor, &edit_form.new_text);
 
-        let previous_version = DbEdit::read(&edit_form.previous_version_id, &data.db_connection)?;
+        let previous_version = DbEdit::read(&edit_form.previous_version_id, &data)?;
         let form = DbConflictForm {
             hash: EditVersion::new(&patch.to_string()),
             diff: patch.to_string(),
@@ -128,7 +128,7 @@ pub(in crate::backend::api) async fn edit_article(
             article_id: original_article.article.id,
             previous_version_id: previous_version.hash,
         };
-        let conflict = DbConflict::create(&form, &data.db_connection)?;
+        let conflict = DbConflict::create(&form, &data)?;
         Ok(Json(conflict.to_api_conflict(&data).await?))
     }
 }
@@ -143,13 +143,13 @@ pub(in crate::backend::api) async fn get_article(
         (Some(title), None) => Ok(Json(DbArticle::read_view_title(
             &title,
             query.domain,
-            &data.db_connection,
+            &data,
         )?)),
         (None, Some(id)) => {
             if query.domain.is_some() {
                 return Err(anyhow!("Cant combine id and instance_domain").into());
             }
-            Ok(Json(DbArticle::read_view(id, &data.db_connection)?))
+            Ok(Json(DbArticle::read_view(id, &data)?))
         }
         _ => Err(anyhow!("Must pass exactly one of title, id").into()),
     }
@@ -161,7 +161,7 @@ pub(in crate::backend::api) async fn list_articles(
     data: Data<IbisData>,
 ) -> MyResult<Json<Vec<DbArticle>>> {
     let only_local = query.only_local.unwrap_or(false);
-    Ok(Json(DbArticle::read_all(only_local, &data.db_connection)?))
+    Ok(Json(DbArticle::read_all(only_local, &data)?))
 }
 
 /// Fork a remote article to local instance. This is useful if there are disagreements about
@@ -173,9 +173,9 @@ pub(in crate::backend::api) async fn fork_article(
     Form(fork_form): Form<ForkArticleData>,
 ) -> MyResult<Json<ArticleView>> {
     // TODO: lots of code duplicated from create_article(), can move it into helper
-    let original_article = DbArticle::read(fork_form.article_id, &data.db_connection)?;
+    let original_article = DbArticle::read(fork_form.article_id, &data)?;
 
-    let local_instance = DbInstance::read_local_instance(&data.db_connection)?;
+    let local_instance = DbInstance::read_local_instance(&data)?;
     let ap_id = ObjectId::parse(&format!(
         "{}://{}:{}/article/{}",
         http_protocol_str(),
@@ -190,11 +190,11 @@ pub(in crate::backend::api) async fn fork_article(
         instance_id: local_instance.id,
         local: true,
     };
-    let article = DbArticle::create(form, &data.db_connection)?;
+    let article = DbArticle::create(form, &data)?;
 
     // copy edits to new article
     // this could also be done in sql
-    let edits = DbEdit::read_for_article(&original_article, &data.db_connection)?
+    let edits = DbEdit::read_for_article(&original_article, &data)?
         .into_iter()
         .map(|e| e.edit)
         .collect::<Vec<_>>();
@@ -210,12 +210,12 @@ pub(in crate::backend::api) async fn fork_article(
             previous_version_id: e.previous_version_id,
             created: Utc::now(),
         };
-        DbEdit::create(&form, &data.db_connection)?;
+        DbEdit::create(&form, &data)?;
     }
 
     CreateArticle::send_to_followers(article.clone(), &data).await?;
 
-    Ok(Json(DbArticle::read_view(article.id, &data.db_connection)?))
+    Ok(Json(DbArticle::read_view(article.id, &data)?))
 }
 
 /// Fetch a remote article, including edits collection. Allows viewing and editing. Note that new
@@ -226,7 +226,7 @@ pub(super) async fn resolve_article(
     data: Data<IbisData>,
 ) -> MyResult<Json<ArticleView>> {
     let article: DbArticle = ObjectId::from(query.id).dereference(&data).await?;
-    let edits = DbEdit::read_for_article(&article, &data.db_connection)?;
+    let edits = DbEdit::read_for_article(&article, &data)?;
     let latest_version = edits.last().unwrap().edit.hash.clone();
     Ok(Json(ArticleView {
         article,
@@ -244,6 +244,6 @@ pub(super) async fn search_article(
     if query.query.is_empty() {
         return Err(anyhow!("Query is empty").into());
     }
-    let article = DbArticle::search(&query.query, &data.db_connection)?;
+    let article = DbArticle::search(&query.query, &data)?;
     Ok(Json(article))
 }

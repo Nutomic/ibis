@@ -33,7 +33,7 @@ impl RejectEdit {
         user_instance: DbInstance,
         data: &Data<IbisData>,
     ) -> MyResult<()> {
-        let local_instance = DbInstance::read_local_instance(&data.db_connection)?;
+        let local_instance = DbInstance::read_local_instance(data)?;
         let id = generate_activity_id(&local_instance.ap_id)?;
         let reject = RejectEdit {
             actor: local_instance.ap_id.clone(),
@@ -82,7 +82,7 @@ impl ActivityHandler for RejectEdit {
             article_id: article.id,
             previous_version_id: self.object.previous_version,
         };
-        DbConflict::create(&form, &data.db_connection)?;
+        DbConflict::create(&form, data)?;
         Ok(())
     }
 }
