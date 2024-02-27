@@ -20,7 +20,11 @@ nav {
 main {
     background-color: #ffffff;
     flex-grow: 1;
-    padding: 20px;
+    padding-top: 0;
+}
+
+.item-view {
+    padding: 0 20px 20px 20px;
 }
 
 pre {
