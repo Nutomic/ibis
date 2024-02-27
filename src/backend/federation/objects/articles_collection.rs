@@ -5,6 +5,7 @@ use crate::common::DbInstance;
 
 use crate::common::DbArticle;
 use activitypub_federation::kinds::collection::CollectionType;
+use activitypub_federation::protocol::verification::verify_domains_match;
 use activitypub_federation::{
     config::Data,
     traits::{Collection, Object},
@@ -55,10 +56,11 @@ impl Collection for DbArticleCollection {
     }
 
     async fn verify(
-        _apub: &Self::Kind,
-        _expected_domain: &Url,
+        json: &Self::Kind,
+        expected_domain: &Url,
         _data: &Data<Self::DataType>,
     ) -> Result<(), Self::Error> {
+        verify_domains_match(&json.id, expected_domain)?;
         Ok(())
     }
 

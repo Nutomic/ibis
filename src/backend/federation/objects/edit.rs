@@ -6,6 +6,7 @@ use crate::common::EditVersion;
 use crate::common::{DbArticle, DbEdit};
 use activitypub_federation::config::Data;
 use activitypub_federation::fetch::object_id::ObjectId;
+use activitypub_federation::protocol::verification::verify_domains_match;
 use activitypub_federation::traits::Object;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -63,10 +64,11 @@ impl Object for DbEdit {
     }
 
     async fn verify(
-        _json: &Self::Kind,
-        _expected_domain: &Url,
+        json: &Self::Kind,
+        expected_domain: &Url,
         _data: &Data<Self::DataType>,
     ) -> Result<(), Self::Error> {
+        verify_domains_match(json.id.inner(), expected_domain)?;
         Ok(())
     }
 
