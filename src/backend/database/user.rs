@@ -15,7 +15,6 @@ use diesel::{ExpressionMethods, JoinOnDsl};
 use diesel::{PgTextExpressionMethods, QueryDsl};
 use std::ops::DerefMut;
 
-
 #[derive(Debug, Clone, Insertable, AsChangeset)]
 #[diesel(table_name = local_user, check_for_backend(diesel::pg::Pg))]
 pub struct DbLocalUserForm {

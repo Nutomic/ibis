@@ -57,7 +57,10 @@ fn backend_hostname() -> String {
     }
     #[cfg(feature = "ssr")]
     {
-        backend_hostname = crate::backend::config::IbisConfig::read().unwrap().bind.to_string();
+        backend_hostname = crate::backend::config::IbisConfig::read()
+            .unwrap()
+            .bind
+            .to_string();
     }
     backend_hostname
 }

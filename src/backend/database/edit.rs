@@ -10,7 +10,6 @@ use diesel::{insert_into, AsChangeset, Insertable, QueryDsl, RunQueryDsl};
 use diffy::create_patch;
 use std::ops::DerefMut;
 
-
 #[derive(Debug, Clone, Insertable, AsChangeset)]
 #[diesel(table_name = edit, check_for_backend(diesel::pg::Pg))]
 pub struct DbEditForm {

@@ -36,7 +36,7 @@ pub struct VerifyUrlData(pub IbisConfig);
 impl UrlVerifier for VerifyUrlData {
     /// Check domain against allowlist and blocklist from config file.
     async fn verify(&self, url: &Url) -> Result<(), ActivityPubError> {
-        let domain = url.domain().unwrap();
+        let domain = url.domain().expect("url has domain");
         if let Some(allowlist) = &self.0.federation.allowlist {
             let allowlist = allowlist.split(',').collect::<Vec<_>>();
             if !allowlist.contains(&domain) {

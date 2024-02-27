@@ -89,6 +89,6 @@ impl Actor for DbPerson {
     }
 
     fn inbox(&self) -> Url {
-        Url::parse(&self.inbox_url).unwrap()
+        self.inbox_url()
     }
 }

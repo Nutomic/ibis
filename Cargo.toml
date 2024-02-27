@@ -23,6 +23,7 @@ hydrate = ["leptos/hydrate", "leptos_meta/hydrate", "leptos_router/hydrate"]
 
 [lints.clippy]
 dbg_macro = "deny"
+unwrap_used = "deny"
 
 [dependencies]
 activitypub_federation = { git = "https://github.com/LemmyNet/activitypub-federation-rust.git", branch = "optional-activity-queue", features = [

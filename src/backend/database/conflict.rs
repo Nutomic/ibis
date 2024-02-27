@@ -10,13 +10,11 @@ use crate::common::{ApiConflict, DbArticle};
 use activitypub_federation::config::Data;
 use diesel::ExpressionMethods;
 use diesel::{
-    delete, insert_into, Identifiable, Insertable, QueryDsl, Queryable, RunQueryDsl,
-    Selectable,
+    delete, insert_into, Identifiable, Insertable, QueryDsl, Queryable, RunQueryDsl, Selectable,
 };
 use diffy::{apply, merge, Patch};
 use serde::{Deserialize, Serialize};
 use std::ops::DerefMut;
-
 
 /// A local only object which represents a merge conflict. It is created
 /// when a local user edit conflicts with another concurrent edit.

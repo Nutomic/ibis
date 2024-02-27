@@ -16,7 +16,6 @@ use diesel::{
 };
 use std::ops::DerefMut;
 
-
 #[derive(Debug, Clone, Insertable, AsChangeset)]
 #[diesel(table_name = article, check_for_backend(diesel::pg::Pg))]
 pub struct DbArticleForm {

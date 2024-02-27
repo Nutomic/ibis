@@ -8,12 +8,9 @@ use activitypub_federation::fetch::collection_id::CollectionId;
 use activitypub_federation::fetch::object_id::ObjectId;
 use chrono::{DateTime, Utc};
 use diesel::ExpressionMethods;
-use diesel::{
-    insert_into, AsChangeset, Insertable, JoinOnDsl, QueryDsl, RunQueryDsl,
-};
+use diesel::{insert_into, AsChangeset, Insertable, JoinOnDsl, QueryDsl, RunQueryDsl};
 use std::fmt::Debug;
 use std::ops::DerefMut;
-
 
 #[derive(Debug, Clone, Insertable, AsChangeset)]
 #[diesel(table_name = instance, check_for_backend(diesel::pg::Pg))]

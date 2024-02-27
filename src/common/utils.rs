@@ -8,7 +8,7 @@ where
     if let Some(port_) = url.inner().port() {
         port = format!(":{port_}");
     }
-    format!("{}{port}", url.inner().host_str().unwrap())
+    format!("{}{port}", url.inner().host_str().expect("has domain"))
 }
 
 #[cfg(not(feature = "ssr"))]

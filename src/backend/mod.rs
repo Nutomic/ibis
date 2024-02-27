@@ -23,7 +23,7 @@ use axum::{middleware::Next, response::Response, Router};
 use chrono::Local;
 use diesel::r2d2::ConnectionManager;
 use diesel::r2d2::Pool;
-use diesel::Connection;
+
 use diesel::PgConnection;
 use diesel_migrations::embed_migrations;
 use diesel_migrations::EmbeddedMigrations;
@@ -31,7 +31,7 @@ use diesel_migrations::MigrationHarness;
 use leptos::*;
 use leptos_axum::{generate_route_list, LeptosRoutes};
 use log::info;
-use std::sync::{Arc, Mutex};
+
 use tower::Layer;
 use tower_http::cors::CorsLayer;
 use tower_http::services::{ServeDir, ServeFile};
@@ -57,10 +57,7 @@ pub async fn start(config: IbisConfig) -> MyResult<()> {
         .get()?
         .run_pending_migrations(MIGRATIONS)
         .expect("run migrations");
-    let data = IbisData {
-        db_pool,
-        config,
-    };
+    let data = IbisData { db_pool, config };
     let data = FederationConfig::builder()
         .domain(data.config.federation.domain.clone())
         .url_verifier(Box::new(VerifyUrlData(data.config.clone())))
@@ -74,7 +71,7 @@ pub async fn start(config: IbisConfig) -> MyResult<()> {
         setup(&data.to_request_data()).await?;
     }
 
-    let conf = get_configuration(Some("Cargo.toml")).await.unwrap();
+    let conf = get_configuration(Some("Cargo.toml")).await?;
     let mut leptos_options = conf.leptos_options;
     leptos_options.site_addr = data.config.bind;
     let routes = generate_route_list(App);
@@ -186,7 +183,9 @@ async fn federation_routes_middleware<B>(request: Request<B>, next: Next<B>) -> 
     if uri.ends_with('/') && uri.len() > 1 {
         uri.pop();
     }
-    parts.uri = uri.parse().unwrap();
+    parts.uri = uri
+        .parse()
+        .expect("can parse uri after dropping trailing slash");
     let request = Request::from_parts(parts, body);
 
     next.run(request).await

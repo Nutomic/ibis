@@ -57,13 +57,9 @@ impl DbInstance {
     {
         let mut inboxes: Vec<_> = DbInstance::read_followers(self.id, data)?
             .iter()
-            .map(|f| Url::parse(&f.inbox_url).unwrap())
+            .map(|f| f.inbox_url())
             .collect();
-        inboxes.extend(
-            extra_recipients
-                .into_iter()
-                .map(|i| Url::parse(&i.inbox_url).unwrap()),
-        );
+        inboxes.extend(extra_recipients.into_iter().map(|i| i.inbox_url()));
         send_activity(self, activity, inboxes, data).await?;
         Ok(())
     }
@@ -140,6 +136,6 @@ impl Actor for DbInstance {
     }
 
     fn inbox(&self) -> Url {
-        Url::parse(&self.inbox_url).unwrap()
+        self.inbox_url()
     }
 }

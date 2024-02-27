@@ -1,9 +1,9 @@
+use crate::backend::error::MyResult;
 use config::Config;
 use doku::Document;
 use serde::Deserialize;
 use smart_default::SmartDefault;
 use std::net::SocketAddr;
-use crate::backend::error::MyResult;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone, Document, SmartDefault)]
 #[serde(default)]

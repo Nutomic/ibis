@@ -98,7 +98,8 @@ impl EditVersion {
         let mut sha256 = Sha256::new();
         sha256.update(diff);
         let hash_bytes = sha256.finalize();
-        let uuid = Uuid::from_slice(&hash_bytes.as_slice()[..16]).unwrap();
+        let uuid =
+            Uuid::from_slice(&hash_bytes.as_slice()[..16]).expect("hash is correct size for uuid");
         EditVersion(uuid)
     }
 
@@ -165,6 +166,12 @@ pub struct DbPerson {
     #[serde(skip)]
     pub last_refreshed_at: DateTime<Utc>,
     pub local: bool,
+}
+
+impl DbPerson {
+    pub fn inbox_url(&self) -> Url {
+        Url::parse(&self.inbox_url).expect("can parse inbox url")
+    }
 }
 
 #[derive(Deserialize, Serialize)]
@@ -244,6 +251,12 @@ pub struct DbInstance {
     #[serde(skip)]
     pub last_refreshed_at: DateTime<Utc>,
     pub local: bool,
+}
+
+impl DbInstance {
+    pub fn inbox_url(&self) -> Url {
+        Url::parse(&self.inbox_url).expect("can parse inbox url")
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]

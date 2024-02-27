@@ -5,9 +5,8 @@ use diesel::r2d2::ConnectionManager;
 use diesel::r2d2::Pool;
 use diesel::PgConnection;
 use diesel::{QueryDsl, RunQueryDsl};
-use std::ops::Deref;
+
 use std::ops::DerefMut;
-use std::sync::{Arc, Mutex};
 
 pub mod article;
 pub mod conflict;
