@@ -1,12 +1,11 @@
 use crate::backend::config::IbisConfig;
 use crate::backend::database::IbisData;
-use activitypub_federation::activity_sending::SendActivityTask;
+use activitypub_federation::activity_queue::queue_activity;
 use activitypub_federation::config::{Data, UrlVerifier};
 use activitypub_federation::error::Error as ActivityPubError;
 use activitypub_federation::protocol::context::WithContext;
 use activitypub_federation::traits::{ActivityHandler, Actor};
 use async_trait::async_trait;
-use log::warn;
 use serde::Serialize;
 use std::fmt::Debug;
 use url::Url;
@@ -26,13 +25,7 @@ where
     <Activity as ActivityHandler>::Error: From<activitypub_federation::error::Error>,
 {
     let activity = WithContext::new_default(activity);
-    let sends = SendActivityTask::prepare(&activity, actor, recipients, data).await?;
-    for send in sends {
-        let send = send.sign_and_send(data).await;
-        if let Err(e) = send {
-            warn!("Failed to send activity {:?}: {e}", activity);
-        }
-    }
+    queue_activity(activity, actor, recipients, data).await?;
     Ok(())
 }
 

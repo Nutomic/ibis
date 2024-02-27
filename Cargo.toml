@@ -16,7 +16,7 @@ ssr = [
   "tokio",
   "leptos_axum",
   "activitypub_federation",
-  "jsonwebtoken"
+  "jsonwebtoken",
 ]
 csr = ["leptos/csr", "leptos_meta/csr", "leptos_router/csr"]
 hydrate = ["leptos/hydrate", "leptos_meta/hydrate", "leptos_router/hydrate"]
@@ -25,7 +25,7 @@ hydrate = ["leptos/hydrate", "leptos_meta/hydrate", "leptos_router/hydrate"]
 dbg_macro = "deny"
 
 [dependencies]
-activitypub_federation = { version = "0.5.0-beta.6", features = [
+activitypub_federation = { git = "https://github.com/LemmyNet/activitypub-federation-rust.git", branch = "optional-activity-queue", features = [
   "axum",
   "diesel",
 ], default-features = false, optional = true }
@@ -52,7 +52,7 @@ enum_delegate = "0.2.0"
 env_logger = { version = "0.10.1", default-features = false }
 futures = "0.3.29"
 hex = "0.4.3"
-jsonwebtoken = {version = "9.2.0", optional = true }
+jsonwebtoken = { version = "9.2.0", optional = true }
 rand = "0.8.5"
 serde_json = "1.0.108"
 sha2 = "0.10.8"
