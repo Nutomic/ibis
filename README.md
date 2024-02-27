@@ -19,6 +19,12 @@ To kickstart federation, paste the domain of a remote instance into the search f
 
 ## Development
 
+First install PostgreSQL and setup the development database:
+```sh
+psql -c "CREATE USER ibis WITH PASSWORD 'ibis' SUPERUSER;" -U postgres
+psql -c "CREATE DATABASE ibis WITH OWNER ibis;" -U postgres
+```
+
 You need to install [cargo](https://rustup.rs/) and [trunk](https://trunkrs.dev). Then run the following commands in separate terminals:
 ```
 # start backend
