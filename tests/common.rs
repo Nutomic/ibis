@@ -1,3 +1,5 @@
+#![allow(clippy::unwrap_used)]
+
 use ibis_lib::backend::config::{IbisConfig, IbisConfigDatabase, IbisConfigFederation};
 use ibis_lib::backend::start;
 use ibis_lib::common::RegisterUserData;

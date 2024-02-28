@@ -76,7 +76,7 @@ mod test {
                 creator: DbPerson {
                     id: 0,
                     username: "".to_string(),
-                    ap_id: ObjectId::parse("http://example.com").unwrap(),
+                    ap_id: ObjectId::parse("http://example.com")?,
                     inbox_url: "".to_string(),
                     public_key: "".to_string(),
                     private_key: None,

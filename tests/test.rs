@@ -1,3 +1,5 @@
+#![allow(clippy::unwrap_used)]
+
 extern crate ibis_lib;
 
 mod common;
