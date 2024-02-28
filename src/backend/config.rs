@@ -26,7 +26,7 @@ pub struct IbisConfig {
 impl IbisConfig {
     pub fn read() -> MyResult<Self> {
         let config = Config::builder()
-            .add_source(config::File::with_name("config/config.toml"))
+            .add_source(config::File::with_name("config.toml"))
             // Cant use _ as separator due to https://github.com/mehcode/config-rs/issues/391
             .add_source(config::Environment::with_prefix("IBIS").separator("__"))
             .build()?;

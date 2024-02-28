@@ -16,25 +16,27 @@ use activitypub_federation::fetch::collection_id::CollectionId;
 use activitypub_federation::fetch::object_id::ObjectId;
 use activitypub_federation::http_signatures::generate_actor_keypair;
 use api::api_routes;
+use axum::debug_handler;
+use axum::headers::HeaderMap;
 use axum::http::{HeaderValue, Request};
+use axum::response::IntoResponse;
+use axum::routing::get;
 use axum::Server;
 use axum::ServiceExt;
 use axum::{middleware::Next, response::Response, Router};
 use chrono::Local;
 use diesel::r2d2::ConnectionManager;
 use diesel::r2d2::Pool;
-
 use diesel::PgConnection;
 use diesel_migrations::embed_migrations;
 use diesel_migrations::EmbeddedMigrations;
 use diesel_migrations::MigrationHarness;
+use leptos::leptos_config::get_config_from_str;
 use leptos::*;
 use leptos_axum::{generate_route_list, LeptosRoutes};
 use log::info;
-
 use tower::Layer;
 use tower_http::cors::CorsLayer;
-use tower_http::services::{ServeDir, ServeFile};
 
 pub mod api;
 pub mod config;
@@ -71,7 +73,7 @@ pub async fn start(config: IbisConfig) -> MyResult<()> {
         setup(&data.to_request_data()).await?;
     }
 
-    let conf = get_configuration(Some("Cargo.toml")).await?;
+    let conf = get_config_from_str(include_str!("../../Cargo.toml"))?;
     let mut leptos_options = conf.leptos_options;
     leptos_options.site_addr = data.config.bind;
     let routes = generate_route_list(App);
@@ -80,15 +82,7 @@ pub async fn start(config: IbisConfig) -> MyResult<()> {
     let app = Router::new()
         .leptos_routes(&leptos_options, routes, || view! {  <App/> })
         .with_state(leptos_options)
-        .nest_service("/assets", ServeDir::new("assets"))
-        .nest_service(
-            "/pkg/ibis.js",
-            ServeFile::new_with_mime("assets/dist/ibis.js", &"application/javascript".parse()?),
-        )
-        .nest_service(
-            "/pkg/ibis_bg.wasm",
-            ServeFile::new_with_mime("assets/dist/ibis_bg.wasm", &"application/wasm".parse()?),
-        )
+        .nest("", asset_routes()?)
         .nest(FEDERATION_ROUTES_PREFIX, federation_routes())
         .nest("/api/v1", api_routes())
         .layer(FederationMiddleware::new(config))
@@ -105,6 +99,42 @@ pub async fn start(config: IbisConfig) -> MyResult<()> {
         .await?;
 
     Ok(())
+}
+
+pub fn asset_routes() -> MyResult<Router> {
+    let mut css_headers = HeaderMap::new();
+    css_headers.insert("Content-Type", "text/css".parse()?);
+    Ok(Router::new()
+        .route(
+            "/assets/ibis.css",
+            get((css_headers.clone(), include_str!("../../assets/ibis.css"))),
+        )
+        .route(
+            "/assets/simple.css",
+            get((css_headers, include_str!("../../assets/simple.css"))),
+        )
+        .route(
+            "/assets/index.html",
+            get(include_str!("../../assets/index.html")),
+        )
+        .route("/pkg/ibis.js", get(serve_js))
+        .route("/pkg/ibis_bg.wasm", get(serve_wasm)))
+}
+
+#[debug_handler]
+async fn serve_js() -> MyResult<impl IntoResponse> {
+    let mut headers = HeaderMap::new();
+    headers.insert("Content-Type", "application/javascript".parse()?);
+    let content = include_str!("../../assets/dist/ibis.js");
+    Ok((headers, content))
+}
+
+#[debug_handler]
+async fn serve_wasm() -> MyResult<impl IntoResponse> {
+    let mut headers = HeaderMap::new();
+    headers.insert("Content-Type", "application/wasm".parse()?);
+    let content = include_bytes!("../../assets/dist/ibis_bg.wasm");
+    Ok((headers, content))
 }
 
 const MAIN_PAGE_DEFAULT_TEXT: &str = "Welcome to Ibis, the federated Wikipedia alternative!
