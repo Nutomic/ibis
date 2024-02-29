@@ -2,6 +2,20 @@ variables:
   - &rust_image "rust:1.75"
 
 steps:
+
+  publish_release:
+    image: *rust_image
+    environment:
+      CARGO_HOME: .cargo_home
+    commands:
+      - wget https://github.com/cargo-bins/cargo-binstall/releases/latest/download/cargo-binstall-x86_64-unknown-linux-musl.tgz
+      - tar -xvf cargo-binstall-x86_64-unknown-linux-musl.tgz
+      - cp cargo-binstall /usr/local/cargo/bin
+      - cargo binstall -y trunk
+      - trunk build --release
+      - cargo build --release
+      - ls -la target/release/ibis
+
   cargo_fmt:
     image: *rust_image
     environment:
