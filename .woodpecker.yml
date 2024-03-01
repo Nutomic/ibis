@@ -18,6 +18,8 @@ steps:
       - cp target/release/ibis .
       - gzip ibis
       - ls -la ibis.gz
+    when:
+      event: tag
 
   publish_release:
     image: woodpeckerci/plugin-github-release
@@ -27,6 +29,8 @@ steps:
       title: ${CI_COMMIT_TAG##v}
       api-key:
         from_secret: github_token
+    when:
+      event: tag
 
   cargo_fmt:
     image: *rust_image
