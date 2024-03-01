@@ -3,7 +3,7 @@ variables:
 
 steps:
 
-  publish_release:
+  build_release:
     image: *rust_image
     environment:
       CARGO_HOME: .cargo_home
@@ -18,6 +18,15 @@ steps:
       - cp target/release/ibis .
       - gzip ibis
       - ls -la ibis.gz
+
+  publish_release:
+    image: woodpeckerci/plugin-github-release
+    settings:
+      files:
+        - ibis.gz
+      title: ${CI_COMMIT_TAG##v}
+      api-key:
+        from_secret: github_token
 
   cargo_fmt:
     image: *rust_image
