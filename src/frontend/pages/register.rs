@@ -1,7 +1,7 @@
-use crate::common::{LocalUserView, RegisterUserForm};
-use crate::frontend::app::GlobalState;
-use crate::frontend::components::credentials::*;
-use crate::frontend::error::MyResult;
+use crate::{
+    common::{LocalUserView, RegisterUserForm},
+    frontend::{app::GlobalState, components::credentials::*, error::MyResult},
+};
 use leptos::{logging::log, *};
 
 #[component]

@@ -1,7 +1,9 @@
-use crate::frontend::article_title;
-use crate::frontend::components::article_nav::ArticleNav;
-use crate::frontend::markdown::markdown_parser;
-use crate::frontend::pages::article_resource;
+use crate::frontend::{
+    article_title,
+    components::article_nav::ArticleNav,
+    markdown::markdown_parser,
+    pages::article_resource,
+};
 use leptos::*;
 
 #[component]

@@ -1,11 +1,10 @@
-use crate::backend::config::IbisConfig;
-use crate::backend::database::schema::jwt_secret;
-use crate::backend::error::MyResult;
-use diesel::r2d2::ConnectionManager;
-use diesel::r2d2::Pool;
-use diesel::PgConnection;
-use diesel::{QueryDsl, RunQueryDsl};
-
+use crate::backend::{config::IbisConfig, database::schema::jwt_secret, error::MyResult};
+use diesel::{
+    r2d2::{ConnectionManager, Pool},
+    PgConnection,
+    QueryDsl,
+    RunQueryDsl,
+};
 use std::ops::DerefMut;
 
 pub mod article;

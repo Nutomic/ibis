@@ -5,14 +5,23 @@ extern crate ibis_lib;
 mod common;
 
 use crate::common::{TestData, TEST_ARTICLE_DEFAULT_TEXT};
-use ibis_lib::common::utils::extract_domain;
-use ibis_lib::common::{
-    ArticleView, EditArticleForm, ForkArticleForm, GetArticleForm, GetUserForm, ListArticlesForm,
-    ProtectArticleForm,
+use ibis_lib::{
+    common::{
+        utils::extract_domain,
+        ArticleView,
+        CreateArticleForm,
+        EditArticleForm,
+        ForkArticleForm,
+        GetArticleForm,
+        GetUserForm,
+        ListArticlesForm,
+        LoginUserForm,
+        ProtectArticleForm,
+        RegisterUserForm,
+        SearchArticleForm,
+    },
+    frontend::error::MyResult,
 };
-use ibis_lib::common::{CreateArticleForm, SearchArticleForm};
-use ibis_lib::common::{LoginUserForm, RegisterUserForm};
-use ibis_lib::frontend::error::MyResult;
 use pretty_assertions::{assert_eq, assert_ne};
 use url::Url;
 

@@ -1,6 +1,11 @@
 use crate::frontend::backend_hostname;
-use markdown_it::parser::inline::{InlineRule, InlineState};
-use markdown_it::{MarkdownIt, Node, NodeValue, Renderer};
+use markdown_it::{
+    parser::inline::{InlineRule, InlineState},
+    MarkdownIt,
+    Node,
+    NodeValue,
+    Renderer,
+};
 
 pub fn markdown_parser() -> MarkdownIt {
     let mut parser = MarkdownIt::new();

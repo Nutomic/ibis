@@ -1,7 +1,7 @@
-use crate::common::validation::can_edit_article;
-use crate::common::ArticleView;
-use crate::frontend::app::GlobalState;
-use crate::frontend::article_link;
+use crate::{
+    common::{validation::can_edit_article, ArticleView},
+    frontend::{app::GlobalState, article_link},
+};
 use leptos::*;
 use leptos_router::*;
 

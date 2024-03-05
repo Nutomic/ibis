@@ -1,33 +1,42 @@
-use crate::backend::database::IbisData;
-use crate::backend::error::Error;
-use crate::backend::error::MyResult;
-use crate::backend::federation::activities::accept::Accept;
-use crate::backend::federation::activities::create_article::CreateArticle;
-use crate::backend::federation::activities::follow::Follow;
-use crate::backend::federation::activities::reject::RejectEdit;
-use crate::backend::federation::activities::update_local_article::UpdateLocalArticle;
-use crate::backend::federation::activities::update_remote_article::UpdateRemoteArticle;
-use crate::backend::federation::objects::article::ApubArticle;
-use crate::backend::federation::objects::articles_collection::{
-    ArticleCollection, DbArticleCollection,
+use crate::{
+    backend::{
+        database::IbisData,
+        error::{Error, MyResult},
+        federation::{
+            activities::{
+                accept::Accept,
+                create_article::CreateArticle,
+                follow::Follow,
+                reject::RejectEdit,
+                update_local_article::UpdateLocalArticle,
+                update_remote_article::UpdateRemoteArticle,
+            },
+            objects::{
+                article::ApubArticle,
+                articles_collection::{ArticleCollection, DbArticleCollection},
+                edits_collection::{ApubEditCollection, DbEditCollection},
+                instance::ApubInstance,
+                user::ApubUser,
+            },
+        },
+    },
+    common::{DbArticle, DbInstance, DbPerson},
 };
-use crate::backend::federation::objects::edits_collection::{ApubEditCollection, DbEditCollection};
-use crate::backend::federation::objects::instance::ApubInstance;
-use crate::backend::federation::objects::user::ApubUser;
-use crate::common::DbArticle;
-use crate::common::DbInstance;
-use crate::common::DbPerson;
-use activitypub_federation::axum::inbox::{receive_activity, ActivityData};
-use activitypub_federation::axum::json::FederationJson;
-use activitypub_federation::config::Data;
-use activitypub_federation::protocol::context::WithContext;
-use activitypub_federation::traits::Actor;
-use activitypub_federation::traits::Object;
-use activitypub_federation::traits::{ActivityHandler, Collection};
-use axum::extract::Path;
-use axum::response::IntoResponse;
-use axum::routing::{get, post};
-use axum::Router;
+use activitypub_federation::{
+    axum::{
+        inbox::{receive_activity, ActivityData},
+        json::FederationJson,
+    },
+    config::Data,
+    protocol::context::WithContext,
+    traits::{ActivityHandler, Actor, Collection, Object},
+};
+use axum::{
+    extract::Path,
+    response::IntoResponse,
+    routing::{get, post},
+    Router,
+};
 use axum_macros::debug_handler;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};

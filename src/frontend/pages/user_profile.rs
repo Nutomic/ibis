@@ -1,6 +1,7 @@
-use crate::common::{DbPerson, GetUserForm};
-use crate::frontend::app::GlobalState;
-use crate::frontend::user_title;
+use crate::{
+    common::{DbPerson, GetUserForm},
+    frontend::{app::GlobalState, user_title},
+};
 use leptos::*;
 use leptos_router::use_params_map;
 

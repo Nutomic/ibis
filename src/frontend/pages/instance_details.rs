@@ -1,6 +1,7 @@
-use crate::common::utils::http_protocol_str;
-use crate::common::{DbInstance, FollowInstance};
-use crate::frontend::app::GlobalState;
+use crate::{
+    common::{utils::http_protocol_str, DbInstance, FollowInstance},
+    frontend::app::GlobalState,
+};
 use leptos::*;
 use leptos_router::use_params_map;
 use url::Url;

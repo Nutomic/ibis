@@ -1,5 +1,7 @@
-use crate::common::{ArticleView, GetArticleForm, MAIN_PAGE_NAME};
-use crate::frontend::app::GlobalState;
+use crate::{
+    common::{ArticleView, GetArticleForm, MAIN_PAGE_NAME},
+    frontend::app::GlobalState,
+};
 use leptos::{create_resource, Resource, SignalGet};
 use leptos_router::use_params_map;
 

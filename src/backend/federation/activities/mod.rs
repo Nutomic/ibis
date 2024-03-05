@@ -1,11 +1,14 @@
-use crate::backend::database::edit::DbEditForm;
-use crate::backend::database::IbisData;
-use crate::backend::error::Error;
-use crate::backend::federation::activities::update_local_article::UpdateLocalArticle;
-use crate::backend::federation::activities::update_remote_article::UpdateRemoteArticle;
-use crate::common::DbInstance;
-use crate::common::EditVersion;
-use crate::common::{DbArticle, DbEdit};
+use crate::{
+    backend::{
+        database::{edit::DbEditForm, IbisData},
+        error::Error,
+        federation::activities::{
+            update_local_article::UpdateLocalArticle,
+            update_remote_article::UpdateRemoteArticle,
+        },
+    },
+    common::{DbArticle, DbEdit, DbInstance, EditVersion},
+};
 use activitypub_federation::config::Data;
 use chrono::Utc;
 

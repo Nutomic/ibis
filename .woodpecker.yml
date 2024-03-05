@@ -3,13 +3,14 @@ variables:
 
 steps:
   cargo_fmt:
-    image: *rust_image
+    image: rustlang/rust:nightly
     environment:
       # store cargo data in repo folder so that it gets cached between steps
       CARGO_HOME: .cargo_home
     commands:
       - rustup component add rustfmt
-      - cargo fmt -- --check
+      - cargo +nightly fmt -- --check
+
 
   check_config_defaults_updated:
     image: *rust_image

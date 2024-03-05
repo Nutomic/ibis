@@ -1,10 +1,14 @@
-use crate::common::ForkArticleForm;
-use crate::frontend::app::GlobalState;
-use crate::frontend::article_link;
-use crate::frontend::article_title;
-use crate::frontend::components::article_nav::ArticleNav;
-use crate::frontend::pages::article_resource;
-use crate::frontend::DbArticle;
+use crate::{
+    common::ForkArticleForm,
+    frontend::{
+        app::GlobalState,
+        article_link,
+        article_title,
+        components::article_nav::ArticleNav,
+        pages::article_resource,
+        DbArticle,
+    },
+};
 use leptos::*;
 use leptos_router::Redirect;
 

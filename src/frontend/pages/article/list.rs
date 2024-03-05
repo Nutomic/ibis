@@ -1,6 +1,7 @@
-use crate::common::ListArticlesForm;
-use crate::frontend::app::GlobalState;
-use crate::frontend::{article_link, article_title};
+use crate::{
+    common::ListArticlesForm,
+    frontend::{app::GlobalState, article_link, article_title},
+};
 use leptos::*;
 use web_sys::wasm_bindgen::JsCast;
 

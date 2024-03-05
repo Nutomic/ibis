@@ -1,27 +1,38 @@
-use crate::backend::database::article::DbArticleForm;
-use crate::backend::database::conflict::{DbConflict, DbConflictForm};
-use crate::backend::database::edit::DbEditForm;
-use crate::backend::database::IbisData;
-use crate::backend::error::MyResult;
-use crate::backend::federation::activities::create_article::CreateArticle;
-use crate::backend::federation::activities::submit_article_update;
-use crate::backend::utils::generate_article_version;
-use crate::common::utils::extract_domain;
-use crate::common::utils::http_protocol_str;
-use crate::common::validation::can_edit_article;
-use crate::common::{ApiConflict, ResolveObject};
-use crate::common::{ArticleView, DbArticle, DbEdit};
-use crate::common::{CreateArticleForm, EditArticleForm, EditVersion, ForkArticleForm};
-use crate::common::{DbInstance, SearchArticleForm};
-use crate::common::{GetArticleForm, ListArticlesForm};
-use crate::common::{LocalUserView, ProtectArticleForm};
-use activitypub_federation::config::Data;
-use activitypub_federation::fetch::object_id::ObjectId;
+use crate::{
+    backend::{
+        database::{
+            article::DbArticleForm,
+            conflict::{DbConflict, DbConflictForm},
+            edit::DbEditForm,
+            IbisData,
+        },
+        error::MyResult,
+        federation::activities::{create_article::CreateArticle, submit_article_update},
+        utils::generate_article_version,
+    },
+    common::{
+        utils::{extract_domain, http_protocol_str},
+        validation::can_edit_article,
+        ApiConflict,
+        ArticleView,
+        CreateArticleForm,
+        DbArticle,
+        DbEdit,
+        DbInstance,
+        EditArticleForm,
+        EditVersion,
+        ForkArticleForm,
+        GetArticleForm,
+        ListArticlesForm,
+        LocalUserView,
+        ProtectArticleForm,
+        ResolveObject,
+        SearchArticleForm,
+    },
+};
+use activitypub_federation::{config::Data, fetch::object_id::ObjectId};
 use anyhow::anyhow;
-use axum::extract::Query;
-use axum::Extension;
-use axum::Form;
-use axum::Json;
+use axum::{extract::Query, Extension, Form, Json};
 use axum_macros::debug_handler;
 use chrono::Utc;
 use diffy::create_patch;

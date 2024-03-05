@@ -1,17 +1,17 @@
-use crate::backend::database::article::DbArticleForm;
-use crate::backend::database::IbisData;
-use crate::backend::error::Error;
-use crate::backend::federation::objects::edits_collection::DbEditCollection;
-use crate::common::DbArticle;
-use crate::common::DbInstance;
-use crate::common::EditVersion;
-use activitypub_federation::config::Data;
-use activitypub_federation::fetch::collection_id::CollectionId;
-use activitypub_federation::kinds::object::ArticleType;
-use activitypub_federation::kinds::public;
-use activitypub_federation::protocol::verification::verify_domains_match;
+use crate::{
+    backend::{
+        database::{article::DbArticleForm, IbisData},
+        error::Error,
+        federation::objects::edits_collection::DbEditCollection,
+    },
+    common::{DbArticle, DbInstance, EditVersion},
+};
 use activitypub_federation::{
-    fetch::object_id::ObjectId, protocol::helpers::deserialize_one_or_many, traits::Object,
+    config::Data,
+    fetch::{collection_id::CollectionId, object_id::ObjectId},
+    kinds::{object::ArticleType, public},
+    protocol::{helpers::deserialize_one_or_many, verification::verify_domains_match},
+    traits::Object,
 };
 use serde::{Deserialize, Serialize};
 use url::Url;

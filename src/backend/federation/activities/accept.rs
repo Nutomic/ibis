@@ -1,11 +1,17 @@
-use crate::backend::error::MyResult;
-use crate::backend::federation::send_activity;
-use crate::backend::utils::generate_activity_id;
-use crate::backend::{database::IbisData, federation::activities::follow::Follow};
-use crate::common::DbInstance;
-use activitypub_federation::traits::Actor;
+use crate::{
+    backend::{
+        database::IbisData,
+        error::MyResult,
+        federation::{activities::follow::Follow, send_activity},
+        utils::generate_activity_id,
+    },
+    common::DbInstance,
+};
 use activitypub_federation::{
-    config::Data, fetch::object_id::ObjectId, kinds::activity::AcceptType, traits::ActivityHandler,
+    config::Data,
+    fetch::object_id::ObjectId,
+    kinds::activity::AcceptType,
+    traits::{ActivityHandler, Actor},
 };
 use serde::{Deserialize, Serialize};
 use url::Url;

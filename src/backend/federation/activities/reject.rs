@@ -1,17 +1,22 @@
-use crate::backend::database::conflict::{DbConflict, DbConflictForm};
-use crate::backend::database::IbisData;
-use crate::backend::error::MyResult;
-use crate::backend::federation::objects::edit::ApubEdit;
-use crate::backend::utils::generate_activity_id;
-use crate::common::DbInstance;
-use crate::common::EditVersion;
-use activitypub_federation::kinds::activity::RejectType;
+use crate::{
+    backend::{
+        database::{
+            conflict::{DbConflict, DbConflictForm},
+            IbisData,
+        },
+        error::MyResult,
+        federation::{objects::edit::ApubEdit, send_activity},
+        utils::generate_activity_id,
+    },
+    common::{DbInstance, EditVersion},
+};
 use activitypub_federation::{
-    config::Data, fetch::object_id::ObjectId, protocol::helpers::deserialize_one_or_many,
+    config::Data,
+    fetch::object_id::ObjectId,
+    kinds::activity::RejectType,
+    protocol::helpers::deserialize_one_or_many,
     traits::ActivityHandler,
 };
-
-use crate::backend::federation::send_activity;
 use serde::{Deserialize, Serialize};
 use url::Url;
 

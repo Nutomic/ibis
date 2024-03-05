@@ -1,6 +1,4 @@
-use crate::frontend::app::GlobalState;
-use crate::frontend::article_link;
-use crate::frontend::article_title;
+use crate::frontend::{app::GlobalState, article_link, article_title};
 use leptos::*;
 
 #[component]

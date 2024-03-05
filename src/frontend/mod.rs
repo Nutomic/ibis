@@ -1,5 +1,4 @@
-use crate::common::utils::extract_domain;
-use crate::common::{DbArticle, DbPerson};
+use crate::common::{utils::extract_domain, DbArticle, DbPerson};
 use leptos::*;
 
 pub mod api;

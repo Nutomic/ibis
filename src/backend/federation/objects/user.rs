@@ -1,11 +1,14 @@
-use crate::backend::database::user::DbPersonForm;
-use crate::backend::database::IbisData;
-use crate::backend::error::Error;
-use crate::common::DbPerson;
-use activitypub_federation::kinds::actor::PersonType;
+use crate::{
+    backend::{
+        database::{user::DbPersonForm, IbisData},
+        error::Error,
+    },
+    common::DbPerson,
+};
 use activitypub_federation::{
     config::Data,
     fetch::object_id::ObjectId,
+    kinds::actor::PersonType,
     protocol::{public_key::PublicKey, verification::verify_domains_match},
     traits::{Actor, Object},
 };

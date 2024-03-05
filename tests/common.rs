@@ -1,19 +1,26 @@
 #![allow(clippy::unwrap_used)]
 
-use ibis_lib::backend::config::{IbisConfig, IbisConfigDatabase, IbisConfigFederation};
-use ibis_lib::backend::start;
-use ibis_lib::common::RegisterUserForm;
-use ibis_lib::frontend::api::ApiClient;
-use ibis_lib::frontend::error::MyResult;
+use ibis_lib::{
+    backend::{
+        config::{IbisConfig, IbisConfigDatabase, IbisConfigFederation},
+        start,
+    },
+    common::RegisterUserForm,
+    frontend::{api::ApiClient, error::MyResult},
+};
 use reqwest::ClientBuilder;
-use std::env::current_dir;
-use std::fs::{create_dir_all, remove_dir_all};
-use std::ops::Deref;
-use std::process::{Command, Stdio};
-use std::sync::atomic::{AtomicI32, Ordering};
-use std::sync::Once;
-use std::thread::{sleep, spawn};
-use std::time::Duration;
+use std::{
+    env::current_dir,
+    fs::{create_dir_all, remove_dir_all},
+    ops::Deref,
+    process::{Command, Stdio},
+    sync::{
+        atomic::{AtomicI32, Ordering},
+        Once,
+    },
+    thread::{sleep, spawn},
+    time::Duration,
+};
 use tokio::task::JoinHandle;
 use tracing::log::LevelFilter;
 

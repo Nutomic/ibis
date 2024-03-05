@@ -1,5 +1,4 @@
-use crate::common::CreateArticleForm;
-use crate::frontend::app::GlobalState;
+use crate::{common::CreateArticleForm, frontend::app::GlobalState};
 use leptos::*;
 use leptos_router::Redirect;
 

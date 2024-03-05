@@ -1,18 +1,26 @@
-use crate::backend::database::{read_jwt_secret, IbisData};
-use crate::backend::error::MyResult;
-use crate::common::{DbPerson, GetUserForm, LocalUserView, LoginUserForm, RegisterUserForm};
+use crate::{
+    backend::{
+        database::{read_jwt_secret, IbisData},
+        error::MyResult,
+    },
+    common::{DbPerson, GetUserForm, LocalUserView, LoginUserForm, RegisterUserForm},
+};
 use activitypub_federation::config::Data;
 use anyhow::anyhow;
-use axum::extract::Query;
-use axum::{Form, Json};
+use axum::{extract::Query, Form, Json};
 use axum_extra::extract::cookie::{Cookie, CookieJar, Expiration, SameSite};
 use axum_macros::debug_handler;
 use bcrypt::verify;
 use chrono::Utc;
-use jsonwebtoken::DecodingKey;
-use jsonwebtoken::Validation;
-use jsonwebtoken::{decode, get_current_timestamp};
-use jsonwebtoken::{encode, EncodingKey, Header};
+use jsonwebtoken::{
+    decode,
+    encode,
+    get_current_timestamp,
+    DecodingKey,
+    EncodingKey,
+    Header,
+    Validation,
+};
 use serde::{Deserialize, Serialize};
 use time::{Duration, OffsetDateTime};
 

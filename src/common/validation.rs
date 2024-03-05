@@ -1,6 +1,5 @@
 use crate::common::DbArticle;
-use anyhow::anyhow;
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 
 pub fn can_edit_article(article: &DbArticle, is_admin: bool) -> Result<()> {
     let err = anyhow!("Article is protected, only admins on origin instance can edit");

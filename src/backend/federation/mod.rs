@@ -1,10 +1,11 @@
-use crate::backend::config::IbisConfig;
-use crate::backend::database::IbisData;
-use activitypub_federation::activity_queue::queue_activity;
-use activitypub_federation::config::{Data, UrlVerifier};
-use activitypub_federation::error::Error as ActivityPubError;
-use activitypub_federation::protocol::context::WithContext;
-use activitypub_federation::traits::{ActivityHandler, Actor};
+use crate::backend::{config::IbisConfig, database::IbisData};
+use activitypub_federation::{
+    activity_queue::queue_activity,
+    config::{Data, UrlVerifier},
+    error::Error as ActivityPubError,
+    protocol::context::WithContext,
+    traits::{ActivityHandler, Actor},
+};
 use async_trait::async_trait;
 use serde::Serialize;
 use std::fmt::Debug;

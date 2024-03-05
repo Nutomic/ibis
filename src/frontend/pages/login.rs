@@ -1,6 +1,7 @@
-use crate::common::LoginUserForm;
-use crate::frontend::app::GlobalState;
-use crate::frontend::components::credentials::*;
+use crate::{
+    common::LoginUserForm,
+    frontend::{app::GlobalState, components::credentials::*},
+};
 use leptos::*;
 use leptos_router::Redirect;
 
