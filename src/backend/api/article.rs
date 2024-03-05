@@ -9,12 +9,12 @@ use crate::backend::utils::generate_article_version;
 use crate::common::utils::extract_domain;
 use crate::common::utils::http_protocol_str;
 use crate::common::validation::can_edit_article;
-use crate::common::LocalUserView;
 use crate::common::{ApiConflict, ResolveObject};
 use crate::common::{ArticleView, DbArticle, DbEdit};
-use crate::common::{CreateArticleData, EditArticleData, EditVersion, ForkArticleData};
-use crate::common::{DbInstance, SearchArticleData};
-use crate::common::{GetArticleData, ListArticlesData};
+use crate::common::{CreateArticleForm, EditArticleForm, EditVersion, ForkArticleForm};
+use crate::common::{DbInstance, SearchArticleForm};
+use crate::common::{GetArticleForm, ListArticlesForm};
+use crate::common::{LocalUserView, ProtectArticleForm};
 use activitypub_federation::config::Data;
 use activitypub_federation::fetch::object_id::ObjectId;
 use anyhow::anyhow;
@@ -31,7 +31,7 @@ use diffy::create_patch;
 pub(in crate::backend::api) async fn create_article(
     Extension(user): Extension<LocalUserView>,
     data: Data<IbisData>,
-    Form(create_article): Form<CreateArticleData>,
+    Form(create_article): Form<CreateArticleForm>,
 ) -> MyResult<Json<ArticleView>> {
     if create_article.title.is_empty() {
         return Err(anyhow!("Title must not be empty").into());
@@ -50,10 +50,11 @@ pub(in crate::backend::api) async fn create_article(
         ap_id,
         instance_id: local_instance.id,
         local: true,
+        protected: false,
     };
     let article = DbArticle::create(form, &data)?;
 
-    let edit_data = EditArticleData {
+    let edit_data = EditArticleForm {
         article_id: article.id,
         new_text: create_article.text,
         summary: create_article.summary,
@@ -81,7 +82,7 @@ pub(in crate::backend::api) async fn create_article(
 pub(in crate::backend::api) async fn edit_article(
     Extension(user): Extension<LocalUserView>,
     data: Data<IbisData>,
-    Form(mut edit_form): Form<EditArticleData>,
+    Form(mut edit_form): Form<EditArticleForm>,
 ) -> MyResult<Json<Option<ApiConflict>>> {
     // resolve conflict if any
     if let Some(resolve_conflict_id) = edit_form.resolve_conflict_id {
@@ -136,7 +137,7 @@ pub(in crate::backend::api) async fn edit_article(
 /// Retrieve an article by ID. It must already be stored in the local database.
 #[debug_handler]
 pub(in crate::backend::api) async fn get_article(
-    Query(query): Query<GetArticleData>,
+    Query(query): Query<GetArticleForm>,
     data: Data<IbisData>,
 ) -> MyResult<Json<ArticleView>> {
     match (query.title, query.id) {
@@ -157,7 +158,7 @@ pub(in crate::backend::api) async fn get_article(
 
 #[debug_handler]
 pub(in crate::backend::api) async fn list_articles(
-    Query(query): Query<ListArticlesData>,
+    Query(query): Query<ListArticlesForm>,
     data: Data<IbisData>,
 ) -> MyResult<Json<Vec<DbArticle>>> {
     let only_local = query.only_local.unwrap_or(false);
@@ -170,7 +171,7 @@ pub(in crate::backend::api) async fn list_articles(
 pub(in crate::backend::api) async fn fork_article(
     Extension(_user): Extension<LocalUserView>,
     data: Data<IbisData>,
-    Form(fork_form): Form<ForkArticleData>,
+    Form(fork_form): Form<ForkArticleForm>,
 ) -> MyResult<Json<ArticleView>> {
     // TODO: lots of code duplicated from create_article(), can move it into helper
     let original_article = DbArticle::read(fork_form.article_id, &data)?;
@@ -188,6 +189,7 @@ pub(in crate::backend::api) async fn fork_article(
         ap_id,
         instance_id: local_instance.id,
         local: true,
+        protected: false,
     };
     let article = DbArticle::create(form, &data)?;
 
@@ -242,12 +244,26 @@ pub(super) async fn resolve_article(
 /// Search articles for matching title or body text.
 #[debug_handler]
 pub(super) async fn search_article(
-    Query(query): Query<SearchArticleData>,
+    Query(query): Query<SearchArticleForm>,
     data: Data<IbisData>,
 ) -> MyResult<Json<Vec<DbArticle>>> {
     if query.query.is_empty() {
         return Err(anyhow!("Query is empty").into());
     }
     let article = DbArticle::search(&query.query, &data)?;
+    Ok(Json(article))
+}
+
+#[debug_handler]
+pub(in crate::backend::api) async fn protect_article(
+    Extension(user): Extension<LocalUserView>,
+    data: Data<IbisData>,
+    Form(lock_params): Form<ProtectArticleForm>,
+) -> MyResult<Json<DbArticle>> {
+    if !user.local_user.admin {
+        return Err(anyhow!("Only admin can lock articles").into());
+    }
+    let article =
+        DbArticle::update_protected(lock_params.article_id, lock_params.protected, &data)?;
     Ok(Json(article))
 }

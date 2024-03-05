@@ -1,3 +1,4 @@
+use crate::backend::api::article::protect_article;
 use crate::backend::api::article::{
     create_article, list_articles, resolve_article, search_article,
 };
@@ -40,6 +41,7 @@ pub fn api_routes() -> Router {
         .route("/article/list", get(list_articles))
         .route("/article/fork", post(fork_article))
         .route("/article/resolve", get(resolve_article))
+        .route("/article/protect", post(protect_article))
         .route("/edit_conflicts", get(edit_conflicts))
         .route("/instance", get(get_local_instance))
         .route("/instance/follow", post(follow_instance))

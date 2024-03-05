@@ -1,4 +1,4 @@
-use crate::common::ForkArticleData;
+use crate::common::ForkArticleForm;
 use crate::frontend::app::GlobalState;
 use crate::frontend::article_link;
 use crate::frontend::article_title;
@@ -15,7 +15,7 @@ pub fn ArticleActions() -> impl IntoView {
     let (fork_response, set_fork_response) = create_signal(Option::<DbArticle>::None);
     let (error, set_error) = create_signal(None::<String>);
     let fork_action = create_action(move |(article_id, new_title): &(i32, String)| {
-        let params = ForkArticleData {
+        let params = ForkArticleForm {
             article_id: *article_id,
             new_title: new_title.to_string(),
         };

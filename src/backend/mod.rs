@@ -179,6 +179,7 @@ async fn setup(data: &Data<IbisData>) -> Result<(), Error> {
         ))?,
         instance_id: instance.id,
         local: true,
+        protected: true,
     };
     let article = DbArticle::create(form, data)?;
     // also create an article so its included in most recently edited list

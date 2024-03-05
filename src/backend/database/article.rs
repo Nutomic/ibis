@@ -24,6 +24,7 @@ pub struct DbArticleForm {
     pub ap_id: ObjectId<DbArticle>,
     pub instance_id: i32,
     pub local: bool,
+    pub protected: bool,
 }
 
 // TODO: get rid of unnecessary methods
@@ -55,6 +56,13 @@ impl DbArticle {
         let mut conn = data.db_pool.get()?;
         Ok(diesel::update(article::dsl::article.find(id))
             .set(article::dsl::text.eq(text))
+            .get_result::<Self>(conn.deref_mut())?)
+    }
+
+    pub fn update_protected(id: i32, locked: bool, data: &IbisData) -> MyResult<Self> {
+        let mut conn = data.db_pool.get()?;
+        Ok(diesel::update(article::dsl::article.find(id))
+            .set(article::dsl::protected.eq(locked))
             .get_result::<Self>(conn.deref_mut())?)
     }
 

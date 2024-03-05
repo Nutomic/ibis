@@ -2,7 +2,7 @@
 
 use ibis_lib::backend::config::{IbisConfig, IbisConfigDatabase, IbisConfigFederation};
 use ibis_lib::backend::start;
-use ibis_lib::common::RegisterUserData;
+use ibis_lib::common::RegisterUserForm;
 use ibis_lib::frontend::api::ApiClient;
 use ibis_lib::frontend::error::MyResult;
 use reqwest::ClientBuilder;
@@ -128,7 +128,7 @@ impl IbisInstance {
         });
         // wait a moment for the backend to start
         tokio::time::sleep(Duration::from_millis(5000)).await;
-        let form = RegisterUserData {
+        let form = RegisterUserForm {
             username: username.to_string(),
             password: "hunter2".to_string(),
         };

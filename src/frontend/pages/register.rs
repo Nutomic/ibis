@@ -1,4 +1,4 @@
-use crate::common::{LocalUserView, RegisterUserData};
+use crate::common::{LocalUserView, RegisterUserForm};
 use crate::frontend::app::GlobalState;
 use crate::frontend::components::credentials::*;
 use crate::frontend::error::MyResult;
@@ -13,7 +13,7 @@ pub fn Register() -> impl IntoView {
     let register_action = create_action(move |(email, password): &(String, String)| {
         let username = email.to_string();
         let password = password.to_string();
-        let credentials = RegisterUserData { username, password };
+        let credentials = RegisterUserForm { username, password };
         log!("Try to register new account for {}", credentials.username);
         async move {
             set_wait_for_response.update(|w| *w = true);

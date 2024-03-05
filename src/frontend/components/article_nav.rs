@@ -13,6 +13,7 @@ pub fn ArticleNav(article: Resource<Option<String>, ArticleView>) -> impl IntoVi
             {move || article.get().map(|article| {
                 let article_link = article_link(&article.article);
                 let article_link_ = article_link.clone();
+                let protected = article.article.protected;
                 view!{
                     <nav class="inner">
                         <A href=article_link.clone()>"Read"</A>
@@ -25,6 +26,9 @@ pub fn ArticleNav(article: Resource<Option<String>, ArticleView>) -> impl IntoVi
                         </Show>
                         <Show when=move || global_state.with(|state| state.my_profile.is_some())>
                             <A href={format!("{article_link_}/actions")}>"Actions"</A>
+                        </Show>
+                        <Show when=move || protected>
+                            <span title="Article can only be edited by local admins">"Protected"</span>
                         </Show>
                     </nav>
             }})}

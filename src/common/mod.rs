@@ -20,14 +20,14 @@ pub const MAIN_PAGE_NAME: &str = "Main_Page";
 
 /// Should be an enum Title/Id but fails due to https://github.com/nox/serde_urlencoded/issues/66
 #[derive(Deserialize, Serialize, Clone, Debug)]
-pub struct GetArticleData {
+pub struct GetArticleForm {
     pub title: Option<String>,
     pub domain: Option<String>,
     pub id: Option<i32>,
 }
 
 #[derive(Deserialize, Serialize, Clone)]
-pub struct ListArticlesData {
+pub struct ListArticlesForm {
     pub only_local: Option<bool>,
 }
 
@@ -53,6 +53,7 @@ pub struct DbArticle {
     pub ap_id: String,
     pub instance_id: i32,
     pub local: bool,
+    pub protected: bool,
 }
 
 /// Represents a single change to the article.
@@ -115,13 +116,13 @@ impl Default for EditVersion {
 }
 
 #[derive(Deserialize, Serialize, Clone)]
-pub struct RegisterUserData {
+pub struct RegisterUserForm {
     pub username: String,
     pub password: String,
 }
 
 #[derive(Deserialize, Serialize)]
-pub struct LoginUserData {
+pub struct LoginUserForm {
     pub username: String,
     pub password: String,
 }
@@ -175,14 +176,14 @@ impl DbPerson {
 }
 
 #[derive(Deserialize, Serialize)]
-pub struct CreateArticleData {
+pub struct CreateArticleForm {
     pub title: String,
     pub text: String,
     pub summary: String,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
-pub struct EditArticleData {
+pub struct EditArticleForm {
     /// Id of the article to edit
     pub article_id: i32,
     /// Full, new text of the article. A diff against `previous_version` is generated on the backend
@@ -197,8 +198,14 @@ pub struct EditArticleData {
     pub resolve_conflict_id: Option<i32>,
 }
 
+#[derive(Deserialize, Serialize, Debug)]
+pub struct ProtectArticleForm {
+    pub article_id: i32,
+    pub protected: bool,
+}
+
 #[derive(Deserialize, Serialize)]
-pub struct ForkArticleData {
+pub struct ForkArticleForm {
     pub article_id: i32,
     pub new_title: String,
 }
@@ -209,7 +216,7 @@ pub struct FollowInstance {
 }
 
 #[derive(Deserialize, Serialize, Clone)]
-pub struct SearchArticleData {
+pub struct SearchArticleForm {
     pub query: String,
 }
 
@@ -269,7 +276,7 @@ pub struct InstanceView {
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
-pub struct GetUserData {
+pub struct GetUserForm {
     pub name: String,
     pub domain: Option<String>,
 }

@@ -1,6 +1,6 @@
 use crate::backend::database::{read_jwt_secret, IbisData};
 use crate::backend::error::MyResult;
-use crate::common::{DbPerson, GetUserData, LocalUserView, LoginUserData, RegisterUserData};
+use crate::common::{DbPerson, GetUserForm, LocalUserView, LoginUserForm, RegisterUserForm};
 use activitypub_federation::config::Data;
 use anyhow::anyhow;
 use axum::extract::Query;
@@ -57,7 +57,7 @@ pub async fn validate(jwt: &str, data: &Data<IbisData>) -> MyResult<LocalUserVie
 pub(in crate::backend::api) async fn register_user(
     data: Data<IbisData>,
     jar: CookieJar,
-    Form(form): Form<RegisterUserData>,
+    Form(form): Form<RegisterUserForm>,
 ) -> MyResult<(CookieJar, Json<LocalUserView>)> {
     if !data.config.registration_open {
         return Err(anyhow!("Registration is closed").into());
@@ -72,7 +72,7 @@ pub(in crate::backend::api) async fn register_user(
 pub(in crate::backend::api) async fn login_user(
     data: Data<IbisData>,
     jar: CookieJar,
-    Form(form): Form<LoginUserData>,
+    Form(form): Form<LoginUserForm>,
 ) -> MyResult<(CookieJar, Json<LocalUserView>)> {
     let user = DbPerson::read_local_from_name(&form.username, &data)?;
     let valid = verify(&form.password, &user.local_user.password_encrypted)?;
@@ -126,7 +126,7 @@ pub(in crate::backend::api) async fn logout_user(
 
 #[debug_handler]
 pub(in crate::backend::api) async fn get_user(
-    params: Query<GetUserData>,
+    params: Query<GetUserForm>,
     data: Data<IbisData>,
 ) -> MyResult<Json<DbPerson>> {
     Ok(Json(DbPerson::read_from_name(

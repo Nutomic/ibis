@@ -1,10 +1,10 @@
 use crate::common::utils::http_protocol_str;
-use crate::common::{ApiConflict, ListArticlesData};
-use crate::common::{ArticleView, LoginUserData, RegisterUserData};
-use crate::common::{CreateArticleData, EditArticleData, ForkArticleData, LocalUserView};
-use crate::common::{DbArticle, GetArticleData};
-use crate::common::{DbInstance, FollowInstance, InstanceView, SearchArticleData};
-use crate::common::{DbPerson, GetUserData, ResolveObject};
+use crate::common::{ApiConflict, ListArticlesForm, ProtectArticleForm};
+use crate::common::{ArticleView, LoginUserForm, RegisterUserForm};
+use crate::common::{CreateArticleForm, EditArticleForm, ForkArticleForm, LocalUserView};
+use crate::common::{DbArticle, GetArticleForm};
+use crate::common::{DbInstance, FollowInstance, InstanceView, SearchArticleForm};
+use crate::common::{DbPerson, GetUserForm, ResolveObject};
 use crate::frontend::error::MyResult;
 use anyhow::anyhow;
 use reqwest::{Client, RequestBuilder, StatusCode};
@@ -34,15 +34,15 @@ impl ApiClient {
         handle_json_res::<T>(req).await
     }
 
-    pub async fn get_article(&self, data: GetArticleData) -> MyResult<ArticleView> {
+    pub async fn get_article(&self, data: GetArticleForm) -> MyResult<ArticleView> {
         self.get_query("/api/v1/article", Some(data)).await
     }
 
-    pub async fn list_articles(&self, data: ListArticlesData) -> MyResult<Vec<DbArticle>> {
+    pub async fn list_articles(&self, data: ListArticlesForm) -> MyResult<Vec<DbArticle>> {
         self.get_query("/api/v1/article/list", Some(data)).await
     }
 
-    pub async fn register(&self, register_form: RegisterUserData) -> MyResult<LocalUserView> {
+    pub async fn register(&self, register_form: RegisterUserForm) -> MyResult<LocalUserView> {
         let req = self
             .client
             .post(self.request_endpoint("/api/v1/account/register"))
@@ -50,7 +50,7 @@ impl ApiClient {
         handle_json_res::<LocalUserView>(req).await
     }
 
-    pub async fn login(&self, login_form: LoginUserData) -> MyResult<LocalUserView> {
+    pub async fn login(&self, login_form: LoginUserForm) -> MyResult<LocalUserView> {
         let req = self
             .client
             .post(self.request_endpoint("/api/v1/account/login"))
@@ -58,7 +58,7 @@ impl ApiClient {
         handle_json_res::<LocalUserView>(req).await
     }
 
-    pub async fn create_article(&self, data: &CreateArticleData) -> MyResult<ArticleView> {
+    pub async fn create_article(&self, data: &CreateArticleForm) -> MyResult<ArticleView> {
         let req = self
             .client
             .post(self.request_endpoint("/api/v1/article"))
@@ -68,7 +68,7 @@ impl ApiClient {
 
     pub async fn edit_article_with_conflict(
         &self,
-        edit_form: &EditArticleData,
+        edit_form: &EditArticleForm,
     ) -> MyResult<Option<ApiConflict>> {
         let req = self
             .client
@@ -77,11 +77,11 @@ impl ApiClient {
         handle_json_res(req).await
     }
 
-    pub async fn edit_article(&self, edit_form: &EditArticleData) -> MyResult<ArticleView> {
+    pub async fn edit_article(&self, edit_form: &EditArticleForm) -> MyResult<ArticleView> {
         let edit_res = self.edit_article_with_conflict(edit_form).await?;
         assert!(edit_res.is_none());
 
-        self.get_article(GetArticleData {
+        self.get_article(GetArticleForm {
             title: None,
             domain: None,
             id: Some(edit_form.article_id),
@@ -89,7 +89,7 @@ impl ApiClient {
         .await
     }
 
-    pub async fn search(&self, search_form: &SearchArticleData) -> MyResult<Vec<DbArticle>> {
+    pub async fn search(&self, search_form: &SearchArticleForm) -> MyResult<Vec<DbArticle>> {
         self.get_query("/api/v1/search", Some(search_form)).await
     }
 
@@ -147,12 +147,20 @@ impl ApiClient {
         Ok(())
     }
 
-    pub async fn fork_article(&self, form: &ForkArticleData) -> MyResult<ArticleView> {
+    pub async fn fork_article(&self, form: &ForkArticleForm) -> MyResult<ArticleView> {
         let req = self
             .client
             .post(self.request_endpoint("/api/v1/article/fork"))
             .form(form);
         Ok(handle_json_res(req).await.unwrap())
+    }
+
+    pub async fn protect_article(&self, params: &ProtectArticleForm) -> MyResult<DbArticle> {
+        let req = self
+            .client
+            .post(self.request_endpoint("/api/v1/article/protect"))
+            .form(params);
+        handle_json_res(req).await
     }
 
     pub async fn get_conflicts(&self) -> MyResult<Vec<ApiConflict>> {
@@ -173,7 +181,7 @@ impl ApiClient {
         self.get_query("/api/v1/instance/resolve", Some(resolve_object))
             .await
     }
-    pub async fn get_user(&self, data: GetUserData) -> MyResult<DbPerson> {
+    pub async fn get_user(&self, data: GetUserForm) -> MyResult<DbPerson> {
         self.get_query("/api/v1/user", Some(data)).await
     }
 

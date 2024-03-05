@@ -29,6 +29,7 @@ pub struct ApubArticle {
     latest_version: EditVersion,
     content: String,
     name: String,
+    protected: bool,
 }
 
 #[async_trait::async_trait]
@@ -56,6 +57,7 @@ impl Object for DbArticle {
             latest_version: self.latest_edit_version(data)?,
             content: self.text,
             name: self.title,
+            protected: self.protected,
         })
     }
 
@@ -76,6 +78,7 @@ impl Object for DbArticle {
             ap_id: json.id,
             local: false,
             instance_id: instance.id,
+            protected: json.protected,
         };
         let article = DbArticle::create_or_update(form, data)?;
 

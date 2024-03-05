@@ -1,4 +1,4 @@
-use crate::common::ListArticlesData;
+use crate::common::ListArticlesForm;
 use crate::frontend::app::GlobalState;
 use crate::frontend::{article_link, article_title};
 use leptos::*;
@@ -11,7 +11,7 @@ pub fn ListArticles() -> impl IntoView {
         move || only_local.get(),
         |only_local| async move {
             GlobalState::api_client()
-                .list_articles(ListArticlesData {
+                .list_articles(ListArticlesForm {
                     only_local: Some(only_local),
                 })
                 .await

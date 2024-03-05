@@ -1,4 +1,4 @@
-use crate::common::{ApiConflict, ArticleView, EditArticleData};
+use crate::common::{ApiConflict, ArticleView, EditArticleForm};
 use crate::frontend::app::GlobalState;
 use crate::frontend::article_title;
 use crate::frontend::components::article_nav::ArticleNav;
@@ -65,7 +65,7 @@ pub fn EditArticle() -> impl IntoView {
             };
             async move {
                 set_edit_error.update(|e| *e = None);
-                let form = EditArticleData {
+                let form = EditArticleForm {
                     article_id: article.article.id,
                     new_text,
                     summary,
