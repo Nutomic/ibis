@@ -5,13 +5,23 @@ extern crate ibis_lib;
 mod common;
 
 use crate::common::{TestData, TEST_ARTICLE_DEFAULT_TEXT};
-use ibis_lib::common::utils::extract_domain;
-use ibis_lib::common::{
-    ArticleView, EditArticleData, ForkArticleData, GetArticleData, GetUserData, ListArticlesData,
+use ibis_lib::{
+    common::{
+        utils::extract_domain,
+        ArticleView,
+        CreateArticleForm,
+        EditArticleForm,
+        ForkArticleForm,
+        GetArticleForm,
+        GetUserForm,
+        ListArticlesForm,
+        LoginUserForm,
+        ProtectArticleForm,
+        RegisterUserForm,
+        SearchArticleForm,
+    },
+    frontend::error::MyResult,
 };
-use ibis_lib::common::{CreateArticleData, SearchArticleData};
-use ibis_lib::common::{LoginUserData, RegisterUserData};
-use ibis_lib::frontend::error::MyResult;
 use pretty_assertions::{assert_eq, assert_ne};
 use url::Url;
 
@@ -20,7 +30,7 @@ async fn test_create_read_and_edit_local_article() -> MyResult<()> {
     let data = TestData::start().await;
 
     // create article
-    let create_form = CreateArticleData {
+    let create_form = CreateArticleForm {
         title: "Manu_Chao".to_string(),
         text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
         summary: "create article".to_string(),
@@ -30,7 +40,7 @@ async fn test_create_read_and_edit_local_article() -> MyResult<()> {
     assert!(create_res.article.local);
 
     // now article can be read
-    let get_article_data = GetArticleData {
+    let get_article_data = GetArticleForm {
         title: Some(create_res.article.title.clone()),
         domain: None,
         id: None,
@@ -45,7 +55,7 @@ async fn test_create_read_and_edit_local_article() -> MyResult<()> {
     assert!(not_found.is_err());
 
     // edit article
-    let edit_form = EditArticleData {
+    let edit_form = EditArticleForm {
         article_id: create_res.article.id,
         new_text: "Lorem Ipsum 2\n".to_string(),
         summary: "summary".to_string(),
@@ -57,7 +67,7 @@ async fn test_create_read_and_edit_local_article() -> MyResult<()> {
     assert_eq!(2, edit_res.edits.len());
     assert_eq!(edit_form.summary, edit_res.edits[1].edit.summary);
 
-    let search_form = SearchArticleData {
+    let search_form = SearchArticleForm {
         query: create_form.title.clone(),
     };
     let search_res = data.alpha.search(&search_form).await?;
@@ -66,7 +76,7 @@ async fn test_create_read_and_edit_local_article() -> MyResult<()> {
 
     let list_articles = data
         .alpha
-        .list_articles(ListArticlesData {
+        .list_articles(ListArticlesForm {
             only_local: Some(false),
         })
         .await?;
@@ -81,7 +91,7 @@ async fn test_create_duplicate_article() -> MyResult<()> {
     let data = TestData::start().await;
 
     // create article
-    let create_form = CreateArticleData {
+    let create_form = CreateArticleForm {
         title: "Manu_Chao".to_string(),
         text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
         summary: "create article".to_string(),
@@ -127,7 +137,7 @@ async fn test_synchronize_articles() -> MyResult<()> {
     let data = TestData::start().await;
 
     // create article on alpha
-    let create_form = CreateArticleData {
+    let create_form = CreateArticleForm {
         title: "Manu_Chao".to_string(),
         text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
         summary: "create article".to_string(),
@@ -138,7 +148,7 @@ async fn test_synchronize_articles() -> MyResult<()> {
     assert!(create_res.article.local);
 
     // edit the article
-    let edit_form = EditArticleData {
+    let edit_form = EditArticleForm {
         article_id: create_res.article.id,
         new_text: "Lorem Ipsum 2\n".to_string(),
         summary: "summary".to_string(),
@@ -153,7 +163,7 @@ async fn test_synchronize_articles() -> MyResult<()> {
         .resolve_instance(Url::parse(&format!("http://{}", &data.alpha.hostname))?)
         .await?;
 
-    let mut get_article_data = GetArticleData {
+    let mut get_article_data = GetArticleForm {
         title: Some(create_res.article.title),
         domain: None,
         id: None,
@@ -185,7 +195,7 @@ async fn test_edit_local_article() -> MyResult<()> {
         .await?;
 
     // create new article
-    let create_form = CreateArticleData {
+    let create_form = CreateArticleForm {
         title: "Manu_Chao".to_string(),
         text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
         summary: "create article".to_string(),
@@ -195,7 +205,7 @@ async fn test_edit_local_article() -> MyResult<()> {
     assert!(create_res.article.local);
 
     // article should be federated to alpha
-    let get_article_data = GetArticleData {
+    let get_article_data = GetArticleForm {
         title: Some(create_res.article.title.to_string()),
         domain: Some(beta_instance.domain),
         id: None,
@@ -207,7 +217,7 @@ async fn test_edit_local_article() -> MyResult<()> {
     assert_eq!(create_res.article.text, get_res.article.text);
 
     // edit the article
-    let edit_form = EditArticleData {
+    let edit_form = EditArticleForm {
         article_id: create_res.article.id,
         new_text: "Lorem Ipsum 2\n".to_string(),
         summary: "summary".to_string(),
@@ -246,7 +256,7 @@ async fn test_edit_remote_article() -> MyResult<()> {
         .await?;
 
     // create new article
-    let create_form = CreateArticleData {
+    let create_form = CreateArticleForm {
         title: "Manu_Chao".to_string(),
         text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
         summary: "create article".to_string(),
@@ -256,7 +266,7 @@ async fn test_edit_remote_article() -> MyResult<()> {
     assert!(create_res.article.local);
 
     // article should be federated to alpha and gamma
-    let get_article_data_alpha = GetArticleData {
+    let get_article_data_alpha = GetArticleForm {
         title: Some(create_res.article.title.to_string()),
         domain: Some(beta_id_on_alpha.domain),
         id: None,
@@ -269,7 +279,7 @@ async fn test_edit_remote_article() -> MyResult<()> {
     assert_eq!(1, get_res.edits.len());
     assert!(!get_res.article.local);
 
-    let get_article_data_gamma = GetArticleData {
+    let get_article_data_gamma = GetArticleForm {
         title: Some(create_res.article.title.to_string()),
         domain: Some(beta_id_on_gamma.domain),
         id: None,
@@ -281,7 +291,7 @@ async fn test_edit_remote_article() -> MyResult<()> {
     assert_eq!(create_res.article.title, get_res.article.title);
     assert_eq!(create_res.article.text, get_res.article.text);
 
-    let edit_form = EditArticleData {
+    let edit_form = EditArticleForm {
         article_id: get_res.article.id,
         new_text: "Lorem Ipsum 2\n".to_string(),
         summary: "summary".to_string(),
@@ -317,7 +327,7 @@ async fn test_local_edit_conflict() -> MyResult<()> {
     let data = TestData::start().await;
 
     // create new article
-    let create_form = CreateArticleData {
+    let create_form = CreateArticleForm {
         title: "Manu_Chao".to_string(),
         text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
         summary: "create article".to_string(),
@@ -327,7 +337,7 @@ async fn test_local_edit_conflict() -> MyResult<()> {
     assert!(create_res.article.local);
 
     // one user edits article
-    let edit_form = EditArticleData {
+    let edit_form = EditArticleForm {
         article_id: create_res.article.id,
         new_text: "Lorem Ipsum\n".to_string(),
         summary: "summary".to_string(),
@@ -339,7 +349,7 @@ async fn test_local_edit_conflict() -> MyResult<()> {
     assert_eq!(2, edit_res.edits.len());
 
     // another user edits article, without being aware of previous edit
-    let edit_form = EditArticleData {
+    let edit_form = EditArticleForm {
         article_id: create_res.article.id,
         new_text: "Ipsum Lorem\n".to_string(),
         summary: "summary".to_string(),
@@ -357,7 +367,7 @@ async fn test_local_edit_conflict() -> MyResult<()> {
     assert_eq!(1, conflicts.len());
     assert_eq!(conflicts[0], edit_res);
 
-    let edit_form = EditArticleData {
+    let edit_form = EditArticleForm {
         article_id: create_res.article.id,
         new_text: "Lorem Ipsum and Ipsum Lorem\n".to_string(),
         summary: "summary".to_string(),
@@ -383,7 +393,7 @@ async fn test_federated_edit_conflict() -> MyResult<()> {
         .await?;
 
     // create new article
-    let create_form = CreateArticleData {
+    let create_form = CreateArticleForm {
         title: "Manu_Chao".to_string(),
         text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
         summary: "create article".to_string(),
@@ -400,7 +410,7 @@ async fn test_federated_edit_conflict() -> MyResult<()> {
     assert_eq!(create_res.article.text, resolve_res.article.text);
 
     // alpha edits article
-    let get_article_data = GetArticleData {
+    let get_article_data = GetArticleForm {
         title: Some(create_form.title.to_string()),
         domain: Some(beta_id_on_alpha.domain),
         id: None,
@@ -408,7 +418,7 @@ async fn test_federated_edit_conflict() -> MyResult<()> {
     let get_res = data.alpha.get_article(get_article_data).await?;
     assert_eq!(&create_res.edits.len(), &get_res.edits.len());
     assert_eq!(&create_res.edits[0].edit.hash, &get_res.edits[0].edit.hash);
-    let edit_form = EditArticleData {
+    let edit_form = EditArticleForm {
         article_id: get_res.article.id,
         new_text: "Lorem Ipsum\n".to_string(),
         summary: "summary".to_string(),
@@ -427,7 +437,7 @@ async fn test_federated_edit_conflict() -> MyResult<()> {
 
     // gamma also edits, as its not the latest version there is a conflict. local version should
     // not be updated with this conflicting version, instead user needs to handle the conflict
-    let edit_form = EditArticleData {
+    let edit_form = EditArticleForm {
         article_id: resolve_res.article.id,
         new_text: "aaaa\n".to_string(),
         summary: "summary".to_string(),
@@ -443,7 +453,7 @@ async fn test_federated_edit_conflict() -> MyResult<()> {
     assert_eq!(1, conflicts.len());
 
     // resolve the conflict
-    let edit_form = EditArticleData {
+    let edit_form = EditArticleForm {
         article_id: resolve_res.article.id,
         new_text: "aaaa\n".to_string(),
         summary: "summary".to_string(),
@@ -465,7 +475,7 @@ async fn test_overlapping_edits_no_conflict() -> MyResult<()> {
     let data = TestData::start().await;
 
     // create new article
-    let create_form = CreateArticleData {
+    let create_form = CreateArticleForm {
         title: "Manu_Chao".to_string(),
         text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
         summary: "create article".to_string(),
@@ -475,7 +485,7 @@ async fn test_overlapping_edits_no_conflict() -> MyResult<()> {
     assert!(create_res.article.local);
 
     // one user edits article
-    let edit_form = EditArticleData {
+    let edit_form = EditArticleForm {
         article_id: create_res.article.id,
         new_text: "my\nexample\ntext\n".to_string(),
         summary: "summary".to_string(),
@@ -487,7 +497,7 @@ async fn test_overlapping_edits_no_conflict() -> MyResult<()> {
     assert_eq!(2, edit_res.edits.len());
 
     // another user edits article, without being aware of previous edit
-    let edit_form = EditArticleData {
+    let edit_form = EditArticleForm {
         article_id: create_res.article.id,
         new_text: "some\nexample\narticle\n".to_string(),
         summary: "summary".to_string(),
@@ -508,7 +518,7 @@ async fn test_fork_article() -> MyResult<()> {
     let data = TestData::start().await;
 
     // create article
-    let create_form = CreateArticleData {
+    let create_form = CreateArticleForm {
         title: "Manu_Chao".to_string(),
         text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
         summary: "create article".to_string(),
@@ -526,7 +536,7 @@ async fn test_fork_article() -> MyResult<()> {
     assert_eq!(create_res.edits.len(), resolve_res.edits.len());
 
     // fork the article to local instance
-    let fork_form = ForkArticleData {
+    let fork_form = ForkArticleForm {
         article_id: resolved_article.id,
         new_title: resolved_article.title.clone(),
     };
@@ -546,7 +556,7 @@ async fn test_fork_article() -> MyResult<()> {
     assert_eq!(forked_article.instance_id, beta_instance.instance.id);
 
     // now search returns two articles for this title (original and forked)
-    let search_form = SearchArticleData {
+    let search_form = SearchArticleForm {
         query: create_form.title.clone(),
     };
     let search_res = data.beta.search(&search_form).await?;
@@ -560,20 +570,20 @@ async fn test_user_registration_login() -> MyResult<()> {
     let data = TestData::start().await;
     let username = "my_user";
     let password = "hunter2";
-    let register_data = RegisterUserData {
+    let register_data = RegisterUserForm {
         username: username.to_string(),
         password: password.to_string(),
     };
     data.alpha.register(register_data).await?;
 
-    let login_data = LoginUserData {
+    let login_data = LoginUserForm {
         username: username.to_string(),
         password: "asd123".to_string(),
     };
     let invalid_login = data.alpha.login(login_data).await;
     assert!(invalid_login.is_err());
 
-    let login_data = LoginUserData {
+    let login_data = LoginUserForm {
         username: username.to_string(),
         password: password.to_string(),
     };
@@ -595,7 +605,7 @@ async fn test_user_profile() -> MyResult<()> {
     let data = TestData::start().await;
 
     // Create an article and federate it, in order to federate the user who created it
-    let create_form = CreateArticleData {
+    let create_form = CreateArticleForm {
         title: "Manu_Chao".to_string(),
         text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
         summary: "create article".to_string(),
@@ -607,13 +617,60 @@ async fn test_user_profile() -> MyResult<()> {
     let domain = extract_domain(&data.alpha.my_profile().await?.person.ap_id);
 
     // Now we can fetch the remote user from local api
-    let params = GetUserData {
+    let params = GetUserForm {
         name: "alpha".to_string(),
         domain: Some(domain),
     };
     let user = data.beta.get_user(params).await?;
     assert_eq!("alpha", user.username);
     assert!(!user.local);
+
+    data.stop()
+}
+
+#[tokio::test]
+async fn test_lock_article() -> MyResult<()> {
+    let data = TestData::start().await;
+
+    // create article
+    let create_form = CreateArticleForm {
+        title: "Manu_Chao".to_string(),
+        text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
+        summary: "create article".to_string(),
+    };
+    let create_res = data.alpha.create_article(&create_form).await?;
+    assert!(!create_res.article.protected);
+
+    // lock from normal user fails
+    let lock_form = ProtectArticleForm {
+        article_id: create_res.article.id,
+        protected: true,
+    };
+    let lock_res = data.alpha.protect_article(&lock_form).await;
+    assert!(lock_res.is_err());
+
+    // login as admin to lock article
+    let form = LoginUserForm {
+        username: "ibis".to_string(),
+        password: "ibis".to_string(),
+    };
+    data.alpha.login(form).await?;
+    let lock_res = data.alpha.protect_article(&lock_form).await?;
+    assert!(lock_res.protected);
+
+    let resolve_res: ArticleView = data
+        .gamma
+        .resolve_article(create_res.article.ap_id.inner().clone())
+        .await?;
+    let edit_form = EditArticleForm {
+        article_id: resolve_res.article.id,
+        new_text: "test".to_string(),
+        summary: "test".to_string(),
+        previous_version_id: resolve_res.latest_version,
+        resolve_conflict_id: None,
+    };
+    let edit_res = data.gamma.edit_article(&edit_form).await;
+    assert!(edit_res.is_err());
 
     data.stop()
 }

@@ -1,18 +1,14 @@
-use crate::backend::database::IbisData;
-use crate::backend::error::Error;
-use crate::backend::federation::objects::edit::ApubEdit;
-use crate::common::DbArticle;
-
-use crate::common::DbEdit;
-use crate::common::DbInstance;
-use activitypub_federation::kinds::collection::OrderedCollectionType;
-use activitypub_federation::protocol::verification::verify_domains_match;
+use crate::{
+    backend::{database::IbisData, error::Error, federation::objects::edit::ApubEdit},
+    common::{DbArticle, DbEdit, DbInstance},
+};
 use activitypub_federation::{
     config::Data,
+    kinds::collection::OrderedCollectionType,
+    protocol::verification::verify_domains_match,
     traits::{Collection, Object},
 };
-use futures::future;
-use futures::future::try_join_all;
+use futures::{future, future::try_join_all};
 use serde::{Deserialize, Serialize};
 use url::Url;
 

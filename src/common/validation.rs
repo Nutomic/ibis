@@ -1,14 +1,14 @@
-use crate::common::{DbArticle, MAIN_PAGE_NAME};
-use anyhow::anyhow;
-use anyhow::Result;
+use crate::common::DbArticle;
+use anyhow::{anyhow, Result};
 
 pub fn can_edit_article(article: &DbArticle, is_admin: bool) -> Result<()> {
-    if article.title == MAIN_PAGE_NAME {
+    let err = anyhow!("Article is protected, only admins on origin instance can edit");
+    if article.protected {
         if !article.local {
-            return Err(anyhow!("Cannot edit main page of remote instance"));
+            return Err(err);
         }
-        if article.local && !is_admin {
-            return Err(anyhow!("Only admin can edit main page"));
+        if !is_admin {
+            return Err(err);
         }
     }
     Ok(())

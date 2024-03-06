@@ -1,19 +1,17 @@
-use crate::backend::database::instance::DbInstanceForm;
-use crate::backend::database::IbisData;
-use crate::backend::error::Error;
-use crate::backend::error::MyResult;
-use crate::backend::federation::objects::articles_collection::DbArticleCollection;
-use crate::backend::federation::send_activity;
-use crate::common::utils::extract_domain;
-use crate::common::DbInstance;
-use activitypub_federation::fetch::collection_id::CollectionId;
-use activitypub_federation::kinds::actor::ServiceType;
-use activitypub_federation::traits::ActivityHandler;
+use crate::{
+    backend::{
+        database::{instance::DbInstanceForm, IbisData},
+        error::{Error, MyResult},
+        federation::{objects::articles_collection::DbArticleCollection, send_activity},
+    },
+    common::{utils::extract_domain, DbInstance},
+};
 use activitypub_federation::{
     config::Data,
-    fetch::object_id::ObjectId,
+    fetch::{collection_id::CollectionId, object_id::ObjectId},
+    kinds::actor::ServiceType,
     protocol::{public_key::PublicKey, verification::verify_domains_match},
-    traits::{Actor, Object},
+    traits::{ActivityHandler, Actor, Object},
 };
 use chrono::{DateTime, Local, Utc};
 use serde::{Deserialize, Serialize};

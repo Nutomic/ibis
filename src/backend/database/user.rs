@@ -1,18 +1,30 @@
-use crate::backend::database::schema::{instance, instance_follow};
-use crate::backend::database::schema::{local_user, person};
-use crate::backend::database::IbisData;
-use crate::backend::error::MyResult;
-use crate::common::utils::http_protocol_str;
-use crate::common::{DbInstance, DbLocalUser, DbPerson, LocalUserView};
-use activitypub_federation::config::Data;
-use activitypub_federation::fetch::object_id::ObjectId;
-use activitypub_federation::http_signatures::generate_actor_keypair;
-use bcrypt::hash;
-use bcrypt::DEFAULT_COST;
+use crate::{
+    backend::{
+        database::{
+            schema::{instance, instance_follow, local_user, person},
+            IbisData,
+        },
+        error::MyResult,
+    },
+    common::{utils::http_protocol_str, DbInstance, DbLocalUser, DbPerson, LocalUserView},
+};
+use activitypub_federation::{
+    config::Data,
+    fetch::object_id::ObjectId,
+    http_signatures::generate_actor_keypair,
+};
+use bcrypt::{hash, DEFAULT_COST};
 use chrono::{DateTime, Local, Utc};
-use diesel::{insert_into, AsChangeset, Insertable, RunQueryDsl};
-use diesel::{ExpressionMethods, JoinOnDsl};
-use diesel::{PgTextExpressionMethods, QueryDsl};
+use diesel::{
+    insert_into,
+    AsChangeset,
+    ExpressionMethods,
+    Insertable,
+    JoinOnDsl,
+    PgTextExpressionMethods,
+    QueryDsl,
+    RunQueryDsl,
+};
 use std::ops::DerefMut;
 
 #[derive(Debug, Clone, Insertable, AsChangeset)]

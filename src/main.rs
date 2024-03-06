@@ -23,8 +23,7 @@ pub async fn main() -> ibis_lib::backend::error::MyResult<()> {
 #[cfg(not(feature = "ssr"))]
 fn main() {
     use ibis_lib::frontend::app::App;
-    use leptos::mount_to_body;
-    use leptos::view;
+    use leptos::{mount_to_body, view};
 
     _ = console_log::init_with_level(log::Level::Debug);
     console_error_panic_hook::set_once();

@@ -1,29 +1,44 @@
-use crate::common::LocalUserView;
-use crate::frontend::api::ApiClient;
-use crate::frontend::backend_hostname;
-use crate::frontend::components::nav::Nav;
-use crate::frontend::pages::article::actions::ArticleActions;
-use crate::frontend::pages::article::create::CreateArticle;
-use crate::frontend::pages::article::edit::EditArticle;
-use crate::frontend::pages::article::history::ArticleHistory;
-use crate::frontend::pages::article::list::ListArticles;
-use crate::frontend::pages::article::read::ReadArticle;
-use crate::frontend::pages::conflicts::Conflicts;
-use crate::frontend::pages::diff::EditDiff;
-use crate::frontend::pages::instance_details::InstanceDetails;
-use crate::frontend::pages::login::Login;
-use crate::frontend::pages::register::Register;
-use crate::frontend::pages::search::Search;
-use crate::frontend::pages::user_profile::UserProfile;
-use leptos::{
-    component, create_local_resource, create_rw_signal, expect_context, provide_context,
-    use_context, view, IntoView, RwSignal, SignalGet, SignalGetUntracked, SignalUpdate,
+use crate::{
+    common::LocalUserView,
+    frontend::{
+        api::ApiClient,
+        backend_hostname,
+        components::nav::Nav,
+        pages::{
+            article::{
+                actions::ArticleActions,
+                create::CreateArticle,
+                edit::EditArticle,
+                history::ArticleHistory,
+                list::ListArticles,
+                read::ReadArticle,
+            },
+            conflicts::Conflicts,
+            diff::EditDiff,
+            instance_details::InstanceDetails,
+            login::Login,
+            register::Register,
+            search::Search,
+            user_profile::UserProfile,
+        },
+    },
 };
-use leptos_meta::provide_meta_context;
-use leptos_meta::*;
-use leptos_router::Route;
-use leptos_router::Router;
-use leptos_router::Routes;
+use leptos::{
+    component,
+    create_local_resource,
+    create_rw_signal,
+    expect_context,
+    provide_context,
+    use_context,
+    view,
+    IntoView,
+    RwSignal,
+    SignalGet,
+    SignalGetUntracked,
+    SignalUpdate,
+};
+use leptos_meta::{provide_meta_context, *};
+use leptos_router::{Route, Router, Routes};
 use reqwest::Client;
 
 // https://book.leptos.dev/15_global_state.html

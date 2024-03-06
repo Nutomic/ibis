@@ -1,5 +1,4 @@
-use crate::common::CreateArticleData;
-use crate::frontend::app::GlobalState;
+use crate::{common::CreateArticleForm, frontend::app::GlobalState};
 use leptos::*;
 use leptos_router::Redirect;
 
@@ -18,7 +17,7 @@ pub fn CreateArticle() -> impl IntoView {
         let text = text.clone();
         let summary = summary.clone();
         async move {
-            let form = CreateArticleData {
+            let form = CreateArticleForm {
                 title,
                 text,
                 summary,

@@ -1,10 +1,14 @@
-use crate::common::ForkArticleData;
-use crate::frontend::app::GlobalState;
-use crate::frontend::article_link;
-use crate::frontend::article_title;
-use crate::frontend::components::article_nav::ArticleNav;
-use crate::frontend::pages::article_resource;
-use crate::frontend::DbArticle;
+use crate::{
+    common::ForkArticleForm,
+    frontend::{
+        app::GlobalState,
+        article_link,
+        article_title,
+        components::article_nav::ArticleNav,
+        pages::article_resource,
+        DbArticle,
+    },
+};
 use leptos::*;
 use leptos_router::Redirect;
 
@@ -15,7 +19,7 @@ pub fn ArticleActions() -> impl IntoView {
     let (fork_response, set_fork_response) = create_signal(Option::<DbArticle>::None);
     let (error, set_error) = create_signal(None::<String>);
     let fork_action = create_action(move |(article_id, new_title): &(i32, String)| {
-        let params = ForkArticleData {
+        let params = ForkArticleForm {
             article_id: *article_id,
             new_title: new_title.to_string(),
         };

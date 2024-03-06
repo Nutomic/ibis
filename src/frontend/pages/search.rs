@@ -1,6 +1,7 @@
-use crate::common::{DbArticle, DbInstance, SearchArticleData};
-use crate::frontend::app::GlobalState;
-use crate::frontend::{article_link, article_title};
+use crate::{
+    common::{DbArticle, DbInstance, SearchArticleForm},
+    frontend::{app::GlobalState, article_link, article_title},
+};
 use leptos::*;
 use leptos_router::use_query_map;
 use serde::{Deserialize, Serialize};
@@ -28,7 +29,7 @@ pub fn Search() -> impl IntoView {
         let mut search_results = SearchResults::default();
         let api_client = GlobalState::api_client();
         let url = Url::parse(&query);
-        let search_data = SearchArticleData { query };
+        let search_data = SearchArticleForm { query };
         let search = api_client.search(&search_data);
 
         match search.await {

@@ -1,16 +1,23 @@
-use crate::backend::database::schema::conflict;
-use crate::backend::database::IbisData;
-use crate::backend::error::MyResult;
-use crate::backend::federation::activities::submit_article_update;
-use crate::backend::utils::generate_article_version;
-use crate::common::DbEdit;
-use crate::common::DbLocalUser;
-use crate::common::EditVersion;
-use crate::common::{ApiConflict, DbArticle};
+use crate::{
+    backend::{
+        database::{schema::conflict, IbisData},
+        error::MyResult,
+        federation::activities::submit_article_update,
+        utils::generate_article_version,
+    },
+    common::{ApiConflict, DbArticle, DbEdit, DbLocalUser, EditVersion},
+};
 use activitypub_federation::config::Data;
-use diesel::ExpressionMethods;
 use diesel::{
-    delete, insert_into, Identifiable, Insertable, QueryDsl, Queryable, RunQueryDsl, Selectable,
+    delete,
+    insert_into,
+    ExpressionMethods,
+    Identifiable,
+    Insertable,
+    QueryDsl,
+    Queryable,
+    RunQueryDsl,
+    Selectable,
 };
 use diffy::{apply, merge, Patch};
 use serde::{Deserialize, Serialize};

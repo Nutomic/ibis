@@ -1,17 +1,24 @@
-use crate::backend::database::schema::{article, edit, instance};
-use crate::backend::database::IbisData;
-use crate::backend::error::MyResult;
-use crate::backend::federation::objects::edits_collection::DbEditCollection;
-use crate::common::DbEdit;
-use crate::common::EditVersion;
-use crate::common::{ArticleView, DbArticle};
-use activitypub_federation::fetch::collection_id::CollectionId;
-use activitypub_federation::fetch::object_id::ObjectId;
-use diesel::dsl::max;
-
-use diesel::ExpressionMethods;
+use crate::{
+    backend::{
+        database::{
+            schema::{article, edit, instance},
+            IbisData,
+        },
+        error::MyResult,
+        federation::objects::edits_collection::DbEditCollection,
+    },
+    common::{ArticleView, DbArticle, DbEdit, EditVersion},
+};
+use activitypub_federation::fetch::{collection_id::CollectionId, object_id::ObjectId};
 use diesel::{
-    insert_into, AsChangeset, BoolExpressionMethods, Insertable, PgTextExpressionMethods, QueryDsl,
+    dsl::max,
+    insert_into,
+    AsChangeset,
+    BoolExpressionMethods,
+    ExpressionMethods,
+    Insertable,
+    PgTextExpressionMethods,
+    QueryDsl,
     RunQueryDsl,
 };
 use std::ops::DerefMut;
@@ -24,6 +31,7 @@ pub struct DbArticleForm {
     pub ap_id: ObjectId<DbArticle>,
     pub instance_id: i32,
     pub local: bool,
+    pub protected: bool,
 }
 
 // TODO: get rid of unnecessary methods
@@ -55,6 +63,13 @@ impl DbArticle {
         let mut conn = data.db_pool.get()?;
         Ok(diesel::update(article::dsl::article.find(id))
             .set(article::dsl::text.eq(text))
+            .get_result::<Self>(conn.deref_mut())?)
+    }
+
+    pub fn update_protected(id: i32, locked: bool, data: &IbisData) -> MyResult<Self> {
+        let mut conn = data.db_pool.get()?;
+        Ok(diesel::update(article::dsl::article.find(id))
+            .set(article::dsl::protected.eq(locked))
             .get_result::<Self>(conn.deref_mut())?)
     }
 

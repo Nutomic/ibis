@@ -1,6 +1,5 @@
 use crate::frontend::app::GlobalState;
-use leptos::*;
-use leptos::{component, use_context, view, IntoView, RwSignal, SignalWith};
+use leptos::{component, use_context, view, IntoView, RwSignal, SignalWith, *};
 use leptos_router::*;
 
 #[component]

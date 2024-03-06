@@ -1,19 +1,20 @@
-use crate::backend::database::IbisData;
-use crate::backend::error::MyResult;
-
-use crate::backend::federation::activities::reject::RejectEdit;
-use crate::backend::federation::activities::update_local_article::UpdateLocalArticle;
-use crate::backend::federation::objects::edit::ApubEdit;
-use crate::backend::federation::send_activity;
-use crate::backend::utils::generate_activity_id;
-use crate::common::validation::can_edit_article;
-use crate::common::DbArticle;
-use crate::common::DbEdit;
-use crate::common::DbInstance;
-use activitypub_federation::kinds::activity::UpdateType;
+use crate::{
+    backend::{
+        database::IbisData,
+        error::MyResult,
+        federation::{
+            activities::{reject::RejectEdit, update_local_article::UpdateLocalArticle},
+            objects::edit::ApubEdit,
+            send_activity,
+        },
+        utils::generate_activity_id,
+    },
+    common::{validation::can_edit_article, DbArticle, DbEdit, DbInstance},
+};
 use activitypub_federation::{
     config::Data,
     fetch::object_id::ObjectId,
+    kinds::activity::UpdateType,
     protocol::helpers::deserialize_one_or_many,
     traits::{ActivityHandler, Object},
 };

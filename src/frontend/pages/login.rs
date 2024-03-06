@@ -1,6 +1,7 @@
-use crate::common::LoginUserData;
-use crate::frontend::app::GlobalState;
-use crate::frontend::components::credentials::*;
+use crate::{
+    common::LoginUserForm,
+    frontend::{app::GlobalState, components::credentials::*},
+};
 use leptos::*;
 use leptos_router::Redirect;
 
@@ -13,7 +14,7 @@ pub fn Login() -> impl IntoView {
     let login_action = create_action(move |(email, password): &(String, String)| {
         let username = email.to_string();
         let password = password.to_string();
-        let credentials = LoginUserData { username, password };
+        let credentials = LoginUserForm { username, password };
         async move {
             set_wait_for_response.update(|w| *w = true);
             let result = GlobalState::api_client().login(credentials).await;

@@ -1,28 +1,42 @@
-use crate::backend::api::article::{
-    create_article, list_articles, resolve_article, search_article,
+use crate::{
+    backend::{
+        api::{
+            article::{
+                create_article,
+                edit_article,
+                fork_article,
+                get_article,
+                list_articles,
+                protect_article,
+                resolve_article,
+                search_article,
+            },
+            instance::{follow_instance, get_local_instance, resolve_instance},
+            user::{
+                get_user,
+                login_user,
+                logout_user,
+                my_profile,
+                register_user,
+                validate,
+                AUTH_COOKIE,
+            },
+        },
+        database::{conflict::DbConflict, IbisData},
+        error::MyResult,
+    },
+    common::{ApiConflict, LocalUserView},
 };
-use crate::backend::api::article::{edit_article, fork_article, get_article};
-use crate::backend::api::instance::get_local_instance;
-use crate::backend::api::instance::{follow_instance, resolve_instance};
-use crate::backend::api::user::validate;
-use crate::backend::api::user::{get_user, register_user};
-use crate::backend::api::user::{login_user, logout_user};
-use crate::backend::api::user::{my_profile, AUTH_COOKIE};
-use crate::backend::database::conflict::DbConflict;
-use crate::backend::database::IbisData;
-use crate::backend::error::MyResult;
-use crate::common::ApiConflict;
-use crate::common::LocalUserView;
 use activitypub_federation::config::Data;
-use axum::routing::{get, post};
 use axum::{
-    http::Request,
-    http::StatusCode,
+    http::{Request, StatusCode},
     middleware::{self, Next},
     response::Response,
+    routing::{get, post},
     Extension,
+    Json,
+    Router,
 };
-use axum::{Json, Router};
 use axum_extra::extract::CookieJar;
 use axum_macros::debug_handler;
 use futures::future::try_join_all;
@@ -40,6 +54,7 @@ pub fn api_routes() -> Router {
         .route("/article/list", get(list_articles))
         .route("/article/fork", post(fork_article))
         .route("/article/resolve", get(resolve_article))
+        .route("/article/protect", post(protect_article))
         .route("/edit_conflicts", get(edit_conflicts))
         .route("/instance", get(get_local_instance))
         .route("/instance/follow", post(follow_instance))

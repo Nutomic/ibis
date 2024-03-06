@@ -1,13 +1,9 @@
-use crate::backend::database::IbisData;
-use crate::backend::error::MyResult;
-use crate::backend::federation::activities::follow::Follow;
-use crate::common::{DbInstance, InstanceView, ResolveObject};
-use crate::common::{FollowInstance, LocalUserView};
-use activitypub_federation::config::Data;
-use activitypub_federation::fetch::object_id::ObjectId;
-use axum::extract::Query;
-use axum::Extension;
-use axum::{Form, Json};
+use crate::{
+    backend::{database::IbisData, error::MyResult, federation::activities::follow::Follow},
+    common::{DbInstance, FollowInstance, InstanceView, LocalUserView, ResolveObject},
+};
+use activitypub_federation::{config::Data, fetch::object_id::ObjectId};
+use axum::{extract::Query, Extension, Form, Json};
 use axum_macros::debug_handler;
 
 /// Retrieve the local instance info.

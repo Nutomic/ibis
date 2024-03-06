@@ -1,12 +1,14 @@
-use crate::backend::database::schema::{edit, person};
-use crate::backend::error::MyResult;
-use crate::backend::IbisData;
-use crate::common::{DbArticle, DbEdit};
-use crate::common::{EditVersion, EditView};
+use crate::{
+    backend::{
+        database::schema::{edit, person},
+        error::MyResult,
+        IbisData,
+    },
+    common::{DbArticle, DbEdit, EditVersion, EditView},
+};
 use activitypub_federation::fetch::object_id::ObjectId;
 use chrono::{DateTime, Utc};
-use diesel::ExpressionMethods;
-use diesel::{insert_into, AsChangeset, Insertable, QueryDsl, RunQueryDsl};
+use diesel::{insert_into, AsChangeset, ExpressionMethods, Insertable, QueryDsl, RunQueryDsl};
 use diffy::create_patch;
 use std::ops::DerefMut;
 

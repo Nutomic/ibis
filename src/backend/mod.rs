@@ -1,38 +1,45 @@
-use crate::backend::config::IbisConfig;
-use crate::backend::database::article::DbArticleForm;
-use crate::backend::database::instance::DbInstanceForm;
-use crate::backend::database::IbisData;
-use crate::backend::error::Error;
-use crate::backend::error::MyResult;
-use crate::backend::federation::activities::submit_article_update;
-use crate::backend::federation::routes::federation_routes;
-use crate::backend::federation::VerifyUrlData;
-use crate::backend::utils::generate_activity_id;
-use crate::common::utils::http_protocol_str;
-use crate::common::{DbArticle, DbInstance, DbPerson, EditVersion, MAIN_PAGE_NAME};
-use crate::frontend::app::App;
-use activitypub_federation::config::{Data, FederationConfig, FederationMiddleware};
-use activitypub_federation::fetch::collection_id::CollectionId;
-use activitypub_federation::fetch::object_id::ObjectId;
-use activitypub_federation::http_signatures::generate_actor_keypair;
+use crate::{
+    backend::{
+        config::IbisConfig,
+        database::{article::DbArticleForm, instance::DbInstanceForm, IbisData},
+        error::{Error, MyResult},
+        federation::{activities::submit_article_update, routes::federation_routes, VerifyUrlData},
+        utils::generate_activity_id,
+    },
+    common::{
+        utils::http_protocol_str,
+        DbArticle,
+        DbInstance,
+        DbPerson,
+        EditVersion,
+        MAIN_PAGE_NAME,
+    },
+    frontend::app::App,
+};
+use activitypub_federation::{
+    config::{Data, FederationConfig, FederationMiddleware},
+    fetch::{collection_id::CollectionId, object_id::ObjectId},
+    http_signatures::generate_actor_keypair,
+};
 use api::api_routes;
-use axum::debug_handler;
-use axum::headers::HeaderMap;
-use axum::http::{HeaderValue, Request};
-use axum::response::IntoResponse;
-use axum::routing::get;
-use axum::Server;
-use axum::ServiceExt;
-use axum::{middleware::Next, response::Response, Router};
+use axum::{
+    debug_handler,
+    headers::HeaderMap,
+    http::{HeaderValue, Request},
+    middleware::Next,
+    response::{IntoResponse, Response},
+    routing::get,
+    Router,
+    Server,
+    ServiceExt,
+};
 use chrono::Local;
-use diesel::r2d2::ConnectionManager;
-use diesel::r2d2::Pool;
-use diesel::PgConnection;
-use diesel_migrations::embed_migrations;
-use diesel_migrations::EmbeddedMigrations;
-use diesel_migrations::MigrationHarness;
-use leptos::leptos_config::get_config_from_str;
-use leptos::*;
+use diesel::{
+    r2d2::{ConnectionManager, Pool},
+    PgConnection,
+};
+use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
+use leptos::{leptos_config::get_config_from_str, *};
 use leptos_axum::{generate_route_list, LeptosRoutes};
 use log::info;
 use tower::Layer;
@@ -179,6 +186,7 @@ async fn setup(data: &Data<IbisData>) -> Result<(), Error> {
         ))?,
         instance_id: instance.id,
         local: true,
+        protected: true,
     };
     let article = DbArticle::create(form, data)?;
     // also create an article so its included in most recently edited list

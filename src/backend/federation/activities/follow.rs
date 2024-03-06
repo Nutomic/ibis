@@ -1,15 +1,17 @@
-use crate::backend::error::MyResult;
-use crate::backend::federation::send_activity;
-use crate::backend::{
-    database::IbisData, federation::activities::accept::Accept, generate_activity_id,
+use crate::{
+    backend::{
+        database::IbisData,
+        error::MyResult,
+        federation::{activities::accept::Accept, send_activity},
+        generate_activity_id,
+    },
+    common::{DbInstance, DbPerson},
 };
-use crate::common::DbInstance;
-use crate::common::DbPerson;
-use activitypub_federation::protocol::verification::verify_urls_match;
 use activitypub_federation::{
     config::Data,
     fetch::object_id::ObjectId,
     kinds::activity::FollowType,
+    protocol::verification::verify_urls_match,
     traits::{ActivityHandler, Actor},
 };
 use serde::{Deserialize, Serialize};

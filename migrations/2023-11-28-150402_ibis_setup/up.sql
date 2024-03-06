@@ -43,7 +43,8 @@ create table article (
     text text not null,
     ap_id varchar(255) not null unique,
     instance_id int REFERENCES instance ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
-    local bool not null
+    local bool not null,
+    protected bool not null
 );
 
 create table edit (

@@ -1,16 +1,29 @@
-use crate::backend::database::schema::{instance, instance_follow};
-use crate::backend::database::IbisData;
-use crate::backend::error::MyResult;
-use crate::backend::federation::objects::articles_collection::DbArticleCollection;
-use crate::common::{DbInstance, DbPerson, InstanceView};
-use activitypub_federation::config::Data;
-use activitypub_federation::fetch::collection_id::CollectionId;
-use activitypub_federation::fetch::object_id::ObjectId;
+use crate::{
+    backend::{
+        database::{
+            schema::{instance, instance_follow},
+            IbisData,
+        },
+        error::MyResult,
+        federation::objects::articles_collection::DbArticleCollection,
+    },
+    common::{DbInstance, DbPerson, InstanceView},
+};
+use activitypub_federation::{
+    config::Data,
+    fetch::{collection_id::CollectionId, object_id::ObjectId},
+};
 use chrono::{DateTime, Utc};
-use diesel::ExpressionMethods;
-use diesel::{insert_into, AsChangeset, Insertable, JoinOnDsl, QueryDsl, RunQueryDsl};
-use std::fmt::Debug;
-use std::ops::DerefMut;
+use diesel::{
+    insert_into,
+    AsChangeset,
+    ExpressionMethods,
+    Insertable,
+    JoinOnDsl,
+    QueryDsl,
+    RunQueryDsl,
+};
+use std::{fmt::Debug, ops::DerefMut};
 
 #[derive(Debug, Clone, Insertable, AsChangeset)]
 #[diesel(table_name = instance, check_for_backend(diesel::pg::Pg))]

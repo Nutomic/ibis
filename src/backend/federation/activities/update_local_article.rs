@@ -1,14 +1,16 @@
-use crate::backend::database::IbisData;
-use crate::backend::error::MyResult;
-use crate::backend::federation::objects::article::ApubArticle;
-
-use crate::backend::utils::generate_activity_id;
-use crate::common::DbArticle;
-use crate::common::DbInstance;
-use activitypub_federation::kinds::activity::UpdateType;
+use crate::{
+    backend::{
+        database::IbisData,
+        error::MyResult,
+        federation::objects::article::ApubArticle,
+        utils::generate_activity_id,
+    },
+    common::{DbArticle, DbInstance},
+};
 use activitypub_federation::{
     config::Data,
     fetch::object_id::ObjectId,
+    kinds::activity::UpdateType,
     protocol::helpers::deserialize_one_or_many,
     traits::{ActivityHandler, Object},
 };

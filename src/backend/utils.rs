@@ -1,14 +1,12 @@
-use crate::backend::error::MyResult;
-use crate::common::EditView;
-use crate::common::{utils, EditVersion};
-use activitypub_federation::fetch::object_id::ObjectId;
-use activitypub_federation::traits::Object;
+use crate::{
+    backend::error::MyResult,
+    common::{utils, utils::extract_domain, EditVersion, EditView},
+};
+use activitypub_federation::{fetch::object_id::ObjectId, traits::Object};
 use anyhow::anyhow;
 use diffy::{apply, Patch};
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use serde::Deserialize;
-
-use crate::common::utils::extract_domain;
 use url::{ParseError, Url};
 
 pub fn generate_activity_id<T>(for_url: &ObjectId<T>) -> Result<Url, ParseError>
