@@ -1,6 +1,7 @@
-use std::fs::create_dir_all;
-use std::fs::File;
-use std::io::Result;
+use std::{
+    fs::{create_dir_all, File},
+    io::Result,
+};
 
 /// Create placeholders for wasm files so that `cargo check` etc work without explicitly building
 /// frontend.
