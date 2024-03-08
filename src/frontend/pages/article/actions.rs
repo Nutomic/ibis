@@ -1,5 +1,5 @@
 use crate::{
-    common::ForkArticleForm,
+    common::{ForkArticleForm, ProtectArticleForm},
     frontend::{
         app::GlobalState,
         article_link,
@@ -14,6 +14,7 @@ use leptos_router::Redirect;
 
 #[component]
 pub fn ArticleActions() -> impl IntoView {
+    let global_state = use_context::<RwSignal<GlobalState>>().unwrap();
     let article = article_resource();
     let (new_title, set_new_title) = create_signal(String::new());
     let (fork_response, set_fork_response) = create_signal(Option::<DbArticle>::None);
@@ -34,8 +35,22 @@ pub fn ArticleActions() -> impl IntoView {
             }
         }
     });
-    // TODO: show fork article option (with option to set different title). after forking do redirect
-
+    let protect_action = create_action(move |(id, protected): &(i32, bool)| {
+        let params = ProtectArticleForm {
+            article_id: *id,
+            protected: !protected,
+        };
+        async move {
+            set_error.update(|e| *e = None);
+            let result = GlobalState::api_client().protect_article(&params).await;
+            match result {
+                Ok(_res) => article.refetch(),
+                Err(err) => {
+                    set_error.update(|e| *e = Some(err.0.to_string()));
+                }
+            }
+        }
+    });
     view! {
         <ArticleNav article=article/>
         <Suspense fallback=|| view! {  "Loading..." }> {
@@ -50,6 +65,15 @@ pub fn ArticleActions() -> impl IntoView {
                                 view! { <p style="color:red;">{err}</p> }
                             })
                     }}
+                    <Show
+                        when=move || global_state.with(|state| {
+                            state.my_profile.as_ref().map(|p| p.local_user.admin).unwrap_or_default()
+                                && article.article.local
+                        })>
+                        <button
+                            on:click=move |_| protect_action.dispatch((article.article.id, article.article.protected))>Toggle Article Protection</button>
+                        <p>"Protect a local article so that only admins can edit it"</p>
+                    </Show>
                     <Show when=move || !article.article.local>
                         <input
                             placeholder="New Title"
