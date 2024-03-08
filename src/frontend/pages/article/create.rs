@@ -82,7 +82,7 @@ pub fn CreateArticle() -> impl IntoView {
                     </button>
                 }
             }>
-            <Redirect path={format!("/article/{}", title.get())} />
+            <Redirect path={format!("/article/{}", title.get().replace(' ', "_"))} />
         </Show>
     }
 }
