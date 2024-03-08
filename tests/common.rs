@@ -140,7 +140,7 @@ impl IbisInstance {
             password: "hunter2".to_string(),
         };
         let client = ClientBuilder::new().cookie_store(true).build().unwrap();
-        let api_client = ApiClient::new(client, hostname.clone());
+        let api_client = ApiClient::new(client, Some(hostname));
         api_client.register(form).await.unwrap();
         Self {
             api_client,

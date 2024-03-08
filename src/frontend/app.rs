@@ -2,7 +2,6 @@ use crate::{
     common::LocalUserView,
     frontend::{
         api::ApiClient,
-        backend_hostname,
         components::nav::Nav,
         pages::{
             article::{
@@ -81,11 +80,9 @@ impl GlobalState {
 
 #[component]
 pub fn App() -> impl IntoView {
-    let backend_hostname = backend_hostname();
-
     provide_meta_context();
     let backend_hostname = GlobalState {
-        api_client: ApiClient::new(Client::new(), backend_hostname.clone()),
+        api_client: ApiClient::new(Client::new(), None),
         my_profile: None,
     };
     // Load user profile in case we are already logged in

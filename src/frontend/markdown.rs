@@ -1,4 +1,3 @@
-use crate::frontend::backend_hostname;
 use markdown_it::{
     parser::inline::{InlineRule, InlineState},
     MarkdownIt,
@@ -26,12 +25,7 @@ impl NodeValue for ArticleLink {
     fn render(&self, node: &Node, fmt: &mut dyn Renderer) {
         let mut attrs = node.attrs.clone();
 
-        let local = backend_hostname() == self.domain;
-        let link = if local {
-            format!("/article/{}", self.title)
-        } else {
-            format!("/article/{}@{}", self.title, self.domain)
-        };
+        let link = format!("/article/{}@{}", self.title, self.domain);
         attrs.push(("href", link));
 
         fmt.open("a", &attrs);
@@ -68,14 +62,7 @@ impl InlineRule for ArticleLinkScanner {
 }
 
 #[test]
-fn test_markdown_local_article_link() {
-    let parser = markdown_parser();
-    let rendered = parser.parse("[[Title@127.0.0.1:8081]]").render();
-    assert_eq!("<p><a href=\"/article/Title\">Title</a></p>\n", rendered);
-}
-
-#[test]
-fn test_markdown_remote_article_link() {
+fn test_markdown_article_link() {
     let parser = markdown_parser();
     let rendered = parser.parse("[[Title@example.com]]").render();
     assert_eq!(

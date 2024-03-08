@@ -47,19 +47,3 @@ fn user_link(person: &DbPerson) -> impl IntoView {
         <a href={creator_path}>{user_title(person)}</a>
     }
 }
-
-fn backend_hostname() -> String {
-    let backend_hostname;
-    #[cfg(not(feature = "ssr"))]
-    {
-        backend_hostname = web_sys::window().unwrap().location().host().unwrap();
-    }
-    #[cfg(feature = "ssr")]
-    {
-        backend_hostname = crate::backend::config::IbisConfig::read()
-            .unwrap()
-            .bind
-            .to_string();
-    }
-    backend_hostname
-}

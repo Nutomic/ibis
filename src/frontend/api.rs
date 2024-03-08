@@ -32,11 +32,35 @@ use url::Url;
 pub struct ApiClient {
     client: Client,
     pub hostname: String,
+    ssl: bool,
 }
 
 impl ApiClient {
-    pub fn new(client: Client, hostname: String) -> Self {
-        Self { client, hostname }
+    pub fn new(client: Client, hostname_: Option<String>) -> Self {
+        let mut hostname;
+        let ssl;
+        #[cfg(not(feature = "ssr"))]
+        {
+            hostname = web_sys::window().unwrap().location().host().unwrap();
+            ssl = !cfg!(debug_assertions);
+        }
+        #[cfg(feature = "ssr")]
+        {
+            hostname = crate::backend::config::IbisConfig::read()
+                .unwrap()
+                .bind
+                .to_string();
+            ssl = false;
+        }
+        // required for tests
+        if let Some(hostname_) = hostname_ {
+            hostname = hostname_;
+        }
+        Self {
+            client,
+            hostname,
+            ssl,
+        }
     }
 
     async fn get_query<T, R>(&self, endpoint: &str, query: Option<R>) -> MyResult<T>
@@ -203,7 +227,8 @@ impl ApiClient {
     }
 
     fn request_endpoint(&self, path: &str) -> String {
-        format!("{}://{}{path}", http_protocol_str(), &self.hostname)
+        let protocol = if self.ssl { "https" } else { "http" };
+        format!("{protocol}://{}{path}", &self.hostname)
     }
 }
 
