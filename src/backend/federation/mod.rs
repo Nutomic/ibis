@@ -26,7 +26,7 @@ where
     <Activity as ActivityHandler>::Error: From<activitypub_federation::error::Error>,
 {
     let activity = WithContext::new_default(activity);
-    queue_activity(activity, actor, recipients, data).await?;
+    queue_activity(&activity, actor, recipients, data).await?;
     Ok(())
 }
 
