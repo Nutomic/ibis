@@ -50,6 +50,7 @@ pub mod config;
 pub mod database;
 pub mod error;
 pub mod federation;
+mod nodeinfo;
 mod utils;
 
 const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
@@ -92,6 +93,7 @@ pub async fn start(config: IbisConfig) -> MyResult<()> {
         .nest("", asset_routes()?)
         .nest(FEDERATION_ROUTES_PREFIX, federation_routes())
         .nest("/api/v1", api_routes())
+        .nest("", nodeinfo::config())
         .layer(FederationMiddleware::new(config))
         .layer(CorsLayer::permissive());
 
