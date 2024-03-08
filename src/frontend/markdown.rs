@@ -47,15 +47,16 @@ impl InlineRule for ArticleLinkScanner {
         }
         const SEPARATOR_LENGTH: usize = 2;
 
-        input.find("]]").and_then(|i| {
+        input.find("]]").and_then(|length| {
             let start = state.pos + SEPARATOR_LENGTH;
+            let i = start + length - SEPARATOR_LENGTH;
             let content = &state.src[start..i];
             content.split_once('@').map(|(title, domain)| {
                 let node = Node::new(ArticleLink {
                     title: title.to_string(),
                     domain: domain.to_string(),
                 });
-                (node, i + SEPARATOR_LENGTH)
+                (node, length + SEPARATOR_LENGTH)
             })
         })
     }
@@ -64,9 +65,11 @@ impl InlineRule for ArticleLinkScanner {
 #[test]
 fn test_markdown_article_link() {
     let parser = markdown_parser();
-    let rendered = parser.parse("[[Title@example.com]]").render();
+    let rendered = parser
+        .parse("some text [[Title@example.com]] and more")
+        .render();
     assert_eq!(
-        "<p><a href=\"/article/Title@example.com\">Title</a></p>\n",
+        "<p>some text <a href=\"/article/Title@example.com\">Title</a> and more</p>\n",
         rendered
     );
 }
