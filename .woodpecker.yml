@@ -3,21 +3,6 @@ variables:
 
 steps:
 
-  build_release:
-    image: *rust_image
-    environment:
-      CARGO_HOME: .cargo_home
-    commands:
-      - wget https://github.com/cargo-bins/cargo-binstall/releases/latest/download/cargo-binstall-x86_64-unknown-linux-musl.tgz
-      - tar -xvf cargo-binstall-x86_64-unknown-linux-musl.tgz
-      - rustup target add wasm32-unknown-unknown
-      - ./cargo-binstall -y trunk
-      - export PATH="$PATH:$(pwd)/.cargo_home/bin/"
-      - echo $PATH
-      - ./scripts/build_release.sh
-    #when:
-    #  event: tag
-
   cargo_fmt:
     image: rustlang/rust:nightly
     environment:
@@ -84,6 +69,20 @@ steps:
       - chown testuser:testuser /home/testuser -R
       - export PATH="/usr/lib/postgresql/15/bin:/usr/local/cargo/bin:$PATH"
       - sudo -u testuser env "PATH=$PATH" cargo test --no-fail-fast
+
+  build_release:
+    image: *rust_image
+    environment:
+      CARGO_HOME: .cargo_home
+    commands:
+      - wget https://github.com/cargo-bins/cargo-binstall/releases/latest/download/cargo-binstall-x86_64-unknown-linux-musl.tgz
+      - tar -xvf cargo-binstall-x86_64-unknown-linux-musl.tgz
+      - rustup target add wasm32-unknown-unknown
+      - ./cargo-binstall -y trunk
+      - export PATH="$PATH:$(pwd)/.cargo_home/bin/"
+      - ./scripts/build_release.sh
+    when:
+      event: tag
 
   publish_release:
     image: woodpeckerci/plugin-github-release
