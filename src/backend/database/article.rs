@@ -102,9 +102,7 @@ impl DbArticle {
                 .filter(article::dsl::title.eq(title))
                 .into_boxed();
             let query = if let Some(domain) = domain {
-                query
-                    .filter(instance::dsl::domain.eq(domain))
-                    .filter(instance::dsl::local.eq(false))
+                query.filter(instance::dsl::domain.eq(domain))
             } else {
                 query.filter(article::dsl::local.eq(true))
             };
