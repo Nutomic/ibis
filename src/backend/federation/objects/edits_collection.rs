@@ -1,6 +1,6 @@
 use crate::{
     backend::{database::IbisData, error::Error, federation::objects::edit::ApubEdit},
-    common::{DbArticle, DbEdit, DbInstance},
+    common::{DbArticle, DbEdit},
 };
 use activitypub_federation::{
     config::Data,
@@ -45,10 +45,9 @@ impl Collection for DbEditCollection {
                 .collect::<Vec<_>>(),
         )
         .await?;
-        let local_instance = DbInstance::read_local_instance(data)?;
         let collection = ApubEditCollection {
             r#type: Default::default(),
-            id: Url::from(local_instance.articles_url),
+            id: Url::from(article.article.edits_id()?),
             total_items: edits.len() as i32,
             items: edits,
         };

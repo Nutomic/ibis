@@ -47,9 +47,10 @@ diesel::table! {
         #[max_length = 255]
         ap_id -> Varchar,
         description -> Nullable<Text>,
-        inbox_url -> Text,
         #[max_length = 255]
         articles_url -> Varchar,
+        #[max_length = 255]
+        inbox_url -> Varchar,
         public_key -> Text,
         private_key -> Nullable<Text>,
         last_refreshed_at -> Timestamptz,
@@ -88,7 +89,8 @@ diesel::table! {
         username -> Text,
         #[max_length = 255]
         ap_id -> Varchar,
-        inbox_url -> Text,
+        #[max_length = 255]
+        inbox_url -> Varchar,
         public_key -> Text,
         private_key -> Nullable<Text>,
         last_refreshed_at -> Timestamptz,

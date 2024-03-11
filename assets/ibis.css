@@ -25,6 +25,7 @@ main {
 
 .item-view {
     padding: 0 20px 20px 20px;
+    max-width: 700px;
 }
 
 pre {
