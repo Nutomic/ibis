@@ -49,7 +49,7 @@ pub(in crate::backend::api) async fn create_article(
     }
 
     let local_instance = DbInstance::read_local_instance(&data)?;
-    let escaped_title = create_article.title.replace(" ", "_");
+    let escaped_title = create_article.title.replace(' ', "_");
     let ap_id = ObjectId::parse(&format!(
         "{}://{}/article/{}",
         http_protocol_str(),
@@ -76,7 +76,6 @@ pub(in crate::backend::api) async fn create_article(
     let _ = edit_article(Extension(user), data.reset_request_count(), Form(edit_data)).await?;
 
     let article_view = DbArticle::read_view(article.id, &data)?;
-    dbg!(&article_view);
     CreateArticle::send_to_followers(article_view.article.clone(), &data).await?;
 
     Ok(Json(article_view))
