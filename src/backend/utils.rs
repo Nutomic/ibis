@@ -1,27 +1,22 @@
 use crate::{
-    backend::error::MyResult,
-    common::{utils, utils::extract_domain, EditVersion, EditView},
+    backend::{database::IbisData, error::MyResult},
+    common::{utils, EditVersion, EditView},
 };
-use activitypub_federation::{fetch::object_id::ObjectId, traits::Object};
+use activitypub_federation::config::Data;
 use anyhow::anyhow;
 use diffy::{apply, Patch};
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
-use serde::Deserialize;
 use url::{ParseError, Url};
 
-pub fn generate_activity_id<T>(for_url: &ObjectId<T>) -> Result<Url, ParseError>
-where
-    T: Object + Send + 'static,
-    for<'de2> <T as Object>::Kind: Deserialize<'de2>,
-{
-    let domain = extract_domain(for_url);
+pub fn generate_activity_id(data: &Data<IbisData>) -> Result<Url, ParseError> {
+    let domain = &data.config.federation.domain;
     let id: String = thread_rng()
         .sample_iter(&Alphanumeric)
         .take(7)
         .map(char::from)
         .collect();
     Url::parse(&format!(
-        "{}://{}/objects/{}",
+        "{}://{}/activity/{}",
         utils::http_protocol_str(),
         domain,
         id
