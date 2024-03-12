@@ -66,12 +66,14 @@ impl Object for DbArticle {
         expected_domain: &Url,
         _data: &Data<Self::DataType>,
     ) -> Result<(), Self::Error> {
-        verify_domains_match(json.id.inner(), expected_domain)?;
+        dbg!(&json);
+        dbg!(verify_domains_match(json.id.inner(), expected_domain))?;
         Ok(())
     }
 
     async fn from_json(json: Self::Kind, data: &Data<Self::DataType>) -> Result<Self, Self::Error> {
-        let instance = json.attributed_to.dereference(data).await?;
+        dbg!(&json);
+        let instance = dbg!(json.attributed_to.dereference(data).await)?;
         let form = DbArticleForm {
             title: json.name,
             text: json.content,
@@ -80,9 +82,9 @@ impl Object for DbArticle {
             instance_id: instance.id,
             protected: json.protected,
         };
-        let article = DbArticle::create_or_update(form, data)?;
+        let article = dbg!(DbArticle::create_or_update(form, data))?;
 
-        json.edits.dereference(&article, data).await?;
+        dbg!(json.edits.dereference(&article, data).await)?;
 
         Ok(article)
     }
