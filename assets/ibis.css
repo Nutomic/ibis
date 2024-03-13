@@ -19,15 +19,32 @@ nav {
 
 main {
     background-color: #ffffff;
-    flex-grow: 1;
-    padding-top: 0;
+    flex-grow: 2;
+    padding: 0 30px 30px 30px;
+}
+
+main .inner {
+    margin: 0 -30px;
+}
+
+nav form {
+    margin: 0.5rem 1rem 0rem 0rem;
 }
 
 .item-view {
-    padding: 0 20px 20px 20px;
     max-width: 700px;
 }
 
 pre {
     white-space: pre-wrap;
+}
+
+@media only screen and (max-width: 720px) {
+    body {
+        flex-direction: column;
+    }
+    nav input {
+        max-width: 200px;
+    }
+    nav li { display: inline-block }
 }
