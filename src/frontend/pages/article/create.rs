@@ -61,25 +61,26 @@ pub fn CreateArticle() -> impl IntoView {
                             set_text.update(|p| *p = val);
                         } >
                         </textarea>
+                        <div><a href="https://commonmark.org/help/" target="blank_">Markdown</a>" formatting is supported"</div>
+                        {move || {
+                            create_error
+                                .get()
+                                .map(|err| {
+                                    view! { <p style="color:red;">{err}</p> }
+                                })
+                        }}
+                        <input type="text"
+                            placeholder="Edit summary"
+                            on:keyup=move |ev| {
+                                let val = event_target_value(&ev);
+                                set_summary.update(|p| *p = val);
+                        }/>
+                        <button
+                            prop:disabled=move || button_is_disabled.get()
+                            on:click=move |_| submit_action.dispatch((title.get(), text.get(), summary.get()))>
+                            Submit
+                        </button>
                     </div>
-                    {move || {
-                        create_error
-                            .get()
-                            .map(|err| {
-                                view! { <p style="color:red;">{err}</p> }
-                            })
-                    }}
-                    <input type="text"
-                        placeholder="Summary"
-                        on:keyup=move |ev| {
-                            let val = event_target_value(&ev);
-                            set_summary.update(|p| *p = val);
-                    }/>
-                    <button
-                        prop:disabled=move || button_is_disabled.get()
-                        on:click=move |_| submit_action.dispatch((title.get(), text.get(), summary.get()))>
-                        Submit
-                    </button>
                 }
             }>
             <Redirect path={format!("/article/{}", title.get().replace(' ', "_"))} />
