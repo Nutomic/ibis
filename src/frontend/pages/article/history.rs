@@ -5,6 +5,7 @@ use crate::frontend::{
     user_link,
 };
 use leptos::*;
+use crate::frontend::extract_domain;
 
 #[component]
 pub fn ArticleHistory() -> impl IntoView {
@@ -19,7 +20,7 @@ pub fn ArticleHistory() -> impl IntoView {
                         <h1>{article_title(&article.article)}</h1>
                         {
                             article.edits.into_iter().rev().map(|edit| {
-                                let path = format!("/article/{}/diff/{}", article.article.title, edit.edit.hash.0);
+                                let path = format!("/article/{}@{}/diff/{}", article.article.title, extract_domain(&article.article.ap_id), edit.edit.hash.0);
                                 let label = format!("{} ({})", edit.edit.summary, edit.edit.created.to_rfc2822());
                                 view! {<li><a href={path}>{label}</a>" by "{user_link(&edit.creator)}</li> }
                             }).collect::<Vec<_>>()
