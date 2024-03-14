@@ -47,6 +47,9 @@ pub(in crate::backend::api) async fn create_article(
     if create_article.title.is_empty() {
         return Err(anyhow!("Title must not be empty").into());
     }
+    if create_article.title.contains('/') {
+        return Err(anyhow!("Invalid character `/`").into());
+    }
 
     let local_instance = DbInstance::read_local_instance(&data)?;
     let escaped_title = create_article.title.replace(' ', "_");
