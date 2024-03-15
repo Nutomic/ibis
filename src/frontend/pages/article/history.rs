@@ -1,11 +1,11 @@
 use crate::frontend::{
     article_title,
     components::article_nav::ArticleNav,
+    extract_domain,
     pages::article_resource,
     user_link,
 };
 use leptos::*;
-use crate::frontend::extract_domain;
 
 #[component]
 pub fn ArticleHistory() -> impl IntoView {

@@ -72,8 +72,11 @@ impl DbInstance {
             .get_result(conn.deref_mut())?)
     }
 
-    pub fn read_local_view(data: &Data<IbisData>) -> MyResult<InstanceView> {
-        let instance = DbInstance::read_local_instance(data)?;
+    pub fn read_view(id: Option<i32>, data: &Data<IbisData>) -> MyResult<InstanceView> {
+        let instance = match id {
+            Some(id) => DbInstance::read(id, data),
+            None => DbInstance::read_local_instance(data),
+        }?;
         let followers = DbInstance::read_followers(instance.id, data)?;
 
         Ok(InstanceView {

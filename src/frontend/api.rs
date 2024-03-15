@@ -11,6 +11,7 @@ use crate::{
         FollowInstance,
         ForkArticleForm,
         GetArticleForm,
+        GetInstance,
         GetUserForm,
         InstanceView,
         ListArticlesForm,
@@ -136,6 +137,10 @@ impl ApiClient {
 
     pub async fn get_local_instance(&self) -> MyResult<InstanceView> {
         self.get_query("/api/v1/instance", None::<i32>).await
+    }
+
+    pub async fn get_instance(&self, get_form: &GetInstance) -> MyResult<InstanceView> {
+        self.get_query("/api/v1/instance", Some(get_form)).await
     }
 
     pub async fn follow_instance_with_resolve(

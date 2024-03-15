@@ -1,17 +1,18 @@
 use crate::{
     backend::{database::IbisData, error::MyResult, federation::activities::follow::Follow},
-    common::{DbInstance, FollowInstance, InstanceView, LocalUserView, ResolveObject},
+    common::{DbInstance, FollowInstance, GetInstance, InstanceView, LocalUserView, ResolveObject},
 };
 use activitypub_federation::{config::Data, fetch::object_id::ObjectId};
 use axum::{extract::Query, Extension, Form, Json};
 use axum_macros::debug_handler;
 
-/// Retrieve the local instance info.
+/// Retrieve details about an instance. If no id is provided, return local instance.
 #[debug_handler]
-pub(in crate::backend::api) async fn get_local_instance(
+pub(in crate::backend::api) async fn get_instance(
     data: Data<IbisData>,
+    Form(query): Form<GetInstance>,
 ) -> MyResult<Json<InstanceView>> {
-    let local_instance = DbInstance::read_local_view(&data)?;
+    let local_instance = DbInstance::read_view(query.id, &data)?;
     Ok(Json(local_instance))
 }
 

@@ -1,3 +1,4 @@
 pub mod article_nav;
-pub(crate) mod credentials;
+pub mod credentials;
+pub mod instance_follow_button;
 pub mod nav;

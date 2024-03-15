@@ -81,13 +81,13 @@ impl GlobalState {
 #[component]
 pub fn App() -> impl IntoView {
     provide_meta_context();
-    let backend_hostname = GlobalState {
+    let global_state = GlobalState {
         api_client: ApiClient::new(Client::new(), None),
         my_profile: None,
     };
     // Load user profile in case we are already logged in
     GlobalState::update_my_profile();
-    provide_context(create_rw_signal(backend_hostname));
+    provide_context(create_rw_signal(global_state));
 
     view! {
         <>

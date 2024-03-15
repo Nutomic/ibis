@@ -11,7 +11,7 @@ use crate::{
                 resolve_article,
                 search_article,
             },
-            instance::{follow_instance, get_local_instance, resolve_instance},
+            instance::{follow_instance, get_instance, resolve_instance},
             user::{
                 get_user,
                 login_user,
@@ -56,7 +56,7 @@ pub fn api_routes() -> Router {
         .route("/article/resolve", get(resolve_article))
         .route("/article/protect", post(protect_article))
         .route("/edit_conflicts", get(edit_conflicts))
-        .route("/instance", get(get_local_instance))
+        .route("/instance", get(get_instance))
         .route("/instance/follow", post(follow_instance))
         .route("/instance/resolve", get(resolve_instance))
         .route("/search", get(search_article))

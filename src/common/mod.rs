@@ -211,6 +211,11 @@ pub struct ForkArticleForm {
 }
 
 #[derive(Deserialize, Serialize, Debug)]
+pub struct GetInstance {
+    pub id: Option<i32>,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
 pub struct FollowInstance {
     pub id: i32,
 }
