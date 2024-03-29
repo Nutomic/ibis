@@ -55,6 +55,7 @@ pub fn Nav() -> impl IntoView {
                   set_search_query.update(|v| *v = val);
               }
             />
+
             <button>Go</button>
           </form>
         </li>

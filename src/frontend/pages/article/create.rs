@@ -63,7 +63,8 @@ pub fn CreateArticle() -> impl IntoView {
                       let val = event_target_value(&ev);
                       set_text.update(|p| *p = val);
                   }
-                ></textarea>
+                >
+                </textarea>
                 <div>
                   <a href="https://commonmark.org/help/" target="blank_">
                     Markdown
@@ -86,6 +87,7 @@ pub fn CreateArticle() -> impl IntoView {
                       set_summary.update(|p| *p = val);
                   }
                 />
+
                 <button
                   prop:disabled=move || button_is_disabled.get()
                   on:click=move |_| submit_action.dispatch((title.get(), text.get(), summary.get()))
@@ -96,6 +98,7 @@ pub fn CreateArticle() -> impl IntoView {
             }
         }
       >
+
         <Redirect path=format!("/article/{}", title.get().replace(' ', "_"))/>
       </Show>
     }

@@ -38,8 +38,7 @@ pub fn ListArticles() -> impl IntoView {
               articles
                   .get()
                   .map(|a| {
-                      a
-                          .into_iter()
+                      a.into_iter()
                           .map(|a| {
                               view! {
                                 <li>
@@ -50,6 +49,7 @@ pub fn ListArticles() -> impl IntoView {
                           .collect::<Vec<_>>()
                   })
           }}
+
         </ul>
       </Suspense>
     }

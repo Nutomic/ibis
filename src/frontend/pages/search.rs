@@ -78,10 +78,11 @@ pub fn Search() -> impl IntoView {
                             }
                         }
                       >
+
                         <ul>
 
-                          {// render resolved instance
-                          if let Some(instance) = &search_results.instance {
+                          // render resolved instance
+                          {if let Some(instance) = &search_results.instance {
                               let domain = &instance.domain;
                               vec![
                                   view! {
@@ -93,8 +94,8 @@ pub fn Search() -> impl IntoView {
                           } else {
                               vec![]
                           }}
-                          {// render articles from resolve/search
-                          search_results
+                          // render articles from resolve/search
+                          {search_results
                               .articles
                               .iter()
                               .map(|a| {

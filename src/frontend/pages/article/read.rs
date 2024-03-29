@@ -15,6 +15,7 @@ pub fn ReadArticle() -> impl IntoView {
       <Suspense fallback=|| {
           view! { "Loading..." }
       }>
+
         {
             let parser = markdown_parser();
             move || {

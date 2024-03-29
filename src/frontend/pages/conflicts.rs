@@ -16,8 +16,7 @@ pub fn Conflicts() -> impl IntoView {
               conflicts
                   .get()
                   .map(|c| {
-                      c
-                          .into_iter()
+                      c.into_iter()
                           .map(|c| {
                               let link = format!("{}/edit/{}", article_link(&c.article), c.id);
                               view! {
@@ -29,6 +28,7 @@ pub fn Conflicts() -> impl IntoView {
                           .collect::<Vec<_>>()
                   })
           }}
+
         </ul>
       </Suspense>
     }

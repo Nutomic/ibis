@@ -95,12 +95,14 @@ pub fn ArticleActions() -> impl IntoView {
                                 set_new_title.update(|v| *v = val);
                             }
                           />
+
                           <button
                             disabled=move || new_title.get().is_empty()
                             on:click=move |_| {
                                 fork_action.dispatch((article.article.id, new_title.get()))
                             }
                           >
+
                             Fork Article
                           </button>
                           <p>

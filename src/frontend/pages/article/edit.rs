@@ -149,6 +149,7 @@ pub fn EditArticle() -> impl IntoView {
                                       set_summary.update(|p| *p = val);
                                   }
                                 />
+
                                 <button
                                   prop:disabled=move || button_is_disabled.get()
                                   on:click=move |_| {
@@ -161,6 +162,7 @@ pub fn EditArticle() -> impl IntoView {
                                           ))
                                   }
                                 >
+
                                   Submit
                                 </button>
                               </div>
@@ -172,6 +174,7 @@ pub fn EditArticle() -> impl IntoView {
             }
         }
       >
+
         Edit successful!
       </Show>
     }
