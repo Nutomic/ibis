@@ -21,28 +21,36 @@ pub fn ListArticles() -> impl IntoView {
     );
 
     view! {
-        <h1>Most recently edited Articles</h1>
-        <Suspense fallback=|| view! {  "Loading..." }>
-            <fieldset on:input=move |ev| {
-                let val = ev
-                    .target()
-                    .unwrap()
-                    .unchecked_into::<web_sys::HtmlInputElement>()
-                    .id();
-                let is_local_only = val == "only-local";
-                set_only_local.update(|p| *p = is_local_only);
-            }>
-                <input type="radio" name="listing-type" id="only-local" />
-                <label for="only-local">Only Local</label>
-                <input type="radio" name="listing-type" id="all" checked/>
-                <label for="all">All</label>
-            </fieldset>
-            <ul> {
-                move || articles.get().map(|a|
-                    a.into_iter().map(|a| view! {
-                    <li><a href=article_link(&a)>{article_title(&a)}</a></li>
-                }).collect::<Vec<_>>())
-            } </ul>
-        </Suspense>
+      <h1>Most recently edited Articles</h1>
+      <Suspense fallback=|| view! { "Loading..." }>
+        <fieldset on:input=move |ev| {
+            let val = ev.target().unwrap().unchecked_into::<web_sys::HtmlInputElement>().id();
+            let is_local_only = val == "only-local";
+            set_only_local.update(|p| *p = is_local_only);
+        }>
+          <input type="radio" name="listing-type" id="only-local"/>
+          <label for="only-local">Only Local</label>
+          <input type="radio" name="listing-type" id="all" checked/>
+          <label for="all">All</label>
+        </fieldset>
+        <ul>
+          {move || {
+              articles
+                  .get()
+                  .map(|a| {
+                      a
+                          .into_iter()
+                          .map(|a| {
+                              view! {
+                                <li>
+                                  <a href=article_link(&a)>{article_title(&a)}</a>
+                                </li>
+                              }
+                          })
+                          .collect::<Vec<_>>()
+                  })
+          }}
+        </ul>
+      </Suspense>
     }
 }
