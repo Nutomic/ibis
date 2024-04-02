@@ -2,7 +2,6 @@ variables:
   - &rust_image "rust:1.75"
 
 steps:
-
   cargo_fmt:
     image: rustlang/rust:nightly
     environment:
@@ -11,7 +10,8 @@ steps:
     commands:
       - rustup component add rustfmt
       - cargo +nightly fmt -- --check
-
+    when:
+      - event: pull_request
 
   check_config_defaults_updated:
     image: *rust_image
@@ -20,6 +20,8 @@ steps:
     commands:
       - cargo run -- --print-config > config/defaults_current.toml
       - diff config/defaults.toml config/defaults_current.toml
+    when:
+      - event: pull_request
 
   ignored_files:
     image: alpine:3
@@ -27,6 +29,8 @@ steps:
       - apk add git
       - IGNORED=$(git ls-files --cached -i --exclude-standard)
       - if [[ "$IGNORED" ]]; then echo "Ignored files present:\n$IGNORED\n"; exit 1; fi
+    when:
+      - event: pull_request
 
   check_diesel_schema:
     image: willsquire/diesel-cli
@@ -37,6 +41,8 @@ steps:
       - diesel migration run
       - diesel print-schema --config-file=diesel.toml > tmp.schema
       - diff tmp.schema src/backend/database/schema.rs
+    when:
+      - event: pull_request
 
   frontend_wasm_build:
     image: *rust_image
@@ -45,6 +51,8 @@ steps:
     commands:
       - "rustup target add wasm32-unknown-unknown"
       - "cargo check --target wasm32-unknown-unknown --features csr,hydrate --no-default-features"
+    when:
+      - event: pull_request
 
   cargo_clippy:
     image: *rust_image
@@ -53,6 +61,8 @@ steps:
     commands:
       - rustup component add clippy
       - cargo clippy --tests --all-targets --all-features
+    when:
+      - event: pull_request
 
   cargo_test:
     image: *rust_image
@@ -69,6 +79,8 @@ steps:
       - chown testuser:testuser /home/testuser -R
       - export PATH="/usr/lib/postgresql/15/bin:/usr/local/cargo/bin:$PATH"
       - sudo -u testuser env "PATH=$PATH" cargo test --no-fail-fast
+    when:
+      - event: pull_request
 
   build_release:
     image: *rust_image
@@ -82,7 +94,7 @@ steps:
       - export PATH="$PATH:$(pwd)/.cargo_home/bin/"
       - ./scripts/build_release.sh
     when:
-      event: tag
+      - event: tag
 
   publish_release:
     image: woodpeckerci/plugin-github-release
@@ -93,7 +105,7 @@ steps:
       api-key:
         from_secret: github_token
     when:
-      event: tag
+      - event: tag
 
 services:
   database:
