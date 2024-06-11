@@ -1,7 +1,9 @@
 About Ibis
 ===
 
-Ibis is a federated alternative to Wikipedia. It uses the Activitypub protocol for communication between different servers (instances), similar to Mastodon or Lemmy. Users can sign up on any instance to read and edit articles, including articles from other instances. The project is currently in alpha state, with core functionality working but countless features still missing.
+Ibis is a federated online encyclopedia similar to Wikipedia.  Users can read, create and edit articles seamlessly across instances. It uses the Activitypub protocol to connect users across different websites, similar to Mastodon or Lemmy. This ensures that there is no single point of control which may be used for global censorship. Instead each Ibis instance is independent and controlled by its admin. Admins can decide which rules to enforce, which content to allow and which instances to connect with. Users who are unhappy with the rules can easily setup their own Ibis instance with their own rules. 
+
+The project is currently in a proof of concept stage. Core features are already working, including creation and editing of articles, full federation and a basic frontend. You can see it in action on [ibis.wiki](https://ibis.wiki). However more work is needed to get the project ready for production use, to add features like moderation tools, user account management, media support, article discussions and better web design. Contributions are welcome!
 
 Read the [Project Announcement](https://ibis.wiki/article/Announcing_Ibis,_the_federated_Wikipedia_Alternative) for more information.
 
