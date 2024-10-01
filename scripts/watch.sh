@@ -9,5 +9,5 @@ IBIS__BIND="${IBIS_BIND:-"127.0.0.1:8081"}"
   # start frontend
   CARGO_TARGET_DIR=target/frontend trunk serve -w src/frontend/ --proxy-backend http://$IBIS__BIND &
   # start backend, with separate target folder to avoid rebuilds from arch change
-  cargo watch -x run
+  bacon -j run
 )

@@ -52,45 +52,67 @@ pub fn Search() -> impl IntoView {
     });
 
     view! {
-        <h1>"Search results for "{query}</h1>
-        <Suspense fallback=|| view! {  "Loading..." }> {
-            move || search_results.get().map(move |search_results| {
-                let is_empty = search_results.is_empty();
-                view! {
-                <Show when=move || !is_empty
-                    fallback=move || {
-                        let error_view = move || {
-                            error.get().map(|err| {
-                                view! { <p style="color:red;">{err}</p> }
-                            })
-                        };
+      <h1>"Search results for " {query}</h1>
+      <Suspense fallback=|| {
+          view! { "Loading..." }
+      }>
+        {move || {
+            search_results
+                .get()
+                .map(move |search_results| {
+                    let is_empty = search_results.is_empty();
                     view! {
-                        {error_view}
-                        <p>No results found</p>
-                    }}>
-                    <ul>
-                        {
-                            // render resolved instance
-                            if let Some(instance) = &search_results.instance {
-                                let domain = &instance.domain;
-                                vec![view! { <li>
-                                    <a href={format!("/instance/{domain}")}>{domain}</a>
-                                </li>}]
-                            } else { vec![] }
+                      <Show
+                        when=move || !is_empty
+                        fallback=move || {
+                            let error_view = move || {
+                                error
+                                    .get()
+                                    .map(|err| {
+                                        view! { <p style="color:red;">{err}</p> }
+                                    })
+                            };
+                            view! {
+                              {error_view}
+                              <p>No results found</p>
+                            }
                         }
-                        {
-                            // render articles from resolve/search
-                            search_results.articles
-                                .iter()
-                                .map(|a| view! { <li>
-                                    <a href={article_link(a)}>{article_title(a)}</a>
-                                </li>})
-                                .collect::<Vec<_>>()
-                        }
-                    </ul>
-                </Show>
-            }})
-        }
-        </Suspense>
+                      >
+
+                        <ul>
+
+                          // render resolved instance
+                          {if let Some(instance) = &search_results.instance {
+                              let domain = &instance.domain;
+                              vec![
+                                  view! {
+                                    <li>
+                                      <a href=format!("/instance/{domain}")>{domain}</a>
+                                    </li>
+                                  },
+                              ]
+                          } else {
+                              vec![]
+                          }}
+                          // render articles from resolve/search
+                          {search_results
+                              .articles
+                              .iter()
+                              .map(|a| {
+                                  view! {
+                                    <li>
+                                      <a href=article_link(a)>{article_title(a)}</a>
+                                    </li>
+                                  }
+                              })
+                              .collect::<Vec<_>>()}
+
+                        </ul>
+                      </Show>
+                    }
+                })
+        }}
+
+      </Suspense>
     }
 }

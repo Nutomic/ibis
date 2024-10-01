@@ -42,7 +42,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use url::Url;
 
-pub fn federation_routes() -> Router {
+pub fn federation_routes() -> Router<()> {
     Router::new()
         .route("/", get(http_get_instance))
         .route("/user/:name", get(http_get_person))

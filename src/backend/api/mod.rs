@@ -29,6 +29,7 @@ use crate::{
 };
 use activitypub_federation::config::Data;
 use axum::{
+    body::Body,
     http::{Request, StatusCode},
     middleware::{self, Next},
     response::Response,
@@ -45,7 +46,7 @@ pub mod article;
 pub mod instance;
 pub mod user;
 
-pub fn api_routes() -> Router {
+pub fn api_routes() -> Router<()> {
     Router::new()
         .route(
             "/article",
@@ -68,11 +69,11 @@ pub fn api_routes() -> Router {
         .route_layer(middleware::from_fn(auth))
 }
 
-async fn auth<B>(
+async fn auth(
     data: Data<IbisData>,
     jar: CookieJar,
-    mut request: Request<B>,
-    next: Next<B>,
+    mut request: Request<Body>,
+    next: Next,
 ) -> Result<Response, StatusCode> {
     if let Some(auth) = jar.get(AUTH_COOKIE) {
         if let Ok(user) = validate(auth.value(), &data).await {
