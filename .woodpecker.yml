@@ -11,6 +11,8 @@ steps:
     commands:
       - rustup component add rustfmt
       - cargo +nightly fmt -- --check
+    when:
+      - event: pull_request
 
   leptos_fmt:
     image: *rust_image
