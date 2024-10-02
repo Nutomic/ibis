@@ -1,5 +1,5 @@
 variables:
-  - &rust_image "rust:1.75"
+  - &rust_image "rust:1.81"
   - &install_binstall "wget https://github.com/cargo-bins/cargo-binstall/releases/latest/download/cargo-binstall-x86_64-unknown-linux-musl.tgz && tar -xvf cargo-binstall-x86_64-unknown-linux-musl.tgz && cp cargo-binstall /usr/local/cargo/bin"
 
 steps:
