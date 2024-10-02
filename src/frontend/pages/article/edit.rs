@@ -100,82 +100,82 @@ pub fn EditArticle() -> impl IntoView {
     );
 
     view! {
-      <ArticleNav article=article/>
-      <Show
-        when=move || edit_response.get() == EditResponse::Success
-        fallback=move || {
-            view! {
-              <Suspense fallback=|| {
-                  view! { "Loading..." }
-              }>
-                {move || {
-                    article
-                        .get()
-                        .map(|mut article| {
-                            if let EditResponse::Conflict(conflict) = edit_response.get() {
-                                article.article.text = conflict.three_way_merge;
-                                set_summary.set(conflict.summary);
-                            }
-                            set_text.set(article.article.text.clone());
-                            let article_ = article.clone();
-                            view! {
-                              // set initial text, otherwise submit with no changes results in empty text
-                              <div class="item-view">
-                                <h1>{article_title(&article.article)}</h1>
-                                {move || {
-                                    edit_error
-                                        .get()
-                                        .map(|err| {
-                                            view! { <p style="color:red;">{err}</p> }
-                                        })
-                                }}
+        <ArticleNav article=article />
+        <Show
+            when=move || edit_response.get() == EditResponse::Success
+            fallback=move || {
+                view! {
+                    <Suspense fallback=|| {
+                        view! { "Loading..." }
+                    }>
+                        {move || {
+                            article
+                                .get()
+                                .map(|mut article| {
+                                    if let EditResponse::Conflict(conflict) = edit_response.get() {
+                                        article.article.text = conflict.three_way_merge;
+                                        set_summary.set(conflict.summary);
+                                    }
+                                    set_text.set(article.article.text.clone());
+                                    let article_ = article.clone();
+                                    view! {
+                                        // set initial text, otherwise submit with no changes results in empty text
+                                        <div class="item-view">
+                                            <h1>{article_title(&article.article)}</h1>
+                                            {move || {
+                                                edit_error
+                                                    .get()
+                                                    .map(|err| {
+                                                        view! { <p style="color:red;">{err}</p> }
+                                                    })
+                                            }}
 
-                                <textarea on:keyup=move |ev| {
-                                    let val = event_target_value(&ev);
-                                    set_text.update(|p| *p = val);
-                                }>{article.article.text.clone()}</textarea>
-                                <div>
-                                  <a href="https://commonmark.org/help/" target="blank_">
-                                    Markdown
-                                  </a>
-                                  " formatting is supported"
-                                </div>
-                                <input
-                                  type="text"
-                                  placeholder="Edit summary"
-                                  value=summary.get_untracked()
-                                  on:keyup=move |ev| {
-                                      let val = event_target_value(&ev);
-                                      set_summary.update(|p| *p = val);
-                                  }
-                                />
+                                            <textarea on:keyup=move |ev| {
+                                                let val = event_target_value(&ev);
+                                                set_text.update(|p| *p = val);
+                                            }>{article.article.text.clone()}</textarea>
+                                            <div>
+                                                <a href="https://commonmark.org/help/" target="blank_">
+                                                    Markdown
+                                                </a>
+                                                " formatting is supported"
+                                            </div>
+                                            <input
+                                                type="text"
+                                                placeholder="Edit summary"
+                                                value=summary.get_untracked()
+                                                on:keyup=move |ev| {
+                                                    let val = event_target_value(&ev);
+                                                    set_summary.update(|p| *p = val);
+                                                }
+                                            />
 
-                                <button
-                                  prop:disabled=move || button_is_disabled.get()
-                                  on:click=move |_| {
-                                      submit_action
-                                          .dispatch((
-                                              text.get(),
-                                              summary.get(),
-                                              article_.clone(),
-                                              edit_response.get(),
-                                          ))
-                                  }
-                                >
+                                            <button
+                                                prop:disabled=move || button_is_disabled.get()
+                                                on:click=move |_| {
+                                                    submit_action
+                                                        .dispatch((
+                                                            text.get(),
+                                                            summary.get(),
+                                                            article_.clone(),
+                                                            edit_response.get(),
+                                                        ))
+                                                }
+                                            >
 
-                                  Submit
-                                </button>
-                              </div>
-                            }
-                        })
-                }}
+                                                Submit
+                                            </button>
+                                        </div>
+                                    }
+                                })
+                        }}
 
-              </Suspense>
+                    </Suspense>
+                }
             }
-        }
-      >
+        >
 
-        Edit successful!
-      </Show>
+            Edit successful!
+        </Show>
     }
 }

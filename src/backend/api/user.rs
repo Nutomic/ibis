@@ -98,7 +98,7 @@ fn create_cookie(jwt: String, data: &Data<IbisData>) -> Cookie<'static> {
     if domain.contains(':') {
         domain = domain.split(':').collect::<Vec<_>>()[0].to_string();
     }
-    Cookie::build(AUTH_COOKIE, jwt)
+    Cookie::build((AUTH_COOKIE, jwt))
         .domain(domain)
         .same_site(SameSite::Strict)
         .path("/")
@@ -107,7 +107,7 @@ fn create_cookie(jwt: String, data: &Data<IbisData>) -> Cookie<'static> {
         .expires(Expiration::DateTime(
             OffsetDateTime::now_utc() + Duration::weeks(52),
         ))
-        .finish()
+        .build()
 }
 
 #[debug_handler]

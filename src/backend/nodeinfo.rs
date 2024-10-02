@@ -7,7 +7,7 @@ use axum::{routing::get, Json, Router};
 use serde::{Deserialize, Serialize};
 use url::Url;
 
-pub fn config() -> Router {
+pub fn config() -> Router<()> {
     Router::new()
         .route("/nodeinfo/2.0.json", get(node_info))
         .route("/.well-known/nodeinfo", get(node_info_well_known))

@@ -23,27 +23,28 @@ use activitypub_federation::{
 };
 use api::api_routes;
 use axum::{
-    debug_handler,
-    headers::HeaderMap,
+    body::Body,
     http::{HeaderValue, Request},
     middleware::Next,
     response::{IntoResponse, Response},
     routing::get,
     Router,
-    Server,
     ServiceExt,
 };
+use axum_macros::{debug_handler, debug_middleware};
 use chrono::Local;
 use diesel::{
     r2d2::{ConnectionManager, Pool},
     PgConnection,
 };
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
-use leptos::{leptos_config::get_config_from_str, *};
+use leptos::leptos_config::get_config_from_str;
 use leptos_axum::{generate_route_list, LeptosRoutes};
 use log::info;
-use tower::Layer;
+use reqwest::header::HeaderMap;
+use tokio::net::TcpListener;
 use tower_http::cors::CorsLayer;
+use tower_layer::Layer;
 
 pub mod api;
 pub mod config;
@@ -81,15 +82,14 @@ pub async fn start(config: IbisConfig) -> MyResult<()> {
         setup(&data.to_request_data()).await?;
     }
 
-    let conf = get_config_from_str(include_str!("../../Cargo.toml"))?;
-    let mut leptos_options = conf.leptos_options;
-    leptos_options.site_addr = data.config.bind;
+    let mut conf = get_config_from_str(include_str!("../../Cargo.toml"))?;
+    conf.site_addr = data.config.bind;
     let routes = generate_route_list(App);
 
     let config = data.clone();
     let app = Router::new()
-        .leptos_routes(&leptos_options, routes, || view! { <App/> })
-        .with_state(leptos_options)
+        .leptos_routes(&conf, routes, App)
+        .with_state(conf)
         .nest("", asset_routes()?)
         .nest(FEDERATION_ROUTES_PREFIX, federation_routes())
         .nest("/api/v1", api_routes())
@@ -103,14 +103,13 @@ pub async fn start(config: IbisConfig) -> MyResult<()> {
     let app_with_middleware = middleware.layer(app);
 
     info!("Listening on {}", &data.config.bind);
-    Server::bind(&data.config.bind)
-        .serve(app_with_middleware.into_make_service())
-        .await?;
+    let listener = TcpListener::bind(&data.config.bind).await?;
+    axum::serve(listener, app_with_middleware.into_make_service()).await?;
 
     Ok(())
 }
 
-pub fn asset_routes() -> MyResult<Router> {
+pub fn asset_routes() -> MyResult<Router<()>> {
     let mut css_headers = HeaderMap::new();
     css_headers.insert("Content-Type", "text/css".parse()?);
     Ok(Router::new()
@@ -209,7 +208,8 @@ async fn setup(data: &Data<IbisData>) -> Result<(), Error> {
 /// with frontend routes. If a request is an Activitypub fetch as indicated by
 /// `Accept: application/activity+json` header, use the federation routes. Otherwise
 /// leave the path unchanged so it can go to frontend.
-async fn federation_routes_middleware<B>(request: Request<B>, next: Next<B>) -> Response {
+#[debug_middleware]
+async fn federation_routes_middleware(request: Request<Body>, next: Next) -> Response {
     let (mut parts, body) = request.into_parts();
     // rewrite uri based on accept header
     let mut uri = parts.uri.to_string();
