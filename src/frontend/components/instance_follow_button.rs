@@ -30,12 +30,12 @@ pub fn InstanceFollowButton(instance: DbInstance) -> impl IntoView {
     };
 
     view! {
-      <button
-        on:click=move |_| follow_action.dispatch(instance.id)
-        prop:disabled=move || is_following
-        prop:hidden=move || instance.local
-      >
-        {follow_text}
-      </button>
+        <button
+            on:click=move |_| follow_action.dispatch(instance.id)
+            prop:disabled=move || is_following
+            prop:hidden=move || instance.local
+        >
+            {follow_text}
+        </button>
     }
 }

@@ -39,22 +39,22 @@ pub fn Register() -> impl IntoView {
     let disabled = Signal::derive(move || wait_for_response.get());
 
     view! {
-      <Show
-        when=move || register_response.get().is_some()
-        fallback=move || {
-            view! {
-              <CredentialsForm
-                title="Please enter the desired credentials"
-                action_label="Register"
-                action=register_action
-                error=register_error.into()
-                disabled
-              />
+        <Show
+            when=move || register_response.get().is_some()
+            fallback=move || {
+                view! {
+                    <CredentialsForm
+                        title="Please enter the desired credentials"
+                        action_label="Register"
+                        action=register_action
+                        error=register_error.into()
+                        disabled
+                    />
+                }
             }
-        }
-      >
+        >
 
-        <p>"You have successfully registered."</p>
-      </Show>
+            <p>"You have successfully registered."</p>
+        </Show>
     }
 }

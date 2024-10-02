@@ -38,22 +38,22 @@ pub fn Login() -> impl IntoView {
     let disabled = Signal::derive(move || wait_for_response.get());
 
     view! {
-      <Show
-        when=move || login_response.get().is_some()
-        fallback=move || {
-            view! {
-              <CredentialsForm
-                title="Please enter the desired credentials"
-                action_label="Login"
-                action=login_action
-                error=login_error.into()
-                disabled
-              />
+        <Show
+            when=move || login_response.get().is_some()
+            fallback=move || {
+                view! {
+                    <CredentialsForm
+                        title="Please enter the desired credentials"
+                        action_label="Login"
+                        action=login_action
+                        error=login_error.into()
+                        disabled
+                    />
+                }
             }
-        }
-      >
+        >
 
-        <Redirect path="/"/>
-      </Show>
+            <Redirect path="/" />
+        </Show>
     }
 }
