@@ -29,6 +29,7 @@ use axum::{
     response::{IntoResponse, Response},
     routing::get,
     Router,
+    ServiceExt,
 };
 use axum_macros::{debug_handler, debug_middleware};
 use chrono::Local;
@@ -43,6 +44,7 @@ use log::info;
 use reqwest::header::HeaderMap;
 use tokio::net::TcpListener;
 use tower_http::cors::CorsLayer;
+use tower_layer::Layer;
 
 pub mod api;
 pub mod config;
@@ -84,10 +86,6 @@ pub async fn start(config: IbisConfig) -> MyResult<()> {
     conf.site_addr = data.config.bind;
     let routes = generate_route_list(App);
 
-    // Rewrite federation routes
-    // https://docs.rs/axum/0.7.4/axum/middleware/index.html#rewriting-request-uri-in-middleware
-    let middleware = axum::middleware::from_fn(federation_routes_middleware);
-
     let config = data.clone();
     let app = Router::new()
         .leptos_routes(&conf, routes, App)
@@ -97,12 +95,16 @@ pub async fn start(config: IbisConfig) -> MyResult<()> {
         .nest("/api/v1", api_routes())
         .nest("", nodeinfo::config())
         .layer(FederationMiddleware::new(config))
-        .layer(CorsLayer::permissive())
-        .layer(middleware);
+        .layer(CorsLayer::permissive());
+
+    // Rewrite federation routes
+    // https://docs.rs/axum/0.7.4/axum/middleware/index.html#rewriting-request-uri-in-middleware
+    let middleware = axum::middleware::from_fn(federation_routes_middleware);
+    let app_with_middleware = middleware.layer(app);
 
     info!("Listening on {}", &data.config.bind);
     let listener = TcpListener::bind(&data.config.bind).await?;
-    axum::serve(listener, app.into_make_service()).await?;
+    axum::serve(listener, app_with_middleware.into_make_service()).await?;
 
     Ok(())
 }
