@@ -43,7 +43,5 @@ fn user_title(person: &DbPerson) -> String {
 
 fn user_link(person: &DbPerson) -> impl IntoView {
     let creator_path = format!("/user/{}", person.username);
-    view! {
-        <a href={creator_path}>{user_title(person)}</a>
-    }
+    view! { <a href=creator_path>{user_title(person)}</a> }
 }

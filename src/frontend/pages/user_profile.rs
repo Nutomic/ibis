@@ -22,20 +22,28 @@ pub fn UserProfile() -> impl IntoView {
     });
 
     view! {
+      {move || {
+          error
+              .get()
+              .map(|err| {
+                  view! { <p style="color:red;">{err}</p> }
+              })
+      }}
+
+      <Suspense fallback=|| {
+          view! { "Loading..." }
+      }>
         {move || {
-            error
+            user_profile
                 .get()
-                .map(|err| {
-                    view! { <p style="color:red;">{err}</p> }
+                .map(|person: DbPerson| {
+                    view! {
+                      <h1>{user_title(&person)}</h1>
+                      <p>TODO: create actual user profile</p>
+                    }
                 })
         }}
-        <Suspense fallback=|| view! {  "Loading..." }> {
-            move || user_profile.get().map(|person: DbPerson| {
-                view! {
-                    <h1>{user_title(&person)}</h1>
-                    <p>TODO: create actual user profile</p>
-                }
-            })
-        }</Suspense>
+
+      </Suspense>
     }
 }

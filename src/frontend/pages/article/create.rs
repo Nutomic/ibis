@@ -40,50 +40,66 @@ pub fn CreateArticle() -> impl IntoView {
     });
 
     view! {
-        <h1>Create new Article</h1>
-        <Show
-            when=move || create_response.get().is_some()
-            fallback=move || {
-                view! {
-                    <div class="item-view">
-                        <input
-                            type="text"
-                            required
-                            placeholder="Title"
-                            prop:disabled=move || wait_for_response.get()
-                            on:keyup=move |ev| {
-                                let val = event_target_value(&ev);
-                                set_title.update(|v| *v = val);
-                            }
-                        />
-                        <textarea placeholder="Article text..." on:keyup=move |ev| {
-                            let val = event_target_value(&ev);
-                            set_text.update(|p| *p = val);
-                        } >
-                        </textarea>
-                        <div><a href="https://commonmark.org/help/" target="blank_">Markdown</a>" formatting is supported"</div>
-                        {move || {
-                            create_error
-                                .get()
-                                .map(|err| {
-                                    view! { <p style="color:red;">{err}</p> }
-                                })
-                        }}
-                        <input type="text"
-                            placeholder="Edit summary"
-                            on:keyup=move |ev| {
-                                let val = event_target_value(&ev);
-                                set_summary.update(|p| *p = val);
-                        }/>
-                        <button
-                            prop:disabled=move || button_is_disabled.get()
-                            on:click=move |_| submit_action.dispatch((title.get(), text.get(), summary.get()))>
-                            Submit
-                        </button>
-                    </div>
-                }
-            }>
-            <Redirect path={format!("/article/{}", title.get().replace(' ', "_"))} />
-        </Show>
+      <h1>Create new Article</h1>
+      <Show
+        when=move || create_response.get().is_some()
+        fallback=move || {
+            view! {
+              <div class="item-view">
+                <input
+                  type="text"
+                  required
+                  placeholder="Title"
+                  prop:disabled=move || wait_for_response.get()
+                  on:keyup=move |ev| {
+                      let val = event_target_value(&ev);
+                      set_title.update(|v| *v = val);
+                  }
+                />
+
+                <textarea
+                  placeholder="Article text..."
+                  on:keyup=move |ev| {
+                      let val = event_target_value(&ev);
+                      set_text.update(|p| *p = val);
+                  }
+                >
+                </textarea>
+                <div>
+                  <a href="https://commonmark.org/help/" target="blank_">
+                    Markdown
+                  </a>
+                  " formatting is supported"
+                </div>
+                {move || {
+                    create_error
+                        .get()
+                        .map(|err| {
+                            view! { <p style="color:red;">{err}</p> }
+                        })
+                }}
+
+                <input
+                  type="text"
+                  placeholder="Edit summary"
+                  on:keyup=move |ev| {
+                      let val = event_target_value(&ev);
+                      set_summary.update(|p| *p = val);
+                  }
+                />
+
+                <button
+                  prop:disabled=move || button_is_disabled.get()
+                  on:click=move |_| submit_action.dispatch((title.get(), text.get(), summary.get()))
+                >
+                  Submit
+                </button>
+              </div>
+            }
+        }
+      >
+
+        <Redirect path=format!("/article/{}", title.get().replace(' ', "_"))/>
+      </Show>
     }
 }

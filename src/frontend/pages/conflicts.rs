@@ -9,16 +9,27 @@ pub fn Conflicts() -> impl IntoView {
     );
 
     view! {
-        <h1>Your unresolved edit conflicts</h1>
-        <Suspense fallback=|| view! {  "Loading..." }>
-            <ul> {
-                move || conflicts.get().map(|c|
-                    c.into_iter().map(|c| {
-                    let link = format!("{}/edit/{}", article_link(&c.article), c.id);
-                    view! {
-                        <li><a href=link>{article_title(&c.article)}" - "{c.summary}</a></li>
-                }}).collect::<Vec<_>>())
-            } </ul>
-        </Suspense>
+      <h1>Your unresolved edit conflicts</h1>
+      <Suspense fallback=|| view! { "Loading..." }>
+        <ul>
+          {move || {
+              conflicts
+                  .get()
+                  .map(|c| {
+                      c.into_iter()
+                          .map(|c| {
+                              let link = format!("{}/edit/{}", article_link(&c.article), c.id);
+                              view! {
+                                <li>
+                                  <a href=link>{article_title(&c.article)} " - " {c.summary}</a>
+                                </li>
+                              }
+                          })
+                          .collect::<Vec<_>>()
+                  })
+          }}
+
+        </ul>
+      </Suspense>
     }
 }

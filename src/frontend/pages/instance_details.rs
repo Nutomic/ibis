@@ -20,22 +20,32 @@ pub fn InstanceDetails() -> impl IntoView {
     });
 
     view! {
-        <Suspense fallback=|| view! {  "Loading..." }> {
-            move || instance_profile.get().map(|instance: DbInstance| {
-                let instance_ = instance.clone();
-                view! {
-                    <h1>{instance.domain}</h1>
+      <Suspense fallback=|| {
+          view! { "Loading..." }
+      }>
+        {move || {
+            instance_profile
+                .get()
+                .map(|instance: DbInstance| {
+                    let instance_ = instance.clone();
+                    view! {
+                      <h1>{instance.domain}</h1>
 
-                    <Show when=move || global_state.with(|state| state.my_profile.is_some())>
-                        <InstanceFollowButton instance=instance_.clone() />
-                    </Show>
-                    <p>Follow the instance so that new edits are federated to your instance.</p>
-                    <p>"TODO: show a list of articles from the instance. For now you can use the "<a href="/article/list">Article list</a>.</p>
-                    <hr/>
-                    <h2>"Description:"</h2>
-                    <div>{instance.description}</div>
-                }
-            })
-        }</Suspense>
+                      <Show when=move || global_state.with(|state| state.my_profile.is_some())>
+                        <InstanceFollowButton instance=instance_.clone()/>
+                      </Show>
+                      <p>Follow the instance so that new edits are federated to your instance.</p>
+                      <p>
+                        "TODO: show a list of articles from the instance. For now you can use the "
+                        <a href="/article/list">Article list</a> .
+                      </p>
+                      <hr/>
+                      <h2>"Description:"</h2>
+                      <div>{instance.description}</div>
+                    }
+                })
+        }}
+
+      </Suspense>
     }
 }

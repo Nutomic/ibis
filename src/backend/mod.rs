@@ -88,7 +88,7 @@ pub async fn start(config: IbisConfig) -> MyResult<()> {
 
     let config = data.clone();
     let app = Router::new()
-        .leptos_routes(&leptos_options, routes, || view! {  <App/> })
+        .leptos_routes(&leptos_options, routes, || view! { <App/> })
         .with_state(leptos_options)
         .nest("", asset_routes()?)
         .nest(FEDERATION_ROUTES_PREFIX, federation_routes())
