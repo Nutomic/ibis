@@ -14,7 +14,6 @@ pub fn markdown_parser() -> MarkdownIt {
     markdown_it::plugins::extra::add(&mut parser);
     parser.inline.add_rule::<MathEquationScanner>();
     parser.inline.add_rule::<ArticleLinkScanner>();
-    //parser.block.add_rule::<MathEquationScanner>();
     parser
 }
 
@@ -94,6 +93,10 @@ impl InlineRule for MathEquationScanner {
         if !input.starts_with("$$")  {
             return None;
         }
+        let mut display_mode = false;
+        if input.starts_with("$$\n") {
+            display_mode = true;
+        }
         const SEPARATOR_LENGTH: usize = 2;
 
         input[SEPARATOR_LENGTH - 1..].find("$$").map(|length| {
@@ -105,7 +108,7 @@ impl InlineRule for MathEquationScanner {
             let content = &state.src[start..i];
             let node = Node::new(MathEquation {
                 equation: content.to_string(),
-                display_mode: false
+                display_mode,
             });
             Some((node, length + SEPARATOR_LENGTH + 1))
         })?
