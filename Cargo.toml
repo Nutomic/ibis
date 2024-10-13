@@ -79,6 +79,12 @@ doku = "0.21.1"
 smart-default = "0.7.1"
 tower-layer = "0.3.3"
 
+[target.'cfg(target_arch = "x86_64")'.dependencies]
+katex = { version = "0.4", features = ["duktape"], default-features = false }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+katex = { version = "0.4", features = ["wasm-js"], default-features = false }
+
 [dev-dependencies]
 pretty_assertions = "1.4.1"
 
