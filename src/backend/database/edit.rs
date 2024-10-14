@@ -91,6 +91,7 @@ impl DbEdit {
         Ok(edit::table
             .inner_join(person::table)
             .filter(edit::article_id.eq(article.id))
+            .order(edit::created)
             .get_results(conn.deref_mut())?)
     }
 }
