@@ -131,10 +131,16 @@ pub fn EditArticle() -> impl IntoView {
                                                     })
                                             }}
 
-                                            <textarea id="edit-article-textarea" rows=rows on:keyup=move |ev| {
-                                                let val = event_target_value(&ev);
-                                                set_text.update(|p| *p = val);
-                                            }>{article.article.text.clone()}</textarea>
+                                            <textarea
+                                                id="edit-article-textarea"
+                                                rows=rows
+                                                on:keyup=move |ev| {
+                                                    let val = event_target_value(&ev);
+                                                    set_text.update(|p| *p = val);
+                                                }
+                                            >
+                                                {article.article.text.clone()}
+                                            </textarea>
                                             <div>
                                                 <a href="https://commonmark.org/help/" target="blank_">
                                                     Markdown
@@ -142,31 +148,31 @@ pub fn EditArticle() -> impl IntoView {
                                                 " formatting is supported"
                                             </div>
                                             <div class="inputs">
-                                            <input
-                                                type="text"
-                                                placeholder="Edit summary"
-                                                value=summary.get_untracked()
-                                                on:keyup=move |ev| {
-                                                    let val = event_target_value(&ev);
-                                                    set_summary.update(|p| *p = val);
-                                                }
-                                            />
+                                                <input
+                                                    type="text"
+                                                    placeholder="Edit summary"
+                                                    value=summary.get_untracked()
+                                                    on:keyup=move |ev| {
+                                                        let val = event_target_value(&ev);
+                                                        set_summary.update(|p| *p = val);
+                                                    }
+                                                />
 
-                                            <button
-                                                prop:disabled=move || button_is_disabled.get()
-                                                on:click=move |_| {
-                                                    submit_action
-                                                        .dispatch((
-                                                            text.get(),
-                                                            summary.get(),
-                                                            article_.clone(),
-                                                            edit_response.get(),
-                                                        ))
-                                                }
-                                            >
+                                                <button
+                                                    prop:disabled=move || button_is_disabled.get()
+                                                    on:click=move |_| {
+                                                        submit_action
+                                                            .dispatch((
+                                                                text.get(),
+                                                                summary.get(),
+                                                                article_.clone(),
+                                                                edit_response.get(),
+                                                            ))
+                                                    }
+                                                >
 
-                                                Submit
-                                            </button>
+                                                    Submit
+                                                </button>
                                             </div>
                                         </div>
                                     }

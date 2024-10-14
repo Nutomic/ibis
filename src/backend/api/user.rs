@@ -99,7 +99,7 @@ fn create_cookie(jwt: String, data: &Data<IbisData>) -> Cookie<'static> {
     // Must not set cookie domain on localhost
     // https://stackoverflow.com/a/1188145
     let domain = data.domain().to_string();
-    if domain.starts_with("localhost") || domain.starts_with("127.0.0.1") {
+    if !domain.starts_with("localhost") && !domain.starts_with("127.0.0.1") {
         cookie = cookie.domain(domain);
     }
     cookie

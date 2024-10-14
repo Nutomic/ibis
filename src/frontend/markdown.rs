@@ -9,7 +9,10 @@ use markdown_it::{
 pub fn markdown_parser() -> MarkdownIt {
     let mut parser = MarkdownIt::new();
     markdown_it::plugins::cmark::add(&mut parser);
-    markdown_it::plugins::extra::add(&mut parser);
+    markdown_it::plugins::extra::linkify::add(&mut parser);
+    markdown_it::plugins::extra::strikethrough::add(&mut parser);
+    markdown_it::plugins::extra::tables::add(&mut parser);
+    markdown_it::plugins::extra::typographer::add(&mut parser);
     parser.inline.add_rule::<ArticleLinkScanner>();
     parser
 }
