@@ -3,6 +3,8 @@ set -e
 
 IBIS__BIND="${IBIS_BIND:-"127.0.0.1:8081"}"
 
+killall trunk || true
+
 # run processes in parallel
 # https://stackoverflow.com/a/52033580
 (trap 'kill 0' INT;

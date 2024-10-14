@@ -118,9 +118,10 @@ pub fn EditArticle() -> impl IntoView {
                                     }
                                     set_text.set(article.article.text.clone());
                                     let article_ = article.clone();
+                                    let rows = article.article.text.lines().count() + 1;
                                     view! {
                                         // set initial text, otherwise submit with no changes results in empty text
-                                        <div class="item-view">
+                                        <div id="edit-article" class="item-view">
                                             <h1>{article_title(&article.article)}</h1>
                                             {move || {
                                                 edit_error
@@ -130,7 +131,7 @@ pub fn EditArticle() -> impl IntoView {
                                                     })
                                             }}
 
-                                            <textarea on:keyup=move |ev| {
+                                            <textarea id="edit-article-textarea" rows=rows on:keyup=move |ev| {
                                                 let val = event_target_value(&ev);
                                                 set_text.update(|p| *p = val);
                                             }>{article.article.text.clone()}</textarea>
@@ -140,6 +141,7 @@ pub fn EditArticle() -> impl IntoView {
                                                 </a>
                                                 " formatting is supported"
                                             </div>
+                                            <div class="inputs">
                                             <input
                                                 type="text"
                                                 placeholder="Edit summary"
@@ -165,6 +167,7 @@ pub fn EditArticle() -> impl IntoView {
 
                                                 Submit
                                             </button>
+                                            </div>
                                         </div>
                                     }
                                 })
