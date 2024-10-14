@@ -89,17 +89,20 @@ pub(in crate::backend::api) async fn login_user(
     }
     let token = generate_login_token(&user.person, &data)?;
     let jar = jar.add(create_cookie(token, &data));
+    dbg!(&jar);
     Ok((jar, Json(user)))
 }
 
 fn create_cookie(jwt: String, data: &Data<IbisData>) -> Cookie<'static> {
-    let mut domain = data.domain().to_string();
-    // remove port from domain
-    if domain.contains(':') {
-        domain = domain.split(':').collect::<Vec<_>>()[0].to_string();
+    let mut cookie = Cookie::build((AUTH_COOKIE, jwt));
+
+    // Must not set cookie domain on localhost
+    // https://stackoverflow.com/a/1188145
+    let domain = data.domain().to_string();
+    if domain.starts_with("localhost") || domain.starts_with("127.0.0.1") {
+        cookie = cookie.domain(domain);
     }
-    Cookie::build((AUTH_COOKIE, jwt))
-        .domain(domain)
+    cookie
         .same_site(SameSite::Strict)
         .path("/")
         .http_only(true)
