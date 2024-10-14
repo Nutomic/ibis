@@ -31,10 +31,6 @@ nav form {
     margin: 0.5rem 1rem 0rem 0rem;
 }
 
-.item-view {
-    max-width: 700px;
-}
-
 pre {
     white-space: pre-wrap;
 }
