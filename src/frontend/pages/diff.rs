@@ -1,4 +1,9 @@
-use crate::frontend::{components::article_nav::ArticleNav, pages::article_resource, user_link};
+use crate::frontend::{
+    components::article_nav::ArticleNav,
+    pages::article_resource,
+    render_date_time,
+    user_link,
+};
 use leptos::*;
 use leptos_router::*;
 
@@ -25,7 +30,7 @@ pub fn EditDiff() -> impl IntoView {
                         let label = format!(
                             "{} ({})",
                             edit.edit.summary,
-                            edit.edit.created.to_rfc2822(),
+                            render_date_time(edit.edit.created),
                         );
                         view! {
                             <div class="item-view">
