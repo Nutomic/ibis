@@ -24,6 +24,7 @@ use activitypub_federation::{
 use api::api_routes;
 use axum::{
     body::Body,
+    extract::Path,
     http::{HeaderValue, Request},
     middleware::Next,
     response::{IntoResponse, Response},
@@ -119,8 +120,13 @@ pub fn asset_routes() -> MyResult<Router<()>> {
         )
         .route(
             "/assets/simple.css",
-            get((css_headers, include_str!("../../assets/simple.css"))),
+            get((css_headers.clone(), include_str!("../../assets/simple.css"))),
         )
+        .route(
+            "/assets/katex.min.css",
+            get((css_headers, include_str!("../../assets/katex.min.css"))),
+        )
+        .route("/assets/fonts/*font", get(get_font))
         .route(
             "/assets/index.html",
             get(include_str!("../../assets/index.html")),
@@ -142,6 +148,23 @@ async fn serve_wasm() -> MyResult<impl IntoResponse> {
     let mut headers = HeaderMap::new();
     headers.insert("Content-Type", "application/wasm".parse()?);
     let content = include_bytes!("../../assets/dist/ibis_bg.wasm");
+    Ok((headers, content))
+}
+
+#[debug_handler]
+async fn get_font(Path(font): Path<String>) -> MyResult<impl IntoResponse> {
+    let mut headers = HeaderMap::new();
+    let content_type = if font.ends_with(".ttf") {
+        "font/ttf"
+    } else if font.ends_with(".woff") {
+        "font/woff"
+    } else if font.ends_with(".woff2") {
+        "font/woff2"
+    } else {
+        ""
+    };
+    headers.insert("Content-type", content_type.parse()?);
+    let content = std::fs::read("assets/fonts/".to_owned() + &font).expect("Can't open katex font");
     Ok((headers, content))
 }
 

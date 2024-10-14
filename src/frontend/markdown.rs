@@ -1,3 +1,4 @@
+use katex;
 use markdown_it::{
     parser::inline::{InlineRule, InlineState},
     MarkdownIt,
@@ -5,8 +6,6 @@ use markdown_it::{
     NodeValue,
     Renderer,
 };
-
-use katex;
 
 pub fn markdown_parser() -> MarkdownIt {
     let mut parser = MarkdownIt::new();
@@ -76,8 +75,8 @@ impl NodeValue for MathEquation {
         let opts = katex::Opts::builder()
             .throw_on_error(false)
             .display_mode(self.display_mode)
-            .build().unwrap();
-        println!("equation: {}",self.equation);
+            .build()
+            .unwrap();
         let katex_equation = katex::render_with_opts(&self.equation, opts).unwrap();
         fmt.text_raw(&katex_equation)
     }
@@ -90,7 +89,7 @@ impl InlineRule for MathEquationScanner {
 
     fn run(state: &mut InlineState) -> Option<(Node, usize)> {
         let input = &state.src[state.pos..state.pos_max];
-        if !input.starts_with("$$")  {
+        if !input.starts_with("$$") {
             return None;
         }
         let mut display_mode = false;
@@ -103,7 +102,7 @@ impl InlineRule for MathEquationScanner {
             let start = state.pos + SEPARATOR_LENGTH;
             let i = start + length - SEPARATOR_LENGTH + 1;
             if start > i {
-                return None
+                return None;
             }
             let content = &state.src[start..i];
             let node = Node::new(MathEquation {
@@ -113,9 +112,7 @@ impl InlineRule for MathEquationScanner {
             Some((node, length + SEPARATOR_LENGTH + 1))
         })?
     }
-    
 }
-
 
 #[test]
 fn test_markdown_article_link() {
@@ -136,7 +133,9 @@ fn test_markdown_equation_katex() {
         .parse("here is a math equation: $$E=mc^2$$. Pretty cool, right?")
         .render();
     assert_eq!(
-        "<p>here is a math equation: ".to_owned() + &katex::render("E=mc^2").unwrap() + ". Pretty cool, right?</p>\n",
+        "<p>here is a math equation: ".to_owned()
+            + &katex::render("E=mc^2").unwrap()
+            + ". Pretty cool, right?</p>\n",
         rendered
     );
 }
