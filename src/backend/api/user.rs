@@ -89,7 +89,6 @@ pub(in crate::backend::api) async fn login_user(
     }
     let token = generate_login_token(&user.person, &data)?;
     let jar = jar.add(create_cookie(token, &data));
-    dbg!(&jar);
     Ok((jar, Json(user)))
 }
 
