@@ -17,7 +17,7 @@ ssr = [
   "leptos_axum",
   "activitypub_federation",
   "jsonwebtoken",
-  "katex/duktape"
+  "katex/duktape",
 ]
 csr = ["leptos/csr", "leptos_meta/csr", "leptos_router/csr", "katex/wasm-js"]
 hydrate = ["leptos/hydrate", "leptos_meta/hydrate", "leptos_router/hydrate"]
