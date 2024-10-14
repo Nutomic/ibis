@@ -24,7 +24,7 @@ psql -c "CREATE USER ibis WITH PASSWORD 'ibis' SUPERUSER;" -U postgres
 psql -c "CREATE DATABASE ibis WITH OWNER ibis;" -U postgres
 ```
 
-You need to install [cargo](https://rustup.rs/), [trunk](https://trunkrs.dev) and [cargo watch](https://github.com/watchexec/cargo-watch). Run `./scripts/watch.sh` which automatically rebuilds the project after changes. Then open the site at [127.0.0.1:8080](http://127.0.0.1:8080/).
+You need to install [cargo](https://rustup.rs/), [trunk](https://trunkrs.dev) and [cargo watch](https://github.com/watchexec/cargo-watch). Run `./scripts/watch.sh` which automatically rebuilds the project after changes. Then open the site at [127.0.0.1:8080](http://127.0.0.1:8080/). Then login with user `ibis` and password `ibis`.
 
 By default the frontend runs on port 8080, which can be changed with env var `TRUNK_SERVE_PORT`. The backend port is 8081 and can be changed with `IBIS_BACKEND_PORT`.
 

@@ -3,6 +3,7 @@ use crate::frontend::{
     components::article_nav::ArticleNav,
     extract_domain,
     pages::article_resource,
+    render_date_time,
     user_link,
 };
 use leptos::*;
@@ -35,15 +36,10 @@ pub fn ArticleHistory() -> impl IntoView {
                                             extract_domain(&article.article.ap_id),
                                             edit.edit.hash.0,
                                         );
-                                        let label = format!(
-                                            "{} ({})",
-                                            edit.edit.summary,
-                                            edit.edit.created.to_rfc2822(),
-                                        );
                                         view! {
                                             <li>
-                                                <a href=path>{label}</a>
-                                                " by "
+                                                {render_date_time(edit.edit.created)}": "
+                                                <a href=path>{edit.edit.summary}</a> " by "
                                                 {user_link(&edit.creator)}
                                             </li>
                                         }

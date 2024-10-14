@@ -118,9 +118,10 @@ pub fn EditArticle() -> impl IntoView {
                                     }
                                     set_text.set(article.article.text.clone());
                                     let article_ = article.clone();
+                                    let rows = article.article.text.lines().count() + 1;
                                     view! {
                                         // set initial text, otherwise submit with no changes results in empty text
-                                        <div class="item-view">
+                                        <div id="edit-article" class="item-view">
                                             <h1>{article_title(&article.article)}</h1>
                                             {move || {
                                                 edit_error
@@ -130,41 +131,49 @@ pub fn EditArticle() -> impl IntoView {
                                                     })
                                             }}
 
-                                            <textarea on:keyup=move |ev| {
-                                                let val = event_target_value(&ev);
-                                                set_text.update(|p| *p = val);
-                                            }>{article.article.text.clone()}</textarea>
+                                            <textarea
+                                                id="edit-article-textarea"
+                                                rows=rows
+                                                on:keyup=move |ev| {
+                                                    let val = event_target_value(&ev);
+                                                    set_text.update(|p| *p = val);
+                                                }
+                                            >
+                                                {article.article.text.clone()}
+                                            </textarea>
                                             <div>
                                                 <a href="https://commonmark.org/help/" target="blank_">
                                                     Markdown
                                                 </a>
                                                 " formatting is supported"
                                             </div>
-                                            <input
-                                                type="text"
-                                                placeholder="Edit summary"
-                                                value=summary.get_untracked()
-                                                on:keyup=move |ev| {
-                                                    let val = event_target_value(&ev);
-                                                    set_summary.update(|p| *p = val);
-                                                }
-                                            />
+                                            <div class="inputs">
+                                                <input
+                                                    type="text"
+                                                    placeholder="Edit summary"
+                                                    value=summary.get_untracked()
+                                                    on:keyup=move |ev| {
+                                                        let val = event_target_value(&ev);
+                                                        set_summary.update(|p| *p = val);
+                                                    }
+                                                />
 
-                                            <button
-                                                prop:disabled=move || button_is_disabled.get()
-                                                on:click=move |_| {
-                                                    submit_action
-                                                        .dispatch((
-                                                            text.get(),
-                                                            summary.get(),
-                                                            article_.clone(),
-                                                            edit_response.get(),
-                                                        ))
-                                                }
-                                            >
+                                                <button
+                                                    prop:disabled=move || button_is_disabled.get()
+                                                    on:click=move |_| {
+                                                        submit_action
+                                                            .dispatch((
+                                                                text.get(),
+                                                                summary.get(),
+                                                                article_.clone(),
+                                                                edit_response.get(),
+                                                            ))
+                                                    }
+                                                >
 
-                                                Submit
-                                            </button>
+                                                    Submit
+                                                </button>
+                                            </div>
                                         </div>
                                     }
                                 })

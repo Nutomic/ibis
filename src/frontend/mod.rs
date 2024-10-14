@@ -1,4 +1,5 @@
 use crate::common::{utils::extract_domain, DbArticle, DbPerson};
+use chrono::{DateTime, Local, Utc};
 use leptos::*;
 
 pub mod api;
@@ -44,4 +45,11 @@ fn user_title(person: &DbPerson) -> String {
 fn user_link(person: &DbPerson) -> impl IntoView {
     let creator_path = format!("/user/{}", person.username);
     view! { <a href=creator_path>{user_title(person)}</a> }
+}
+
+fn render_date_time(date_time: DateTime<Utc>) -> String {
+    date_time
+        .with_timezone(&Local)
+        .format("%Y-%m-%d %H:%M:%S")
+        .to_string()
 }

@@ -31,12 +31,21 @@ nav form {
     margin: 0.5rem 1rem 0rem 0rem;
 }
 
-.item-view {
-    max-width: 700px;
-}
-
 pre {
     white-space: pre-wrap;
+}
+
+#edit-article textarea  {
+    height: auto;
+    width: 100%;
+}
+
+#edit-article .inputs {
+    display: flex;
+}
+#edit-article .inputs input {
+    flex: 1;
+    margin: 5px;
 }
 
 @media only screen and (max-width: 720px) {
