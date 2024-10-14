@@ -22,7 +22,7 @@ pub struct ArticleCollection {
 }
 
 #[derive(Clone, Debug)]
-pub struct DbArticleCollection(Vec<DbArticle>);
+pub struct DbArticleCollection(());
 
 #[async_trait::async_trait]
 impl Collection for DbArticleCollection {
@@ -66,14 +66,13 @@ impl Collection for DbArticleCollection {
         _owner: &Self::Owner,
         data: &Data<Self::DataType>,
     ) -> Result<Self, Self::Error> {
-        let articles = try_join_all(
+        try_join_all(
             apub.items
                 .into_iter()
                 .map(|i| DbArticle::from_json(i, data)),
         )
         .await?;
 
-        // TODO: return value propably not needed
-        Ok(DbArticleCollection(articles))
+        Ok(DbArticleCollection(()))
     }
 }
