@@ -9,7 +9,7 @@ killall trunk || true
 # https://stackoverflow.com/a/52033580
 (trap 'kill 0' INT;
   # start frontend
-  CARGO_TARGET_DIR=target/frontend trunk serve -w src/frontend/ --proxy-backend http://$IBIS__BIND &
+  CARGO_TARGET_DIR=target/frontend trunk serve -w src/frontend/ -w assets/ --proxy-backend http://$IBIS__BIND &
   # start backend, with separate target folder to avoid rebuilds from arch change
-  bacon -j run
+  cargo watch -x run
 )
