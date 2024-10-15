@@ -93,6 +93,7 @@ pub fn App() -> impl IntoView {
         <>
             <Stylesheet id="simple" href="/assets/simple.css" />
             <Stylesheet id="ibis" href="/assets/ibis.css" />
+            <Stylesheet id="katex" href="/assets/katex.min.css" />
             <Router>
                 <Nav />
                 <main>

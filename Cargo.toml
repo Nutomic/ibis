@@ -17,8 +17,9 @@ ssr = [
   "leptos_axum",
   "activitypub_federation",
   "jsonwebtoken",
+  "katex/duktape",
 ]
-csr = ["leptos/csr", "leptos_meta/csr", "leptos_router/csr"]
+csr = ["leptos/csr", "leptos_meta/csr", "leptos_router/csr", "katex/wasm-js"]
 hydrate = ["leptos/hydrate", "leptos_meta/hydrate", "leptos_router/hydrate"]
 
 [lints.clippy]
@@ -78,6 +79,7 @@ config = { version = "0.14.0", features = ["toml"] }
 doku = "0.21.1"
 smart-default = "0.7.1"
 tower-layer = "0.3.3"
+katex = { version = "0.4", default-features = false }
 
 [dev-dependencies]
 pretty_assertions = "1.4.1"
