@@ -43,7 +43,15 @@ fn user_title(person: &DbPerson) -> String {
 }
 
 fn user_link(person: &DbPerson) -> impl IntoView {
-    let creator_path = format!("/user/{}", person.username);
+    let creator_path = if person.local {
+        format!("/user/{}", person.username)
+    } else {
+        format!(
+            "/user/{}@{}",
+            person.username,
+            extract_domain(&person.ap_id)
+        )
+    };
     view! { <a href=creator_path>{user_title(person)}</a> }
 }
 

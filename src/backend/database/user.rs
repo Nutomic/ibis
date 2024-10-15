@@ -129,7 +129,7 @@ impl DbPerson {
             .select(person::all_columns)
             .into_boxed();
         query = if let Some(domain) = domain {
-            let domain_pattern = format!("{}://{domain}/%", http_protocol_str());
+            let domain_pattern = format!("%://{domain}/%");
             query
                 .filter(person::ap_id.ilike(domain_pattern))
                 .filter(person::local.eq(false))
