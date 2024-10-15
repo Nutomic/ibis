@@ -1,6 +1,7 @@
 use katex;
 use markdown_it::{
     parser::inline::{InlineRule, InlineState},
+    plugins::cmark::block::{heading::ATXHeading, lheading::SetextHeader},
     MarkdownIt,
     Node,
     NodeValue,
@@ -10,7 +11,19 @@ use once_cell::sync::OnceCell;
 
 pub fn render_markdown(text: &str) -> String {
     static INSTANCE: OnceCell<MarkdownIt> = OnceCell::new();
-    INSTANCE.get_or_init(markdown_parser).parse(text).render()
+    let mut parsed = INSTANCE.get_or_init(markdown_parser).parse(text);
+
+    // Make markdown headings one level smaller, so that h1 becomes h2 etc, and markdown titles
+    // are smaller than page title.
+    parsed.walk_mut(|node, _| {
+        if let Some(heading) = node.cast_mut::<ATXHeading>() {
+            heading.level += 1;
+        }
+        if let Some(heading) = node.cast_mut::<SetextHeader>() {
+            heading.level += 1;
+        }
+    });
+    parsed.render()
 }
 
 fn markdown_parser() -> MarkdownIt {
