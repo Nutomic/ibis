@@ -11,5 +11,5 @@ killall trunk || true
   # start frontend
   CARGO_TARGET_DIR=target/frontend trunk serve -w src/frontend/ -w assets/ --proxy-backend http://$IBIS__BIND &
   # start backend, with separate target folder to avoid rebuilds from arch change
-  cargo watch -x run
+  cargo watch --ignore assets/ibis.css --exec run
 )

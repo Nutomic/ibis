@@ -22,17 +22,16 @@ use activitypub_federation::{
     http_signatures::generate_actor_keypair,
 };
 use api::api_routes;
+use assets::asset_routes;
 use axum::{
     body::Body,
-    extract::Path,
     http::{HeaderValue, Request},
     middleware::Next,
-    response::{IntoResponse, Response},
-    routing::get,
+    response::Response,
     Router,
     ServiceExt,
 };
-use axum_macros::{debug_handler, debug_middleware};
+use axum_macros::debug_middleware;
 use chrono::Local;
 use diesel::{
     r2d2::{ConnectionManager, Pool},
@@ -42,12 +41,12 @@ use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 use leptos::leptos_config::get_config_from_str;
 use leptos_axum::{generate_route_list, LeptosRoutes};
 use log::info;
-use reqwest::header::HeaderMap;
 use tokio::net::TcpListener;
 use tower_http::cors::CorsLayer;
 use tower_layer::Layer;
 
 pub mod api;
+mod assets;
 pub mod config;
 pub mod database;
 pub mod error;
@@ -108,64 +107,6 @@ pub async fn start(config: IbisConfig) -> MyResult<()> {
     axum::serve(listener, app_with_middleware.into_make_service()).await?;
 
     Ok(())
-}
-
-pub fn asset_routes() -> MyResult<Router<()>> {
-    let mut css_headers = HeaderMap::new();
-    css_headers.insert("Content-Type", "text/css".parse()?);
-    Ok(Router::new()
-        .route(
-            "/assets/ibis.css",
-            get((css_headers.clone(), include_str!("../../assets/ibis.css"))),
-        )
-        .route(
-            "/assets/simple.css",
-            get((css_headers.clone(), include_str!("../../assets/simple.css"))),
-        )
-        .route(
-            "/assets/katex.min.css",
-            get((css_headers, include_str!("../../assets/katex.min.css"))),
-        )
-        .route("/assets/fonts/*font", get(get_font))
-        .route(
-            "/assets/index.html",
-            get(include_str!("../../assets/index.html")),
-        )
-        .route("/pkg/ibis.js", get(serve_js))
-        .route("/pkg/ibis_bg.wasm", get(serve_wasm)))
-}
-
-#[debug_handler]
-async fn serve_js() -> MyResult<impl IntoResponse> {
-    let mut headers = HeaderMap::new();
-    headers.insert("Content-Type", "application/javascript".parse()?);
-    let content = include_str!("../../assets/dist/ibis.js");
-    Ok((headers, content))
-}
-
-#[debug_handler]
-async fn serve_wasm() -> MyResult<impl IntoResponse> {
-    let mut headers = HeaderMap::new();
-    headers.insert("Content-Type", "application/wasm".parse()?);
-    let content = include_bytes!("../../assets/dist/ibis_bg.wasm");
-    Ok((headers, content))
-}
-
-#[debug_handler]
-async fn get_font(Path(font): Path<String>) -> MyResult<impl IntoResponse> {
-    let mut headers = HeaderMap::new();
-    let content_type = if font.ends_with(".ttf") {
-        "font/ttf"
-    } else if font.ends_with(".woff") {
-        "font/woff"
-    } else if font.ends_with(".woff2") {
-        "font/woff2"
-    } else {
-        ""
-    };
-    headers.insert("Content-type", content_type.parse()?);
-    let content = std::fs::read("assets/fonts/".to_owned() + &font).expect("Can't open katex font");
-    Ok((headers, content))
 }
 
 const MAIN_PAGE_DEFAULT_TEXT: &str = "Welcome to Ibis, the federated Wikipedia alternative!
