@@ -6,8 +6,14 @@ use markdown_it::{
     NodeValue,
     Renderer,
 };
+use once_cell::sync::OnceCell;
 
-pub fn markdown_parser() -> MarkdownIt {
+pub fn render_markdown(text: &str) -> String {
+    static INSTANCE: OnceCell<MarkdownIt> = OnceCell::new();
+    INSTANCE.get_or_init(markdown_parser).parse(text).render()
+}
+
+fn markdown_parser() -> MarkdownIt {
     let mut parser = MarkdownIt::new();
     markdown_it::plugins::cmark::add(&mut parser);
     markdown_it::plugins::extra::linkify::add(&mut parser);

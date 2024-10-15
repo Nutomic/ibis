@@ -4,6 +4,7 @@ use crate::{
         app::GlobalState,
         article_title,
         components::article_nav::ArticleNav,
+        markdown::render_markdown,
         pages::article_resource,
     },
 };
@@ -46,6 +47,8 @@ pub fn EditArticle() -> impl IntoView {
 
     let (text, set_text) = create_signal(String::new());
     let (summary, set_summary) = create_signal(String::new());
+    let (show_preview, set_show_preview) = create_signal(false);
+    let (preview, set_preview) = create_signal(String::new());
     let (wait_for_response, set_wait_for_response) = create_signal(false);
     let button_is_disabled =
         Signal::derive(move || wait_for_response.get() || summary.get().is_empty());
@@ -117,6 +120,7 @@ pub fn EditArticle() -> impl IntoView {
                                         set_summary.set(conflict.summary);
                                     }
                                     set_text.set(article.article.text.clone());
+                                    set_preview.set(render_markdown(&article.article.text));
                                     let article_ = article.clone();
                                     let rows = article.article.text.lines().count() + 1;
                                     view! {
@@ -136,11 +140,18 @@ pub fn EditArticle() -> impl IntoView {
                                                 rows=rows
                                                 on:keyup=move |ev| {
                                                     let val = event_target_value(&ev);
-                                                    set_text.update(|p| *p = val);
+                                                    set_preview.set(render_markdown(&val));
+                                                    set_text.set(val);
                                                 }
                                             >
                                                 {article.article.text.clone()}
                                             </textarea>
+                                            <button on:click=move |_| {
+                                                set_show_preview.update(|s| *s = !*s)
+                                            }>Preview</button>
+                                            <Show when=move || { show_preview.get() }>
+                                                <div id="preview" inner_html=move || preview.get()></div>
+                                            </Show>
                                             <div>
                                                 <a href="https://commonmark.org/help/" target="blank_">
                                                     Markdown

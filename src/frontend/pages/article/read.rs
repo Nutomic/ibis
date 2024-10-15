@@ -1,7 +1,7 @@
 use crate::frontend::{
     article_title,
     components::article_nav::ArticleNav,
-    markdown::markdown_parser,
+    markdown::render_markdown,
     pages::article_resource,
 };
 use leptos::*;
@@ -16,23 +16,18 @@ pub fn ReadArticle() -> impl IntoView {
             view! { "Loading..." }
         }>
 
-            {
-                let parser = markdown_parser();
-                move || {
-                    article
-                        .get()
-                        .map(|article| {
-                            view! {
-                                <div class="item-view">
-                                    <h1>{article_title(&article.article)}</h1>
-                                    <div inner_html=parser
-                                        .parse(&article.article.text)
-                                        .render()></div>
-                                </div>
-                            }
-                        })
-                }
-            }
+            {move || {
+                article
+                    .get()
+                    .map(|article| {
+                        view! {
+                            <div class="item-view">
+                                <h1>{article_title(&article.article)}</h1>
+                                <div inner_html=render_markdown(&article.article.text)></div>
+                            </div>
+                        }
+                    })
+            }}
 
         </Suspense>
     }
