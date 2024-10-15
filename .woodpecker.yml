@@ -96,7 +96,7 @@ steps:
       - event: tag
 
   publish_release:
-    image: woodpeckerci/plugin-github-release
+    image: woodpeckerci/plugin-release
     settings:
       files:
         - ibis.gz
