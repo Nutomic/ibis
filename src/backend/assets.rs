@@ -73,10 +73,6 @@ async fn serve_wasm() -> MyResult<impl IntoResponse> {
 #[debug_handler]
 async fn get_font(Path(font): Path<String>) -> MyResult<impl IntoResponse> {
     let mut headers = HeaderMap::new();
-    headers.insert("Content-type", "font/woff2".parse()?);
-    let font_dir = include_dir!("assets/fonts");
-    if let Some(font_file) = font_dir.get_file(font) {
-        return Ok((headers, font_file.contents()));
-    }
-    Err(anyhow!("invalid font").into())
+    let file = font_dir.get_file(font).ok_or(anyhow!("invalid font"))?;
+    Ok((headers, file.contents()))
 }
