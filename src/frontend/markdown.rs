@@ -115,7 +115,8 @@ impl InlineRule for MathEquationScanner {
             return None;
         }
         let mut display_mode = false;
-        if input.starts_with("$$\n") {
+        println!("Input: {}", input);
+        if input.starts_with("$$\n") || input.starts_with("$$ ") {
             display_mode = true;
         }
         const SEPARATOR_LENGTH: usize = 2;
