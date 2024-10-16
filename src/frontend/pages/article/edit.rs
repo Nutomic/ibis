@@ -125,7 +125,7 @@ pub fn EditArticle() -> impl IntoView {
                                     let rows = article.article.text.lines().count() + 1;
                                     view! {
                                         // set initial text, otherwise submit with no changes results in empty text
-                                        <div id="edit-article" class="item-view">
+                                        <div>
                                             <h1>{article_title(&article.article)}</h1>
                                             {move || {
                                                 edit_error
@@ -137,6 +137,7 @@ pub fn EditArticle() -> impl IntoView {
 
                                             <textarea
                                                 id="edit-article-textarea"
+                                                class="textarea textarea-bordered textarea-primary min-w-full"
                                                 rows=rows
                                                 on:keyup=move |ev| {
                                                     let val = event_target_value(&ev);
@@ -146,11 +147,11 @@ pub fn EditArticle() -> impl IntoView {
                                             >
                                                 {article.article.text.clone()}
                                             </textarea>
-                                            <button on:click=move |_| {
+                                            <button class="btn" on:click=move |_| {
                                                 set_show_preview.update(|s| *s = !*s)
                                             }>Preview</button>
                                             <Show when=move || { show_preview.get() }>
-                                                <div id="preview" inner_html=move || preview.get()></div>
+                                                <div class="preview" inner_html=move || preview.get()></div>
                                             </Show>
                                             <div>
                                                 <a href="https://commonmark.org/help/" target="blank_">
@@ -161,6 +162,7 @@ pub fn EditArticle() -> impl IntoView {
                                             <div class="inputs">
                                                 <input
                                                     type="text"
+                                                    class="input input-secondary"
                                                     placeholder="Edit summary"
                                                     value=summary.get_untracked()
                                                     on:keyup=move |ev| {
@@ -170,6 +172,7 @@ pub fn EditArticle() -> impl IntoView {
                                                 />
 
                                                 <button
+                                                class="btn btn-secondary"
                                                     prop:disabled=move || button_is_disabled.get()
                                                     on:click=move |_| {
                                                         submit_action

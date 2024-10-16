@@ -20,6 +20,10 @@ pub fn asset_routes() -> MyResult<Router<()>> {
             get((css_headers(), include_str!("../../assets/simple.css"))),
         )
         .route(
+            "/assets/daisyui.css",
+            get((css_headers(), include_str!("../../assets/daisyui.css"))),
+        )
+        .route(
             "/assets/katex.min.css",
             get((css_headers(), include_str!("../../assets/katex.min.css"))),
         )

@@ -48,6 +48,20 @@ pre {
     margin: 5px;
 }
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  h1 {
+    @apply text-2xl;
+  }
+  h2 {
+    @apply text-xl;
+  }
+  /* ... */
+}
+
 @media only screen and (max-width: 720px) {
     body {
         flex-direction: column;

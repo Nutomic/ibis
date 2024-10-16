@@ -21,8 +21,8 @@ pub fn ReadArticle() -> impl IntoView {
                     .get()
                     .map(|article| {
                         view! {
-                            <div class="item-view">
-                                <h1>{article_title(&article.article)}</h1>
+                            <div class="prose prose-slate">
+                                <h1 class="slate">{article_title(&article.article)}</h1>
                                 <div inner_html=render_markdown(&article.article.text)></div>
                             </div>
                         }

@@ -22,7 +22,7 @@ pub fn Nav() -> impl IntoView {
 
     let (search_query, set_search_query) = create_signal(String::new());
     view! {
-        <nav class="inner" style="min-width: 250px;">
+        <nav class="menu menu-vertical" style="min-width: 250px;">
             <li>
                 <A href="/">"Main Page"</A>
             </li>
@@ -48,6 +48,7 @@ pub fn Nav() -> impl IntoView {
                 }>
                     <input
                         type="text"
+                        class="input"
                         placeholder="Search"
                         prop:value=search_query
                         on:keyup=move |ev: ev::KeyboardEvent| {
@@ -56,7 +57,7 @@ pub fn Nav() -> impl IntoView {
                         }
                     />
 
-                    <button>Go</button>
+                    <button class="btn btn-primary">Go</button>
                 </form>
             </li>
             <Show

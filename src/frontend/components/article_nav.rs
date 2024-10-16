@@ -31,9 +31,9 @@ pub fn ArticleNav(article: Resource<Option<String>, ArticleView>) -> impl IntoVi
                         let article_link_ = article_link.clone();
                         let protected = article_.article.protected;
                         view! {
-                            <nav class="inner">
-                                <A href=article_link.clone()>"Read"</A>
-                                <A href=format!("{article_link}/history")>"History"</A>
+                            <div role="tablist" class="tabs tabs-bordered">
+                                <A class="tab" href=article_link.clone()>"Read"</A>
+                                <A class="tab" href=format!("{article_link}/history")>"History"</A>
                                 <Show when=move || {
                                     global_state
                                         .with(|state| {
@@ -46,12 +46,12 @@ pub fn ArticleNav(article: Resource<Option<String>, ArticleView>) -> impl IntoVi
                                                 && can_edit_article(&article_.article, is_admin).is_ok()
                                         })
                                 }>
-                                    <A href=format!("{article_link}/edit")>"Edit"</A>
+                                    <A class="tab" href=format!("{article_link}/edit")>"Edit"</A>
                                 </Show>
                                 <Show when=move || {
                                     global_state.with(|state| state.my_profile.is_some())
                                 }>
-                                    <A href=format!("{article_link_}/actions")>"Actions"</A>
+                                    <A class="tab" href=format!("{article_link_}/actions")>"Actions"</A>
                                     {instance
                                         .get()
                                         .map(|i| {
@@ -66,7 +66,7 @@ pub fn ArticleNav(article: Resource<Option<String>, ArticleView>) -> impl IntoVi
                                         "Protected"
                                     </span>
                                 </Show>
-                            </nav>
+                            </div>
                         }
                     })
             }}
