@@ -12,7 +12,7 @@ module.exports = {
     require('@tailwindcss/typography')
   ],
   daisyui: {
-    themes: ["cupcake"],
+    themes: ["emerald"],
   },
   darkMode: 'class'
 }

@@ -22,7 +22,7 @@ pub fn Nav() -> impl IntoView {
 
     let (search_query, set_search_query) = create_signal(String::new());
     view! {
-        <nav class="menu menu-vertical" style="min-width: 250px;">
+        <nav class="menu lg:menu-vertical lg:w-40">
             <li>
                 <A href="/">"Main Page"</A>
             </li>
@@ -38,7 +38,9 @@ pub fn Nav() -> impl IntoView {
                 </li>
             </Show>
             <li>
-                <form on:submit=move |ev| {
+                <form 
+                class="form-control m-0 p-1"
+                on:submit=move |ev| {
                     ev.prevent_default();
                     let navigate = leptos_router::use_navigate();
                     let query = search_query.get();
@@ -48,7 +50,7 @@ pub fn Nav() -> impl IntoView {
                 }>
                     <input
                         type="text"
-                        class="input"
+                        class="input input-secondary input-bordered input-xs w-full rounded"
                         placeholder="Search"
                         prop:value=search_query
                         on:keyup=move |ev: ev::KeyboardEvent| {
@@ -57,9 +59,10 @@ pub fn Nav() -> impl IntoView {
                         }
                     />
 
-                    <button class="btn btn-primary">Go</button>
+                    <button class="btn btn-xs btn-secondary">Go</button>
                 </form>
             </li>
+            <div class="divider"></div>
             <Show
                 when=move || global_state.with(|state| state.my_profile.is_some())
                 fallback=move || {
@@ -80,16 +83,15 @@ pub fn Nav() -> impl IntoView {
                     let my_profile = global_state.with(|state| state.my_profile.clone().unwrap());
                     let profile_link = format!("/user/{}", my_profile.person.username);
                     view! {
-                        <p>
+                        <p class="self-center pb-2">
                             "Logged in as "
-                            <a
+                            <a class="link"
                                 href=profile_link
-                                style="border: none; padding: 0; color: var(--accent) !important;"
                             >
                                 {my_profile.person.username}
                             </a>
                         </p>
-                        <button on:click=move |_| logout_action.dispatch(())>Logout</button>
+                        <button class="btn" on:click=move |_| logout_action.dispatch(())>Logout</button>
                     }
                 }
 

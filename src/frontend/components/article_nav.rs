@@ -31,8 +31,8 @@ pub fn ArticleNav(article: Resource<Option<String>, ArticleView>) -> impl IntoVi
                         let article_link_ = article_link.clone();
                         let protected = article_.article.protected;
                         view! {
-                            <div role="tablist" class="tabs tabs-bordered">
-                                <A class="tab" href=article_link.clone()>"Read"</A>
+                            <div role="tablist" class="tabs tabs-lifted">
+                                <A class="tab tab-active" href=article_link.clone()>"Read"</A>
                                 <A class="tab" href=format!("{article_link}/history")>"History"</A>
                                 <Show when=move || {
                                     global_state

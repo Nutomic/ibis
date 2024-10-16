@@ -30,7 +30,10 @@ fn main() {
     mount_to_body(|| {
         view! { <App /> }
     });
+
+    // set theme
+    // https://daisyui.com/docs/themes/
     let document = web_sys::window().unwrap().document().unwrap();
     let html_element = document.document_element().unwrap();
-    html_element.set_attribute("data-theme", "cupcake").unwrap();
+    html_element.set_attribute("data-theme", "emerald").unwrap();
 }
