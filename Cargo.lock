@@ -1704,7 +1704,11 @@ dependencies = [
 
 [[package]]
 name = "ibis"
+<<<<<<< HEAD
 version = "0.1.2"
+=======
+version = "0.1.3"
+>>>>>>> master
 dependencies = [
  "activitypub_federation",
  "anyhow",
