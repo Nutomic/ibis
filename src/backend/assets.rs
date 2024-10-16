@@ -8,6 +8,7 @@ use axum::{
     Router,
 };
 use axum_macros::debug_handler;
+use include_dir::include_dir;
 use once_cell::sync::OnceCell;
 use reqwest::header::HeaderMap;
 use std::fs::read_to_string;
@@ -72,16 +73,7 @@ async fn serve_wasm() -> MyResult<impl IntoResponse> {
 #[debug_handler]
 async fn get_font(Path(font): Path<String>) -> MyResult<impl IntoResponse> {
     let mut headers = HeaderMap::new();
-    let content_type = if font.ends_with(".ttf") {
-        "font/ttf"
-    } else if font.ends_with(".woff") {
-        "font/woff"
-    } else if font.ends_with(".woff2") {
-        "font/woff2"
-    } else {
-        return Err(anyhow!("invalid font").into());
-    };
-    headers.insert("Content-type", content_type.parse()?);
-    let content = std::fs::read("assets/fonts/".to_owned() + &font)?;
-    Ok((headers, content))
+    let font_dir = include_dir!("assets/fonts");
+    let file = font_dir.get_file(font).ok_or(anyhow!("invalid font"))?;
+    Ok((headers, file.contents()))
 }
