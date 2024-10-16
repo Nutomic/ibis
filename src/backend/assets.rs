@@ -8,10 +8,10 @@ use axum::{
     Router,
 };
 use axum_macros::debug_handler;
+use include_dir::include_dir;
 use once_cell::sync::OnceCell;
 use reqwest::header::HeaderMap;
 use std::fs::read_to_string;
-use include_dir::include_dir;
 
 pub fn asset_routes() -> MyResult<Router<()>> {
     Ok(Router::new()
@@ -75,7 +75,7 @@ async fn get_font(Path(font): Path<String>) -> MyResult<impl IntoResponse> {
     let mut headers = HeaderMap::new();
     headers.insert("Content-type", "font/woff2".parse()?);
     let font_dir = include_dir!("assets/fonts");
-    if let Some(font_file) = font_dir.get_file(font){
+    if let Some(font_file) = font_dir.get_file(font) {
         return Ok((headers, font_file.contents()));
     }
     Err(anyhow!("invalid font").into())
