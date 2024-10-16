@@ -1,5 +1,5 @@
 use crate::frontend::{
-    components::article_nav::ArticleNav,
+    components::article_nav::{ActiveTab, ArticleNav},
     pages::article_resource,
     render_date_time,
     user_link,
@@ -13,7 +13,7 @@ pub fn EditDiff() -> impl IntoView {
     let article = article_resource();
 
     view! {
-        <ArticleNav article=article />
+        <ArticleNav article=article active_tab=ActiveTab::Edit />
         <Suspense fallback=|| {
             view! { "Loading..." }
         }>

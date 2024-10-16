@@ -24,12 +24,13 @@ pub fn CredentialsForm(
                 error
                     .get()
                     .map(|err| {
-                        view! { <p style="color:red;">{err}</p> }
+                        view! { <p class="alert alert-error">{err}</p> }
                     })
             }}
 
             <input
                 type="text"
+                class="input"
                 required
                 placeholder="Username"
                 prop:disabled=move || disabled.get()
@@ -46,6 +47,7 @@ pub fn CredentialsForm(
 
             <input
                 type="password"
+                class="input"
                 required
                 placeholder="Password"
                 prop:disabled=move || disabled.get()
@@ -69,6 +71,7 @@ pub fn CredentialsForm(
 
             <div>
                 <button
+                    class="btn"
                     prop:disabled=move || button_is_disabled.get()
                     on:click=move |_| dispatch_action()
                 >

@@ -1,6 +1,5 @@
 use crate::frontend::{
-    article_title,
-    components::article_nav::ArticleNav,
+    components::article_nav::{ActiveTab, ArticleNav},
     markdown::render_markdown,
     pages::article_resource,
 };
@@ -11,7 +10,7 @@ pub fn ReadArticle() -> impl IntoView {
     let article = article_resource();
 
     view! {
-        <ArticleNav article=article />
+        <ArticleNav article=article active_tab=ActiveTab::Read />
         <Suspense fallback=|| {
             view! { "Loading..." }
         }>
@@ -21,10 +20,10 @@ pub fn ReadArticle() -> impl IntoView {
                     .get()
                     .map(|article| {
                         view! {
-                            <div class="prose prose-slate">
-                                <h1 class="slate">{article_title(&article.article)}</h1>
-                                <div inner_html=render_markdown(&article.article.text)></div>
-                            </div>
+                            <div
+                                class="prose prose-slate"
+                                inner_html=render_markdown(&article.article.text)
+                            ></div>
                         }
                     })
             }}

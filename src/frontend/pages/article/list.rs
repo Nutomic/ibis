@@ -21,19 +21,19 @@ pub fn ListArticles() -> impl IntoView {
     );
 
     view! {
-        <h1>Most recently edited Articles</h1>
+        <h1 class="text-4xl font-bold font-serif my-4">Most recently edited Articles</h1>
         <Suspense fallback=|| view! { "Loading..." }>
             <fieldset on:input=move |ev| {
                 let val = ev.target().unwrap().unchecked_into::<web_sys::HtmlInputElement>().id();
                 let is_local_only = val == "only-local";
                 set_only_local.update(|p| *p = is_local_only);
             }>
-                <input type="radio" name="listing-type" id="only-local" />
+                <input type="radio" name="listing-type" class="radio radio-primary" />
                 <label for="only-local">Only Local</label>
-                <input type="radio" name="listing-type" id="all" checked />
+                <input type="radio" name="listing-type" class="radio radio-primary" checked />
                 <label for="all">All</label>
             </fieldset>
-            <ul>
+            <ul class="list-disc">
                 {move || {
                     articles
                         .get()
@@ -42,7 +42,7 @@ pub fn ListArticles() -> impl IntoView {
                                 .map(|a| {
                                     view! {
                                         <li>
-                                            <a href=article_link(&a)>{article_title(&a)}</a>
+                                            <a class="link link-secondary" href=article_link(&a)>{article_title(&a)}</a>
                                         </li>
                                     }
                                 })

@@ -3,8 +3,7 @@ use crate::{
     frontend::{
         app::GlobalState,
         article_link,
-        article_title,
-        components::article_nav::ArticleNav,
+        components::article_nav::{ActiveTab, ArticleNav},
         pages::article_resource,
         DbArticle,
     },
@@ -52,7 +51,7 @@ pub fn ArticleActions() -> impl IntoView {
         }
     });
     view! {
-        <ArticleNav article=article />
+        <ArticleNav article=article active_tab=ActiveTab::Actions />
         <Suspense fallback=|| {
             view! { "Loading..." }
         }>
@@ -61,16 +60,14 @@ pub fn ArticleActions() -> impl IntoView {
                     .get()
                     .map(|article| {
                         view! {
-                            <div class="item-view">
-                                <h1>{article_title(&article.article)}</h1>
+                            <div>
                                 {move || {
                                     error
                                         .get()
                                         .map(|err| {
-                                            view! { <p style="color:red;">{err}</p> }
+                                            view! { <p class="alert">{err}</p> }
                                         })
                                 }}
-
                                 <Show when=move || {
                                     global_state
                                         .with(|state| {
@@ -81,14 +78,19 @@ pub fn ArticleActions() -> impl IntoView {
                                                 .unwrap_or_default() && article.article.local
                                         })
                                 }>
-                                    <button on:click=move |_| {
-                                        protect_action
-                                            .dispatch((article.article.id, article.article.protected))
-                                    }>Toggle Article Protection</button>
+                                    <button
+                                        class="btn btn-secondary"
+                                        on:click=move |_| {
+                                            protect_action
+                                                .dispatch((article.article.id, article.article.protected))
+                                        }
+                                    >
+                                        Toggle Article Protection
+                                    </button>
                                     <p>"Protect a local article so that only admins can edit it"</p>
-                                </Show>
-                                <Show when=move || !article.article.local>
+                                </Show> <Show when=move || !article.article.local>
                                     <input
+                                        class="input"
                                         placeholder="New Title"
                                         on:keyup=move |ev: ev::KeyboardEvent| {
                                             let val = event_target_value(&ev);
@@ -97,6 +99,7 @@ pub fn ArticleActions() -> impl IntoView {
                                     />
 
                                     <button
+                                        class="btn"
                                         disabled=move || new_title.get().is_empty()
                                         on:click=move |_| {
                                             fork_action.dispatch((article.article.id, new_title.get()))

@@ -2,8 +2,7 @@ use crate::{
     common::{ApiConflict, ArticleView, EditArticleForm},
     frontend::{
         app::GlobalState,
-        article_title,
-        components::article_nav::ArticleNav,
+        components::article_nav::{ActiveTab, ArticleNav},
         markdown::render_markdown,
         pages::article_resource,
     },
@@ -103,7 +102,7 @@ pub fn EditArticle() -> impl IntoView {
     );
 
     view! {
-        <ArticleNav article=article />
+        <ArticleNav article=article active_tab=ActiveTab::Edit />
         <Show
             when=move || edit_response.get() == EditResponse::Success
             fallback=move || {
@@ -126,7 +125,6 @@ pub fn EditArticle() -> impl IntoView {
                                     view! {
                                         // set initial text, otherwise submit with no changes results in empty text
                                         <div>
-                                            <h1>{article_title(&article.article)}</h1>
                                             {move || {
                                                 edit_error
                                                     .get()
@@ -134,7 +132,6 @@ pub fn EditArticle() -> impl IntoView {
                                                         view! { <p style="color:red;">{err}</p> }
                                                     })
                                             }}
-
                                             <textarea
                                                 id="edit-article-textarea"
                                                 class="textarea textarea-bordered textarea-primary min-w-full"
@@ -147,19 +144,19 @@ pub fn EditArticle() -> impl IntoView {
                                             >
                                                 {article.article.text.clone()}
                                             </textarea>
-                                            <button class="btn" on:click=move |_| {
-                                                set_show_preview.update(|s| *s = !*s)
-                                            }>Preview</button>
-                                            <Show when=move || { show_preview.get() }>
+                                            <button
+                                                class="btn"
+                                                on:click=move |_| { set_show_preview.update(|s| *s = !*s) }
+                                            >
+                                                Preview
+                                            </button> <Show when=move || { show_preview.get() }>
                                                 <div class="preview" inner_html=move || preview.get()></div>
-                                            </Show>
-                                            <div>
+                                            </Show> <div>
                                                 <a href="https://commonmark.org/help/" target="blank_">
                                                     Markdown
                                                 </a>
                                                 " formatting is supported"
-                                            </div>
-                                            <div class="inputs">
+                                            </div> <div class="inputs">
                                                 <input
                                                     type="text"
                                                     class="input input-secondary"
@@ -172,7 +169,7 @@ pub fn EditArticle() -> impl IntoView {
                                                 />
 
                                                 <button
-                                                class="btn btn-secondary"
+                                                    class="btn btn-secondary"
                                                     prop:disabled=move || button_is_disabled.get()
                                                     on:click=move |_| {
                                                         submit_action

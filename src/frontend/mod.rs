@@ -52,7 +52,11 @@ fn user_link(person: &DbPerson) -> impl IntoView {
             extract_domain(&person.ap_id)
         )
     };
-    view! { <a href=creator_path>{user_title(person)}</a> }
+    view! {
+        <a class="link" href=creator_path>
+            {user_title(person)}
+        </a>
+    }
 }
 
 fn render_date_time(date_time: DateTime<Utc>) -> String {

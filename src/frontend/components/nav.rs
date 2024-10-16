@@ -38,16 +38,17 @@ pub fn Nav() -> impl IntoView {
                 </li>
             </Show>
             <li>
-                <form 
-                class="form-control m-0 p-1"
-                on:submit=move |ev| {
-                    ev.prevent_default();
-                    let navigate = leptos_router::use_navigate();
-                    let query = search_query.get();
-                    if !query.is_empty() {
-                        navigate(&format!("/search?query={query}"), Default::default());
+                <form
+                    class="form-control m-0 p-1"
+                    on:submit=move |ev| {
+                        ev.prevent_default();
+                        let navigate = leptos_router::use_navigate();
+                        let query = search_query.get();
+                        if !query.is_empty() {
+                            navigate(&format!("/search?query={query}"), Default::default());
+                        }
                     }
-                }>
+                >
                     <input
                         type="text"
                         class="input input-secondary input-bordered input-xs w-full rounded"
@@ -84,14 +85,13 @@ pub fn Nav() -> impl IntoView {
                     let profile_link = format!("/user/{}", my_profile.person.username);
                     view! {
                         <p class="self-center pb-2">
-                            "Logged in as "
-                            <a class="link"
-                                href=profile_link
-                            >
+                            "Logged in as " <a class="link" href=profile_link>
                                 {my_profile.person.username}
                             </a>
                         </p>
-                        <button class="btn" on:click=move |_| logout_action.dispatch(())>Logout</button>
+                        <button class="btn" on:click=move |_| logout_action.dispatch(())>
+                            Logout
+                        </button>
                     }
                 }
 
