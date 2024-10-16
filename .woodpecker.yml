@@ -14,9 +14,9 @@ steps:
       - ./cargo-binstall -y trunk
       - export PATH="$PATH:$(pwd)/.cargo_home/bin/"
       - ls -lah assets
-      - ls -lah assets/dist
+      - ls -lah assets/dist || true
       - ./scripts/build_release.sh
-      - ls -lah assets/dist
+      - ls -lah assets/dist || true
     when:
       - event: tag
 
