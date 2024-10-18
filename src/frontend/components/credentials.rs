@@ -18,8 +18,8 @@ pub fn CredentialsForm(
     });
 
     view! {
-        <form on:submit=|ev| ev.prevent_default()>
-            <p>{title}</p>
+        <form class="form-control max-w-80" on:submit=|ev| ev.prevent_default()>
+            <h1 class="text-4xl font-bold font-serif my-4 grow max-w-fit">{title}</h1>
             {move || {
                 error
                     .get()
@@ -44,7 +44,7 @@ pub fn CredentialsForm(
                     set_username.update(|v| *v = val);
                 }
             />
-
+            <div class="h-2"></div>
             <input
                 type="password"
                 class="input"
@@ -71,7 +71,7 @@ pub fn CredentialsForm(
 
             <div>
                 <button
-                    class="btn"
+                    class="btn btn-primary my-2"
                     prop:disabled=move || button_is_disabled.get()
                     on:click=move |_| dispatch_action()
                 >

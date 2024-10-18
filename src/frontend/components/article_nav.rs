@@ -88,13 +88,18 @@ pub fn ArticleNav(
                                 </Show>
                             </div>
                             <div class="flex flex-row">
-                            <h1 class="text-4xl font-bold font-serif my-4 grow max-w-fit">{title}</h1>
-                            <Show when=move || protected>
-                                <span title="Article can only be edited by local admins">
-                                    "Protected"
-                                </span>
-                            </Show>
-                                    </div>
+                                <h1 class="text-4xl font-bold font-serif my-6 grow flex-auto">
+                                    {title}
+                                </h1>
+                                <Show when=move || protected>
+                                    <span
+                                        class="place-self-center"
+                                        title="Article can only be edited by local admins"
+                                    >
+                                        "Protected"
+                                    </span>
+                                </Show>
+                            </div>
                         }
                     })
             }}

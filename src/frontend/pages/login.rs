@@ -43,7 +43,7 @@ pub fn Login() -> impl IntoView {
             fallback=move || {
                 view! {
                     <CredentialsForm
-                        title="Please enter the desired credentials"
+                        title="Login"
                         action_label="Login"
                         action=login_action
                         error=login_error.into()

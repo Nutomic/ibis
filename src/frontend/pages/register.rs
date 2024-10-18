@@ -44,7 +44,7 @@ pub fn Register() -> impl IntoView {
             fallback=move || {
                 view! {
                     <CredentialsForm
-                        title="Please enter the desired credentials"
+                        title="Register"
                         action_label="Register"
                         action=register_action
                         error=register_error.into()
