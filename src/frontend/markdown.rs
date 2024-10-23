@@ -33,6 +33,7 @@ fn markdown_parser() -> MarkdownIt {
     markdown_it::plugins::extra::strikethrough::add(&mut parser);
     markdown_it::plugins::extra::tables::add(&mut parser);
     markdown_it::plugins::extra::typographer::add(&mut parser);
+    markdown_it_block_spoiler::add(&mut parser);
     parser.inline.add_rule::<ArticleLinkScanner>();
     parser.inline.add_rule::<MathEquationScanner>();
     parser

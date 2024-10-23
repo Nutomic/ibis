@@ -1735,6 +1735,7 @@ dependencies = [
  "leptos_router",
  "log",
  "markdown-it",
+ "markdown-it-block-spoiler",
  "once_cell",
  "pretty_assertions",
  "rand",
@@ -2291,6 +2292,16 @@ dependencies = [
  "stacker",
  "syntect",
  "unicode-general-category",
+]
+
+[[package]]
+name = "markdown-it-block-spoiler"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "008a8e4184fd08b5dca0f2b5b2ef8f126c1e83ca797c44ee41f8d7765951360c"
+dependencies = [
+ "itertools 0.13.0",
+ "markdown-it",
 ]
 
 [[package]]
