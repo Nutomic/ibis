@@ -1426,6 +1426,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6fb8d784f27acf97159b40fc4db5ecd8aa23b9ad5ef69cdd136d3bc80665f0c0"
 
 [[package]]
+name = "github-slugger"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "721820f4eab1c427d482e144b63288754d9872fb7f0d72d73ab101008ef43147"
+dependencies = [
+ "once_cell",
+ "regex",
+]
+
+[[package]]
 name = "gloo-net"
 version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1736,6 +1746,7 @@ dependencies = [
  "log",
  "markdown-it",
  "markdown-it-block-spoiler",
+ "markdown-it-heading-anchors",
  "once_cell",
  "pretty_assertions",
  "rand",
@@ -2301,6 +2312,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "008a8e4184fd08b5dca0f2b5b2ef8f126c1e83ca797c44ee41f8d7765951360c"
 dependencies = [
  "itertools 0.13.0",
+ "markdown-it",
+]
+
+[[package]]
+name = "markdown-it-heading-anchors"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3c8c71a46fc41bf2fdac133c188c1477562b7bcd1be3981e84fc81cfc2e515fe"
+dependencies = [
+ "github-slugger",
  "markdown-it",
 ]
 
