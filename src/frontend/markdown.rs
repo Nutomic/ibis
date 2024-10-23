@@ -29,10 +29,12 @@ pub fn render_markdown(text: &str) -> String {
 fn markdown_parser() -> MarkdownIt {
     let mut parser = MarkdownIt::new();
     markdown_it::plugins::cmark::add(&mut parser);
-    markdown_it::plugins::extra::linkify::add(&mut parser);
+    markdown_it_heading_anchors::add(&mut parser);
+    markdown_it_footnote::add(&mut parser);
     markdown_it::plugins::extra::strikethrough::add(&mut parser);
     markdown_it::plugins::extra::tables::add(&mut parser);
     markdown_it::plugins::extra::typographer::add(&mut parser);
+    markdown_it_block_spoiler::add(&mut parser);
     parser.inline.add_rule::<ArticleLinkScanner>();
     parser.inline.add_rule::<MathEquationScanner>();
     parser
