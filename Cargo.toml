@@ -84,6 +84,8 @@ include_dir = "0.7.4"
 markdown-it-block-spoiler = "1.0.0"
 markdown-it-heading-anchors = "0.3.0"
 markdown-it-footnote = "0.2.0"
+markdown-it-sub = "1.0.0"
+markdown-it-sup = "1.0.0"
 
 [dev-dependencies]
 pretty_assertions = "1.4.1"
