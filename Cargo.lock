@@ -1748,6 +1748,8 @@ dependencies = [
  "markdown-it-block-spoiler",
  "markdown-it-footnote",
  "markdown-it-heading-anchors",
+ "markdown-it-sub",
+ "markdown-it-sup",
  "once_cell",
  "pretty_assertions",
  "rand",
@@ -2332,6 +2334,24 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3c8c71a46fc41bf2fdac133c188c1477562b7bcd1be3981e84fc81cfc2e515fe"
 dependencies = [
  "github-slugger",
+ "markdown-it",
+]
+
+[[package]]
+name = "markdown-it-sub"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8abe3aa8927af2314644b3aae37393241a229e869ff9c95ac640749e08357d2a"
+dependencies = [
+ "markdown-it",
+]
+
+[[package]]
+name = "markdown-it-sup"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5ae949e78c7a615f88a47019d51b65962bfc5c4cbc65fa81eae8b9b2506d1cb1"
+dependencies = [
  "markdown-it",
 ]
 
