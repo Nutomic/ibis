@@ -11,7 +11,11 @@ pub mod pages;
 
 #[cfg(feature = "hydrate")]
 #[wasm_bindgen::prelude::wasm_bindgen]
-pub fn hydrate() {}
+pub fn hydrate() {
+    use crate::frontend::app::App;
+    console_error_panic_hook::set_once();
+    leptos::mount_to_body(App);
+}
 
 fn article_link(article: &DbArticle) -> String {
     if article.local {

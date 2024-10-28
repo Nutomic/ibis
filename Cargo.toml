@@ -21,8 +21,29 @@ ssr = [
   "leptos/ssr",
   "leptos-use/ssr",
 ]
-csr = ["leptos/csr", "leptos_meta/csr", "leptos_router/csr", "katex/wasm-js"]
-hydrate = ["leptos/hydrate", "leptos_meta/hydrate", "leptos_router/hydrate"]
+hydrate = [
+  "leptos/hydrate",
+  "leptos_meta/hydrate",
+  "leptos_router/hydrate",
+  "katex/wasm-js",
+]
+
+# This profile significantly speeds up build time. If debug info is needed you can comment the line
+# out temporarily, but make sure to leave this in the main branch.
+[profile.dev]
+debug = 0
+
+[profile.release]
+lto = "thin"
+strip = true
+
+# Defines a size-optimized profile for the WASM bundle in release mode
+[profile.wasm-release]
+inherits = "release"
+opt-level = 'z'
+lto = true
+codegen-units = 1
+panic = "abort"
 
 [lints.clippy]
 dbg_macro = "deny"
@@ -95,19 +116,10 @@ pretty_assertions = "1.4.1"
 
 [package.metadata.leptos]
 output-name = "ibis"
+assets-dir = "assets"
 bin-features = ["ssr"]
-lib-features = ["csr"]
+lib-features = ["hydrate"]
+lib-profile-release = "wasm-release"
 
 [lib]
-name = "ibis_lib"
 crate-type = ["cdylib", "rlib"]
-
-# This profile significantly speeds up build time. If debug info is needed you can comment the line
-# out temporarily, but make sure to leave this in the main branch.
-[profile.dev]
-debug = 0
-
-[profile.release]
-lto = "thin"
-strip = true # Automatically strip symbols from the binary.
-#opt-level = "z" # Optimize for size.

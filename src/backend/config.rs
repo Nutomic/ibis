@@ -3,15 +3,10 @@ use config::Config;
 use doku::Document;
 use serde::Deserialize;
 use smart_default::SmartDefault;
-use std::net::SocketAddr;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone, Document, SmartDefault)]
 #[serde(default)]
 pub struct IbisConfig {
-    /// Address where ibis should listen for incoming requests
-    #[default("127.0.0.1:8081".parse().expect("parse config bind"))]
-    #[doku(as = "String", example = "127.0.0.1:8081")]
-    pub bind: SocketAddr,
     /// Details about the PostgreSQL database connection
     pub database: IbisConfigDatabase,
     /// Whether users can create new accounts

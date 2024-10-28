@@ -22,7 +22,7 @@ use activitypub_federation::{
     http_signatures::generate_actor_keypair,
 };
 use api::api_routes;
-use assets::asset_routes;
+use assets::file_and_error_handler;
 use axum::{
     body::Body,
     http::{HeaderValue, Request},
@@ -38,9 +38,10 @@ use diesel::{
     PgConnection,
 };
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
-use leptos::leptos_config::get_config_from_str;
+use leptos::get_configuration;
 use leptos_axum::{generate_route_list, LeptosRoutes};
 use log::info;
+use std::net::SocketAddr;
 use tokio::net::TcpListener;
 use tower_http::cors::CorsLayer;
 use tower_layer::Layer;
@@ -58,7 +59,7 @@ const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
 
 const FEDERATION_ROUTES_PREFIX: &str = "/federation_routes";
 
-pub async fn start(config: IbisConfig) -> MyResult<()> {
+pub async fn start(config: IbisConfig, override_hostname: Option<SocketAddr>) -> MyResult<()> {
     let manager = ConnectionManager::<PgConnection>::new(&config.database.connection_url);
     let db_pool = Pool::builder()
         .max_size(config.database.pool_size)
@@ -82,15 +83,18 @@ pub async fn start(config: IbisConfig) -> MyResult<()> {
         setup(&data.to_request_data()).await?;
     }
 
-    let mut conf = get_config_from_str(include_str!("../../Cargo.toml"))?;
-    conf.site_addr = data.config.bind;
+    let leptos_options = get_configuration(Some("Cargo.toml")).await?.leptos_options;
+    let mut addr = leptos_options.site_addr;
+    if let Some(override_hostname) = override_hostname {
+        addr = override_hostname;
+    }
     let routes = generate_route_list(App);
 
     let config = data.clone();
     let app = Router::new()
-        .leptos_routes(&conf, routes, App)
-        .with_state(conf)
-        .nest("", asset_routes()?)
+        .leptos_routes(&leptos_options, routes, App)
+        .fallback(file_and_error_handler)
+        .with_state(leptos_options)
         .nest(FEDERATION_ROUTES_PREFIX, federation_routes())
         .nest("/api/v1", api_routes())
         .nest("", nodeinfo::config())
@@ -102,8 +106,8 @@ pub async fn start(config: IbisConfig) -> MyResult<()> {
     let middleware = axum::middleware::from_fn(federation_routes_middleware);
     let app_with_middleware = middleware.layer(app);
 
-    info!("Listening on {}", &data.config.bind);
-    let listener = TcpListener::bind(&data.config.bind).await?;
+    info!("Listening on {}", &addr);
+    let listener = TcpListener::bind(&addr).await?;
     axum::serve(listener, app_with_middleware.into_make_service()).await?;
 
     Ok(())

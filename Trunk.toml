@@ -1,5 +1,0 @@
-[build]
-filehash = false
-target = "assets/index.html"
-dist = "assets/dist"
-minify = "on_release"

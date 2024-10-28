@@ -1,11 +1,9 @@
 #![allow(clippy::unwrap_used)]
 
-extern crate ibis_lib;
-
 mod common;
 
 use crate::common::{TestData, TEST_ARTICLE_DEFAULT_TEXT};
-use ibis_lib::{
+use ibis::{
     common::{
         utils::extract_domain,
         ArticleView,
