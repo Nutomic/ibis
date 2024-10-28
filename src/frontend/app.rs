@@ -91,9 +91,9 @@ pub fn App() -> impl IntoView {
 
     view! {
         <>
-            <Stylesheet id="simple" href="/assets/simple.css" />
-            <Stylesheet id="ibis" href="/assets/ibis.css" />
-            <Stylesheet id="katex" href="/assets/katex.min.css" />
+            <Stylesheet id="simple" href="/simple.css" />
+            <Stylesheet id="ibis" href="/ibis.css" />
+            <Stylesheet id="katex" href="/katex.min.css" />
             <Router>
                 <Nav />
                 <main>
