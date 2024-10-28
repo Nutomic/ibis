@@ -1,11 +1,18 @@
 use crate::{common::CreateArticleForm, frontend::app::GlobalState};
+use html::Textarea;
 use leptos::*;
 use leptos_router::Redirect;
+use leptos_use::{use_textarea_autosize, UseTextareaAutosizeReturn};
 
 #[component]
 pub fn CreateArticle() -> impl IntoView {
     let (title, set_title) = create_signal(String::new());
-    let (text, set_text) = create_signal(String::new());
+    let textarea = create_node_ref::<Textarea>();
+    let UseTextareaAutosizeReturn {
+        content,
+        set_content,
+        trigger_resize: _,
+    } = use_textarea_autosize(textarea);
     let (summary, set_summary) = create_signal(String::new());
     let (create_response, set_create_response) = create_signal(None::<()>);
     let (create_error, set_create_error) = create_signal(None::<String>);
@@ -58,11 +65,10 @@ pub fn CreateArticle() -> impl IntoView {
                         />
 
                         <textarea
+                            value=content
                             placeholder="Article text..."
-                            on:keyup=move |ev| {
-                                let val = event_target_value(&ev);
-                                set_text.update(|p| *p = val);
-                            }
+                            on:input=move |evt| set_content.set(event_target_value(&evt))
+                            node_ref=textarea
                         ></textarea>
                         <div>
                             <a href="https://commonmark.org/help/" target="blank_">
@@ -90,7 +96,7 @@ pub fn CreateArticle() -> impl IntoView {
                         <button
                             prop:disabled=move || button_is_disabled.get()
                             on:click=move |_| {
-                                submit_action.dispatch((title.get(), text.get(), summary.get()))
+                                submit_action.dispatch((title.get(), content.get(), summary.get()))
                             }
                         >
                             Submit

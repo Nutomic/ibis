@@ -18,6 +18,8 @@ ssr = [
   "activitypub_federation",
   "jsonwebtoken",
   "katex/duktape",
+  "leptos/ssr",
+  "leptos-use/ssr"
 ]
 csr = ["leptos/csr", "leptos_meta/csr", "leptos_router/csr", "katex/wasm-js"]
 hydrate = ["leptos/hydrate", "leptos_meta/hydrate", "leptos_router/hydrate"]
@@ -86,6 +88,7 @@ markdown-it-heading-anchors = "0.3.0"
 markdown-it-footnote = "0.2.0"
 markdown-it-sub = "1.0.0"
 markdown-it-sup = "1.0.0"
+leptos-use = "0.13.6"
 
 [dev-dependencies]
 pretty_assertions = "1.4.1"

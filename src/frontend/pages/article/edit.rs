@@ -8,8 +8,10 @@ use crate::{
         pages::article_resource,
     },
 };
+use html::Textarea;
 use leptos::*;
 use leptos_router::use_params_map;
+use leptos_use::{use_textarea_autosize, UseTextareaAutosizeReturn};
 
 #[derive(Clone, PartialEq)]
 enum EditResponse {
@@ -45,7 +47,12 @@ pub fn EditArticle() -> impl IntoView {
         .dispatch(conflict_id);
     }
 
-    let (text, set_text) = create_signal(String::new());
+    let textarea = create_node_ref::<Textarea>();
+    let UseTextareaAutosizeReturn {
+        content,
+        set_content,
+        trigger_resize: _,
+    } = use_textarea_autosize(textarea);
     let (summary, set_summary) = create_signal(String::new());
     let (show_preview, set_show_preview) = create_signal(false);
     let (preview, set_preview) = create_signal(String::new());
@@ -119,10 +126,9 @@ pub fn EditArticle() -> impl IntoView {
                                         article.article.text = conflict.three_way_merge;
                                         set_summary.set(conflict.summary);
                                     }
-                                    set_text.set(article.article.text.clone());
+                                    set_content.set(article.article.text.clone());
                                     set_preview.set(render_markdown(&article.article.text));
                                     let article_ = article.clone();
-                                    let rows = article.article.text.lines().count() + 1;
                                     view! {
                                         // set initial text, otherwise submit with no changes results in empty text
                                         <div id="edit-article" class="item-view">
@@ -136,13 +142,14 @@ pub fn EditArticle() -> impl IntoView {
                                             }}
 
                                             <textarea
+                                                value=content
                                                 id="edit-article-textarea"
-                                                rows=rows
-                                                on:keyup=move |ev| {
-                                                    let val = event_target_value(&ev);
+                                                on:input=move |evt| {
+                                                    let val = event_target_value(&evt);
                                                     set_preview.set(render_markdown(&val));
-                                                    set_text.set(val);
+                                                    set_content.set(val);
                                                 }
+                                                node_ref=textarea
                                             >
                                                 {article.article.text.clone()}
                                             </textarea>
@@ -174,7 +181,7 @@ pub fn EditArticle() -> impl IntoView {
                                                     on:click=move |_| {
                                                         submit_action
                                                             .dispatch((
-                                                                text.get(),
+                                                                content.get(),
                                                                 summary.get(),
                                                                 article_.clone(),
                                                                 edit_response.get(),
