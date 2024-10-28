@@ -1,7 +1,5 @@
 #![allow(clippy::unwrap_used)]
 
-extern crate ibis;
-
 mod common;
 
 use crate::common::{TestData, TEST_ARTICLE_DEFAULT_TEXT};

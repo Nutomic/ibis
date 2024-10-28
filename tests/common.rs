@@ -21,7 +21,7 @@ use std::{
     thread::{sleep, spawn},
     time::Duration,
 };
-use tokio::task::JoinHandle;
+use tokio::{join, task::JoinHandle};
 use tracing::log::LevelFilter;
 
 pub struct TestData {
@@ -66,11 +66,13 @@ impl TestData {
             j.join().unwrap();
         }
 
-        Self {
-            alpha: IbisInstance::start(alpha_db_path, port_alpha, "alpha").await,
-            beta: IbisInstance::start(beta_db_path, port_beta, "beta").await,
-            gamma: IbisInstance::start(gamma_db_path, port_gamma, "gamma").await,
-        }
+        let (alpha, beta, gamma) = join!(
+            IbisInstance::start(alpha_db_path, port_alpha, "alpha"),
+            IbisInstance::start(beta_db_path, port_beta, "beta"),
+            IbisInstance::start(gamma_db_path, port_gamma, "gamma")
+        );
+
+        Self { alpha, beta, gamma }
     }
 
     pub fn stop(self) -> MyResult<()> {
@@ -115,7 +117,8 @@ impl IbisInstance {
 
     async fn start(db_path: String, port: i32, username: &str) -> Self {
         let connection_url = format!("postgresql://ibis:password@/ibis?host={db_path}");
-        let hostname = format!("localhost:{port}");
+        let hostname = format!("127.0.0.1:{port}");
+        let domain = format!("localhost:{port}");
         let config = IbisConfig {
             database: IbisConfigDatabase {
                 connection_url,
@@ -123,13 +126,17 @@ impl IbisInstance {
             },
             registration_open: true,
             federation: IbisConfigFederation {
-                domain: hostname.clone(),
+                domain: domain.clone(),
                 ..Default::default()
             },
             ..Default::default()
         };
+        let client = ClientBuilder::new().cookie_store(true).build().unwrap();
+        let api_client = ApiClient::new(client, Some(domain));
         let handle = tokio::task::spawn(async move {
-            start(config).await.unwrap();
+            start(config, Some(hostname.parse().unwrap()))
+                .await
+                .unwrap();
         });
         // wait a moment for the backend to start
         tokio::time::sleep(Duration::from_millis(5000)).await;
@@ -137,8 +144,6 @@ impl IbisInstance {
             username: username.to_string(),
             password: "hunter2".to_string(),
         };
-        let client = ClientBuilder::new().cookie_store(true).build().unwrap();
-        let api_client = ApiClient::new(client, Some(hostname));
         api_client.register(form).await.unwrap();
         Self {
             api_client,
