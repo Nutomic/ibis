@@ -19,9 +19,14 @@ ssr = [
   "jsonwebtoken",
   "katex/duktape",
   "leptos/ssr",
-  "leptos-use/ssr"
+  "leptos-use/ssr",
 ]
-hydrate = ["leptos/hydrate", "leptos_meta/hydrate", "leptos_router/hydrate","katex/wasm-js"]
+hydrate = [
+  "leptos/hydrate",
+  "leptos_meta/hydrate",
+  "leptos_router/hydrate",
+  "katex/wasm-js",
+]
 
 # This profile significantly speeds up build time. If debug info is needed you can comment the line
 # out temporarily, but make sure to leave this in the main branch.
