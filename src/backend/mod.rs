@@ -22,7 +22,7 @@ use activitypub_federation::{
     http_signatures::generate_actor_keypair,
 };
 use api::api_routes;
-use assets::{file_and_error_handler};
+use assets::file_and_error_handler;
 use axum::{
     body::Body,
     http::{HeaderValue, Request},

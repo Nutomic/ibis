@@ -28,8 +28,7 @@ pub async fn file_and_error_handler(
             .insert("accept-encoding", encodings.clone());
     }
 
-    let res = get_static_file(Request::from_parts(static_parts, Body::empty()), &root)
-        .await?;
+    let res = get_static_file(Request::from_parts(static_parts, Body::empty()), &root).await?;
 
     if res.status() == StatusCode::OK {
         Ok(res.into_response())
