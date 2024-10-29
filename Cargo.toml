@@ -1,6 +1,6 @@
 [package]
 name = "ibis"
-version = "0.1.3"
+version = "0.1.4"
 edition = "2021"
 
 [features]
@@ -18,9 +18,32 @@ ssr = [
   "activitypub_federation",
   "jsonwebtoken",
   "katex/duktape",
+  "leptos/ssr",
+  "leptos-use/ssr",
 ]
-csr = ["leptos/csr", "leptos_meta/csr", "leptos_router/csr", "katex/wasm-js"]
-hydrate = ["leptos/hydrate", "leptos_meta/hydrate", "leptos_router/hydrate"]
+hydrate = [
+  "leptos/hydrate",
+  "leptos_meta/hydrate",
+  "leptos_router/hydrate",
+  "katex/wasm-js",
+]
+
+# This profile significantly speeds up build time. If debug info is needed you can comment the line
+# out temporarily, but make sure to leave this in the main branch.
+[profile.dev]
+debug = 0
+
+[profile.release]
+lto = "thin"
+strip = true
+
+# Defines a size-optimized profile for the WASM bundle in release mode
+[profile.wasm-release]
+inherits = "release"
+opt-level = 'z'
+lto = true
+codegen-units = 1
+panic = "abort"
 
 [lints.clippy]
 dbg_macro = "deny"
@@ -80,25 +103,23 @@ doku = "0.21.1"
 smart-default = "0.7.1"
 tower-layer = "0.3.3"
 katex = { version = "0.4", default-features = false }
+include_dir = "0.7.4"
+markdown-it-block-spoiler = "1.0.0"
+markdown-it-heading-anchors = "0.3.0"
+markdown-it-footnote = "0.2.0"
+markdown-it-sub = "1.0.0"
+markdown-it-sup = "1.0.0"
+leptos-use = "0.13.6"
 
 [dev-dependencies]
 pretty_assertions = "1.4.1"
 
 [package.metadata.leptos]
 output-name = "ibis"
+assets-dir = "assets"
 bin-features = ["ssr"]
-lib-features = ["csr"]
+lib-features = ["hydrate"]
+lib-profile-release = "wasm-release"
 
 [lib]
-name = "ibis_lib"
 crate-type = ["cdylib", "rlib"]
-
-# This profile significantly speeds up build time. If debug info is needed you can comment the line
-# out temporarily, but make sure to leave this in the main branch.
-[profile.dev]
-debug = 0
-
-[profile.release]
-lto = "thin"
-strip = true # Automatically strip symbols from the binary.
-#opt-level = "z" # Optimize for size.

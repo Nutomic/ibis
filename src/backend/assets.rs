@@ -1,91 +1,61 @@
-use super::error::MyResult;
-use anyhow::anyhow;
+use crate::frontend::app::App;
 use axum::{
     body::Body,
-    extract::Path,
+    extract::{Request, State},
+    http::StatusCode,
     response::{IntoResponse, Response},
-    routing::get,
-    Router,
 };
 use axum_macros::debug_handler;
-use once_cell::sync::OnceCell;
-use reqwest::header::HeaderMap;
-use std::fs::read_to_string;
+use leptos::LeptosOptions;
+use tower::ServiceExt;
+use tower_http::services::ServeDir;
 
-pub fn asset_routes() -> MyResult<Router<()>> {
-    Ok(Router::new()
-        .route("/assets/ibis.css", get(ibis_css))
-        .route(
-            "/assets/simple.css",
-            get((css_headers(), include_str!("../../assets/simple.css"))),
-        )
-        .route(
-            "/assets/daisyui.css",
-            get((css_headers(), include_str!("../../assets/daisyui.css"))),
-        )
-        .route(
-            "/assets/katex.min.css",
-            get((css_headers(), include_str!("../../assets/katex.min.css"))),
-        )
-        .route("/assets/fonts/*font", get(get_font))
-        .route(
-            "/assets/index.html",
-            get(include_str!("../../assets/index.html")),
-        )
-        .route("/pkg/ibis.js", get(serve_js))
-        .route("/pkg/ibis_bg.wasm", get(serve_wasm)))
-}
+// from https://github.com/leptos-rs/start-axum
 
-fn css_headers() -> HeaderMap {
-    static INSTANCE: OnceCell<HeaderMap> = OnceCell::new();
-    INSTANCE
-        .get_or_init(|| {
-            let mut css_headers = HeaderMap::new();
-            let val = "text/css".parse().expect("valid header value");
-            css_headers.insert("Content-Type", val);
-            css_headers
-        })
-        .clone()
-}
+#[debug_handler]
+pub async fn file_and_error_handler(
+    State(options): State<LeptosOptions>,
+    req: Request<Body>,
+) -> Result<Response<Body>, (StatusCode, String)> {
+    let root = options.site_root.clone();
+    let (parts, body) = req.into_parts();
 
-async fn ibis_css() -> MyResult<(HeaderMap, Response<Body>)> {
-    let res = if cfg!(debug_assertions) {
-        read_to_string("assets/ibis.css")?.into_response()
+    let mut static_parts = parts.clone();
+    static_parts.headers.clear();
+    if let Some(encodings) = parts.headers.get("accept-encoding") {
+        static_parts
+            .headers
+            .insert("accept-encoding", encodings.clone());
+    }
+
+    let res = get_static_file(Request::from_parts(static_parts, Body::empty()), &root).await?;
+
+    if res.status() == StatusCode::OK {
+        Ok(res.into_response())
     } else {
-        include_str!("../../assets/ibis.css").into_response()
-    };
-    Ok((css_headers(), res))
+        let handler = leptos_axum::render_app_to_stream(options.to_owned(), App);
+        Ok(handler(Request::from_parts(parts, body))
+            .await
+            .into_response())
+    }
 }
 
-#[debug_handler]
-async fn serve_js() -> MyResult<impl IntoResponse> {
-    let mut headers = HeaderMap::new();
-    headers.insert("Content-Type", "application/javascript".parse()?);
-    let content = include_str!("../../assets/dist/ibis.js");
-    Ok((headers, content))
-}
-
-#[debug_handler]
-async fn serve_wasm() -> MyResult<impl IntoResponse> {
-    let mut headers = HeaderMap::new();
-    headers.insert("Content-Type", "application/wasm".parse()?);
-    let content = include_bytes!("../../assets/dist/ibis_bg.wasm");
-    Ok((headers, content))
-}
-
-#[debug_handler]
-async fn get_font(Path(font): Path<String>) -> MyResult<impl IntoResponse> {
-    let mut headers = HeaderMap::new();
-    let content_type = if font.ends_with(".ttf") {
-        "font/ttf"
-    } else if font.ends_with(".woff") {
-        "font/woff"
-    } else if font.ends_with(".woff2") {
-        "font/woff2"
-    } else {
-        return Err(anyhow!("invalid font").into());
-    };
-    headers.insert("Content-type", content_type.parse()?);
-    let content = std::fs::read("assets/fonts/".to_owned() + &font)?;
-    Ok((headers, content))
+async fn get_static_file(
+    request: Request<Body>,
+    root: &str,
+) -> Result<Response<Body>, (StatusCode, String)> {
+    // `ServeDir` implements `tower::Service` so we can call it with `tower::ServiceExt::oneshot`
+    // This path is relative to the cargo root
+    match ServeDir::new(root)
+        .precompressed_gzip()
+        .precompressed_br()
+        .oneshot(request)
+        .await
+    {
+        Ok(res) => Ok(res.into_response()),
+        Err(err) => Err((
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Error serving files: {err}"),
+        )),
+    }
 }

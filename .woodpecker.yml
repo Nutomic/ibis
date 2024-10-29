@@ -1,7 +1,7 @@
 variables:
   - &rust_image "rust:1.81"
   - &install_binstall "wget https://github.com/cargo-bins/cargo-binstall/releases/latest/download/cargo-binstall-x86_64-unknown-linux-musl.tgz && tar -xvf cargo-binstall-x86_64-unknown-linux-musl.tgz && cp cargo-binstall /usr/local/cargo/bin"
-  - &install_trunk "cargo-binstall -y trunk@0.21.1"
+  - &install_cargo_leptos "cargo-binstall -y cargo-leptos@0.2.20"
 
 steps:
   cargo_fmt:
@@ -50,14 +50,6 @@ steps:
       - diesel print-schema --config-file=diesel.toml > tmp.schema
       - diff tmp.schema src/backend/database/schema.rs
 
-  frontend_wasm_build:
-    image: *rust_image
-    environment:
-      CARGO_HOME: .cargo_home
-    commands:
-      - "rustup target add wasm32-unknown-unknown"
-      - "cargo check --target wasm32-unknown-unknown --features csr,hydrate --no-default-features"
-
   cargo_clippy:
     image: *rust_image
     environment:
@@ -89,7 +81,7 @@ steps:
     commands:
       - *install_binstall
       - rustup target add wasm32-unknown-unknown
-      - *install_trunk
+      - *install_cargo_leptos
       - export PATH="$PATH:$(pwd)/.cargo_home/bin/"
       - ./scripts/build_release.sh
     when:

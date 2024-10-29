@@ -11,7 +11,17 @@ pub mod pages;
 
 #[cfg(feature = "hydrate")]
 #[wasm_bindgen::prelude::wasm_bindgen]
-pub fn hydrate() {}
+pub fn hydrate() {
+    use crate::frontend::app::App;
+    console_error_panic_hook::set_once();
+    leptos::mount_to_body(App);
+    
+    // set theme
+    // https://daisyui.com/docs/themes/
+    let document = web_sys::window().unwrap().document().unwrap();
+    let html_element = document.document_element().unwrap();
+    html_element.set_attribute("data-theme", "emerald").unwrap();
+}
 
 fn article_link(article: &DbArticle) -> String {
     if article.local {

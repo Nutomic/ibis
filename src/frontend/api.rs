@@ -47,10 +47,9 @@ impl ApiClient {
         }
         #[cfg(feature = "ssr")]
         {
-            hostname = crate::backend::config::IbisConfig::read()
-                .unwrap()
-                .bind
-                .to_string();
+            use leptos::leptos_config::get_config_from_str;
+            let leptos_options = get_config_from_str(include_str!("../../Cargo.toml")).unwrap();
+            hostname = leptos_options.site_addr.to_string();
             ssl = false;
         }
         // required for tests

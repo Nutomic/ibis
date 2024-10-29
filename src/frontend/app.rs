@@ -91,10 +91,10 @@ pub fn App() -> impl IntoView {
 
     view! {
         <>
-            <Stylesheet id="daisyui" href="/assets/daisyui.css" />
-            <Stylesheet id="ibis" href="/assets/ibis.css" />
-            <Stylesheet id="katex" href="/assets/katex.min.css" />
-            <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio,container-queries"></script>
+            <Stylesheet id="daisyui" href="/daisyui.css" />
+            <Stylesheet id="ibis" href="/ibis.css" />
+            <Stylesheet id="katex" href="/katex.min.css" />
+            <script src="/tailwind.js"></script>
             <Router>
                 <Nav />
                 <main>
