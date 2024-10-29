@@ -6,6 +6,7 @@ use smart_default::SmartDefault;
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone, Document, SmartDefault)]
 #[serde(default)]
+#[serde(deny_unknown_fields)]
 pub struct IbisConfig {
     /// Details about the PostgreSQL database connection
     pub database: IbisConfigDatabase,
@@ -32,6 +33,7 @@ impl IbisConfig {
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone, Document, SmartDefault)]
 #[serde(default)]
+#[serde(deny_unknown_fields)]
 pub struct IbisConfigDatabase {
     /// Database connection url
     #[default("postgres://ibis:password@localhost:5432/ibis")]
@@ -45,6 +47,7 @@ pub struct IbisConfigDatabase {
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone, Document, SmartDefault)]
 #[serde(default)]
+#[serde(deny_unknown_fields)]
 pub struct IbisConfigSetup {
     #[default("ibis")]
     #[doku(example = "ibis")]
@@ -56,6 +59,7 @@ pub struct IbisConfigSetup {
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone, Document, SmartDefault)]
 #[serde(default)]
+#[serde(deny_unknown_fields)]
 pub struct IbisConfigFederation {
     /// Domain name of the instance, mandatory for federation
     #[default("example.com")]
