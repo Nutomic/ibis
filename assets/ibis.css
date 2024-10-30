@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 html {
     height: 100%;
     width: 100%;
@@ -48,9 +52,9 @@ pre {
     margin: 5px;
 }
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+.anchor svg {
+    display: inline !important;
+}
 
 @layer base {
   h1 {

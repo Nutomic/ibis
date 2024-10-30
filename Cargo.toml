@@ -120,7 +120,7 @@ assets-dir = "assets"
 bin-features = ["ssr"]
 lib-features = ["hydrate"]
 lib-profile-release = "wasm-release"
-tailwind-input-file = "assets/tailwind.css"
+tailwind-input-file = "assets/ibis.css"
 tailwind-config-file = "tailwind.config.js"
 
 [lib]
