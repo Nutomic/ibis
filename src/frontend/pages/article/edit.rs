@@ -136,13 +136,11 @@ pub fn EditArticle() -> impl IntoView {
                                                     .map(|err| {
                                                         view! { <p style="color:red;">{err}</p> }
                                                     })
-                                            }}
-                                            <EditorView textarea_ref content set_content />
-
-                                            <div class="inputs">
+                                            }} <EditorView textarea_ref content set_content />
+                                            <div class="flex flex-row mr-2">
                                                 <input
                                                     type="text"
-                                                    class="input input-secondary"
+                                                    class="input input-secondary grow"
                                                     placeholder="Edit summary"
                                                     value=summary.get_untracked()
                                                     on:keyup=move |ev| {

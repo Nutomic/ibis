@@ -33,11 +33,12 @@ pub fn EditDiff() -> impl IntoView {
                             render_date_time(edit.edit.created),
                         );
                         view! {
-                            <div class="item-view">
-                                <h1>{article.article.title.replace('_', " ")}</h1>
-                                <h2>{label}</h2>
-                                <p>"by " {user_link(&edit.creator)}</p>
-                                <pre>{edit.edit.diff.clone()}</pre>
+                            <h2 class="text-xl font-bold font-serif my-2">{label}</h2>
+                            <p>"by " {user_link(&edit.creator)}</p>
+                            <div class="bg-gray-200 p-2 rounded my-2">
+                                <pre>
+                                    <code>{edit.edit.diff.clone()}</code>
+                                </pre>
                             </div>
                         }
                     })

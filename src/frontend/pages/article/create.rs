@@ -50,13 +50,14 @@ pub fn CreateArticle() -> impl IntoView {
     });
 
     view! {
-        <h1>Create new Article</h1>
+        <h1 class="text-4xl font-bold font-serif my-4">Create new Article</h1>
         <Show
             when=move || create_response.get().is_some()
             fallback=move || {
                 view! {
                     <div class="item-view">
                         <input
+                            class="input input-primary w-full"
                             type="text"
                             required
                             placeholder="Title"
@@ -77,23 +78,28 @@ pub fn CreateArticle() -> impl IntoView {
                                 })
                         }}
 
-                        <input
-                            type="text"
-                            placeholder="Edit summary"
-                            on:keyup=move |ev| {
-                                let val = event_target_value(&ev);
-                                set_summary.update(|p| *p = val);
-                            }
-                        />
+                        <div class="flex flex-row">
+                            <input
+                                class="input input-primary grow mr-2"
+                                type="text"
+                                placeholder="Edit summary"
+                                on:keyup=move |ev| {
+                                    let val = event_target_value(&ev);
+                                    set_summary.update(|p| *p = val);
+                                }
+                            />
 
-                        <button
-                            prop:disabled=move || button_is_disabled.get()
-                            on:click=move |_| {
-                                submit_action.dispatch((title.get(), content.get(), summary.get()))
-                            }
-                        >
-                            Submit
-                        </button>
+                            <button
+                                class="btn btn-primary"
+                                prop:disabled=move || button_is_disabled.get()
+                                on:click=move |_| {
+                                    submit_action
+                                        .dispatch((title.get(), content.get(), summary.get()))
+                                }
+                            >
+                                Submit
+                            </button>
+                        </div>
                     </div>
                 }
             }

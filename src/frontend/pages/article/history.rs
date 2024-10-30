@@ -35,11 +35,16 @@ pub fn ArticleHistory() -> impl IntoView {
                                                 edit.edit.hash.0,
                                             );
                                             view! {
-                                                <li>
-                                                    {render_date_time(edit.edit.created)}": "
-                                                    <a class="link link-primary" href=path>
-                                                        {edit.edit.summary}
-                                                    </a> " by " {user_link(&edit.creator)}
+                                                <li class="card card-compact bg-base-100 card-bordered m-2 rounded-s">
+                                                    <div class="card-body">
+                                                        <a class="link link-primary text-lg w-full" href=path>
+                                                            {edit.edit.summary}
+                                                        </a>
+                                                        <p>
+                                                            {render_date_time(edit.edit.created)}" by "
+                                                            {user_link(&edit.creator)}
+                                                        </p>
+                                                    </div>
                                                 </li>
                                             }
                                         })

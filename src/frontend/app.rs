@@ -91,7 +91,7 @@ pub fn App() -> impl IntoView {
     provide_context(create_rw_signal(global_state));
 
     view! {
-        <Html attr:data-theme="emerald"/>
+        <Html attr:data-theme="emerald" />
         <>
             <Stylesheet id="daisyui" href="/daisyui.css" />
             <Stylesheet id="ibis" href="/ibis.css" />
