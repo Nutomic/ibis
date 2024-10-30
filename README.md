@@ -31,7 +31,7 @@ psql -c "CREATE USER ibis WITH PASSWORD 'ibis' SUPERUSER;" -U postgres
 psql -c "CREATE DATABASE ibis WITH OWNER ibis;" -U postgres
 ```
 
-You need to install [cargo](https://rustup.rs/), and [cargo-leptos](https://github.com/leptos-rs/cargo-leptos). Run `cargo leptos watch` which automatically rebuilds the project after changes. Then open the site at [localhost:3000](http://localhost:3000/). You can login with user `ibis` and password `ibis`.
+You need to install [cargo](https://rustup.rs/), [pnpm](https://pnpm.io/) and [cargo-leptos](https://github.com/leptos-rs/cargo-leptos). Use `pnpm install` to get Javascript dependencies. Then run `cargo leptos watch` which automatically rebuilds the project after changes. Open the site at [localhost:3000](http://localhost:3000/). You can login with user `ibis` and password `ibis`.
 
 By default the frontend runs on port 3000, which can be changed with env var `TRUNK_SERVE_PORT`. The backend port is 8081 and can be changed with `IBIS_BACKEND_PORT`.
 
