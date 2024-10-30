@@ -2,8 +2,10 @@ use crate::{
     common::{ApiConflict, ArticleView, EditArticleForm},
     frontend::{
         app::GlobalState,
-        components::article_nav::{ActiveTab, ArticleNav},
-        markdown::render_markdown,
+        components::{
+            article_nav::{ActiveTab, ArticleNav},
+            editor::EditorView,
+        },
         pages::article_resource,
     },
 };
@@ -27,7 +29,7 @@ pub fn EditArticle() -> impl IntoView {
     let (edit_response, set_edit_response) = create_signal(EditResponse::None);
     let (edit_error, set_edit_error) = create_signal(None::<String>);
 
-    let conflict_id = move || use_params_map().get().get("conflict_id").cloned();
+    let conflict_id = move || use_params_map().get_untracked().get("conflict_id").cloned();
     if let Some(conflict_id) = conflict_id() {
         create_action(move |conflict_id: &String| {
             let conflict_id: i32 = conflict_id.parse().unwrap();
@@ -46,15 +48,13 @@ pub fn EditArticle() -> impl IntoView {
         .dispatch(conflict_id);
     }
 
-    let textarea = create_node_ref::<Textarea>();
+    let textarea_ref = create_node_ref::<Textarea>();
     let UseTextareaAutosizeReturn {
         content,
         set_content,
         trigger_resize: _,
-    } = use_textarea_autosize(textarea);
+    } = use_textarea_autosize(textarea_ref);
     let (summary, set_summary) = create_signal(String::new());
-    let (show_preview, set_show_preview) = create_signal(false);
-    let (preview, set_preview) = create_signal(String::new());
     let (wait_for_response, set_wait_for_response) = create_signal(false);
     let button_is_disabled =
         Signal::derive(move || wait_for_response.get() || summary.get().is_empty());
@@ -126,7 +126,6 @@ pub fn EditArticle() -> impl IntoView {
                                         set_summary.set(conflict.summary);
                                     }
                                     set_content.set(article.article.text.clone());
-                                    set_preview.set(render_markdown(&article.article.text));
                                     let article_ = article.clone();
                                     view! {
                                         // set initial text, otherwise submit with no changes results in empty text
@@ -138,32 +137,9 @@ pub fn EditArticle() -> impl IntoView {
                                                         view! { <p style="color:red;">{err}</p> }
                                                     })
                                             }}
-                                            <textarea
-                                                value=content
-                                                id="edit-article-textarea"
-                                                class="textarea textarea-bordered textarea-primary min-w-full"
-                                                on:input=move |evt| {
-                                                    let val = event_target_value(&evt);
-                                                    set_preview.set(render_markdown(&val));
-                                                    set_content.set(val);
-                                                }
-                                                node_ref=textarea
-                                            >
-                                                {article.article.text.clone()}
-                                            </textarea>
-                                            <button
-                                                class="btn"
-                                                on:click=move |_| { set_show_preview.update(|s| *s = !*s) }
-                                            >
-                                                Preview
-                                            </button> <Show when=move || { show_preview.get() }>
-                                                <div class="preview" inner_html=move || preview.get()></div>
-                                            </Show> <div>
-                                                <a href="https://commonmark.org/help/" target="blank_">
-                                                    Markdown
-                                                </a>
-                                                " formatting is supported"
-                                            </div> <div class="inputs">
+                                            <EditorView textarea_ref content set_content />
+
+                                            <div class="inputs">
                                                 <input
                                                     type="text"
                                                     class="input input-secondary"

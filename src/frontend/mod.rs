@@ -15,7 +15,7 @@ pub fn hydrate() {
     use crate::frontend::app::App;
     console_error_panic_hook::set_once();
     leptos::mount_to_body(App);
-    
+
     // set theme
     // https://daisyui.com/docs/themes/
     let document = web_sys::window().unwrap().document().unwrap();

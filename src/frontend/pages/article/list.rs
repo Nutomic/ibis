@@ -23,20 +23,30 @@ pub fn ListArticles() -> impl IntoView {
     view! {
         <h1 class="text-4xl font-bold font-serif my-4">Most recently edited Articles</h1>
         <Suspense fallback=|| view! { "Loading..." }>
-            <fieldset 
-            class="flex flex-row"
-            on:input=move |ev| {
-                let val = ev.target().unwrap().unchecked_into::<web_sys::HtmlInputElement>().id();
-                let is_local_only = val == "only-local";
-                set_only_local.update(|p| *p = is_local_only);
-            }>
+            <fieldset
+                class="flex flex-row"
+                on:input=move |ev| {
+                    let val = ev
+                        .target()
+                        .unwrap()
+                        .unchecked_into::<web_sys::HtmlInputElement>()
+                        .id();
+                    let is_local_only = val == "only-local";
+                    set_only_local.update(|p| *p = is_local_only);
+                }
+            >
                 <label class="label cursor-pointer max-w-32">
                     <span>Only Local</span>
                     <input type="radio" name="listing-type" class="radio checked:bg-primary" />
                 </label>
                 <label class="label cursor-pointer max-w-32">
                     <span>All</span>
-                    <input type="radio" name="listing-type" class="radio checked:bg-primary" checked="checked" />
+                    <input
+                        type="radio"
+                        name="listing-type"
+                        class="radio checked:bg-primary"
+                        checked="checked"
+                    />
                 </label>
             </fieldset>
             <ul class="list-disc">
