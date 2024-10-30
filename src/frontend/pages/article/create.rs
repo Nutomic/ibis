@@ -1,6 +1,6 @@
 use crate::{
     common::CreateArticleForm,
-    frontend::{app::GlobalState, markdown::render_markdown},
+    frontend::{app::GlobalState, components::editor::EditorView},
 };
 use html::Textarea;
 use leptos::*;
@@ -10,15 +10,13 @@ use leptos_use::{use_textarea_autosize, UseTextareaAutosizeReturn};
 #[component]
 pub fn CreateArticle() -> impl IntoView {
     let (title, set_title) = create_signal(String::new());
-    let textarea = create_node_ref::<Textarea>();
+    let textarea_ref = create_node_ref::<Textarea>();
     let UseTextareaAutosizeReturn {
         content,
         set_content,
         trigger_resize: _,
-    } = use_textarea_autosize(textarea);
+    } = use_textarea_autosize(textarea_ref);
     let (summary, set_summary) = create_signal(String::new());
-    let (show_preview, set_show_preview) = create_signal(false);
-    let (preview, set_preview) = create_signal(String::new());
     let (create_response, set_create_response) = create_signal(None::<()>);
     let (create_error, set_create_error) = create_signal(None::<String>);
     let (wait_for_response, set_wait_for_response) = create_signal(false);
@@ -69,28 +67,8 @@ pub fn CreateArticle() -> impl IntoView {
                             }
                         />
 
-                        <textarea
-                            value=content
-                            placeholder="Article text..."
-                            on:input=move |evt| {
-                                let val = event_target_value(&evt);
-                                set_preview.set(render_markdown(&val));
-                                set_content.set(val);
-                            }
-                            node_ref=textarea
-                        ></textarea>
-                        <button on:click=move |_| {
-                            set_show_preview.update(|s| *s = !*s)
-                        }>Preview</button>
-                        <Show when=move || { show_preview.get() }>
-                            <div id="preview" inner_html=move || preview.get()></div>
-                        </Show>
-                        <div>
-                            <a href="https://commonmark.org/help/" target="blank_">
-                                Markdown
-                            </a>
-                            " formatting is supported"
-                        </div>
+                        <EditorView textarea_ref content set_content />
+                        
                         {move || {
                             create_error
                                 .get()
