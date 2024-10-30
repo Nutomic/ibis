@@ -18,7 +18,6 @@ body {
 nav {
     background-color: #f6f6f6;
     padding: 10px;
-    list-style: none;
 }
 
 main {
@@ -27,51 +26,12 @@ main {
     padding: 0 30px 30px 30px;
 }
 
-main .inner {
-    margin: 0 -30px;
-}
-
-nav form {
-    margin: 0.5rem 1rem 0rem 0rem;
-}
-
-pre {
-    white-space: pre-wrap;
-}
-
-#edit-article textarea  {
-    height: auto;
-    width: 100%;
-}
-
-#edit-article .inputs {
-    display: flex;
-}
-#edit-article .inputs input {
-    flex: 1;
-    margin: 5px;
-}
-
 .anchor svg {
-    display: inline !important;
-}
-
-@layer base {
-  h1 {
-    @apply text-2xl;
-  }
-  h2 {
-    @apply text-xl;
-  }
-  /* ... */
+    display: inline;
 }
 
 @media only screen and (max-width: 720px) {
     body {
         flex-direction: column;
     }
-    nav input {
-        max-width: 200px;
-    }
-    nav li { display: inline-block }
 }
