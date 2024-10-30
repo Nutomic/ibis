@@ -2,12 +2,14 @@ use crate::{
     common::ListArticlesForm,
     frontend::{app::GlobalState, article_link, article_title},
 };
+use html::Input;
 use leptos::*;
-use web_sys::wasm_bindgen::JsCast;
 
 #[component]
 pub fn ListArticles() -> impl IntoView {
     let (only_local, set_only_local) = create_signal(false);
+    let button_only_local = create_node_ref::<Input>();
+    let button_all = create_node_ref::<Input>();
     let articles = create_resource(
         move || only_local.get(),
         |only_local| async move {
@@ -23,33 +25,31 @@ pub fn ListArticles() -> impl IntoView {
     view! {
         <h1 class="text-4xl font-bold font-serif my-4">Most recently edited Articles</h1>
         <Suspense fallback=|| view! { "Loading..." }>
-            <fieldset
-                class="flex flex-row"
-                on:input=move |ev| {
-                    let val = ev
-                        .target()
-                        .unwrap()
-                        .unchecked_into::<web_sys::HtmlInputElement>()
-                        .id();
-                    let is_local_only = val == "only-local";
-                    set_only_local.update(|p| *p = is_local_only);
-                }
-            >
-                <label class="label cursor-pointer max-w-32">
-                    <span>Only Local</span>
-                    <input type="radio" name="listing-type" class="radio checked:bg-primary" />
-                </label>
-                <label class="label cursor-pointer max-w-32">
-                    <span>All</span>
-                    <input
-                        type="radio"
-                        name="listing-type"
-                        class="radio checked:bg-primary"
-                        checked="checked"
-                    />
-                </label>
-            </fieldset>
-            <ul class="list-disc">
+            <div class="divide-x">
+                <input
+                    type="button"
+                    value="Only Local"
+                    class="btn rounded-r-none"
+                    node_ref=button_only_local
+                    on:click=move |_| {
+                        button_all.get().map(|c| c.class("btn-primary", false));
+                        button_only_local.get().map(|c| c.class("btn-primary", true));
+                        set_only_local.set(true);
+                    }
+                />
+                <input
+                    type="button"
+                    value="All"
+                    class="btn btn-primary rounded-l-none"
+                    node_ref=button_all
+                    on:click=move |_| {
+                        button_all.get().map(|c| c.class("btn-primary", true));
+                        button_only_local.get().map(|c| c.class("btn-primary", false));
+                        set_only_local.set(false);
+                    }
+                />
+            </div>
+            <ul class="list-none my-4">
                 {move || {
                     articles
                         .get()
@@ -58,7 +58,7 @@ pub fn ListArticles() -> impl IntoView {
                                 .map(|a| {
                                     view! {
                                         <li>
-                                            <a class="link link-secondary" href=article_link(&a)>
+                                            <a class="link text-lg" href=article_link(&a)>
                                                 {article_title(&a)}
                                             </a>
                                         </li>
