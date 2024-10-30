@@ -96,6 +96,13 @@ pub fn Nav() -> impl IntoView {
                 }
 
             </Show>
+            <div class="flex-grow"></div>
+            <p class="m-1">"Version "{env!("CARGO_PKG_VERSION")}</p>
+            <p class="m-1">
+                <a href="https://github.com/Nutomic/ibis" class="link">
+                    Source Code
+                </a>
+            </p>
         </nav>
     }
 }
