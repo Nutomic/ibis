@@ -2,36 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
-html {
-    height: 100%;
-    width: 100%;
-}
-
-body {
-    flex-direction: row;
-    display: flex;
-    min-height: 100%;
-    min-width: 100%;
-    padding: 0;
-}
-
-nav {
-    background-color: #f6f6f6;
-    padding: 10px;
-}
-
-main {
-    background-color: #ffffff;
-    flex-grow: 2;
-    padding: 0 30px 30px 30px;
-}
-
+/* anchor links in markdown headings */
 .anchor svg {
     display: inline;
 }
 
 @media only screen and (max-width: 720px) {
-    body {
-        flex-direction: column;
+    nav {
+        width: 100% !important;
+    }
+    nav #navbar-start {
+        display: flex;
     }
 }

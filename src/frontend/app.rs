@@ -91,15 +91,14 @@ pub fn App() -> impl IntoView {
     provide_context(create_rw_signal(global_state));
 
     view! {
-        <Html attr:data-theme="emerald" />
+        <Html attr:data-theme="emerald" class="h-full" />
+        <Body class="min-h-full flex max-sm:flex-col divide-x divide-slate-300 divide-solid" />
         <>
-            <Stylesheet id="daisyui" href="/daisyui.css" />
-            <Stylesheet id="ibis" href="/ibis.css" />
+            <Stylesheet id="ibis" href="/pkg/ibis.css" />
             <Stylesheet id="katex" href="/katex.min.css" />
-            <script src="/tailwind.js"></script>
             <Router>
                 <Nav />
-                <main>
+                <main class="p-4 grow">
                     <Routes>
                         <Route path="/" view=ReadArticle />
                         <Route path="/article/:title" view=ReadArticle />
