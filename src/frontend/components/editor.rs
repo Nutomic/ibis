@@ -35,7 +35,11 @@ pub fn EditorView(
                 <div class="prose prose-slate" inner_html=move || preview.get()></div>
             </Show>
             <div>
-                <a class="link link-secondary" href="https://commonmark.org/help/" target="blank_">
+                <a
+                    class="link link-secondary"
+                    href="https://ibis.wiki/article/Markdown_Guide"
+                    target="blank_"
+                >
                     Markdown
                 </a>
                 " formatting is supported"
