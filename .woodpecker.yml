@@ -40,6 +40,13 @@ steps:
       - IGNORED=$(git ls-files --cached -i --exclude-standard)
       - if [[ "$IGNORED" ]]; then echo "Ignored files present:\n$IGNORED\n"; exit 1; fi
 
+  cargo_shear:
+    image: *rust_image
+    commands:
+      - *install_binstall
+      - cargo binstall -y cargo-shear
+      - cargo shear
+
   check_diesel_schema:
     image: willsquire/diesel-cli
     environment:
