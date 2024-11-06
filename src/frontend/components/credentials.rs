@@ -30,7 +30,7 @@ pub fn CredentialsForm(
 
             <input
                 type="text"
-                class="input"
+                class="input input-primary input-bordered"
                 required
                 placeholder="Username"
                 prop:disabled=move || disabled.get()
@@ -47,7 +47,7 @@ pub fn CredentialsForm(
             <div class="h-2"></div>
             <input
                 type="password"
-                class="input"
+                class="input input-primary input-bordered"
                 required
                 placeholder="Password"
                 prop:disabled=move || disabled.get()
