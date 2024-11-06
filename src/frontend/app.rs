@@ -92,7 +92,7 @@ pub fn App() -> impl IntoView {
 
     view! {
         <Html attr:data-theme="emerald" class="h-full" />
-        <Body class="min-h-full flex max-sm:flex-col md:divide-x divide-slate-300 divide-solid" />
+        <Body class="min-h-full flex max-sm:flex-col md:divide-x divide-slate-400 divide-solid" />
         <>
             <Stylesheet id="ibis" href="/pkg/ibis.css" />
             <Stylesheet id="katex" href="/katex.min.css" />

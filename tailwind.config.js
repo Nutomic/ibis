@@ -12,6 +12,23 @@ module.exports = {
     require('@tailwindcss/typography')
   ],
   daisyui: {
-    themes: ["emerald"]
-  }
+    //themes: ["emerald", "dim"]
+    themes: [
+      {
+        emerald: {
+          ...require("daisyui/src/theming/themes")["emerald"],
+          "nav, .menu": {
+            "background-color": "theme(colors.sky.50)",
+          },
+        },
+        dim: {
+          ...require("daisyui/src/theming/themes")["dim"],
+          "nav, .menu": {
+            "background-color": "theme(colors.sky.900)",
+          },
+        },
+      },
+    ],
+  },
+  darkMode: ['class', '[data-theme="dim"]']
 }
