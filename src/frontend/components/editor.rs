@@ -13,36 +13,44 @@ pub fn EditorView(
     let (show_preview, set_show_preview) = create_signal(false);
 
     view! {
-        <div class="my-4">
-            <textarea
-                prop:value=content
-                placeholder="Article text..."
-                class="textarea textarea-primary min-w-full min-h-80 resize-none text-base"
-                on:input=move |evt| {
-                    let val = event_target_value(&evt);
-                    set_preview.set(render_markdown(&val));
-                    set_content.set(val);
-                }
-                node_ref=textarea_ref
-            ></textarea>
-            <button
-                class="btn btn-secondary my-4"
-                on:click=move |_| { set_show_preview.update(|s| *s = !*s) }
-            >
-                Preview
-            </button>
-            <Show when=move || { show_preview.get() }>
-                <div class="prose prose-slate" inner_html=move || preview.get()></div>
-            </Show>
-            <div>
-                <a
-                    class="link link-secondary"
-                    href="https://ibis.wiki/article/Markdown_Guide"
-                    target="blank_"
+        <div>
+            <div class="my-4 w-full flex max-sm:flex-col">
+                <textarea
+                    prop:value=content
+                    placeholder="Article text..."
+                    class="grow textarea textarea-primary min-h-80 resize-none text-base text-base"
+                    on:input=move |evt| {
+                        let val = event_target_value(&evt);
+                        set_preview.set(render_markdown(&val));
+                        set_content.set(val);
+                    }
+                    node_ref=textarea_ref
+                ></textarea>
+                <Show when=move || { show_preview.get() }>
+                    <div class="divider md:hidden"></div>
+                    <div
+                        class="prose prose-slate basis-6/12 md:ms-4 text-base py-2 max-sm:px-2"
+                        inner_html=move || preview.get()
+                    ></div>
+                </Show>
+            </div>
+            <div class="flex h-min items-center mb-4">
+                <button
+                    class="btn btn-secondary"
+                    on:click=move |_| { set_show_preview.update(|s| *s = !*s) }
                 >
-                    Markdown
-                </a>
-                " formatting is supported"
+                    Preview
+                </button>
+                <p class="mx-4">
+                    <a
+                        class="link link-secondary"
+                        href="https://ibis.wiki/article/Markdown_Guide"
+                        target="blank_"
+                    >
+                        Markdown
+                    </a>
+                    " formatting is supported"
+                </p>
             </div>
         </div>
     }

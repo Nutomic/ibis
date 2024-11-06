@@ -140,7 +140,7 @@ pub fn EditArticle() -> impl IntoView {
                                             <div class="flex flex-row mr-2">
                                                 <input
                                                     type="text"
-                                                    class="input input-secondary grow"
+                                                    class="input input-primary grow me-4"
                                                     placeholder="Edit summary"
                                                     value=summary.get_untracked()
                                                     on:keyup=move |ev| {
@@ -150,7 +150,7 @@ pub fn EditArticle() -> impl IntoView {
                                                 />
 
                                                 <button
-                                                    class="btn btn-secondary"
+                                                    class="btn btn-primary"
                                                     prop:disabled=move || button_is_disabled.get()
                                                     on:click=move |_| {
                                                         submit_action

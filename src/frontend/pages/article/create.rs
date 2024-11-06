@@ -80,7 +80,7 @@ pub fn CreateArticle() -> impl IntoView {
 
                         <div class="flex flex-row">
                             <input
-                                class="input input-primary grow mr-2"
+                                class="input input-primary grow mr-4"
                                 type="text"
                                 placeholder="Edit summary"
                                 on:keyup=move |ev| {
