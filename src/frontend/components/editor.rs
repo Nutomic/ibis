@@ -9,7 +9,7 @@ pub fn EditorView(
     content: Signal<String>,
     set_content: WriteSignal<String>,
 ) -> impl IntoView {
-    let (preview, set_preview) = create_signal(render_markdown(&content.get()));
+    let (preview, set_preview) = create_signal(render_markdown(&content.get_untracked()));
     let (show_preview, set_show_preview) = create_signal(false);
 
     view! {
