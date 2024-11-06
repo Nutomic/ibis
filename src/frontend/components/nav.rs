@@ -109,7 +109,7 @@ pub fn Nav() -> impl IntoView {
                                     </a>
                                 </p>
                                 <button
-                                    class="btn btn-outline"
+                                    class="btn btn-outline btn-xs w-min self-center"
                                     on:click=move |_| logout_action.dispatch(())
                                 >
                                     Logout
