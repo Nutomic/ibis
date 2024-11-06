@@ -1,3 +1,8 @@
+
+![GitHub tag (latest SemVer)](https://img.shields.io/github/tag/Nutomic/ibis.svg)
+[![Build Status](https://woodpecker.join-lemmy.org/api/badges/Nutomic/ibis/status.svg)](https://woodpecker.join-lemmy.org/Nutomic/ibis)
+[![License](https://img.shields.io/github/license/Nutomic/ibis.svg)](LICENSE)
+
 About Ibis
 ===
 
