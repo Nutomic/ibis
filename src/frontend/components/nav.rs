@@ -22,10 +22,10 @@ pub fn Nav() -> impl IntoView {
 
     let (search_query, set_search_query) = create_signal(String::new());
     view! {
-        <nav class="max-sm:navbar p-2.5 bg-sky-50/50">
+        <nav class="max-sm:navbar p-2.5 bg-sky-50">
             <div
                 id="navbar-start"
-                class="max-sm:navbar-start max-sm:dropdown max-sm:dropdown-bottom max-sm:dropdown-end max-sm:w-full md:h-full"
+                class="max-sm:navbar-start max-sm:flex max-sm:dropdown max-sm:dropdown-bottom max-sm:dropdown-end max-sm:w-full md:h-full"
             >
                 <h1 class="w-min md:hidden text-3xl font-bold font-serif">
                     {GlobalState::api_client().hostname}
@@ -36,7 +36,7 @@ pub fn Nav() -> impl IntoView {
                 </button>
                 <ul
                     tabindex="0"
-                    class="menu dropdown-content p-2 max-sm:rounded-box max-sm:bg-sky-50 max-sm:z-[1] max-sm:shadow md:h-full max-sm:translate-y-6"
+                    class="menu dropdown-content p-2 max-sm:rounded-box bg-sky-50 max-sm:z-[1] max-sm:shadow md:h-full"
                 >
                     <h1 class="px-4 py-2 text-3xl font-bold font-serif sm:hidden">
                         {GlobalState::api_client().hostname}
@@ -118,13 +118,15 @@ pub fn Nav() -> impl IntoView {
                         }
 
                     </Show>
-                    <div class="flex-grow"></div>
-                    <p class="m-1">"Version "{env!("CARGO_PKG_VERSION")}</p>
-                    <p class="m-1">
-                        <a href="https://github.com/Nutomic/ibis" class="link">
-                            Source Code
-                        </a>
-                    </p>
+                    <div class="flex-grow min-h-2"></div>
+                    <div class="m-1 grid gap-2">
+                        <p>"Version "{env!("CARGO_PKG_VERSION")}</p>
+                        <p>
+                            <a href="https://github.com/Nutomic/ibis" class="link">
+                                Source Code
+                            </a>
+                        </p>
+                    </div>
                 </ul>
             </div>
         </nav>
