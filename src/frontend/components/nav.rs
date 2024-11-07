@@ -126,7 +126,13 @@ pub fn Nav() -> impl IntoView {
                             <input
                                 type="checkbox"
                                 class="toggle"
-                                checked=move || { expect_context::<Darkmode>().is_dark() }
+                                checked=move || {
+                                    if expect_context::<Darkmode>().is_light() {
+                                        "checked"
+                                    } else {
+                                        ""
+                                    }
+                                }
                                 on:click=move |_| { expect_context::<Darkmode>().toggle() }
                             />
                             <span class="label-text">Dark</span>
