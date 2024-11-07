@@ -1,6 +1,5 @@
-use crate::frontend::app::GlobalState;
+use crate::frontend::{app::GlobalState, dark_mode::DarkMode};
 use leptos::{component, use_context, view, IntoView, RwSignal, SignalWith, *};
-use leptos_darkmode::Darkmode;
 use leptos_router::*;
 
 #[component]
@@ -22,6 +21,7 @@ pub fn Nav() -> impl IntoView {
     );
 
     let (search_query, set_search_query) = create_signal(String::new());
+    let mut dark_mode = expect_context::<DarkMode>();
     view! {
         <nav class="max-sm:navbar p-2.5">
             <div
@@ -126,14 +126,8 @@ pub fn Nav() -> impl IntoView {
                             <input
                                 type="checkbox"
                                 class="toggle"
-                                checked=move || {
-                                    if expect_context::<Darkmode>().is_light() {
-                                        "checked"
-                                    } else {
-                                        ""
-                                    }
-                                }
-                                on:click=move |_| { expect_context::<Darkmode>().toggle() }
+                                prop:checked=dark_mode.is_dark
+                                on:click=move |_| { dark_mode.toggle() }
                             />
                             <span class="label-text">Dark</span>
                         </label>

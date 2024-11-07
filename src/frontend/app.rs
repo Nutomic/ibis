@@ -3,6 +3,7 @@ use crate::{
     frontend::{
         api::ApiClient,
         components::nav::Nav,
+        dark_mode::DarkMode,
         pages::{
             article::{
                 actions::ArticleActions,
@@ -37,7 +38,6 @@ use leptos::{
     SignalGetUntracked,
     SignalUpdate,
 };
-use leptos_darkmode::Darkmode;
 use leptos_meta::{provide_meta_context, *};
 use leptos_router::{Route, Router, Routes};
 use reqwest::Client;
@@ -91,18 +91,11 @@ pub fn App() -> impl IntoView {
     GlobalState::update_my_profile();
     provide_context(create_rw_signal(global_state));
 
-    let darkmode = Darkmode::init();
+    let darkmode = DarkMode::init();
     provide_context(darkmode.clone());
-    let theme = move || {
-        if darkmode.is_light() {
-            "emerald"
-        } else {
-            "dim"
-        }
-    };
 
     view! {
-        <Html attr:data-theme=theme class="h-full" />
+        <Html attr:data-theme=darkmode.theme class="h-full" />
         <Body class="min-h-full flex max-sm:flex-col md:divide-x divide-slate-400 divide-solid" />
         <>
             <Stylesheet id="ibis" href="/pkg/ibis.css" />
