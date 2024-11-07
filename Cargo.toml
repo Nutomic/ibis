@@ -108,6 +108,7 @@ markdown-it-footnote = "0.2.0"
 markdown-it-sub = "1.0.0"
 markdown-it-sup = "1.0.0"
 leptos-use = "0.13.6"
+leptos_darkmode = "0.2.0"
 
 [dev-dependencies]
 pretty_assertions = "1.4.1"

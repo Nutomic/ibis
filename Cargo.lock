@@ -1796,6 +1796,7 @@ dependencies = [
  "leptos",
  "leptos-use",
  "leptos_axum",
+ "leptos_darkmode",
  "leptos_meta",
  "leptos_router",
  "log",
@@ -2067,6 +2068,16 @@ dependencies = [
  "serde",
  "thiserror",
  "typed-builder",
+]
+
+[[package]]
+name = "leptos_darkmode"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "35ec7c7c56b312da0a739680cc2cb70d641eb82adbc1f83a565c2e9562a96253"
+dependencies = [
+ "leptos",
+ "web-sys",
 ]
 
 [[package]]
