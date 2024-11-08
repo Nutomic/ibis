@@ -41,6 +41,7 @@ use leptos::{
 use leptos_meta::{provide_meta_context, *};
 use leptos_router::{Route, Router, Routes};
 use reqwest::Client;
+use std::{thread::sleep, time::Duration};
 
 // https://book.leptos.dev/15_global_state.html
 #[derive(Clone)]
@@ -51,7 +52,13 @@ pub struct GlobalState {
 
 impl GlobalState {
     pub fn api_client() -> ApiClient {
-        use_context::<RwSignal<GlobalState>>()
+        let mut global_state = use_context::<RwSignal<GlobalState>>();
+        // Wait for global state to be populated (only needed on instance_details for some reason)
+        while global_state.is_none() {
+            sleep(Duration::from_millis(10));
+            global_state = use_context::<RwSignal<GlobalState>>();
+        }
+        global_state
             .expect("global state is provided")
             .get_untracked()
             .api_client
