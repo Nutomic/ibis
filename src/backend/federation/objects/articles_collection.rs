@@ -8,7 +8,8 @@ use activitypub_federation::{
     protocol::verification::verify_domains_match,
     traits::{Collection, Object},
 };
-use futures::{future, future::try_join_all};
+use futures::future::{self, join_all};
+use log::warn;
 use serde::{Deserialize, Serialize};
 use url::Url;
 
@@ -35,7 +36,7 @@ impl Collection for DbArticleCollection {
         owner: &Self::Owner,
         data: &Data<Self::DataType>,
     ) -> Result<Self::Kind, Self::Error> {
-        let local_articles = DbArticle::read_all(true, data)?;
+        let local_articles = DbArticle::read_all(Some(true), None, data)?;
         let articles = future::try_join_all(
             local_articles
                 .into_iter()
@@ -66,12 +67,15 @@ impl Collection for DbArticleCollection {
         _owner: &Self::Owner,
         data: &Data<Self::DataType>,
     ) -> Result<Self, Self::Error> {
-        try_join_all(
-            apub.items
-                .into_iter()
-                .map(|i| DbArticle::from_json(i, data)),
-        )
-        .await?;
+        join_all(apub.items.into_iter().map(|article| async {
+            let id = article.id.clone();
+            let res = DbArticle::from_json(article, data).await;
+            if let Err(e) = &res {
+                warn!("Failed to synchronize article {id}: {e}");
+            }
+            res
+        }))
+        .await;
 
         Ok(DbArticleCollection(()))
     }

@@ -16,6 +16,7 @@ pub fn ListArticles() -> impl IntoView {
             GlobalState::api_client()
                 .list_articles(ListArticlesForm {
                     only_local: Some(only_local),
+                    instance_id: None,
                 })
                 .await
                 .unwrap()

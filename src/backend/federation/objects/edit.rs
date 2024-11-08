@@ -78,6 +78,7 @@ impl Object for DbEdit {
     async fn from_json(json: Self::Kind, data: &Data<Self::DataType>) -> Result<Self, Self::Error> {
         let article = json.object.dereference(data).await?;
         let creator = json.attributed_to.dereference(data).await?;
+        // TODO: if creator fails to fetch, make a dummy user
         let form = DbEditForm {
             creator_id: creator.id,
             ap_id: json.id,

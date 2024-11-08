@@ -76,6 +76,7 @@ async fn test_create_read_and_edit_local_article() -> MyResult<()> {
         .alpha
         .list_articles(ListArticlesForm {
             only_local: Some(false),
+            instance_id: None,
         })
         .await?;
     assert_eq!(2, list_articles.len());

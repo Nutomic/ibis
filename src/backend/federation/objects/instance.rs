@@ -114,8 +114,17 @@ impl Object for DbInstance {
             local: false,
         };
         let instance = DbInstance::create(&form, data)?;
+
         // TODO: very inefficient to sync all articles every time
-        instance.articles_url.dereference(&instance, data).await?;
+        let instance_ = instance.clone();
+        let data_ = data.reset_request_count();
+        tokio::spawn(async move {
+            let res = instance_.articles_url.dereference(&instance_, &data_).await;
+            if let Err(e) = res {
+                tracing::warn!("error in spawn: {e}");
+            }
+        });
+
         Ok(instance)
     }
 }

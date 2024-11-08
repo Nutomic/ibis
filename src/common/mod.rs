@@ -29,6 +29,7 @@ pub struct GetArticleForm {
 #[derive(Deserialize, Serialize, Clone)]
 pub struct ListArticlesForm {
     pub only_local: Option<bool>,
+    pub instance_id: Option<i32>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]

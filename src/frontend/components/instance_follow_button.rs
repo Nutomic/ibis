@@ -22,7 +22,7 @@ pub fn InstanceFollowButton(instance: DbInstance) -> impl IntoView {
         .get_untracked()
         .my_profile
         .map(|p| p.following.contains(&instance))
-        .unwrap_or_default();
+        .unwrap_or(false);
     let follow_text = if is_following {
         "Following instance"
     } else {
@@ -31,9 +31,11 @@ pub fn InstanceFollowButton(instance: DbInstance) -> impl IntoView {
 
     view! {
         <button
+            class="btn btn-sm"
             on:click=move |_| follow_action.dispatch(instance.id)
             prop:disabled=move || is_following
             prop:hidden=move || instance.local
+            title="Follow the instance so that new edits are synchronized to your instance."
         >
             {follow_text}
         </button>

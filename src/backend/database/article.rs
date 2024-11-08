@@ -135,20 +135,29 @@ impl DbArticle {
     }
 
     /// Read all articles, ordered by most recently edited first.
-    pub fn read_all(only_local: bool, data: &IbisData) -> MyResult<Vec<Self>> {
+    ///
+    /// TODO: Should get rid of only_local param and rely on instance_id
+    pub fn read_all(
+        only_local: Option<bool>,
+        instance_id: Option<i32>,
+        data: &IbisData,
+    ) -> MyResult<Vec<Self>> {
         let mut conn = data.db_pool.get()?;
-        let query = article::table
+        let mut query = article::table
             .inner_join(edit::table)
+            .inner_join(instance::table)
             .group_by(article::dsl::id)
             .order_by(max(edit::dsl::created).desc())
-            .select(article::all_columns);
-        Ok(if only_local {
-            query
-                .filter(article::dsl::local.eq(true))
-                .get_results(&mut conn)?
-        } else {
-            query.get_results(&mut conn)?
-        })
+            .select(article::all_columns)
+            .into_boxed();
+
+        if let Some(true) = only_local {
+            query = query.filter(article::dsl::local.eq(true));
+        }
+        if let Some(instance_id) = instance_id {
+            query = query.filter(instance::dsl::id.eq(instance_id));
+        }
+        Ok(query.get_results(&mut conn)?)
     }
 
     pub fn search(query: &str, data: &IbisData) -> MyResult<Vec<Self>> {

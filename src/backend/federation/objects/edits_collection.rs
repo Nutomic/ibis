@@ -22,7 +22,7 @@ pub struct ApubEditCollection {
 }
 
 #[derive(Clone, Debug)]
-pub struct DbEditCollection(pub Vec<DbEdit>);
+pub struct DbEditCollection();
 
 #[async_trait::async_trait]
 impl Collection for DbEditCollection {
@@ -68,9 +68,7 @@ impl Collection for DbEditCollection {
         _owner: &Self::Owner,
         data: &Data<Self::DataType>,
     ) -> Result<Self, Self::Error> {
-        let edits =
-            try_join_all(apub.items.into_iter().map(|i| DbEdit::from_json(i, data))).await?;
-        // TODO: return value propably not needed
-        Ok(DbEditCollection(edits))
+        try_join_all(apub.items.into_iter().map(|i| DbEdit::from_json(i, data))).await?;
+        Ok(DbEditCollection())
     }
 }

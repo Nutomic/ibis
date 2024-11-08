@@ -176,8 +176,11 @@ pub(in crate::backend::api) async fn list_articles(
     Query(query): Query<ListArticlesForm>,
     data: Data<IbisData>,
 ) -> MyResult<Json<Vec<DbArticle>>> {
-    let only_local = query.only_local.unwrap_or(false);
-    Ok(Json(DbArticle::read_all(only_local, &data)?))
+    Ok(Json(DbArticle::read_all(
+        query.only_local,
+        query.instance_id,
+        &data,
+    )?))
 }
 
 /// Fork a remote article to local instance. This is useful if there are disagreements about
