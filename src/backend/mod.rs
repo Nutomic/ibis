@@ -169,6 +169,9 @@ async fn setup(data: &Data<IbisData>) -> Result<(), Error> {
     )
     .await?;
 
+    // create ghost user
+    DbPerson::ghost(data)?;
+
     Ok(())
 }
 

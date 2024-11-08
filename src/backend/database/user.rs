@@ -164,4 +164,31 @@ impl DbPerson {
             .select(instance::all_columns)
             .get_results(conn.deref_mut())?)
     }
+
+    /// Ghost user serves as placeholder for deleted accounts
+    pub fn ghost(data: &Data<IbisData>) -> MyResult<DbPerson> {
+        let username = "ghost";
+        let read = DbPerson::read_from_name(username, &None, data);
+        if read.is_ok() {
+            read
+        } else {
+            let domain = &data.config.federation.domain;
+            let ap_id = ObjectId::parse(&format!(
+                "{}://{domain}/user/{username}",
+                http_protocol_str()
+            ))?;
+            let inbox_url = format!("{}://{domain}/inbox", http_protocol_str());
+            let keypair = generate_actor_keypair()?;
+            let person_form = DbPersonForm {
+                username: username.to_string(),
+                ap_id,
+                inbox_url,
+                public_key: keypair.public_key,
+                private_key: Some(keypair.private_key),
+                last_refreshed_at: Utc::now(),
+                local: true,
+            };
+            DbPerson::create(&person_form, data)
+        }
+    }
 }

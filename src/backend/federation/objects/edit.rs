@@ -12,6 +12,7 @@ use activitypub_federation::{
     traits::Object,
 };
 use chrono::{DateTime, Utc};
+use log::warn;
 use serde::{Deserialize, Serialize};
 use url::Url;
 
@@ -77,8 +78,14 @@ impl Object for DbEdit {
 
     async fn from_json(json: Self::Kind, data: &Data<Self::DataType>) -> Result<Self, Self::Error> {
         let article = json.object.dereference(data).await?;
-        let creator = json.attributed_to.dereference(data).await?;
-        // TODO: if creator fails to fetch, make a dummy user
+        let creator = match json.attributed_to.dereference(data).await {
+            Ok(c) => c,
+            Err(e) => {
+                // If actor couldnt be fetched, use ghost as placeholder
+                warn!("Failed to fetch user {}: {e}", json.attributed_to);
+                DbPerson::ghost(data)?
+            }
+        };
         let form = DbEditForm {
             creator_id: creator.id,
             ap_id: json.id,
