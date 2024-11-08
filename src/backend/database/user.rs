@@ -14,7 +14,7 @@ use activitypub_federation::{
     http_signatures::generate_actor_keypair,
 };
 use bcrypt::{hash, DEFAULT_COST};
-use chrono::{DateTime, Local, Utc};
+use chrono::{DateTime, Utc};
 use diesel::{
     insert_into,
     AsChangeset,
@@ -83,7 +83,7 @@ impl DbPerson {
             inbox_url,
             public_key: keypair.public_key,
             private_key: Some(keypair.private_key),
-            last_refreshed_at: Local::now().into(),
+            last_refreshed_at: Utc::now(),
             local: true,
         };
 

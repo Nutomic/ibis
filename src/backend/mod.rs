@@ -32,7 +32,7 @@ use axum::{
     ServiceExt,
 };
 use axum_macros::debug_middleware;
-use chrono::Local;
+use chrono::Utc;
 use diesel::{
     r2d2::{ConnectionManager, Pool},
     PgConnection,
@@ -133,7 +133,7 @@ async fn setup(data: &Data<IbisData>) -> Result<(), Error> {
         inbox_url,
         public_key: keypair.public_key,
         private_key: Some(keypair.private_key),
-        last_refreshed_at: Local::now().into(),
+        last_refreshed_at: Utc::now(),
         local: true,
     };
     let instance = DbInstance::create(&form, data)?;
