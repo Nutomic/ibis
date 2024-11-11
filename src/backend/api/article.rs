@@ -116,12 +116,7 @@ pub(in crate::backend::api) async fn edit_article(
         edit_form.new_text.push('\n');
     }
 
-    dbg!(
-        &edit_form.previous_version_id,
-        &original_article.latest_version
-    );
     if edit_form.previous_version_id == original_article.latest_version {
-        dbg!("no conflict");
         // No intermediate changes, simply submit new version
         submit_article_update(
             edit_form.new_text.clone(),

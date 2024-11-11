@@ -15,6 +15,7 @@ use {
     },
     activitypub_federation::fetch::{collection_id::CollectionId, object_id::ObjectId},
     diesel::{Identifiable, Queryable, Selectable},
+    diesel_derive_newtype::DieselNewType,
 };
 
 pub const MAIN_PAGE_NAME: &str = "Main_Page";
@@ -149,10 +150,8 @@ pub struct DbLocalUser {
     pub person_id: i32,
     pub admin: bool,
 }
-
-#[derive(
-    Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize, DieselNewType,
-)]
+#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize)]
+#[cfg_attr(feature = "ssr", derive(DieselNewType))]
 pub struct PersonId(pub i32);
 
 /// Federation related data from a local or remote user.
