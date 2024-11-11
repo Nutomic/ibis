@@ -29,12 +29,16 @@ pub fn InstanceFollowButton(instance: DbInstance) -> impl IntoView {
         "Follow instance"
     };
 
+    let class_ = if instance.local {
+        "hidden"
+    } else {
+        "btn btn-sm"
+    };
     view! {
         <button
-            class="btn btn-sm"
+            class=class_
             on:click=move |_| follow_action.dispatch(instance.id)
             prop:disabled=move || is_following
-            prop:hidden=move || instance.local
             title="Follow the instance so that new edits are synchronized to your instance."
         >
             {follow_text}
