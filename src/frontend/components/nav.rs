@@ -28,6 +28,7 @@ pub fn Nav() -> impl IntoView {
                 id="navbar-start"
                 class="max-sm:navbar-start max-sm:flex max-sm:dropdown max-sm:dropdown-bottom max-sm:dropdown-end max-sm:w-full md:h-full"
             >
+                <img src="/logo.png" class="m-auto" />
                 <h1 class="w-min md:hidden text-3xl font-bold font-serif">
                     {GlobalState::api_client().hostname}
                 </h1>
