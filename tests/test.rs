@@ -163,10 +163,9 @@ async fn test_synchronize_articles() -> MyResult<()> {
         .resolve_instance(Url::parse(&format!("http://{}", &data.alpha.hostname))?)
         .await?;
 
-    let mut get_article_data = GetArticleForm {
-        title: Some(create_res.article.title),
-        domain: None,
-        id: None,
+    let get_article_data = GetArticleForm {
+        title: Some(create_res.article.title.clone()),
+        ..Default::default()
     };
 
     // try to read remote article by name, fails without domain
@@ -174,8 +173,23 @@ async fn test_synchronize_articles() -> MyResult<()> {
     assert!(get_res.is_err());
 
     // get the article with instance id and compare
-    get_article_data.domain = Some(instance.domain);
-    let get_res = data.beta.get_article(get_article_data).await?;
+    let get_res = RetryFuture::new(
+        || async {
+            let get_article_data = GetArticleForm {
+                title: Some(create_res.article.title.clone()),
+                domain: Some(instance.domain.clone()),
+                id: None,
+            };
+            let res = data.beta.get_article(get_article_data).await;
+            match res {
+                Err(_) => Err(RetryPolicy::<String>::Retry(None)),
+                Ok(a) if a.edits.len() < 2 => Err(RetryPolicy::Retry(None)),
+                Ok(a) => Ok(a),
+            }
+        },
+        LinearRetryStrategy::new(),
+    )
+    .await?;
     assert_eq!(create_res.article.ap_id, get_res.article.ap_id);
     assert_eq!(create_form.title, get_res.article.title);
     assert_eq!(2, get_res.edits.len());

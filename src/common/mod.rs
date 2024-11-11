@@ -20,7 +20,7 @@ use {
 pub const MAIN_PAGE_NAME: &str = "Main_Page";
 
 /// Should be an enum Title/Id but fails due to https://github.com/nox/serde_urlencoded/issues/66
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
 pub struct GetArticleForm {
     pub title: Option<String>,
     pub domain: Option<String>,
