@@ -67,7 +67,7 @@ pub struct DbEdit {
     //       the same edit is used for multiple articles
     pub id: i32,
     #[serde(skip)]
-    pub creator_id: i32,
+    pub creator_id: PersonId,
     /// UUID built from sha224 hash of diff
     pub hash: EditVersion,
     #[cfg(feature = "ssr")]
@@ -150,12 +150,17 @@ pub struct DbLocalUser {
     pub admin: bool,
 }
 
+#[derive(
+    Debug, Copy, Clone, Hash, Eq, PartialEq, Default, Serialize, Deserialize, DieselNewType,
+)]
+pub struct PersonId(pub i32);
+
 /// Federation related data from a local or remote user.
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[cfg_attr(feature = "ssr", derive(Queryable, Selectable, Identifiable))]
 #[cfg_attr(feature = "ssr", diesel(table_name = person, check_for_backend(diesel::pg::Pg)))]
 pub struct DbPerson {
-    pub id: i32,
+    pub id: PersonId,
     pub username: String,
     #[cfg(feature = "ssr")]
     pub ap_id: ObjectId<DbPerson>,

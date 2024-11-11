@@ -358,6 +358,7 @@ async fn test_local_edit_conflict() -> MyResult<()> {
         previous_version_id: create_res.latest_version.clone(),
         resolve_conflict_id: None,
     };
+    dbg!("first edit");
     let edit_res = data.alpha.edit_article(&edit_form).await?;
     assert_eq!(edit_res.article.text, edit_form.new_text);
     assert_eq!(2, edit_res.edits.len());
@@ -370,6 +371,7 @@ async fn test_local_edit_conflict() -> MyResult<()> {
         previous_version_id: create_res.latest_version,
         resolve_conflict_id: None,
     };
+    dbg!("second edit");
     let edit_res = data
         .alpha
         .edit_article_with_conflict(&edit_form)

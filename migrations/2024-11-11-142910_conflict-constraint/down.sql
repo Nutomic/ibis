@@ -1,0 +1,2 @@
+ALTER TABLE conflict DROP CONSTRAINT conflict_creator_id_fkey;
+ALTER TABLE conflict ADD CONSTRAINT conflict_creator_id_fkey FOREIGN KEY (creator_id) REFERENCES local_user(id) ON UPDATE CASCADE ON DELETE CASCADE;

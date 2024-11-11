@@ -116,7 +116,12 @@ pub(in crate::backend::api) async fn edit_article(
         edit_form.new_text.push('\n');
     }
 
+    dbg!(
+        &edit_form.previous_version_id,
+        &original_article.latest_version
+    );
     if edit_form.previous_version_id == original_article.latest_version {
+        dbg!("no conflict");
         // No intermediate changes, simply submit new version
         submit_article_update(
             edit_form.new_text.clone(),
@@ -140,7 +145,7 @@ pub(in crate::backend::api) async fn edit_article(
             hash: EditVersion::new(&patch.to_string()),
             diff: patch.to_string(),
             summary: edit_form.summary.clone(),
-            creator_id: user.local_user.id,
+            creator_id: user.person.id,
             article_id: original_article.article.id,
             previous_version_id: previous_version.hash,
         };

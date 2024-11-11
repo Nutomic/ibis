@@ -7,7 +7,7 @@ use crate::{
             update_remote_article::UpdateRemoteArticle,
         },
     },
-    common::{DbArticle, DbEdit, DbInstance, EditVersion},
+    common::{DbArticle, DbEdit, DbInstance, EditVersion, PersonId},
 };
 use activitypub_federation::config::Data;
 use chrono::Utc;
@@ -24,7 +24,7 @@ pub async fn submit_article_update(
     summary: String,
     previous_version: EditVersion,
     original_article: &DbArticle,
-    creator_id: i32,
+    creator_id: PersonId,
     data: &Data<IbisData>,
 ) -> Result<(), Error> {
     let form = DbEditForm::new(

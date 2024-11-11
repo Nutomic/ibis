@@ -4,7 +4,7 @@ use crate::{
         error::MyResult,
         IbisData,
     },
-    common::{DbArticle, DbEdit, EditVersion, EditView},
+    common::{DbArticle, DbEdit, EditVersion, EditView, PersonId},
 };
 use activitypub_federation::fetch::object_id::ObjectId;
 use chrono::{DateTime, Utc};
@@ -15,7 +15,7 @@ use std::ops::DerefMut;
 #[derive(Debug, Clone, Insertable, AsChangeset)]
 #[diesel(table_name = edit, check_for_backend(diesel::pg::Pg))]
 pub struct DbEditForm {
-    pub creator_id: i32,
+    pub creator_id: PersonId,
     pub hash: EditVersion,
     pub ap_id: ObjectId<DbEdit>,
     pub diff: String,
@@ -28,7 +28,7 @@ pub struct DbEditForm {
 impl DbEditForm {
     pub fn new(
         original_article: &DbArticle,
-        creator_id: i32,
+        creator_id: PersonId,
         updated_text: &str,
         summary: String,
         previous_version_id: EditVersion,

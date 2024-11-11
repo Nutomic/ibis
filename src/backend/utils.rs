@@ -46,7 +46,7 @@ pub fn generate_article_version(edits: &Vec<EditView>, version: &EditVersion) ->
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::common::{DbEdit, DbPerson};
+    use crate::common::{DbEdit, DbPerson, PersonId};
     use activitypub_federation::fetch::object_id::ObjectId;
     use chrono::Utc;
     use diffy::create_patch;
@@ -57,7 +57,7 @@ mod test {
             Ok(EditView {
                 edit: DbEdit {
                     id: 0,
-                    creator_id: 0,
+                    creator_id: PersonId(0),
                     hash: EditVersion::new(&diff),
                     ap_id: ObjectId::parse("http://example.com")?,
                     diff,
@@ -67,7 +67,7 @@ mod test {
                     created: Utc::now(),
                 },
                 creator: DbPerson {
-                    id: 0,
+                    id: PersonId(0),
                     username: "".to_string(),
                     ap_id: ObjectId::parse("http://example.com")?,
                     inbox_url: "".to_string(),

@@ -6,7 +6,14 @@ use crate::{
         },
         error::MyResult,
     },
-    common::{utils::http_protocol_str, DbInstance, DbLocalUser, DbPerson, LocalUserView},
+    common::{
+        utils::http_protocol_str,
+        DbInstance,
+        DbLocalUser,
+        DbPerson,
+        LocalUserView,
+        PersonId,
+    },
 };
 use activitypub_federation::{
     config::Data,
@@ -31,7 +38,7 @@ use std::ops::DerefMut;
 #[diesel(table_name = local_user, check_for_backend(diesel::pg::Pg))]
 pub struct DbLocalUserForm {
     pub password_encrypted: String,
-    pub person_id: i32,
+    pub person_id: PersonId,
     pub admin: bool,
 }
 
@@ -58,7 +65,7 @@ impl DbPerson {
             .get_result::<DbPerson>(conn.deref_mut())?)
     }
 
-    pub fn read(id: i32, data: &Data<IbisData>) -> MyResult<DbPerson> {
+    pub fn read(id: PersonId, data: &Data<IbisData>) -> MyResult<DbPerson> {
         let mut conn = data.db_pool.get()?;
         Ok(person::table.find(id).get_result(conn.deref_mut())?)
     }
@@ -155,7 +162,7 @@ impl DbPerson {
         })
     }
 
-    fn read_following(id_: i32, data: &Data<IbisData>) -> MyResult<Vec<DbInstance>> {
+    fn read_following(id_: PersonId, data: &Data<IbisData>) -> MyResult<Vec<DbInstance>> {
         use instance_follow::dsl::{follower_id, instance_id};
         let mut conn = data.db_pool.get()?;
         Ok(instance_follow::table

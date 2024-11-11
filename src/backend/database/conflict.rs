@@ -5,7 +5,7 @@ use crate::{
         federation::activities::submit_article_update,
         utils::generate_article_version,
     },
-    common::{ApiConflict, DbArticle, DbEdit, DbLocalUser, EditVersion},
+    common::{ApiConflict, DbArticle, DbEdit, DbPerson, EditVersion, PersonId},
 };
 use activitypub_federation::config::Data;
 use diesel::{
@@ -32,7 +32,7 @@ pub struct DbConflict {
     pub hash: EditVersion,
     pub diff: String,
     pub summary: String,
-    pub creator_id: i32,
+    pub creator_id: PersonId,
     pub article_id: i32,
     pub previous_version_id: EditVersion,
 }
@@ -43,7 +43,7 @@ pub struct DbConflictForm {
     pub hash: EditVersion,
     pub diff: String,
     pub summary: String,
-    pub creator_id: i32,
+    pub creator_id: PersonId,
     pub article_id: i32,
     pub previous_version_id: EditVersion,
 }
@@ -56,10 +56,10 @@ impl DbConflict {
             .get_result(conn.deref_mut())?)
     }
 
-    pub fn list(local_user: &DbLocalUser, data: &IbisData) -> MyResult<Vec<Self>> {
+    pub fn list(person: &DbPerson, data: &IbisData) -> MyResult<Vec<Self>> {
         let mut conn = data.db_pool.get()?;
         Ok(conflict::table
-            .filter(conflict::dsl::creator_id.eq(local_user.id))
+            .filter(conflict::dsl::creator_id.eq(person.id))
             .get_results(conn.deref_mut())?)
     }
 
