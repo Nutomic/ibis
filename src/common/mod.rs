@@ -3,7 +3,7 @@ pub mod utils;
 pub mod validation;
 
 use chrono::{DateTime, Utc};
-use newtypes::PersonId;
+use newtypes::{ArticleId, ConflictId, EditId, InstanceId, PersonId};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use url::Url;
@@ -26,13 +26,13 @@ pub const MAIN_PAGE_NAME: &str = "Main_Page";
 pub struct GetArticleForm {
     pub title: Option<String>,
     pub domain: Option<String>,
-    pub id: Option<i32>,
+    pub id: Option<ArticleId>,
 }
 
 #[derive(Deserialize, Serialize, Clone)]
 pub struct ListArticlesForm {
     pub only_local: Option<bool>,
-    pub instance_id: Option<i32>,
+    pub instance_id: Option<InstanceId>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
@@ -48,14 +48,14 @@ pub struct ArticleView {
 #[cfg_attr(feature = "ssr", derive(Queryable, Selectable, Identifiable))]
 #[cfg_attr(feature = "ssr", diesel(table_name = article, check_for_backend(diesel::pg::Pg), belongs_to(DbInstance, foreign_key = instance_id)))]
 pub struct DbArticle {
-    pub id: i32,
+    pub id: ArticleId,
     pub title: String,
     pub text: String,
     #[cfg(feature = "ssr")]
     pub ap_id: ObjectId<DbArticle>,
     #[cfg(not(feature = "ssr"))]
     pub ap_id: String,
-    pub instance_id: i32,
+    pub instance_id: InstanceId,
     pub local: bool,
     pub protected: bool,
 }
@@ -67,7 +67,7 @@ pub struct DbArticle {
 pub struct DbEdit {
     // TODO: we could use hash as primary key, but that gives errors on forking because
     //       the same edit is used for multiple articles
-    pub id: i32,
+    pub id: EditId,
     #[serde(skip)]
     pub creator_id: PersonId,
     /// UUID built from sha224 hash of diff
@@ -78,7 +78,7 @@ pub struct DbEdit {
     pub ap_id: String,
     pub diff: String,
     pub summary: String,
-    pub article_id: i32,
+    pub article_id: ArticleId,
     /// First edit of an article always has `EditVersion::default()` here
     pub previous_version_id: EditVersion,
     pub created: DateTime<Utc>,
@@ -145,10 +145,10 @@ pub struct LocalUserView {
 #[cfg_attr(feature = "ssr", derive(Queryable, Selectable, Identifiable))]
 #[cfg_attr(feature = "ssr", diesel(table_name = local_user, check_for_backend(diesel::pg::Pg)))]
 pub struct DbLocalUser {
-    pub id: i32,
+    pub id: InstanceId,
     #[serde(skip)]
     pub password_encrypted: String,
-    pub person_id: i32,
+    pub person_id: PersonId,
     pub admin: bool,
 }
 
@@ -189,7 +189,7 @@ pub struct CreateArticleForm {
 #[derive(Deserialize, Serialize, Debug)]
 pub struct EditArticleForm {
     /// Id of the article to edit
-    pub article_id: i32,
+    pub article_id: ArticleId,
     /// Full, new text of the article. A diff against `previous_version` is generated on the backend
     /// side to handle conflicts.
     pub new_text: String,
@@ -199,29 +199,29 @@ pub struct EditArticleForm {
     /// [ApiConflict.previous_version]
     pub previous_version_id: EditVersion,
     /// If you are resolving a conflict, pass the id to delete conflict from the database
-    pub resolve_conflict_id: Option<i32>,
+    pub resolve_conflict_id: Option<ConflictId>,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct ProtectArticleForm {
-    pub article_id: i32,
+    pub article_id: ArticleId,
     pub protected: bool,
 }
 
 #[derive(Deserialize, Serialize)]
 pub struct ForkArticleForm {
-    pub article_id: i32,
+    pub article_id: ArticleId,
     pub new_title: String,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct GetInstance {
-    pub id: Option<i32>,
+    pub id: Option<InstanceId>,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct FollowInstance {
-    pub id: i32,
+    pub id: InstanceId,
 }
 
 #[derive(Deserialize, Serialize, Clone)]
@@ -236,7 +236,7 @@ pub struct ResolveObject {
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct ApiConflict {
-    pub id: i32,
+    pub id: ConflictId,
     pub hash: EditVersion,
     pub three_way_merge: String,
     pub summary: String,
@@ -248,7 +248,7 @@ pub struct ApiConflict {
 #[cfg_attr(feature = "ssr", derive(Queryable, Selectable, Identifiable))]
 #[cfg_attr(feature = "ssr", diesel(table_name = instance, check_for_backend(diesel::pg::Pg)))]
 pub struct DbInstance {
-    pub id: i32,
+    pub id: InstanceId,
     pub domain: String,
     #[cfg(feature = "ssr")]
     pub ap_id: ObjectId<DbInstance>,

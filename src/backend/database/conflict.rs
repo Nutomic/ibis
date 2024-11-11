@@ -5,9 +5,15 @@ use crate::{
         federation::activities::submit_article_update,
         utils::generate_article_version,
     },
-    common::{ApiConflict, DbArticle, DbEdit, DbPerson, EditVersion},
+    common::{
+        newtypes::{ArticleId, ConflictId, PersonId},
+        ApiConflict,
+        DbArticle,
+        DbEdit,
+        DbPerson,
+        EditVersion,
+    },
 };
-use crate::common::newtypes::PersonId;
 use activitypub_federation::config::Data;
 use diesel::{
     delete,
@@ -29,12 +35,12 @@ use std::ops::DerefMut;
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Queryable, Selectable, Identifiable)]
 #[diesel(table_name = conflict, check_for_backend(diesel::pg::Pg), belongs_to(DbArticle, foreign_key = article_id))]
 pub struct DbConflict {
-    pub id: i32,
+    pub id: ConflictId,
     pub hash: EditVersion,
     pub diff: String,
     pub summary: String,
     pub creator_id: PersonId,
-    pub article_id: i32,
+    pub article_id: ArticleId,
     pub previous_version_id: EditVersion,
 }
 
@@ -45,7 +51,7 @@ pub struct DbConflictForm {
     pub diff: String,
     pub summary: String,
     pub creator_id: PersonId,
-    pub article_id: i32,
+    pub article_id: ArticleId,
     pub previous_version_id: EditVersion,
 }
 
@@ -65,7 +71,7 @@ impl DbConflict {
     }
 
     /// Delete a merge conflict after it is resolved.
-    pub fn delete(id: i32, data: &IbisData) -> MyResult<Self> {
+    pub fn delete(id: ConflictId, data: &IbisData) -> MyResult<Self> {
         let mut conn = data.db_pool.get()?;
         Ok(delete(conflict::table.find(id)).get_result(conn.deref_mut())?)
     }

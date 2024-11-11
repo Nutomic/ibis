@@ -7,11 +7,16 @@ use crate::{
             update_remote_article::UpdateRemoteArticle,
         },
     },
-    common::{DbArticle, DbEdit, DbInstance, EditVersion},
+    common::{
+        newtypes::{EditId, PersonId},
+        DbArticle,
+        DbEdit,
+        DbInstance,
+        EditVersion,
+    },
 };
 use activitypub_federation::config::Data;
 use chrono::Utc;
-use crate::common::newtypes::PersonId;
 
 pub mod accept;
 pub mod create_article;
@@ -43,7 +48,7 @@ pub async fn submit_article_update(
     } else {
         // dont insert edit into db, might be invalid in case of conflict
         let edit = DbEdit {
-            id: -1,
+            id: EditId(-1),
             creator_id,
             hash: form.hash,
             ap_id: form.ap_id,

@@ -1,5 +1,5 @@
 use crate::{
-    common::{DbInstance, FollowInstance},
+    common::{newtypes::InstanceId, DbInstance, FollowInstance},
     frontend::app::GlobalState,
 };
 use leptos::{component, *};
@@ -7,7 +7,7 @@ use leptos::{component, *};
 #[component]
 pub fn InstanceFollowButton(instance: DbInstance) -> impl IntoView {
     let global_state = use_context::<RwSignal<GlobalState>>().unwrap();
-    let follow_action = create_action(move |instance_id: &i32| {
+    let follow_action = create_action(move |instance_id: &InstanceId| {
         let instance_id = *instance_id;
         async move {
             let form = FollowInstance { id: instance_id };

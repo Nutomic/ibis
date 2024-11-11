@@ -7,6 +7,7 @@ use crate::{
         error::MyResult,
     },
     common::{
+        newtypes::PersonId,
         utils::http_protocol_str,
         DbInstance,
         DbLocalUser,
@@ -14,7 +15,6 @@ use crate::{
         LocalUserView,
     },
 };
-use crate::common::newtypes::PersonId;
 use activitypub_federation::{
     config::Data,
     fetch::object_id::ObjectId,

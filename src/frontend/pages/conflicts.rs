@@ -21,7 +21,7 @@ pub fn Conflicts() -> impl IntoView {
                                     let link = format!(
                                         "{}/edit/{}",
                                         article_link(&c.article),
-                                        c.id,
+                                        c.id.0,
                                     );
                                     view! {
                                         <li>

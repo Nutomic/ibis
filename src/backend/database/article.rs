@@ -7,7 +7,13 @@ use crate::{
         error::MyResult,
         federation::objects::edits_collection::DbEditCollection,
     },
-    common::{ArticleView, DbArticle, DbEdit, EditVersion},
+    common::{
+        newtypes::{ArticleId, InstanceId},
+        ArticleView,
+        DbArticle,
+        DbEdit,
+        EditVersion,
+    },
 };
 use activitypub_federation::fetch::{collection_id::CollectionId, object_id::ObjectId};
 use diesel::{
@@ -29,7 +35,7 @@ pub struct DbArticleForm {
     pub title: String,
     pub text: String,
     pub ap_id: ObjectId<DbArticle>,
-    pub instance_id: i32,
+    pub instance_id: InstanceId,
     pub local: bool,
     pub protected: bool,
 }
@@ -59,26 +65,26 @@ impl DbArticle {
             .get_result(conn.deref_mut())?)
     }
 
-    pub fn update_text(id: i32, text: &str, data: &IbisData) -> MyResult<Self> {
+    pub fn update_text(id: ArticleId, text: &str, data: &IbisData) -> MyResult<Self> {
         let mut conn = data.db_pool.get()?;
         Ok(diesel::update(article::dsl::article.find(id))
             .set(article::dsl::text.eq(text))
             .get_result::<Self>(conn.deref_mut())?)
     }
 
-    pub fn update_protected(id: i32, locked: bool, data: &IbisData) -> MyResult<Self> {
+    pub fn update_protected(id: ArticleId, locked: bool, data: &IbisData) -> MyResult<Self> {
         let mut conn = data.db_pool.get()?;
         Ok(diesel::update(article::dsl::article.find(id))
             .set(article::dsl::protected.eq(locked))
             .get_result::<Self>(conn.deref_mut())?)
     }
 
-    pub fn read(id: i32, data: &IbisData) -> MyResult<Self> {
+    pub fn read(id: ArticleId, data: &IbisData) -> MyResult<Self> {
         let mut conn = data.db_pool.get()?;
         Ok(article::table.find(id).get_result(conn.deref_mut())?)
     }
 
-    pub fn read_view(id: i32, data: &IbisData) -> MyResult<ArticleView> {
+    pub fn read_view(id: ArticleId, data: &IbisData) -> MyResult<ArticleView> {
         let mut conn = data.db_pool.get()?;
         let article: DbArticle = { article::table.find(id).get_result(conn.deref_mut())? };
         let latest_version = article.latest_edit_version(data)?;
@@ -139,7 +145,7 @@ impl DbArticle {
     /// TODO: Should get rid of only_local param and rely on instance_id
     pub fn read_all(
         only_local: Option<bool>,
-        instance_id: Option<i32>,
+        instance_id: Option<InstanceId>,
         data: &IbisData,
     ) -> MyResult<Vec<Self>> {
         let mut conn = data.db_pool.get()?;
