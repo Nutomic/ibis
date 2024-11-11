@@ -8,7 +8,7 @@ use leptos_router::use_params_map;
 pub(crate) mod article;
 pub(crate) mod conflicts;
 pub(crate) mod diff;
-pub(crate) mod instance_details;
+pub(crate) mod instance;
 pub(crate) mod login;
 pub(crate) mod register;
 pub(crate) mod search;

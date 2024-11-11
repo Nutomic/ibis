@@ -15,7 +15,7 @@ use crate::{
             },
             conflicts::Conflicts,
             diff::EditDiff,
-            instance_details::InstanceDetails,
+            instance::{details::InstanceDetails, list::ListInstances},
             login::Login,
             register::Register,
             search::Search,
@@ -120,6 +120,7 @@ pub fn App() -> impl IntoView {
                         <Route path="/article/create" view=CreateArticle />
                         <Route path="/article/list" view=ListArticles />
                         <Route path="/instance/:hostname" view=InstanceDetails />
+                        <Route path="/instance/list" view=ListInstances />
                         <Route path="/user/:name" view=UserProfile />
                         <Route path="/login" view=Login />
                         <Route path="/register" view=Register />

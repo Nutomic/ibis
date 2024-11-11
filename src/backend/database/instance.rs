@@ -119,4 +119,11 @@ impl DbInstance {
             .select(person::all_columns)
             .get_results(conn.deref_mut())?)
     }
+
+    pub fn read_remote(data: &Data<IbisData>) -> MyResult<Vec<DbInstance>> {
+        let mut conn = data.db_pool.get()?;
+        Ok(instance::table
+            .filter(instance::local.eq(false))
+            .get_results(conn.deref_mut())?)
+    }
 }

@@ -142,6 +142,10 @@ impl ApiClient {
         self.get_query("/api/v1/instance", Some(get_form)).await
     }
 
+    pub async fn list_instances(&self) -> MyResult<Vec<DbInstance>> {
+        self.get_query("/api/v1/instance/list", None::<i32>).await
+    }
+
     pub async fn follow_instance_with_resolve(
         &self,
         follow_instance: &str,

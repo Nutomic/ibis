@@ -42,3 +42,11 @@ pub(super) async fn resolve_instance(
     let instance: DbInstance = ObjectId::from(query.id).dereference(&data).await?;
     Ok(Json(instance))
 }
+
+#[debug_handler]
+pub(in crate::backend::api) async fn list_remote_instances(
+    data: Data<IbisData>,
+) -> MyResult<Json<Vec<DbInstance>>> {
+    let instances = DbInstance::read_remote(&data)?;
+    Ok(Json(instances))
+}

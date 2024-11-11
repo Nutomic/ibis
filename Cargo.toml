@@ -20,7 +20,7 @@ ssr = [
   "katex/duktape",
   "leptos/ssr",
   "leptos-use/ssr",
-  "leptos-use/axum"
+  "leptos-use/axum",
 ]
 hydrate = [
   "leptos/hydrate",

@@ -41,6 +41,7 @@ use axum::{
 use axum_extra::extract::CookieJar;
 use axum_macros::debug_handler;
 use futures::future::try_join_all;
+use instance::list_remote_instances;
 
 pub mod article;
 pub mod instance;
@@ -60,6 +61,7 @@ pub fn api_routes() -> Router<()> {
         .route("/instance", get(get_instance))
         .route("/instance/follow", post(follow_instance))
         .route("/instance/resolve", get(resolve_instance))
+        .route("/instance/list", get(list_remote_instances))
         .route("/search", get(search_article))
         .route("/user", get(get_user))
         .route("/account/register", post(register_user))
