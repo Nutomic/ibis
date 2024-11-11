@@ -21,6 +21,7 @@ use ibis::{
     frontend::error::MyResult,
 };
 use pretty_assertions::{assert_eq, assert_ne};
+use retry_future::{LinearRetryStrategy, RetryFuture, RetryPolicy};
 use url::Url;
 
 #[tokio::test]
@@ -670,6 +671,45 @@ async fn test_lock_article() -> MyResult<()> {
     };
     let edit_res = data.gamma.edit_article(&edit_form).await;
     assert!(edit_res.is_err());
+
+    data.stop()
+}
+
+#[tokio::test]
+async fn test_synchronize_instances() -> MyResult<()> {
+    let data = TestData::start().await;
+
+    // fetch alpha instance on beta
+    data.beta
+        .resolve_instance(Url::parse(&format!("http://{}", &data.alpha.hostname))?)
+        .await?;
+    let beta_instances = data.beta.list_instances().await?;
+    assert_eq!(1, beta_instances.len());
+
+    // fetch beta instance on gamma
+    data.gamma
+        .resolve_instance(Url::parse(&format!("http://{}", &data.beta.hostname))?)
+        .await?;
+
+    // wait until instance collection is fetched
+    let gamma_instances = RetryFuture::new(
+        || async {
+            let res = data.gamma.list_instances().await;
+            match res {
+                Err(_) => Err(RetryPolicy::<String>::Retry(None)),
+                Ok(i) if i.len() < 2 => Err(RetryPolicy::Retry(None)),
+                Ok(i) => Ok(i),
+            }
+        },
+        LinearRetryStrategy::new(),
+    )
+    .await?;
+
+    // now gamma also knows about alpha
+    assert_eq!(2, gamma_instances.len());
+    assert!(gamma_instances
+        .iter()
+        .any(|i| i.domain == data.alpha.hostname));
 
     data.stop()
 }

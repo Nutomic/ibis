@@ -11,6 +11,7 @@ use {
     crate::backend::{
         database::schema::{article, edit, instance, local_user, person},
         federation::objects::articles_collection::DbArticleCollection,
+        federation::objects::instance_collection::DbInstanceCollection,
     },
     activitypub_federation::fetch::{collection_id::CollectionId, object_id::ObjectId},
     diesel::{Identifiable, Queryable, Selectable},
@@ -253,7 +254,7 @@ pub struct DbInstance {
     pub ap_id: String,
     pub description: Option<String>,
     #[cfg(feature = "ssr")]
-    pub articles_url: CollectionId<DbArticleCollection>,
+    pub articles_url: Option<CollectionId<DbArticleCollection>>,
     #[cfg(not(feature = "ssr"))]
     pub articles_url: String,
     pub inbox_url: String,
@@ -264,6 +265,8 @@ pub struct DbInstance {
     #[serde(skip)]
     pub last_refreshed_at: DateTime<Utc>,
     pub local: bool,
+    #[cfg(feature = "ssr")]
+    pub instances_url: Option<CollectionId<DbInstanceCollection>>,
 }
 
 impl DbInstance {

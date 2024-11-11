@@ -18,7 +18,7 @@ use crate::{
 };
 use activitypub_federation::{
     config::{Data, FederationConfig, FederationMiddleware},
-    fetch::{collection_id::CollectionId, object_id::ObjectId},
+    fetch::object_id::ObjectId,
     http_signatures::generate_actor_keypair,
 };
 use api::api_routes;
@@ -38,6 +38,10 @@ use diesel::{
     PgConnection,
 };
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
+use federation::objects::{
+    articles_collection::local_articles_url,
+    instance_collection::linked_instances_url,
+};
 use leptos::get_configuration;
 use leptos_axum::{generate_route_list, LeptosRoutes};
 use log::info;
@@ -74,7 +78,8 @@ pub async fn start(config: IbisConfig, override_hostname: Option<SocketAddr>) ->
         .domain(data.config.federation.domain.clone())
         .url_verifier(Box::new(VerifyUrlData(data.config.clone())))
         .app_data(data)
-        .debug(true)
+        .http_fetch_limit(1000)
+        .debug(cfg!(debug_assertions))
         .build()
         .await?;
 
@@ -121,15 +126,14 @@ and to list interesting articles.";
 async fn setup(data: &Data<IbisData>) -> Result<(), Error> {
     let domain = &data.config.federation.domain;
     let ap_id = ObjectId::parse(&format!("{}://{domain}", http_protocol_str()))?;
-    let articles_url =
-        CollectionId::parse(&format!("{}://{domain}/all_articles", http_protocol_str()))?;
     let inbox_url = format!("{}://{domain}/inbox", http_protocol_str());
     let keypair = generate_actor_keypair()?;
     let form = DbInstanceForm {
         domain: domain.to_string(),
         ap_id,
         description: Some("New Ibis instance".to_string()),
-        articles_url,
+        articles_url: Some(local_articles_url(domain)?),
+        instances_url: Some(linked_instances_url(domain)?),
         inbox_url,
         public_key: keypair.public_key,
         private_key: Some(keypair.private_key),

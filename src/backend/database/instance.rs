@@ -5,7 +5,10 @@ use crate::{
             IbisData,
         },
         error::MyResult,
-        federation::objects::articles_collection::DbArticleCollection,
+        federation::objects::{
+            articles_collection::DbArticleCollection,
+            instance_collection::DbInstanceCollection,
+        },
     },
     common::{DbInstance, DbPerson, InstanceView},
 };
@@ -31,12 +34,13 @@ pub struct DbInstanceForm {
     pub domain: String,
     pub ap_id: ObjectId<DbInstance>,
     pub description: Option<String>,
-    pub articles_url: CollectionId<DbArticleCollection>,
+    pub articles_url: Option<CollectionId<DbArticleCollection>>,
     pub inbox_url: String,
     pub public_key: String,
     pub private_key: Option<String>,
     pub last_refreshed_at: DateTime<Utc>,
     pub local: bool,
+    pub instances_url: Option<CollectionId<DbInstanceCollection>>,
 }
 
 impl DbInstance {

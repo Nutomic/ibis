@@ -113,6 +113,7 @@ codee = "0.2.0"
 
 [dev-dependencies]
 pretty_assertions = "1.4.1"
+retry_future = "0.4.0"
 
 [package.metadata.leptos]
 output-name = "ibis"

@@ -1810,6 +1810,7 @@ dependencies = [
  "pretty_assertions",
  "rand",
  "reqwest",
+ "retry_future",
  "serde",
  "serde_json",
  "sha2",
@@ -3328,6 +3329,18 @@ dependencies = [
  "serde",
  "thiserror",
  "tower-service",
+]
+
+[[package]]
+name = "retry_future"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a831851ed690d7d2ca106ddba947ee9f59e130c00311e815bd6d4ccbefbbc11f"
+dependencies = [
+ "anyhow",
+ "futures",
+ "pin-project",
+ "tokio",
 ]
 
 [[package]]
