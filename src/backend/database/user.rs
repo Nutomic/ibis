@@ -12,9 +12,9 @@ use crate::{
         DbLocalUser,
         DbPerson,
         LocalUserView,
-        PersonId,
     },
 };
+use crate::common::newtypes::PersonId;
 use activitypub_federation::{
     config::Data,
     fetch::object_id::ObjectId,

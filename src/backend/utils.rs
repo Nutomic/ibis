@@ -46,7 +46,7 @@ pub fn generate_article_version(edits: &Vec<EditView>, version: &EditVersion) ->
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::common::{DbEdit, DbPerson, PersonId};
+    use crate::common::{newtypes::PersonId, DbEdit, DbPerson};
     use activitypub_federation::fetch::object_id::ObjectId;
     use chrono::Utc;
     use diffy::create_patch;

@@ -5,8 +5,9 @@ use crate::{
         federation::activities::submit_article_update,
         utils::generate_article_version,
     },
-    common::{ApiConflict, DbArticle, DbEdit, DbPerson, EditVersion, PersonId},
+    common::{ApiConflict, DbArticle, DbEdit, DbPerson, EditVersion},
 };
+use crate::common::newtypes::PersonId;
 use activitypub_federation::config::Data;
 use diesel::{
     delete,

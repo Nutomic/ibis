@@ -7,10 +7,11 @@ use crate::{
             update_remote_article::UpdateRemoteArticle,
         },
     },
-    common::{DbArticle, DbEdit, DbInstance, EditVersion, PersonId},
+    common::{DbArticle, DbEdit, DbInstance, EditVersion},
 };
 use activitypub_federation::config::Data;
 use chrono::Utc;
+use crate::common::newtypes::PersonId;
 
 pub mod accept;
 pub mod create_article;
