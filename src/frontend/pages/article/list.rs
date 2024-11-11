@@ -1,6 +1,6 @@
 use crate::{
     common::ListArticlesForm,
-    frontend::{app::GlobalState, article_link, article_title},
+    frontend::{app::GlobalState, article_link, article_title, components::connect::ConnectView},
 };
 use html::Input;
 use leptos::*;
@@ -50,26 +50,31 @@ pub fn ListArticles() -> impl IntoView {
                     }
                 />
             </div>
-            <ul class="list-none my-4">
-                {move || {
-                    articles
-                        .get()
-                        .map(|a| {
-                            a.into_iter()
-                                .map(|a| {
-                                    view! {
-                                        <li>
-                                            <a class="link text-lg" href=article_link(&a)>
-                                                {article_title(&a)}
-                                            </a>
-                                        </li>
-                                    }
-                                })
-                                .collect::<Vec<_>>()
-                        })
-                }}
+            <Show
+                when=move || { articles.get().unwrap_or_default().len() > 1 || only_local.get() }
+                fallback=move || view! { <ConnectView res=articles /> }
+            >
+                <ul class="list-none my-4">
+                    {move || {
+                        articles
+                            .get()
+                            .map(|a| {
+                                a.into_iter()
+                                    .map(|a| {
+                                        view! {
+                                            <li>
+                                                <a class="link text-lg" href=article_link(&a)>
+                                                    {article_title(&a)}
+                                                </a>
+                                            </li>
+                                        }
+                                    })
+                                    .collect::<Vec<_>>()
+                            })
+                    }}
 
-            </ul>
+                </ul>
+            </Show>
         </Suspense>
     }
 }
