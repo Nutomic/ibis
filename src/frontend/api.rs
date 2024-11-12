@@ -19,6 +19,7 @@ use crate::{
         ListArticlesForm,
         LocalUserView,
         LoginUserForm,
+        Notification,
         ProtectArticleForm,
         RegisterUserForm,
         ResolveObject,
@@ -132,10 +133,17 @@ impl ApiClient {
         .await
     }
 
-    pub async fn list_articles_approval_required(&self) -> MyResult<Vec<DbArticle>> {
+    pub async fn notifications_list(&self) -> MyResult<Vec<Notification>> {
         let req = self
             .client
-            .get(self.request_endpoint("/api/v1/article/list/approval_required"));
+            .get(self.request_endpoint("/api/v1/user/notifications/list"));
+        handle_json_res(req).await
+    }
+
+    pub async fn notifications_count(&self) -> MyResult<usize> {
+        let req = self
+            .client
+            .get(self.request_endpoint("/api/v1/user/notifications/count"));
         handle_json_res(req).await
     }
 
@@ -228,13 +236,6 @@ impl ApiClient {
             .post(self.request_endpoint("/api/v1/article/protect"))
             .form(params);
         handle_json_res(req).await
-    }
-
-    pub async fn get_conflicts(&self) -> MyResult<Vec<ApiConflict>> {
-        let req = self
-            .client
-            .get(self.request_endpoint("/api/v1/edit_conflicts"));
-        Ok(handle_json_res(req).await.unwrap())
     }
 
     pub async fn resolve_article(&self, id: Url) -> MyResult<ArticleView> {

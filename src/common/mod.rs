@@ -250,6 +250,12 @@ pub struct ApiConflict {
     pub previous_version_id: EditVersion,
 }
 
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub enum Notification {
+    EditConflict(ApiConflict),
+    ArticleApprovalRequired(DbArticle),
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[cfg_attr(feature = "ssr", derive(Queryable, Selectable, Identifiable))]
 #[cfg_attr(feature = "ssr", diesel(table_name = instance, check_for_backend(diesel::pg::Pg)))]

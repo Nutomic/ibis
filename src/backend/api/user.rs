@@ -1,17 +1,27 @@
+use super::check_is_admin;
 use crate::{
     backend::{
-        database::{read_jwt_secret, IbisData},
+        database::{conflict::DbConflict, read_jwt_secret, IbisData},
         error::MyResult,
     },
-    common::{DbPerson, GetUserForm, LocalUserView, LoginUserForm, RegisterUserForm},
+    common::{
+        DbArticle,
+        DbPerson,
+        GetUserForm,
+        LocalUserView,
+        LoginUserForm,
+        Notification,
+        RegisterUserForm,
+    },
 };
 use activitypub_federation::config::Data;
 use anyhow::anyhow;
-use axum::{extract::Query, Form, Json};
+use axum::{extract::Query, Extension, Form, Json};
 use axum_extra::extract::cookie::{Cookie, CookieJar, Expiration, SameSite};
 use axum_macros::debug_handler;
 use bcrypt::verify;
 use chrono::Utc;
+use futures::future::try_join_all;
 use jsonwebtoken::{
     decode,
     encode,
@@ -144,4 +154,50 @@ pub(in crate::backend::api) async fn get_user(
         &params.domain,
         &data,
     )?))
+}
+
+#[debug_handler]
+pub(crate) async fn list_notifications(
+    Extension(user): Extension<LocalUserView>,
+    data: Data<IbisData>,
+) -> MyResult<Json<Vec<Notification>>> {
+    let is_admin = check_is_admin(&user).is_ok();
+    let conflicts = DbConflict::list(&user.person, &data)?;
+    let conflicts: Vec<_> = try_join_all(conflicts.into_iter().map(|c| {
+        let data = data.reset_request_count();
+        async move { c.to_api_conflict(is_admin, &data).await }
+    }))
+    .await?;
+    let mut notifications: Vec<_> = conflicts
+        .into_iter()
+        .flatten()
+        .map(Notification::EditConflict)
+        .collect();
+
+    if check_is_admin(&user).is_ok() {
+        let articles = DbArticle::list_approval_required(&data)?;
+        notifications.extend(
+            articles
+                .into_iter()
+                .map(Notification::ArticleApprovalRequired),
+        )
+    }
+
+    Ok(Json(notifications))
+}
+
+#[debug_handler]
+pub(crate) async fn count_notifications(
+    Extension(user): Extension<LocalUserView>,
+    data: Data<IbisData>,
+) -> MyResult<Json<usize>> {
+    let mut count = 0;
+    let conflicts = DbConflict::list(&user.person, &data)?;
+    count += conflicts.len();
+    if check_is_admin(&user).is_ok() {
+        let articles = DbArticle::list_approval_required(&data)?;
+        count += articles.len();
+    }
+
+    Ok(Json(count))
 }

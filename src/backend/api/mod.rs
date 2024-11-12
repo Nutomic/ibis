@@ -22,28 +22,25 @@ use crate::{
                 AUTH_COOKIE,
             },
         },
-        database::{conflict::DbConflict, IbisData},
+        database::IbisData,
         error::MyResult,
     },
-    common::{ApiConflict, LocalUserView},
+    common::LocalUserView,
 };
 use activitypub_federation::config::Data;
 use anyhow::anyhow;
-use article::{approve_article, list_approval_required};
+use article::approve_article;
 use axum::{
     body::Body,
     http::{Request, StatusCode},
     middleware::{self, Next},
     response::Response,
     routing::{get, post},
-    Extension,
-    Json,
     Router,
 };
 use axum_extra::extract::CookieJar;
-use axum_macros::debug_handler;
-use futures::future::try_join_all;
 use instance::list_remote_instances;
+use user::{count_notifications, list_notifications};
 
 pub mod article;
 pub mod instance;
@@ -59,18 +56,15 @@ pub fn api_routes() -> Router<()> {
         .route("/article/fork", post(fork_article))
         .route("/article/resolve", get(resolve_article))
         .route("/article/protect", post(protect_article))
-        .route(
-            "/article/list/approval_required",
-            get(list_approval_required),
-        )
         .route("/article/approve", post(approve_article))
-        .route("/edit_conflicts", get(edit_conflicts))
         .route("/instance", get(get_instance))
         .route("/instance/follow", post(follow_instance))
         .route("/instance/resolve", get(resolve_instance))
         .route("/instance/list", get(list_remote_instances))
         .route("/search", get(search_article))
         .route("/user", get(get_user))
+        .route("/user/notifications/list", get(list_notifications))
+        .route("/user/notifications/count", get(count_notifications))
         .route("/account/register", post(register_user))
         .route("/account/login", post(login_user))
         .route("/account/my_profile", get(my_profile))
@@ -98,22 +92,4 @@ fn check_is_admin(user: &LocalUserView) -> MyResult<()> {
         return Err(anyhow!("Only admin can perform this action").into());
     }
     Ok(())
-}
-
-/// Get a list of all unresolved edit conflicts.
-#[debug_handler]
-async fn edit_conflicts(
-    Extension(user): Extension<LocalUserView>,
-    data: Data<IbisData>,
-) -> MyResult<Json<Vec<ApiConflict>>> {
-    let conflicts = DbConflict::list(&user.person, &data)?;
-    let conflicts: Vec<ApiConflict> = try_join_all(conflicts.into_iter().map(|c| {
-        let data = data.reset_request_count();
-        async move { c.to_api_conflict(&data).await }
-    }))
-    .await?
-    .into_iter()
-    .flatten()
-    .collect();
-    Ok(Json(conflicts))
 }

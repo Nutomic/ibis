@@ -19,6 +19,15 @@ pub fn Nav() -> impl IntoView {
                 .unwrap_or_default()
         },
     );
+    let notification_count = create_resource(
+        || (),
+        move |_| async move {
+            GlobalState::api_client()
+                .notifications_count()
+                .await
+                .unwrap_or_default()
+        },
+    );
 
     let (search_query, set_search_query) = create_signal(String::new());
     let mut dark_mode = expect_context::<DarkMode>();
@@ -57,7 +66,7 @@ pub fn Nav() -> impl IntoView {
                             <A href="/article/create">"Create Article"</A>
                         </li>
                         <li>
-                            <A href="/conflicts">"Edit Conflicts"</A>
+                            <A href="/notifications">"Notifications "<span class="indicator-item indicator-end badge badge-neutral">{notification_count}</span></A>
                         </li>
                     </Show>
                     <li>

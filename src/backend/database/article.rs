@@ -87,14 +87,13 @@ impl DbArticle {
             .get_result::<Self>(conn.deref_mut())?)
     }
 
-    pub fn read(id: ArticleId, data: &IbisData) -> MyResult<Self> {
+    pub fn read_view(id: ArticleId, is_admin: bool, data: &IbisData) -> MyResult<ArticleView> {
         let mut conn = data.db_pool.get()?;
-        Ok(article::table.find(id).get_result(conn.deref_mut())?)
-    }
-
-    pub fn read_view(id: ArticleId, data: &IbisData) -> MyResult<ArticleView> {
-        let mut conn = data.db_pool.get()?;
-        let article: DbArticle = { article::table.find(id).get_result(conn.deref_mut())? };
+        let mut query = article::table.find(id).into_boxed();
+        if !is_admin {
+            query = query.filter(article::dsl::approved.eq(true));
+        }
+        let article: DbArticle = query.get_result(conn.deref_mut())?;
         let latest_version = article.latest_edit_version(data)?;
         let edits = DbEdit::read_for_article(&article, data)?;
         Ok(ArticleView {
@@ -107,6 +106,7 @@ impl DbArticle {
     pub fn read_view_title(
         title: &str,
         domain: Option<String>,
+        admin: bool,
         data: &IbisData,
     ) -> MyResult<ArticleView> {
         let mut conn = data.db_pool.get()?;
@@ -115,11 +115,14 @@ impl DbArticle {
                 .inner_join(instance::table)
                 .filter(article::dsl::title.eq(title))
                 .into_boxed();
-            let query = if let Some(domain) = domain {
+            let mut query = if let Some(domain) = domain {
                 query.filter(instance::dsl::domain.eq(domain))
             } else {
                 query.filter(article::dsl::local.eq(true))
             };
+            if !admin {
+                query = query.filter(article::dsl::approved.eq(true));
+            }
             query
                 .select(article::all_columns)
                 .get_result(conn.deref_mut())?
@@ -137,14 +140,6 @@ impl DbArticle {
         let mut conn = data.db_pool.get()?;
         Ok(article::table
             .filter(article::dsl::ap_id.eq(ap_id))
-            .get_result(conn.deref_mut())?)
-    }
-
-    pub fn read_local_title(title: &str, data: &IbisData) -> MyResult<Self> {
-        let mut conn = data.db_pool.get()?;
-        Ok(article::table
-            .filter(article::dsl::title.eq(title))
-            .filter(article::dsl::local.eq(true))
             .get_result(conn.deref_mut())?)
     }
 

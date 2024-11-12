@@ -2,7 +2,7 @@
 
 use ibis::{
     backend::{
-        config::{IbisConfig, IbisConfigDatabase, IbisConfigFederation, IbisConfigSetup},
+        config::{IbisConfig, IbisConfigDatabase, IbisConfigFederation},
         start,
     },
     common::RegisterUserForm,

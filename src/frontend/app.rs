@@ -13,10 +13,10 @@ use crate::{
                 list::ListArticles,
                 read::ReadArticle,
             },
-            conflicts::Conflicts,
             diff::EditDiff,
             instance::{details::InstanceDetails, list::ListInstances},
             login::Login,
+            notifications::Notifications,
             register::Register,
             search::Search,
             user_profile::UserProfile,
@@ -125,7 +125,7 @@ pub fn App() -> impl IntoView {
                         <Route path="/login" view=Login />
                         <Route path="/register" view=Register />
                         <Route path="/search" view=Search />
-                        <Route path="/conflicts" view=Conflicts />
+                        <Route path="/notifications" view=Notifications />
                     </Routes>
                 </main>
             </Router>

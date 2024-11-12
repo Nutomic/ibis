@@ -14,6 +14,7 @@ use ibis::{
         GetUserForm,
         ListArticlesForm,
         LoginUserForm,
+        Notification,
         ProtectArticleForm,
         RegisterUserForm,
         SearchArticleForm,
@@ -377,9 +378,12 @@ async fn test_local_edit_conflict() -> MyResult<()> {
         .unwrap();
     assert_eq!("<<<<<<< ours\nIpsum Lorem\n||||||| original\nsome\nexample\ntext\n=======\nLorem Ipsum\n>>>>>>> theirs\n", edit_res.three_way_merge);
 
-    let conflicts = data.alpha.get_conflicts().await?;
-    assert_eq!(1, conflicts.len());
-    assert_eq!(conflicts[0], edit_res);
+    let notifications = data.alpha.notifications_list().await?;
+    assert_eq!(1, notifications.len());
+    let Notification::EditConflict(conflict) = &notifications[0] else {
+        panic!()
+    };
+    assert_eq!(conflict, &edit_res);
 
     let edit_form = EditArticleForm {
         article_id: create_res.article.id,
@@ -391,8 +395,7 @@ async fn test_local_edit_conflict() -> MyResult<()> {
     let edit_res = data.alpha.edit_article(&edit_form).await?;
     assert_eq!(edit_form.new_text, edit_res.article.text);
 
-    let conflicts = data.alpha.get_conflicts().await?;
-    assert_eq!(0, conflicts.len());
+    assert_eq!(0, data.alpha.notifications_count().await?);
 
     data.stop()
 }
@@ -463,23 +466,28 @@ async fn test_federated_edit_conflict() -> MyResult<()> {
     assert_eq!(1, edit_res.edits.len());
     assert!(!edit_res.article.local);
 
-    let conflicts = data.gamma.get_conflicts().await?;
-    assert_eq!(1, conflicts.len());
+    assert_eq!(1, data.gamma.notifications_count().await?);
+    let notifications = data.gamma.notifications_list().await?;
+    assert_eq!(1, notifications.len());
+    let Notification::EditConflict(conflict) = &notifications[0] else {
+        panic!()
+    };
 
     // resolve the conflict
     let edit_form = EditArticleForm {
         article_id: resolve_res.article.id,
         new_text: "aaaa\n".to_string(),
         summary: "summary".to_string(),
-        previous_version_id: conflicts[0].previous_version_id.clone(),
-        resolve_conflict_id: Some(conflicts[0].id),
+        previous_version_id: conflict.previous_version_id.clone(),
+        resolve_conflict_id: Some(conflict.id),
     };
     let edit_res = data.gamma.edit_article(&edit_form).await?;
     assert_eq!(edit_form.new_text, edit_res.article.text);
     assert_eq!(3, edit_res.edits.len());
 
-    let conflicts = data.gamma.get_conflicts().await?;
-    assert_eq!(0, conflicts.len());
+    assert_eq!(0, data.gamma.notifications_count().await?);
+    let notifications = data.gamma.notifications_list().await?;
+    assert_eq!(0, notifications.len());
 
     data.stop()
 }
@@ -519,8 +527,7 @@ async fn test_overlapping_edits_no_conflict() -> MyResult<()> {
         resolve_conflict_id: None,
     };
     let edit_res = data.alpha.edit_article(&edit_form).await?;
-    let conflicts = data.alpha.get_conflicts().await?;
-    assert_eq!(0, conflicts.len());
+    assert_eq!(0, data.alpha.notifications_count().await?);
     assert_eq!(3, edit_res.edits.len());
     assert_eq!("my\nexample\narticle\n", edit_res.article.text);
 
@@ -752,14 +759,15 @@ async fn test_article_approval_required() -> MyResult<()> {
     };
     data.alpha.login(form).await?;
 
-    let list_approval_required = data.alpha.list_articles_approval_required().await?;
-    assert_eq!(1, list_approval_required.len());
-    assert_eq!(create_res.article.id, list_approval_required[0].id);
+    assert_eq!(1, data.alpha.notifications_count().await?);
+    let notifications = data.alpha.notifications_list().await?;
+    assert_eq!(1, notifications.len());
+    let Notification::ArticleApprovalRequired(notif) = &notifications[0] else {
+        panic!()
+    };
+    assert_eq!(create_res.article.id, notif.id);
 
-    let approve = data
-        .alpha
-        .approve_article(list_approval_required[0].id)
-        .await?;
+    let approve = data.alpha.approve_article(notif.id).await?;
     assert_eq!(create_res.article.id, approve.id);
     assert!(approve.approved);
 

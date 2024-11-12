@@ -1,5 +1,5 @@
 use crate::{
-    common::{newtypes::ConflictId, ApiConflict, ArticleView, EditArticleForm},
+    common::{newtypes::ConflictId, ApiConflict, ArticleView, EditArticleForm, Notification},
     frontend::{
         app::GlobalState,
         components::{
@@ -35,10 +35,14 @@ pub fn EditArticle() -> impl IntoView {
             let conflict_id = ConflictId(conflict_id.parse().unwrap());
             async move {
                 let conflict = GlobalState::api_client()
-                    .get_conflicts()
+                    .notifications_list()
                     .await
                     .unwrap()
                     .into_iter()
+                    .filter_map(|n| match n {
+                        Notification::EditConflict(c) => Some(c),
+                        _ => None,
+                    })
                     .find(|c| c.id == conflict_id)
                     .unwrap();
                 set_edit_response.set(EditResponse::Conflict(conflict));
