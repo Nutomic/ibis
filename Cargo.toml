@@ -52,7 +52,7 @@ dbg_macro = "deny"
 unwrap_used = "deny"
 
 [dependencies]
-activitypub_federation = { version = "0.6.0-alpha2", features = [
+activitypub_federation = { version = "0.6.0", features = [
   "axum",
   "diesel",
 ], default-features = false, optional = true }
