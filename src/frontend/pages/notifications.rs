@@ -28,16 +28,25 @@ pub fn Notifications() -> impl IntoView {
                                 .map(|n| {
                                     use Notification::*;
                                     let (link, title) = match n {
-                                        EditConflict(c) => (format!(
-                                            "{}/edit/{}",
-                                            article_link(&c.article),
-                                            c.id.0)
-                                        , format!("Conflict: {} - {}", article_title(&c.article), c.summary)),
-                                        ArticleApprovalRequired(a) => (article_link(&a), format!("Approval required: {}", a.title)),
-
+                                        EditConflict(c) => {
+                                            (
+                                                format!("{}/edit/{}", article_link(&c.article), c.id.0),
+                                                format!(
+                                                    "Conflict: {} - {}",
+                                                    article_title(&c.article),
+                                                    c.summary,
+                                                ),
+                                            )
+                                        }
+                                        ArticleApprovalRequired(a) => {
+                                            (
+                                                article_link(&a),
+                                                format!("Approval required: {}", a.title),
+                                            )
+                                        }
                                     };
-                                    // TODO: need buttons to approve/reject new article, also makes sense to discard edit conflict
                                     view! {
+                                        // TODO: need buttons to approve/reject new article, also makes sense to discard edit conflict
                                         <li>
                                             <a class="link text-lg" href=link>
                                                 {title}

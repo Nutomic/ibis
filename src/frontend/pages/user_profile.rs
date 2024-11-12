@@ -38,7 +38,9 @@ pub fn UserProfile() -> impl IntoView {
                     .get()
                     .map(|person: DbPerson| {
                         view! {
-                            <h1 class="text-4xl font-bold font-serif my-6 grow flex-auto">{user_title(&person)}</h1>
+                            <h1 class="text-4xl font-bold font-serif my-6 grow flex-auto">
+                                {user_title(&person)}
+                            </h1>
                             <p>TODO: create actual user profile</p>
                         }
                     })

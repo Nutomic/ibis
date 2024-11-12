@@ -66,7 +66,12 @@ pub fn Nav() -> impl IntoView {
                             <A href="/article/create">"Create Article"</A>
                         </li>
                         <li>
-                            <A href="/notifications">"Notifications "<span class="indicator-item indicator-end badge badge-neutral">{notification_count}</span></A>
+                            <A href="/notifications">
+                                "Notifications "
+                                <span class="indicator-item indicator-end badge badge-neutral">
+                                    {notification_count}
+                                </span>
+                            </A>
                         </li>
                     </Show>
                     <li>
