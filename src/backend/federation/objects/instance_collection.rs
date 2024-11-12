@@ -79,15 +79,19 @@ impl Collection for DbInstanceCollection {
         _owner: &Self::Owner,
         data: &Data<Self::DataType>,
     ) -> Result<Self, Self::Error> {
-        join_all(apub.items.into_iter().map(|instance| async {
-            let id = instance.id.clone();
-            let res = DbInstance::from_json(instance, data).await;
-            if let Err(e) = &res {
-                warn!("Failed to synchronize article {id}: {e}");
-            }
-            res
-        }))
-        .await;
+        let instances =
+            apub.items
+                .into_iter()
+                .filter(|i| !i.id.is_local(data))
+                .map(|instance| async {
+                    let id = instance.id.clone();
+                    let res = DbInstance::from_json(instance, data).await;
+                    if let Err(e) = &res {
+                        warn!("Failed to synchronize article {id}: {e}");
+                    }
+                    res
+                });
+        join_all(instances).await;
 
         Ok(DbInstanceCollection(()))
     }

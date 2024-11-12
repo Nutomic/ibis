@@ -80,7 +80,7 @@ impl ActivityHandler for UpdateRemoteArticle {
         Ok(())
     }
 
-    /// Received on article origin instances
+    /// Received on article origin instance
     async fn receive(self, data: &Data<Self::DataType>) -> Result<(), Self::Error> {
         let local_article = DbArticle::read_from_ap_id(&self.object.object, data)?;
         let patch = Patch::from_str(&self.object.content)?;

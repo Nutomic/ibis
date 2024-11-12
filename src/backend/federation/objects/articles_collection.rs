@@ -79,15 +79,19 @@ impl Collection for DbArticleCollection {
         _owner: &Self::Owner,
         data: &Data<Self::DataType>,
     ) -> Result<Self, Self::Error> {
-        join_all(apub.items.into_iter().map(|article| async {
-            let id = article.id.clone();
-            let res = DbArticle::from_json(article, data).await;
-            if let Err(e) = &res {
-                warn!("Failed to synchronize article {id}: {e}");
-            }
-            res
-        }))
-        .await;
+        let articles =
+            apub.items
+                .into_iter()
+                .filter(|i| !i.id.is_local(data))
+                .map(|article| async {
+                    let id = article.id.clone();
+                    let res = DbArticle::from_json(article, data).await;
+                    if let Err(e) = &res {
+                        warn!("Failed to synchronize article {id}: {e}");
+                    }
+                    res
+                });
+        join_all(articles).await;
 
         Ok(DbArticleCollection(()))
     }
