@@ -38,6 +38,7 @@ pub struct DbArticleForm {
     pub instance_id: InstanceId,
     pub local: bool,
     pub protected: bool,
+    pub approved: bool,
 }
 
 // TODO: get rid of unnecessary methods
@@ -76,6 +77,13 @@ impl DbArticle {
         let mut conn = data.db_pool.get()?;
         Ok(diesel::update(article::dsl::article.find(id))
             .set(article::dsl::protected.eq(locked))
+            .get_result::<Self>(conn.deref_mut())?)
+    }
+
+    pub fn update_approved(id: ArticleId, approved: bool, data: &IbisData) -> MyResult<Self> {
+        let mut conn = data.db_pool.get()?;
+        Ok(diesel::update(article::dsl::article.find(id))
+            .set(article::dsl::approved.eq(approved))
             .get_result::<Self>(conn.deref_mut())?)
     }
 
@@ -152,6 +160,7 @@ impl DbArticle {
         let mut query = article::table
             .inner_join(edit::table)
             .inner_join(instance::table)
+            .filter(article::dsl::approved.eq(true))
             .group_by(article::dsl::id)
             .order_by(max(edit::dsl::created).desc())
             .select(article::all_columns)
@@ -195,5 +204,18 @@ impl DbArticle {
             Some(latest_version) => Ok(latest_version),
             None => Ok(EditVersion::default()),
         }
+    }
+
+    pub fn list_approval_required(data: &IbisData) -> MyResult<Vec<Self>> {
+        let mut conn = data.db_pool.get()?;
+        let query = article::table
+            .inner_join(edit::table)
+            .group_by(article::dsl::id)
+            .filter(article::dsl::approved.eq(false))
+            .order_by(max(edit::dsl::created).desc())
+            .select(article::all_columns)
+            .into_boxed();
+
+        Ok(query.get_results(&mut conn)?)
     }
 }

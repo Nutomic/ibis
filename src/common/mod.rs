@@ -29,7 +29,7 @@ pub struct GetArticleForm {
     pub id: Option<ArticleId>,
 }
 
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Clone, Default)]
 pub struct ListArticlesForm {
     pub only_local: Option<bool>,
     pub instance_id: Option<InstanceId>,
@@ -58,6 +58,7 @@ pub struct DbArticle {
     pub instance_id: InstanceId,
     pub local: bool,
     pub protected: bool,
+    pub approved: bool,
 }
 
 /// Represents a single change to the article.
@@ -212,6 +213,11 @@ pub struct ProtectArticleForm {
 pub struct ForkArticleForm {
     pub article_id: ArticleId,
     pub new_title: String,
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct ApproveArticleForm {
+    pub article_id: ArticleId,
 }
 
 #[derive(Deserialize, Serialize, Debug)]

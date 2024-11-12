@@ -14,6 +14,10 @@ pub struct IbisConfig {
     #[default = true]
     #[doku(example = "true")]
     pub registration_open: bool,
+    /// Whether admins need to approve new articles
+    #[default = false]
+    #[doku(example = "false")]
+    pub article_approval: bool,
     /// Details of the initial admin account
     pub setup: IbisConfigSetup,
     pub federation: IbisConfigFederation,

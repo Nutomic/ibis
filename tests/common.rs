@@ -2,7 +2,7 @@
 
 use ibis::{
     backend::{
-        config::{IbisConfig, IbisConfigDatabase, IbisConfigFederation},
+        config::{IbisConfig, IbisConfigDatabase, IbisConfigFederation, IbisConfigSetup},
         start,
     },
     common::RegisterUserForm,
@@ -31,7 +31,7 @@ pub struct TestData {
 }
 
 impl TestData {
-    pub async fn start() -> Self {
+    pub async fn start(article_approval: bool) -> Self {
         static INIT: Once = Once::new();
         INIT.call_once(|| {
             env_logger::builder()
@@ -67,9 +67,9 @@ impl TestData {
         }
 
         let (alpha, beta, gamma) = join!(
-            IbisInstance::start(alpha_db_path, port_alpha, "alpha"),
-            IbisInstance::start(beta_db_path, port_beta, "beta"),
-            IbisInstance::start(gamma_db_path, port_gamma, "gamma")
+            IbisInstance::start(alpha_db_path, port_alpha, "alpha", article_approval),
+            IbisInstance::start(beta_db_path, port_beta, "beta", article_approval),
+            IbisInstance::start(gamma_db_path, port_gamma, "gamma", article_approval)
         );
 
         Self { alpha, beta, gamma }
@@ -115,7 +115,7 @@ impl IbisInstance {
         })
     }
 
-    async fn start(db_path: String, port: i32, username: &str) -> Self {
+    async fn start(db_path: String, port: i32, username: &str, article_approval: bool) -> Self {
         let connection_url = format!("postgresql://ibis:password@/ibis?host={db_path}");
         let hostname = format!("127.0.0.1:{port}");
         let domain = format!("localhost:{port}");
@@ -129,6 +129,7 @@ impl IbisInstance {
                 domain: domain.clone(),
                 ..Default::default()
             },
+            article_approval,
             ..Default::default()
         };
         let client = ClientBuilder::new().cookie_store(true).build().unwrap();

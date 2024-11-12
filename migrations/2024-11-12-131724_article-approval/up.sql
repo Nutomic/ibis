@@ -1,0 +1,1 @@
+alter table article add column approved bool not null default true;

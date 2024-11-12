@@ -79,6 +79,7 @@ impl Object for DbArticle {
             local: false,
             instance_id: instance.id,
             protected: json.protected,
+            approved: true,
         };
         let article = DbArticle::create_or_update(form, data)?;
 

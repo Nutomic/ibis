@@ -28,6 +28,8 @@ use crate::{
     common::{ApiConflict, LocalUserView},
 };
 use activitypub_federation::config::Data;
+use anyhow::anyhow;
+use article::{approve_article, list_approval_required};
 use axum::{
     body::Body,
     http::{Request, StatusCode},
@@ -57,6 +59,11 @@ pub fn api_routes() -> Router<()> {
         .route("/article/fork", post(fork_article))
         .route("/article/resolve", get(resolve_article))
         .route("/article/protect", post(protect_article))
+        .route(
+            "/article/list/approval_required",
+            get(list_approval_required),
+        )
+        .route("/article/approve", post(approve_article))
         .route("/edit_conflicts", get(edit_conflicts))
         .route("/instance", get(get_instance))
         .route("/instance/follow", post(follow_instance))
@@ -84,6 +91,13 @@ async fn auth(
     }
     let response = next.run(request).await;
     Ok(response)
+}
+
+fn check_is_admin(user: &LocalUserView) -> MyResult<()> {
+    if !user.local_user.admin {
+        return Err(anyhow!("Only admin can perform this action").into());
+    }
+    Ok(())
 }
 
 /// Get a list of all unresolved edit conflicts.

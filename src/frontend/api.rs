@@ -1,7 +1,9 @@
 use crate::{
     common::{
+        newtypes::ArticleId,
         utils::http_protocol_str,
         ApiConflict,
+        ApproveArticleForm,
         ArticleView,
         CreateArticleForm,
         DbArticle,
@@ -128,6 +130,22 @@ impl ApiClient {
             id: Some(edit_form.article_id),
         })
         .await
+    }
+
+    pub async fn list_articles_approval_required(&self) -> MyResult<Vec<DbArticle>> {
+        let req = self
+            .client
+            .get(self.request_endpoint("/api/v1/article/list/approval_required"));
+        handle_json_res(req).await
+    }
+
+    pub async fn approve_article(&self, article_id: ArticleId) -> MyResult<DbArticle> {
+        let form = ApproveArticleForm { article_id };
+        let req = self
+            .client
+            .post(self.request_endpoint("/api/v1/article/approve"))
+            .form(&form);
+        handle_json_res(req).await
     }
 
     pub async fn search(&self, search_form: &SearchArticleForm) -> MyResult<Vec<DbArticle>> {

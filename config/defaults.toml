@@ -1,6 +1,9 @@
 # Whether users can create new accounts
 registration_open = true
 
+# Whether admins need to approve new articles
+article_approval = false
+
 # Details about the PostgreSQL database connection
 [database]
 # Database connection url

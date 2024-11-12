@@ -1,3 +1,4 @@
+use super::check_is_admin;
 use crate::{
     backend::{
         database::{
@@ -14,6 +15,7 @@ use crate::{
         utils::{extract_domain, http_protocol_str},
         validation::can_edit_article,
         ApiConflict,
+        ApproveArticleForm,
         ArticleView,
         CreateArticleForm,
         DbArticle,
@@ -66,6 +68,7 @@ pub(in crate::backend::api) async fn create_article(
         instance_id: local_instance.id,
         local: true,
         protected: false,
+        approved: !data.config.article_approval,
     };
     let article = DbArticle::create(form, &data)?;
 
@@ -208,6 +211,7 @@ pub(in crate::backend::api) async fn fork_article(
         instance_id: local_instance.id,
         local: true,
         protected: false,
+        approved: data.config.article_approval,
     };
     let article = DbArticle::create(form, &data)?;
 
@@ -278,10 +282,31 @@ pub(in crate::backend::api) async fn protect_article(
     data: Data<IbisData>,
     Form(lock_params): Form<ProtectArticleForm>,
 ) -> MyResult<Json<DbArticle>> {
-    if !user.local_user.admin {
-        return Err(anyhow!("Only admin can lock articles").into());
-    }
+    check_is_admin(&user)?;
     let article =
         DbArticle::update_protected(lock_params.article_id, lock_params.protected, &data)?;
+    Ok(Json(article))
+}
+
+/// Get a list of all unresolved edit conflicts.
+#[debug_handler]
+pub async fn list_approval_required(
+    Extension(user): Extension<LocalUserView>,
+    data: Data<IbisData>,
+) -> MyResult<Json<Vec<DbArticle>>> {
+    check_is_admin(&user)?;
+    let articles = DbArticle::list_approval_required(&data)?;
+    Ok(Json(articles))
+}
+
+/// Get a list of all unresolved edit conflicts.
+#[debug_handler]
+pub async fn approve_article(
+    Extension(user): Extension<LocalUserView>,
+    data: Data<IbisData>,
+    Form(approve_params): Form<ApproveArticleForm>,
+) -> MyResult<Json<DbArticle>> {
+    check_is_admin(&user)?;
+    let article = DbArticle::update_approved(approve_params.article_id, true, &data)?;
     Ok(Json(article))
 }

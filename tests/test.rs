@@ -26,7 +26,7 @@ use url::Url;
 
 #[tokio::test]
 async fn test_create_read_and_edit_local_article() -> MyResult<()> {
-    let data = TestData::start().await;
+    let data = TestData::start(false).await;
 
     // create article
     let create_form = CreateArticleForm {
@@ -88,7 +88,7 @@ async fn test_create_read_and_edit_local_article() -> MyResult<()> {
 
 #[tokio::test]
 async fn test_create_duplicate_article() -> MyResult<()> {
-    let data = TestData::start().await;
+    let data = TestData::start(false).await;
 
     // create article
     let create_form = CreateArticleForm {
@@ -108,7 +108,7 @@ async fn test_create_duplicate_article() -> MyResult<()> {
 
 #[tokio::test]
 async fn test_follow_instance() -> MyResult<()> {
-    let data = TestData::start().await;
+    let data = TestData::start(false).await;
 
     // check initial state
     let alpha_user = data.alpha.my_profile().await?;
@@ -134,7 +134,7 @@ async fn test_follow_instance() -> MyResult<()> {
 
 #[tokio::test]
 async fn test_synchronize_articles() -> MyResult<()> {
-    let data = TestData::start().await;
+    let data = TestData::start(false).await;
 
     // create article on alpha
     let create_form = CreateArticleForm {
@@ -201,7 +201,7 @@ async fn test_synchronize_articles() -> MyResult<()> {
 
 #[tokio::test]
 async fn test_edit_local_article() -> MyResult<()> {
-    let data = TestData::start().await;
+    let data = TestData::start(false).await;
 
     let beta_instance = data
         .alpha
@@ -258,7 +258,7 @@ async fn test_edit_local_article() -> MyResult<()> {
 
 #[tokio::test]
 async fn test_edit_remote_article() -> MyResult<()> {
-    let data = TestData::start().await;
+    let data = TestData::start(false).await;
 
     let beta_id_on_alpha = data
         .alpha
@@ -338,7 +338,7 @@ async fn test_edit_remote_article() -> MyResult<()> {
 
 #[tokio::test]
 async fn test_local_edit_conflict() -> MyResult<()> {
-    let data = TestData::start().await;
+    let data = TestData::start(false).await;
 
     // create new article
     let create_form = CreateArticleForm {
@@ -399,7 +399,7 @@ async fn test_local_edit_conflict() -> MyResult<()> {
 
 #[tokio::test]
 async fn test_federated_edit_conflict() -> MyResult<()> {
-    let data = TestData::start().await;
+    let data = TestData::start(false).await;
 
     let beta_id_on_alpha = data
         .alpha
@@ -486,7 +486,7 @@ async fn test_federated_edit_conflict() -> MyResult<()> {
 
 #[tokio::test]
 async fn test_overlapping_edits_no_conflict() -> MyResult<()> {
-    let data = TestData::start().await;
+    let data = TestData::start(false).await;
 
     // create new article
     let create_form = CreateArticleForm {
@@ -529,7 +529,7 @@ async fn test_overlapping_edits_no_conflict() -> MyResult<()> {
 
 #[tokio::test]
 async fn test_fork_article() -> MyResult<()> {
-    let data = TestData::start().await;
+    let data = TestData::start(false).await;
 
     // create article
     let create_form = CreateArticleForm {
@@ -581,7 +581,7 @@ async fn test_fork_article() -> MyResult<()> {
 
 #[tokio::test]
 async fn test_user_registration_login() -> MyResult<()> {
-    let data = TestData::start().await;
+    let data = TestData::start(false).await;
     let username = "my_user";
     let password = "hunter2";
     let register_data = RegisterUserForm {
@@ -616,7 +616,7 @@ async fn test_user_registration_login() -> MyResult<()> {
 
 #[tokio::test]
 async fn test_user_profile() -> MyResult<()> {
-    let data = TestData::start().await;
+    let data = TestData::start(false).await;
 
     // Create an article and federate it, in order to federate the user who created it
     let create_form = CreateArticleForm {
@@ -644,7 +644,7 @@ async fn test_user_profile() -> MyResult<()> {
 
 #[tokio::test]
 async fn test_lock_article() -> MyResult<()> {
-    let data = TestData::start().await;
+    let data = TestData::start(false).await;
 
     // create article
     let create_form = CreateArticleForm {
@@ -691,7 +691,7 @@ async fn test_lock_article() -> MyResult<()> {
 
 #[tokio::test]
 async fn test_synchronize_instances() -> MyResult<()> {
-    let data = TestData::start().await;
+    let data = TestData::start(false).await;
 
     // fetch alpha instance on beta
     data.beta
@@ -724,6 +724,48 @@ async fn test_synchronize_instances() -> MyResult<()> {
     assert!(gamma_instances
         .iter()
         .any(|i| i.domain == data.alpha.hostname));
+
+    data.stop()
+}
+
+#[tokio::test]
+async fn test_article_approval_required() -> MyResult<()> {
+    let data = TestData::start(true).await;
+
+    // create article
+    let create_form = CreateArticleForm {
+        title: "Manu_Chao".to_string(),
+        text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
+        summary: "create article".to_string(),
+    };
+    let create_res = data.alpha.create_article(&create_form).await?;
+    assert!(!create_res.article.approved);
+
+    let list_all = data.alpha.list_articles(Default::default()).await?;
+    assert_eq!(1, list_all.len());
+    assert!(list_all.iter().all(|a| a.id != create_res.article.id));
+
+    // login as admin to handle approvals
+    let form = LoginUserForm {
+        username: "ibis".to_string(),
+        password: "ibis".to_string(),
+    };
+    data.alpha.login(form).await?;
+
+    let list_approval_required = data.alpha.list_articles_approval_required().await?;
+    assert_eq!(1, list_approval_required.len());
+    assert_eq!(create_res.article.id, list_approval_required[0].id);
+
+    let approve = data
+        .alpha
+        .approve_article(list_approval_required[0].id)
+        .await?;
+    assert_eq!(create_res.article.id, approve.id);
+    assert!(approve.approved);
+
+    let list_all = data.alpha.list_articles(Default::default()).await?;
+    assert_eq!(2, list_all.len());
+    assert!(list_all.iter().any(|a| a.id == create_res.article.id));
 
     data.stop()
 }
