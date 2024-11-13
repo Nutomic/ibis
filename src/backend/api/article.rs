@@ -1,4 +1,4 @@
-use super::check_is_admin;
+use super::{check_is_admin, is_admin_opt};
 use crate::{
     backend::{
         database::{
@@ -161,10 +161,10 @@ pub(in crate::backend::api) async fn edit_article(
 #[debug_handler]
 pub(in crate::backend::api) async fn get_article(
     Query(query): Query<GetArticleForm>,
-    Extension(user): Extension<LocalUserView>,
+    user: Option<Extension<LocalUserView>>,
     data: Data<IbisData>,
 ) -> MyResult<Json<ArticleView>> {
-    let is_admin = check_is_admin(&user).is_ok();
+    let is_admin = is_admin_opt(&user);
     match (query.title, query.id) {
         (Some(title), None) => Ok(Json(DbArticle::read_view_title(
             &title,
