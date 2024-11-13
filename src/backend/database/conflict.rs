@@ -78,12 +78,8 @@ impl DbConflict {
         Ok(delete(conflict::table.find(id)).get_result(conn.deref_mut())?)
     }
 
-    pub async fn to_api_conflict(
-        &self,
-        is_admin: bool,
-        data: &Data<IbisData>,
-    ) -> MyResult<Option<ApiConflict>> {
-        let article = DbArticle::read_view(self.article_id, is_admin, data)?;
+    pub async fn to_api_conflict(&self, data: &Data<IbisData>) -> MyResult<Option<ApiConflict>> {
+        let article = DbArticle::read_view(self.article_id, data)?;
         // Make sure to get latest version from origin so that all conflicts can be resolved
         let original_article = article.article.ap_id.dereference_forced(data).await?;
 

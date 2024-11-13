@@ -94,7 +94,7 @@ async fn http_get_article(
     Path(title): Path<String>,
     data: Data<IbisData>,
 ) -> MyResult<FederationJson<WithContext<ApubArticle>>> {
-    let article = DbArticle::read_view_title(&title, None, false, &data)?;
+    let article = DbArticle::read_view_title(&title, None, &data)?;
     let json = article.article.into_json(&data).await?;
     Ok(FederationJson(WithContext::new_default(json)))
 }
@@ -104,7 +104,7 @@ async fn http_get_article_edits(
     Path(title): Path<String>,
     data: Data<IbisData>,
 ) -> MyResult<FederationJson<WithContext<ApubEditCollection>>> {
-    let article = DbArticle::read_view_title(&title, None, false, &data)?;
+    let article = DbArticle::read_view_title(&title, None, &data)?;
     let json = DbEditCollection::read_local(&article.article, &data).await?;
     Ok(FederationJson(WithContext::new_default(json)))
 }

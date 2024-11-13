@@ -52,7 +52,7 @@ impl Object for DbEdit {
     }
 
     async fn into_json(self, data: &Data<Self::DataType>) -> Result<Self::Kind, Self::Error> {
-        let article = DbArticle::read_view(self.article_id, false, data)?;
+        let article = DbArticle::read_view(self.article_id, data)?;
         let creator = DbPerson::read(self.creator_id, data)?;
         Ok(ApubEdit {
             kind: PatchType::Patch,

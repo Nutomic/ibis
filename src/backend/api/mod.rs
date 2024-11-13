@@ -36,7 +36,6 @@ use axum::{
     middleware::{self, Next},
     response::Response,
     routing::{get, post},
-    Extension,
     Router,
 };
 use axum_extra::extract::CookieJar;
@@ -93,12 +92,4 @@ fn check_is_admin(user: &LocalUserView) -> MyResult<()> {
         return Err(anyhow!("Only admin can perform this action").into());
     }
     Ok(())
-}
-
-fn is_admin_opt(user: &Option<Extension<LocalUserView>>) -> bool {
-    if let Some(user) = user {
-        user.local_user.admin
-    } else {
-        false
-    }
 }

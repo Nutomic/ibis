@@ -161,11 +161,10 @@ pub(crate) async fn list_notifications(
     Extension(user): Extension<LocalUserView>,
     data: Data<IbisData>,
 ) -> MyResult<Json<Vec<Notification>>> {
-    let is_admin = check_is_admin(&user).is_ok();
     let conflicts = DbConflict::list(&user.person, &data)?;
     let conflicts: Vec<_> = try_join_all(conflicts.into_iter().map(|c| {
         let data = data.reset_request_count();
-        async move { c.to_api_conflict(is_admin, &data).await }
+        async move { c.to_api_conflict(&data).await }
     }))
     .await?;
     let mut notifications: Vec<_> = conflicts

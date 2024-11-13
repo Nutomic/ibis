@@ -87,12 +87,9 @@ impl DbArticle {
             .get_result::<Self>(conn.deref_mut())?)
     }
 
-    pub fn read_view(id: ArticleId, is_admin: bool, data: &IbisData) -> MyResult<ArticleView> {
+    pub fn read_view(id: ArticleId, data: &IbisData) -> MyResult<ArticleView> {
         let mut conn = data.db_pool.get()?;
-        let mut query = article::table.find(id).into_boxed();
-        if !is_admin {
-            query = query.filter(article::dsl::approved.eq(true));
-        }
+        let query = article::table.find(id).into_boxed();
         let article: DbArticle = query.get_result(conn.deref_mut())?;
         let latest_version = article.latest_edit_version(data)?;
         let edits = DbEdit::read_for_article(&article, data)?;
@@ -106,7 +103,6 @@ impl DbArticle {
     pub fn read_view_title(
         title: &str,
         domain: Option<String>,
-        admin: bool,
         data: &IbisData,
     ) -> MyResult<ArticleView> {
         let mut conn = data.db_pool.get()?;
@@ -115,14 +111,11 @@ impl DbArticle {
                 .inner_join(instance::table)
                 .filter(article::dsl::title.eq(title))
                 .into_boxed();
-            let mut query = if let Some(domain) = domain {
+            let query = if let Some(domain) = domain {
                 query.filter(instance::dsl::domain.eq(domain))
             } else {
                 query.filter(article::dsl::local.eq(true))
             };
-            if !admin {
-                query = query.filter(article::dsl::approved.eq(true));
-            }
             query
                 .select(article::all_columns)
                 .get_result(conn.deref_mut())?

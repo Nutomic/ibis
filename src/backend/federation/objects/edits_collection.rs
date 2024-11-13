@@ -35,7 +35,7 @@ impl Collection for DbEditCollection {
         owner: &Self::Owner,
         data: &Data<Self::DataType>,
     ) -> Result<Self::Kind, Self::Error> {
-        let article = DbArticle::read_view(owner.id, false, data)?;
+        let article = DbArticle::read_view(owner.id, data)?;
 
         let edits = future::try_join_all(
             article
