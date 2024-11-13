@@ -1,4 +1,4 @@
-use crate::frontend::{app::GlobalState, dark_mode::DarkMode};
+use crate::frontend::{api::ApiClient, app::{site, GlobalState}, dark_mode::DarkMode};
 use leptos::{component, use_context, view, IntoView, RwSignal, SignalWith, *};
 use leptos_router::*;
 
@@ -6,23 +6,13 @@ use leptos_router::*;
 pub fn Nav() -> impl IntoView {
     let global_state = use_context::<RwSignal<GlobalState>>().unwrap();
     let logout_action = create_action(move |_| async move {
-        GlobalState::api_client().logout().await.unwrap();
-        GlobalState::update_my_profile();
+        ApiClient::get().logout().await.unwrap();
+        site().refetch();
     });
-    let registration_open = create_local_resource(
-        || (),
-        move |_| async move {
-            GlobalState::api_client()
-                .get_local_instance()
-                .await
-                .map(|i| i.registration_open)
-                .unwrap_or_default()
-        },
-    );
     let notification_count = create_resource(
         || (),
         move |_| async move {
-            GlobalState::api_client()
+            ApiClient::get()
                 .notifications_count()
                 .await
                 .unwrap_or_default()
@@ -108,11 +98,12 @@ pub fn Nav() -> impl IntoView {
                                 <li>
                                     <A href="/login">"Login"</A>
                                 </li>
-                                <Show when=move || registration_open.get().unwrap_or_default()>
+                                <Transition>
+                                <Show when=move || site().get().map(|s| s.config.registration_open).unwrap_or_default()>
                                     <li>
                                         <A href="/register">"Register"</A>
                                     </li>
-                                </Show>
+                                </Show></Transition>
                             }
                         }
                     >

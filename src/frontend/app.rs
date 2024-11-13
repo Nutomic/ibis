@@ -1,5 +1,5 @@
 use crate::{
-    common::LocalUserView,
+    common::{LocalUserView, SiteView},
     frontend::{
         api::ApiClient,
         components::nav::Nav,
@@ -24,22 +24,9 @@ use crate::{
     },
 };
 use leptos::{
-    component,
-    create_local_resource,
-    create_rw_signal,
-    expect_context,
-    provide_context,
-    use_context,
-    view,
-    DynAttrs,
-    IntoView,
-    RwSignal,
-    SignalGetUntracked,
-    SignalUpdate,
-};
+*};
 use leptos_meta::{provide_meta_context, *};
 use leptos_router::{Route, Router, Routes};
-use reqwest::Client;
 use std::{thread::sleep, time::Duration};
 
 // https://book.leptos.dev/15_global_state.html
@@ -62,28 +49,23 @@ impl GlobalState {
             .get_untracked()
             .api_client
     }
+}
 
-    pub fn update_my_profile() {
-        create_local_resource(
-            move || (),
-            |_| async move {
-                let my_profile = GlobalState::api_client().my_profile().await.ok();
-                expect_context::<RwSignal<GlobalState>>()
-                    .update(|state| state.my_profile = my_profile.clone());
-            },
-        );
-    }
+pub fn site() -> Resource<(), SiteView>{
+    use_context::<Resource<(), SiteView>>().unwrap()
 }
 
 #[component]
 pub fn App() -> impl IntoView {
     provide_meta_context();
     let global_state = GlobalState {
-        api_client: ApiClient::new(Client::new(), None),
+        api_client: ApiClient::get().clone(),
         my_profile: None,
     };
-    // Load user profile in case we are already logged in
-    GlobalState::update_my_profile();
+    let site = create_resource(|| (), |_| async move {
+        ApiClient::get().site().await.unwrap()
+    });
+    provide_context(site);
     provide_context(create_rw_signal(global_state));
 
     let darkmode = DarkMode::init();

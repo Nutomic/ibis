@@ -23,11 +23,12 @@ use crate::{
         ProtectArticleForm,
         RegisterUserForm,
         ResolveObject,
-        SearchArticleForm,
+        SearchArticleForm, SiteView,
     },
     frontend::error::MyResult,
 };
 use anyhow::anyhow;
+use once_cell::sync::OnceCell;
 use reqwest::{Client, RequestBuilder, StatusCode};
 use serde::{Deserialize, Serialize};
 use url::Url;
@@ -40,7 +41,12 @@ pub struct ApiClient {
 }
 
 impl ApiClient {
-    pub fn new(client: Client, hostname_: Option<String>) -> Self {
+    pub fn get() -> &'static ApiClient {
+        static CELL: OnceCell<ApiClient> = OnceCell::<ApiClient>::new();
+        CELL.get_or_init(|| Self::build(Client::new(), None))
+    }
+    
+    pub fn build(client: Client, hostname_: Option<String>) -> Self {
         let mut hostname;
         let ssl;
         #[cfg(not(feature = "ssr"))]
@@ -207,10 +213,10 @@ impl ApiClient {
         }
     }
 
-    pub async fn my_profile(&self) -> MyResult<LocalUserView> {
+    pub async fn site(&self) -> MyResult<SiteView> {
         let req = self
             .client
-            .get(self.request_endpoint("/api/v1/account/my_profile"));
+            .get(self.request_endpoint("/api/v1/site"));
         handle_json_res(req).await
     }
 

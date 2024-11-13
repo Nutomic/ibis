@@ -64,7 +64,7 @@ axum-extra = { version = "0.9.4", features = ["cookie"], optional = true }
 leptos = "0.6.15"
 leptos_meta = "0.6.15"
 leptos_router = "0.6.15"
-leptos_axum = { version = "0.6.15", features = ["wasm"], optional = true }
+leptos_axum = { version = "0.6.15", optional = true }
 bcrypt = "0.15.1"
 chrono = { version = "0.4.38", features = ["serde"] }
 diesel = { version = "2.2.4", features = [
