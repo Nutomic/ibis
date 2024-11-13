@@ -49,57 +49,61 @@ pub fn CreateArticle() -> impl IntoView {
         }
     });
 
+    //let hide_approval_warning = GlobalState::config().article_approval && !GlobalState::is_admin();
+    
     view! {
         <h1 class="text-4xl font-bold font-serif my-4">Create new Article</h1>
         <Show
             when=move || create_response.get().is_some()
             fallback=move || {
                 view! {
-                    <div class="item-view">
+                    <Await future=|| approval_warning_class() let:approval_warning_class>
+                        <span class=approval_warning_class>
+                            Admin approval is required for new articles
+                        </span>
+                    </Await>
+                    <input
+                        class="input input-primary w-full"
+                        type="text"
+                        required
+                        placeholder="Title"
+                        prop:disabled=move || wait_for_response.get()
+                        on:keyup=move |ev| {
+                            let val = event_target_value(&ev);
+                            set_title.update(|v| *v = val);
+                        }
+                    />
+
+                    <EditorView textarea_ref content set_content />
+
+                    {move || {
+                        create_error
+                            .get()
+                            .map(|err| {
+                                view! { <p style="color:red;">{err}</p> }
+                            })
+                    }}
+
+                    <div class="flex flex-row">
                         <input
-                            class="input input-primary w-full"
+                            class="input input-primary grow mr-4"
                             type="text"
-                            required
-                            placeholder="Title"
-                            prop:disabled=move || wait_for_response.get()
+                            placeholder="Edit summary"
                             on:keyup=move |ev| {
                                 let val = event_target_value(&ev);
-                                set_title.update(|v| *v = val);
+                                set_summary.update(|p| *p = val);
                             }
                         />
 
-                        <EditorView textarea_ref content set_content />
-
-                        {move || {
-                            create_error
-                                .get()
-                                .map(|err| {
-                                    view! { <p style="color:red;">{err}</p> }
-                                })
-                        }}
-
-                        <div class="flex flex-row">
-                            <input
-                                class="input input-primary grow mr-4"
-                                type="text"
-                                placeholder="Edit summary"
-                                on:keyup=move |ev| {
-                                    let val = event_target_value(&ev);
-                                    set_summary.update(|p| *p = val);
-                                }
-                            />
-
-                            <button
-                                class="btn btn-primary"
-                                prop:disabled=move || button_is_disabled.get()
-                                on:click=move |_| {
-                                    submit_action
-                                        .dispatch((title.get(), content.get(), summary.get()))
-                                }
-                            >
-                                Submit
-                            </button>
-                        </div>
+                        <button
+                            class="btn btn-primary"
+                            prop:disabled=move || button_is_disabled.get()
+                            on:click=move |_| {
+                                submit_action.dispatch((title.get(), content.get(), summary.get()))
+                            }
+                        >
+                            Submit
+                        </button>
                     </div>
                 }
             }
@@ -108,4 +112,14 @@ pub fn CreateArticle() -> impl IntoView {
             <Redirect path=format!("/article/{}", title.get().replace(' ', "_")) />
         </Show>
     }
+}
+
+async fn approval_warning_class() -> String {
+    let is_admin = expect_context::<RwSignal<GlobalState>>()
+        .get_untracked()
+        .my_profile
+        .map(|p| p.local_user.admin)
+        .unwrap_or(false);
+    let classes = "alert alert-warning mb-4";
+    if is_admin { classes.to_string() + " hidden" } else { classes.to_string() }
 }

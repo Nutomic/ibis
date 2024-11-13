@@ -34,7 +34,6 @@ use leptos::{
     DynAttrs,
     IntoView,
     RwSignal,
-    SignalGet,
     SignalGetUntracked,
     SignalUpdate,
 };
@@ -73,17 +72,6 @@ impl GlobalState {
                     .update(|state| state.my_profile = my_profile.clone());
             },
         );
-    }
-
-    pub fn is_admin() -> fn() -> bool {
-        move || {
-            use_context::<RwSignal<GlobalState>>()
-                .expect("global state is provided")
-                .get()
-                .my_profile
-                .map(|p| p.local_user.admin)
-                .unwrap_or(false)
-        }
     }
 }
 
