@@ -1,4 +1,4 @@
-use crate::backend::error::MyResult;
+use crate::{backend::error::MyResult, common::SharedConfig};
 use config::Config;
 use doku::Document;
 use serde::Deserialize;
@@ -10,17 +10,10 @@ use smart_default::SmartDefault;
 pub struct IbisConfig {
     /// Details about the PostgreSQL database connection
     pub database: IbisConfigDatabase,
-    /// Whether users can create new accounts
-    #[default = true]
-    #[doku(example = "true")]
-    pub registration_open: bool,
-    /// Whether admins need to approve new articles
-    #[default = false]
-    #[doku(example = "false")]
-    pub article_approval: bool,
     /// Details of the initial admin account
     pub setup: IbisConfigSetup,
     pub federation: IbisConfigFederation,
+    pub config: SharedConfig,
 }
 
 impl IbisConfig {
