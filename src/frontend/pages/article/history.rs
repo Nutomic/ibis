@@ -41,7 +41,7 @@ pub fn ArticleHistory() -> impl IntoView {
                                                             {edit.edit.summary}
                                                         </a>
                                                         <p>
-                                                            {render_date_time(edit.edit.created)}" by "
+                                                            {render_date_time(edit.edit.published)}" by "
                                                             {user_link(&edit.creator)}
                                                         </p>
                                                     </div>

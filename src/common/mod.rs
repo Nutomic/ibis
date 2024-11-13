@@ -59,6 +59,7 @@ pub struct DbArticle {
     pub local: bool,
     pub protected: bool,
     pub approved: bool,
+    pub published: DateTime<Utc>,
 }
 
 /// Represents a single change to the article.
@@ -82,7 +83,7 @@ pub struct DbEdit {
     pub article_id: ArticleId,
     /// First edit of an article always has `EditVersion::default()` here
     pub previous_version_id: EditVersion,
-    pub created: DateTime<Utc>,
+    pub published: DateTime<Utc>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
@@ -248,12 +249,22 @@ pub struct ApiConflict {
     pub summary: String,
     pub article: DbArticle,
     pub previous_version_id: EditVersion,
+    pub published: DateTime<Utc>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum Notification {
     EditConflict(ApiConflict),
     ArticleApprovalRequired(DbArticle),
+}
+
+impl Notification {
+    pub fn published(&self) -> &DateTime<Utc> {
+        match self {
+            Notification::EditConflict(api_conflict) => &api_conflict.published,
+            Notification::ArticleApprovalRequired(db_article) => &db_article.published,
+        }
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]

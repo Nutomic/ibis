@@ -28,7 +28,7 @@ pub struct DbEditForm {
     pub summary: String,
     pub article_id: ArticleId,
     pub previous_version_id: EditVersion,
-    pub created: DateTime<Utc>,
+    pub published: DateTime<Utc>,
 }
 
 impl DbEditForm {
@@ -50,7 +50,7 @@ impl DbEditForm {
             article_id: original_article.id,
             previous_version_id,
             summary,
-            created: Utc::now(),
+            published: Utc::now(),
         })
     }
 
@@ -97,7 +97,7 @@ impl DbEdit {
         Ok(edit::table
             .inner_join(person::table)
             .filter(edit::article_id.eq(article.id))
-            .order(edit::created)
+            .order(edit::published)
             .get_results(conn.deref_mut())?)
     }
 }

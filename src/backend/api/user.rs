@@ -182,6 +182,7 @@ pub(crate) async fn list_notifications(
                 .map(Notification::ArticleApprovalRequired),
         )
     }
+    notifications.sort_by(|a, b| a.published().cmp(b.published()));
 
     Ok(Json(notifications))
 }

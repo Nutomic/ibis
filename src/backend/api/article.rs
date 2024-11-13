@@ -242,7 +242,7 @@ pub(in crate::backend::api) async fn fork_article(
             article_id: article.id,
             hash: e.hash,
             previous_version_id: e.previous_version_id,
-            created: Utc::now(),
+            published: Utc::now(),
         };
         DbEdit::create(&form, &data)?;
     }

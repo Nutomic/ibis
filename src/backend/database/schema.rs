@@ -11,6 +11,7 @@ diesel::table! {
         local -> Bool,
         protected -> Bool,
         approved -> Bool,
+        published -> Timestamptz,
     }
 }
 
@@ -23,6 +24,7 @@ diesel::table! {
         creator_id -> Int4,
         article_id -> Int4,
         previous_version_id -> Uuid,
+        published -> Timestamptz,
     }
 }
 
@@ -37,7 +39,7 @@ diesel::table! {
         summary -> Text,
         article_id -> Int4,
         previous_version_id -> Uuid,
-        created -> Timestamptz,
+        published -> Timestamptz,
     }
 }
 

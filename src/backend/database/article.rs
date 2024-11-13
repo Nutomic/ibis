@@ -157,7 +157,7 @@ impl DbArticle {
             .inner_join(instance::table)
             .filter(article::dsl::approved.eq(true))
             .group_by(article::dsl::id)
-            .order_by(max(edit::dsl::created).desc())
+            .order_by(max(edit::dsl::published).desc())
             .select(article::all_columns)
             .into_boxed();
 
@@ -204,10 +204,8 @@ impl DbArticle {
     pub fn list_approval_required(data: &IbisData) -> MyResult<Vec<Self>> {
         let mut conn = data.db_pool.get()?;
         let query = article::table
-            .inner_join(edit::table)
             .group_by(article::dsl::id)
             .filter(article::dsl::approved.eq(false))
-            .order_by(max(edit::dsl::created).desc())
             .select(article::all_columns)
             .into_boxed();
 

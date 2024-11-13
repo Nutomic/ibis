@@ -68,7 +68,7 @@ mod test {
                     summary: String::new(),
                     article_id: ArticleId(0),
                     previous_version_id: Default::default(),
-                    created: Utc::now(),
+                    published: Utc::now(),
                 },
                 creator: DbPerson {
                     id: PersonId(0),

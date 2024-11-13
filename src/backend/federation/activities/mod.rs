@@ -56,7 +56,7 @@ pub async fn submit_article_update(
             summary: form.summary,
             article_id: form.article_id,
             previous_version_id: form.previous_version_id,
-            created: Utc::now(),
+            published: Utc::now(),
         };
         let instance = DbInstance::read(original_article.instance_id, data)?;
         UpdateRemoteArticle::send(edit, instance, data).await?;

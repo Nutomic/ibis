@@ -30,7 +30,7 @@ pub fn EditDiff() -> impl IntoView {
                         let label = format!(
                             "{} ({})",
                             edit.edit.summary,
-                            render_date_time(edit.edit.created),
+                            render_date_time(edit.edit.published),
                         );
                         view! {
                             <h2 class="text-xl font-bold font-serif my-2">{label}</h2>

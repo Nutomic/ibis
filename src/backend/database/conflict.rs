@@ -15,6 +15,7 @@ use crate::{
     },
 };
 use activitypub_federation::config::Data;
+use chrono::{DateTime, Utc};
 use diesel::{
     delete,
     insert_into,
@@ -42,6 +43,7 @@ pub struct DbConflict {
     pub creator_id: PersonId,
     pub article_id: ArticleId,
     pub previous_version_id: EditVersion,
+    pub published: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Insertable)]
@@ -117,6 +119,7 @@ impl DbConflict {
                     summary: self.summary.clone(),
                     article: original_article.clone(),
                     previous_version_id: original_article.latest_edit_version(data)?,
+                    published: self.published,
                 }))
             }
         }

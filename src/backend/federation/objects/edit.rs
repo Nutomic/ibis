@@ -63,7 +63,7 @@ impl Object for DbEdit {
             previous_version: self.previous_version_id,
             object: article.article.ap_id,
             attributed_to: creator.ap_id,
-            published: self.created,
+            published: self.published,
         })
     }
 
@@ -94,7 +94,7 @@ impl Object for DbEdit {
             article_id: article.id,
             hash: json.version,
             previous_version_id: json.previous_version,
-            created: json.published,
+            published: json.published,
         };
         let edit = DbEdit::create(&form, data)?;
         Ok(edit)
