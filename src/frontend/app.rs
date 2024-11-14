@@ -59,13 +59,8 @@ impl<T: Default> DefaultResource<T> for Resource<(), T> {
 #[component]
 pub fn App() -> impl IntoView {
     // TODO: should create_resource() but then things break
-    let site_resource = create_local_resource(
-        move || (),
-        |_| async move {
-            let site = CLIENT.site().await.unwrap();
-            site
-        },
-    );
+    let site_resource =
+        create_local_resource(move || (), |_| async move { CLIENT.site().await.unwrap() });
     provide_context(site_resource);
     provide_meta_context();
 

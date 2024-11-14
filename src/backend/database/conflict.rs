@@ -72,10 +72,15 @@ impl DbConflict {
             .get_results(conn.deref_mut())?)
     }
 
-    /// Delete a merge conflict after it is resolved.
-    pub fn delete(id: ConflictId, data: &IbisData) -> MyResult<Self> {
+    /// Delete merge conflict which was created by specific user
+    pub fn delete(id: ConflictId, creator_id: PersonId, data: &IbisData) -> MyResult<Self> {
         let mut conn = data.db_pool.get()?;
-        Ok(delete(conflict::table.find(id)).get_result(conn.deref_mut())?)
+        Ok(delete(
+            conflict::table
+                .filter(conflict::dsl::creator_id.eq(creator_id))
+                .find(id),
+        )
+        .get_result(conn.deref_mut())?)
     }
 
     pub async fn to_api_conflict(&self, data: &Data<IbisData>) -> MyResult<Option<ApiConflict>> {
@@ -103,7 +108,7 @@ impl DbConflict {
                     data,
                 )
                 .await?;
-                DbConflict::delete(self.id, data)?;
+                DbConflict::delete(self.id, self.creator_id, data)?;
                 Ok(None)
             }
             Err(three_way_merge) => {

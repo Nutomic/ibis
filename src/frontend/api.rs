@@ -1,6 +1,6 @@
 use crate::{
     common::{
-        newtypes::ArticleId,
+        newtypes::{ArticleId, ConflictId},
         utils::http_protocol_str,
         ApiConflict,
         ApproveArticleForm,
@@ -9,6 +9,7 @@ use crate::{
         DbArticle,
         DbInstance,
         DbPerson,
+        DeleteConflictForm,
         EditArticleForm,
         FollowInstance,
         ForkArticleForm,
@@ -151,11 +152,23 @@ impl ApiClient {
         handle_json_res(req).await
     }
 
-    pub async fn approve_article(&self, article_id: ArticleId) -> MyResult<DbArticle> {
-        let form = ApproveArticleForm { article_id };
+    pub async fn approve_article(&self, article_id: ArticleId, approve: bool) -> MyResult<()> {
+        let form = ApproveArticleForm {
+            article_id,
+            approve,
+        };
         let req = self
             .client
             .post(self.request_endpoint("/api/v1/article/approve"))
+            .form(&form);
+        handle_json_res(req).await
+    }
+
+    pub async fn delete_conflict(&self, conflict_id: ConflictId) -> MyResult<()> {
+        let form = DeleteConflictForm { conflict_id };
+        let req = self
+            .client
+            .delete(self.request_endpoint("/api/v1/conflict"))
             .form(&form);
         handle_json_res(req).await
     }

@@ -21,13 +21,13 @@ use crate::{
 };
 use activitypub_federation::config::Data;
 use anyhow::anyhow;
-use article::approve_article;
+use article::{approve_article, delete_conflict};
 use axum::{
     body::Body,
     http::{Request, StatusCode},
     middleware::{self, Next},
     response::Response,
-    routing::{get, post},
+    routing::{delete, get, post},
     Extension,
     Json,
     Router,
@@ -52,6 +52,7 @@ pub fn api_routes() -> Router<()> {
         .route("/article/resolve", get(resolve_article))
         .route("/article/protect", post(protect_article))
         .route("/article/approve", post(approve_article))
+        .route("/conflict", delete(delete_conflict))
         .route("/instance", get(get_instance))
         .route("/instance/follow", post(follow_instance))
         .route("/instance/resolve", get(resolve_instance))

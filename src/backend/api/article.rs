@@ -21,6 +21,7 @@ use crate::{
         DbArticle,
         DbEdit,
         DbInstance,
+        DeleteConflictForm,
         EditArticleForm,
         EditVersion,
         ForkArticleForm,
@@ -106,7 +107,7 @@ pub(in crate::backend::api) async fn edit_article(
 ) -> MyResult<Json<Option<ApiConflict>>> {
     // resolve conflict if any
     if let Some(resolve_conflict_id) = edit_form.resolve_conflict_id {
-        DbConflict::delete(resolve_conflict_id, &data)?;
+        DbConflict::delete(resolve_conflict_id, user.person.id, &data)?;
     }
     let original_article = DbArticle::read_view(edit_form.article_id, &data)?;
     if edit_form.new_text == original_article.article.text {
@@ -297,9 +298,24 @@ pub(in crate::backend::api) async fn protect_article(
 pub async fn approve_article(
     Extension(user): Extension<LocalUserView>,
     data: Data<IbisData>,
-    Form(approve_params): Form<ApproveArticleForm>,
-) -> MyResult<Json<DbArticle>> {
+    Form(params): Form<ApproveArticleForm>,
+) -> MyResult<Json<()>> {
     check_is_admin(&user)?;
-    let article = DbArticle::update_approved(approve_params.article_id, true, &data)?;
-    Ok(Json(article))
+    if params.approve {
+        DbArticle::update_approved(params.article_id, true, &data)?;
+    } else {
+        DbArticle::delete(params.article_id, &data)?;
+    }
+    Ok(Json(()))
+}
+
+/// Get a list of all unresolved edit conflicts.
+#[debug_handler]
+pub async fn delete_conflict(
+    Extension(user): Extension<LocalUserView>,
+    data: Data<IbisData>,
+    Form(params): Form<DeleteConflictForm>,
+) -> MyResult<Json<()>> {
+    DbConflict::delete(params.conflict_id, user.person.id, &data)?;
+    Ok(Json(()))
 }

@@ -87,6 +87,11 @@ impl DbArticle {
             .get_result::<Self>(conn.deref_mut())?)
     }
 
+    pub fn delete(id: ArticleId, data: &IbisData) -> MyResult<Self> {
+        let mut conn = data.db_pool.get()?;
+        Ok(diesel::delete(article::dsl::article.find(id)).get_result::<Self>(conn.deref_mut())?)
+    }
+
     pub fn read_view(id: ArticleId, data: &IbisData) -> MyResult<ArticleView> {
         let mut conn = data.db_pool.get()?;
         let query = article::table.find(id).into_boxed();

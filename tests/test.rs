@@ -767,9 +767,14 @@ async fn test_article_approval_required() -> MyResult<()> {
     };
     assert_eq!(create_res.article.id, notif.id);
 
-    let approve = data.alpha.approve_article(notif.id).await?;
-    assert_eq!(create_res.article.id, approve.id);
-    assert!(approve.approved);
+    data.alpha.approve_article(notif.id, true).await?;
+    let form = GetArticleForm {
+        id: Some(create_res.article.id),
+        ..Default::default()
+    };
+    let approved = data.alpha.get_article(form).await?;
+    assert_eq!(create_res.article.id, approved.article.id);
+    assert!(approved.article.approved);
 
     let list_all = data.alpha.list_articles(Default::default()).await?;
     assert_eq!(2, list_all.len());

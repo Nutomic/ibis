@@ -226,6 +226,12 @@ pub struct ForkArticleForm {
 #[derive(Deserialize, Serialize)]
 pub struct ApproveArticleForm {
     pub article_id: ArticleId,
+    pub approve: bool,
+}
+
+#[derive(Deserialize, Serialize)]
+pub struct DeleteConflictForm {
+    pub conflict_id: ConflictId,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
