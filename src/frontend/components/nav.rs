@@ -20,12 +20,11 @@ pub fn Nav() -> impl IntoView {
     let (search_query, set_search_query) = create_signal(String::new());
     let mut dark_mode = expect_context::<DarkMode>();
     view! {
-        <nav class="max-sm:navbar p-2.5">
+        <nav class="max-sm:navbar p-2.5 h-full md:fixed md:w-64 max-sm: border-b md:border-e border-slate-400 border-solid">
             <div
                 id="navbar-start"
                 class="max-sm:navbar-start max-sm:flex max-sm:dropdown max-sm:dropdown-bottom max-sm:dropdown-end max-sm:w-full md:h-full"
             >
-                <img src="/logo.png" class="m-auto" />
                 <h1 class="w-min md:hidden text-3xl font-bold font-serif">
                     {CLIENT.hostname.clone()}
                 </h1>
@@ -33,63 +32,69 @@ pub fn Nav() -> impl IntoView {
                 <button tabindex="0" class="btn btn-outline lg:hidden">
                     Menu
                 </button>
-                <ul
+                <div
                     tabindex="0"
                     class="menu dropdown-content p-2 max-sm:rounded-box max-sm:z-[1] max-sm:shadow md:h-full"
                 >
+                    <img src="/logo.png" class="m-auto max-sm:hidden" />
                     <h1 class="px-4 py-2 text-3xl font-bold font-serif sm:hidden">
                         {CLIENT.hostname.clone()}
                     </h1>
-                    <li>
-                        <A href="/">"Main Page"</A>
-                    </li>
-                    <li>
-                        <A href="/instance/list">"Instances"</A>
-                    </li>
-                    <li>
-                        <A href="/article/list">"Articles"</A>
-                    </li>
-                    <Transition>
-                        <Show when=is_logged_in>
-                            <li>
-                                <A href="/article/create">"Create Article"</A>
-                            </li>
-                            <li>
-                                <A href="/notifications">
-                                    "Notifications "
-                                    <span class="indicator-item indicator-end badge badge-neutral">
-                                        {move || notification_count.get()}
-                                    </span>
-                                </A>
-                            </li>
-                        </Show>
-                    </Transition>
-                    <li>
-                        <form
-                            class="form-control m-0 p-1"
-                            on:submit=move |ev| {
-                                ev.prevent_default();
-                                let navigate = leptos_router::use_navigate();
-                                let query = search_query.get();
-                                if !query.is_empty() {
-                                    navigate(&format!("/search?query={query}"), Default::default());
+                    <ul>
+                        <li>
+                            <A href="/">"Main Page"</A>
+                        </li>
+                        <li>
+                            <A href="/instance/list">"Instances"</A>
+                        </li>
+                        <li>
+                            <A href="/article/list">"Articles"</A>
+                        </li>
+                        <Transition>
+                            <Show when=is_logged_in>
+                                <li>
+                                    <A href="/article/create">"Create Article"</A>
+                                </li>
+                                <li>
+                                    <A href="/notifications">
+                                        "Notifications "
+                                        <span class="indicator-item indicator-end badge badge-neutral">
+                                            {move || notification_count.get()}
+                                        </span>
+                                    </A>
+                                </li>
+                            </Show>
+                        </Transition>
+                        <li>
+                            <form
+                                class="form-control m-0 p-1"
+                                on:submit=move |ev| {
+                                    ev.prevent_default();
+                                    let navigate = leptos_router::use_navigate();
+                                    let query = search_query.get();
+                                    if !query.is_empty() {
+                                        navigate(
+                                            &format!("/search?query={query}"),
+                                            Default::default(),
+                                        );
+                                    }
                                 }
-                            }
-                        >
-                            <input
-                                type="text"
-                                class="input input-secondary input-bordered input-xs w-full rounded"
-                                placeholder="Search"
-                                prop:value=search_query
-                                on:keyup=move |ev: ev::KeyboardEvent| {
-                                    let val = event_target_value(&ev);
-                                    set_search_query.update(|v| *v = val);
-                                }
-                            />
+                            >
+                                <input
+                                    type="text"
+                                    class="input input-secondary input-bordered input-xs w-full rounded"
+                                    placeholder="Search"
+                                    prop:value=search_query
+                                    on:keyup=move |ev: ev::KeyboardEvent| {
+                                        let val = event_target_value(&ev);
+                                        set_search_query.update(|v| *v = val);
+                                    }
+                                />
 
-                            <button class="btn btn-xs btn-secondary">Go</button>
-                        </form>
-                    </li>
+                                <button class="btn btn-xs btn-secondary">Go</button>
+                            </form>
+                        </li>
+                    </ul>
                     <div class="divider"></div>
                     <Transition>
                         <Show
@@ -131,7 +136,7 @@ pub fn Nav() -> impl IntoView {
 
                         </Show>
                     </Transition>
-                    <div class="flex-grow min-h-2"></div>
+                    <div class="grow min-h-2"></div>
                     <div class="m-1 grid gap-2">
                         <label class="flex cursor-pointer gap-2">
                             <span class="label-text">Light</span>
@@ -150,7 +155,7 @@ pub fn Nav() -> impl IntoView {
                             </a>
                         </p>
                     </div>
-                </ul>
+                </div>
             </div>
         </nav>
     }

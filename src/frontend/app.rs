@@ -74,13 +74,13 @@ pub fn App() -> impl IntoView {
 
     view! {
         <Html attr:data-theme=darkmode.theme class="h-full" />
-        <Body class="min-h-full flex max-sm:flex-col md:divide-x divide-slate-400 divide-solid" />
+        <Body class="h-full max-sm:flex max-sm:flex-col" />
         <>
             <Stylesheet id="ibis" href="/pkg/ibis.css" />
             <Stylesheet id="katex" href="/katex.min.css" />
             <Router>
                 <Nav />
-                <main class="p-4 grow">
+                <main class="p-4 md:ml-64">
                     <Routes>
                         <Route path="/" view=ReadArticle />
                         <Route path="/article/:title" view=ReadArticle />
