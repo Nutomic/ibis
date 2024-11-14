@@ -1,11 +1,11 @@
-use crate::frontend::{app::GlobalState, components::connect::ConnectView};
-use leptos::*;
+use crate::frontend::components::connect::ConnectView;
+use leptos::*;use crate::frontend::api::CLIENT;
 
 #[component]
 pub fn ListInstances() -> impl IntoView {
     let instances = create_resource(
         move || (),
-        |_| async move { GlobalState::api_client().list_instances().await.unwrap() },
+        |_| async move { CLIENT.list_instances().await.unwrap() },
     );
 
     view! {

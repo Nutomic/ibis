@@ -2,7 +2,7 @@ use crate::{
     common::{LocalUserView, RegisterUserForm},
     frontend::{app::GlobalState, components::credentials::*, error::MyResult},
 };
-use leptos::{logging::log, *};
+use leptos::{logging::log, *};use crate::frontend::api::CLIENT;
 
 #[component]
 pub fn Register() -> impl IntoView {
@@ -18,7 +18,7 @@ pub fn Register() -> impl IntoView {
         async move {
             set_wait_for_response.update(|w| *w = true);
             let result: MyResult<LocalUserView> =
-                GlobalState::api_client().register(credentials).await;
+                CLIENT.register(credentials).await;
             set_wait_for_response.update(|w| *w = false);
             match result {
                 Ok(res) => {

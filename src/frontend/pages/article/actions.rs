@@ -7,7 +7,7 @@ use crate::{
         pages::article_resource,
         DbArticle,
     },
-};
+};use crate::frontend::api::CLIENT;
 use leptos::*;
 use leptos_router::Redirect;
 
@@ -25,7 +25,7 @@ pub fn ArticleActions() -> impl IntoView {
         };
         async move {
             set_error.update(|e| *e = None);
-            let result = GlobalState::api_client().fork_article(&params).await;
+            let result = CLIENT.fork_article(&params).await;
             match result {
                 Ok(res) => set_fork_response.set(Some(res.article)),
                 Err(err) => {
@@ -41,7 +41,7 @@ pub fn ArticleActions() -> impl IntoView {
         };
         async move {
             set_error.update(|e| *e = None);
-            let result = GlobalState::api_client().protect_article(&params).await;
+            let result = CLIENT.protect_article(&params).await;
             match result {
                 Ok(_res) => article.refetch(),
                 Err(err) => {

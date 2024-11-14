@@ -1,11 +1,11 @@
 use crate::{
     common::{DbArticle, DbInstance, SearchArticleForm},
-    frontend::{app::GlobalState, article_link, article_title},
+    frontend::{article_link, article_title},
 };
 use leptos::*;
 use leptos_router::use_query_map;
 use serde::{Deserialize, Serialize};
-use url::Url;
+use url::Url;use crate::frontend::api::CLIENT;
 
 #[derive(Default, Clone, Deserialize, Serialize, Debug)]
 struct SearchResults {
@@ -27,10 +27,9 @@ pub fn Search() -> impl IntoView {
     let search_results = create_resource(query, move |query| async move {
         set_error.set(None);
         let mut search_results = SearchResults::default();
-        let api_client = GlobalState::api_client();
         let url = Url::parse(&query);
         let search_data = SearchArticleForm { query };
-        let search = api_client.search(&search_data);
+        let search = CLIENT.search(&search_data);
 
         match search.await {
             Ok(mut a) => search_results.articles.append(&mut a),
@@ -39,11 +38,11 @@ pub fn Search() -> impl IntoView {
 
         // If its a valid url, also attempt to resolve as federation object
         if let Ok(url) = url {
-            match api_client.resolve_article(url.clone()).await {
+            match CLIENT.resolve_article(url.clone()).await {
                 Ok(a) => search_results.articles.push(a.article),
                 Err(e) => set_error.set(Some(e.0.to_string())),
             }
-            match api_client.resolve_instance(url).await {
+            match CLIENT.resolve_instance(url).await {
                 Ok(a) => search_results.instance = Some(a),
                 Err(e) => set_error.set(Some(e.0.to_string())),
             }

@@ -1,3 +1,5 @@
+use std::sync::LazyLock;
+
 use crate::{
     common::{
         newtypes::ArticleId,
@@ -31,6 +33,10 @@ use anyhow::anyhow;
 use reqwest::{Client, RequestBuilder, StatusCode};
 use serde::{Deserialize, Serialize};
 use url::Url;
+
+pub static CLIENT: LazyLock<ApiClient> = LazyLock::new(|| {
+    ApiClient::new(Client::new(), None)
+  });
 
 #[derive(Clone)]
 pub struct ApiClient {

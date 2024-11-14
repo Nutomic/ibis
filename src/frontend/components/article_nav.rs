@@ -6,7 +6,7 @@ use crate::{
         article_title,
         components::instance_follow_button::InstanceFollowButton,
     },
-};
+};use crate::frontend::api::CLIENT;
 use leptos::*;
 use leptos_router::*;
 
@@ -37,7 +37,7 @@ pub fn ArticleNav(
                                 let form = GetInstance {
                                     id: Some(instance_id),
                                 };
-                                GlobalState::api_client().get_instance(&form).await.unwrap()
+                                CLIENT.get_instance(&form).await.unwrap()
                             },
                         );
                         let global_state = use_context::<RwSignal<GlobalState>>().unwrap();

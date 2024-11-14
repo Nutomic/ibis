@@ -1,11 +1,10 @@
-use crate::frontend::app::GlobalState;
 use leptos::{component, *};
-use url::Url;
+use url::Url;use crate::frontend::api::CLIENT;
 
 #[component]
 pub fn ConnectView<T: Clone + 'static, R: 'static>(res: Resource<T, R>) -> impl IntoView {
     let connect_ibis_wiki = create_action(move |_: &()| async move {
-        GlobalState::api_client()
+        CLIENT
             .resolve_instance(Url::parse("https://ibis.wiki").unwrap())
             .await
             .unwrap();

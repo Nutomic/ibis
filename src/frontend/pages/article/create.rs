@@ -1,7 +1,7 @@
 use crate::{
     common::CreateArticleForm,
-    frontend::{app::GlobalState, components::editor::EditorView},
-};
+    frontend::components::editor::EditorView,
+};use crate::frontend::api::CLIENT;
 use html::Textarea;
 use leptos::*;
 use leptos_router::Redirect;
@@ -33,7 +33,7 @@ pub fn CreateArticle() -> impl IntoView {
                 summary,
             };
             set_wait_for_response.update(|w| *w = true);
-            let res = GlobalState::api_client().create_article(&form).await;
+            let res = CLIENT.create_article(&form).await;
             set_wait_for_response.update(|w| *w = false);
             match res {
                 Ok(_res) => {

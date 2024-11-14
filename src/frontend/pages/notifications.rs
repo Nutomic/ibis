@@ -1,6 +1,6 @@
 use crate::{
     common::Notification,
-    frontend::{app::GlobalState, article_link, article_title},
+    frontend::{api::CLIENT, article_link, article_title},
 };
 use leptos::*;
 
@@ -9,7 +9,7 @@ pub fn Notifications() -> impl IntoView {
     let notifications = create_local_resource(
         move || {},
         |_| async move {
-            GlobalState::api_client()
+            CLIENT
                 .notifications_list()
                 .await
                 .unwrap()

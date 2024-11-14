@@ -1,18 +1,18 @@
 use crate::frontend::{app::GlobalState, dark_mode::DarkMode};
 use leptos::{component, use_context, view, IntoView, RwSignal, SignalWith, *};
-use leptos_router::*;
+use leptos_router::*;use crate::frontend::api::CLIENT;
 
 #[component]
 pub fn Nav() -> impl IntoView {
     let global_state = use_context::<RwSignal<GlobalState>>().unwrap();
     let logout_action = create_action(move |_| async move {
-        GlobalState::api_client().logout().await.unwrap();
+        CLIENT.logout().await.unwrap();
         GlobalState::update_my_profile();
     });
     let registration_open = create_local_resource(
         || (),
         move |_| async move {
-            GlobalState::api_client()
+            CLIENT
                 .get_local_instance()
                 .await
                 .map(|i| i.registration_open)
@@ -22,7 +22,7 @@ pub fn Nav() -> impl IntoView {
     let notification_count = create_resource(
         || (),
         move |_| async move {
-            GlobalState::api_client()
+            CLIENT
                 .notifications_count()
                 .await
                 .unwrap_or_default()
@@ -39,7 +39,7 @@ pub fn Nav() -> impl IntoView {
             >
                 <img src="/logo.png" class="m-auto" />
                 <h1 class="w-min md:hidden text-3xl font-bold font-serif">
-                    {GlobalState::api_client().hostname}
+                    {CLIENT.hostname.clone()}
                 </h1>
                 <div class="flex-grow md:hidden"></div>
                 <button tabindex="0" class="btn btn-outline lg:hidden">
@@ -50,7 +50,7 @@ pub fn Nav() -> impl IntoView {
                     class="menu dropdown-content p-2 max-sm:rounded-box max-sm:z-[1] max-sm:shadow md:h-full"
                 >
                     <h1 class="px-4 py-2 text-3xl font-bold font-serif sm:hidden">
-                        {GlobalState::api_client().hostname}
+                        {CLIENT.hostname.clone()}
                     </h1>
                     <li>
                         <A href="/">"Main Page"</A>

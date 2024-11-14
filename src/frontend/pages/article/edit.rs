@@ -1,14 +1,13 @@
 use crate::{
     common::{newtypes::ConflictId, ApiConflict, ArticleView, EditArticleForm, Notification},
     frontend::{
-        app::GlobalState,
         components::{
             article_nav::{ActiveTab, ArticleNav},
             editor::EditorView,
         },
         pages::article_resource,
     },
-};
+};use crate::frontend::api::CLIENT;
 use html::Textarea;
 use leptos::*;
 use leptos_router::use_params_map;
@@ -34,7 +33,7 @@ pub fn EditArticle() -> impl IntoView {
         create_action(move |conflict_id: &String| {
             let conflict_id = ConflictId(conflict_id.parse().unwrap());
             async move {
-                let conflict = GlobalState::api_client()
+                let conflict = CLIENT
                     .notifications_list()
                     .await
                     .unwrap()
@@ -90,7 +89,7 @@ pub fn EditArticle() -> impl IntoView {
                     resolve_conflict_id,
                 };
                 set_wait_for_response.update(|w| *w = true);
-                let res = GlobalState::api_client()
+                let res = CLIENT
                     .edit_article_with_conflict(&form)
                     .await;
                 set_wait_for_response.update(|w| *w = false);

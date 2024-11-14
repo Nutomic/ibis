@@ -1,7 +1,7 @@
 use crate::{
     common::{newtypes::InstanceId, DbInstance, FollowInstance},
     frontend::app::GlobalState,
-};
+};use crate::frontend::api::CLIENT;
 use leptos::{component, *};
 
 #[component]
@@ -11,7 +11,7 @@ pub fn InstanceFollowButton(instance: DbInstance) -> impl IntoView {
         let instance_id = *instance_id;
         async move {
             let form = FollowInstance { id: instance_id };
-            GlobalState::api_client()
+            CLIENT
                 .follow_instance(form)
                 .await
                 .unwrap();

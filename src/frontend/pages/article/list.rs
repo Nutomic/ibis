@@ -1,7 +1,7 @@
 use crate::{
     common::ListArticlesForm,
-    frontend::{app::GlobalState, article_link, article_title, components::connect::ConnectView},
-};
+    frontend::{article_link, article_title, components::connect::ConnectView},
+};use crate::frontend::api::CLIENT;
 use html::Input;
 use leptos::*;
 
@@ -13,7 +13,7 @@ pub fn ListArticles() -> impl IntoView {
     let articles = create_resource(
         move || only_local.get(),
         |only_local| async move {
-            GlobalState::api_client()
+            CLIENT
                 .list_articles(ListArticlesForm {
                     only_local: Some(only_local),
                     instance_id: None,

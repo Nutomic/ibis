@@ -1,9 +1,9 @@
 use crate::{
     common::{DbPerson, GetUserForm},
-    frontend::{app::GlobalState, user_title},
+    frontend::user_title,
 };
 use leptos::*;
-use leptos_router::use_params_map;
+use leptos_router::use_params_map;use crate::frontend::api::CLIENT;
 
 #[component]
 pub fn UserProfile() -> impl IntoView {
@@ -18,7 +18,7 @@ pub fn UserProfile() -> impl IntoView {
             domain = Some(domain_.to_string());
         }
         let params = GetUserForm { name, domain };
-        GlobalState::api_client().get_user(params).await.unwrap()
+        CLIENT.get_user(params).await.unwrap()
     });
 
     view! {

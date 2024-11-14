@@ -1,9 +1,6 @@
-use crate::{
-    common::{ArticleView, GetArticleForm, MAIN_PAGE_NAME},
-    frontend::app::GlobalState,
-};
+use crate::common::{ArticleView, GetArticleForm, MAIN_PAGE_NAME};
 use leptos::{create_resource, Resource, SignalGet};
-use leptos_router::use_params_map;
+use leptos_router::use_params_map;use crate::frontend::api::CLIENT;
 
 pub(crate) mod article;
 pub(crate) mod diff;
@@ -24,7 +21,7 @@ fn article_resource() -> Resource<Option<String>, ArticleView> {
             title = title_.to_string();
             domain = Some(domain_.to_string());
         }
-        GlobalState::api_client()
+        CLIENT
             .get_article(GetArticleForm {
                 title: Some(title),
                 domain,
