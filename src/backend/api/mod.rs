@@ -102,6 +102,6 @@ pub(in crate::backend::api) async fn site_view(
 ) -> MyResult<Json<SiteView>> {
     Ok(Json(SiteView {
         my_profile: user.map(|u| u.0),
-        config: data.config.config.clone(),
+        config: data.config.options.clone(),
     }))
 }

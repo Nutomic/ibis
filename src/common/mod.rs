@@ -326,7 +326,7 @@ pub struct GetUserForm {
 #[serde(deny_unknown_fields)]
 #[cfg_attr(feature = "ssr", derive(Queryable, Document))]
 #[cfg_attr(feature = "ssr", diesel(check_for_backend(diesel::pg::Pg)))]
-pub struct SharedConfig {
+pub struct Options {
     /// Whether users can create new accounts
     #[default = true]
     #[cfg_attr(feature = "ssr", doku(example = "true"))]
@@ -342,7 +342,7 @@ pub struct SharedConfig {
 #[cfg_attr(feature = "ssr", diesel(check_for_backend(diesel::pg::Pg)))]
 pub struct SiteView {
     pub my_profile: Option<LocalUserView>,
-    pub config: SharedConfig,
+    pub config: Options,
 }
 
 #[test]

@@ -76,7 +76,7 @@ pub(in crate::backend::api) async fn register_user(
     jar: CookieJar,
     Form(form): Form<RegisterUserForm>,
 ) -> MyResult<(CookieJar, Json<LocalUserView>)> {
-    if !data.config.config.registration_open {
+    if !data.config.options.registration_open {
         return Err(anyhow!("Registration is closed").into());
     }
     let user = DbPerson::create_local(form.username, form.password, false, &data)?;

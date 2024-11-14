@@ -1,4 +1,4 @@
-use crate::{backend::error::MyResult, common::SharedConfig};
+use crate::{backend::error::MyResult, common::Options};
 use config::Config;
 use doku::Document;
 use serde::Deserialize;
@@ -13,7 +13,7 @@ pub struct IbisConfig {
     /// Details of the initial admin account
     pub setup: IbisConfigSetup,
     pub federation: IbisConfigFederation,
-    pub config: SharedConfig,
+    pub options: Options,
 }
 
 impl IbisConfig {

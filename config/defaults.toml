@@ -1,9 +1,3 @@
-# Whether users can create new accounts
-registration_open = true
-
-# Whether admins need to approve new articles
-article_approval = false
-
 # Details about the PostgreSQL database connection
 [database]
 # Database connection url
@@ -28,3 +22,10 @@ allowlist = "good.com,friends.org"
 
 # Comma separated list of instances which are blocked for federation; optional
 blocklist = "evil.com,bad.org"
+
+[options]
+# Whether users can create new accounts
+registration_open = true
+
+# Whether admins need to approve new articles
+article_approval = false

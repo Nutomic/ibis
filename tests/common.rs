@@ -5,7 +5,7 @@ use ibis::{
         config::{IbisConfig, IbisConfigDatabase, IbisConfigFederation},
         start,
     },
-    common::{RegisterUserForm, SharedConfig},
+    common::{Options, RegisterUserForm},
     frontend::{api::ApiClient, error::MyResult},
 };
 use reqwest::ClientBuilder;
@@ -128,7 +128,7 @@ impl IbisInstance {
                 domain: domain.clone(),
                 ..Default::default()
             },
-            config: SharedConfig {
+            options: Options {
                 registration_open: true,
                 article_approval,
             },
