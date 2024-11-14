@@ -47,7 +47,7 @@ pub fn Notifications() -> impl IntoView {
                                         let notif_ = notif_.clone();
                                         async move {
                                             if let ArticleApprovalRequired(a) = notif_ {
-                                                    CLIENT.approve_article(a.id, true).await.unwrap();
+                                                CLIENT.approve_article(a.id, true).await.unwrap();
                                             }
                                             notifications.refetch();
                                         }
