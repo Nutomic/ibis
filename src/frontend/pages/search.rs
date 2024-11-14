@@ -1,11 +1,11 @@
 use crate::{
     common::{DbArticle, DbInstance, SearchArticleForm},
-    frontend::{article_link, article_title},
+    frontend::{api::CLIENT, article_link, article_title},
 };
 use leptos::*;
 use leptos_router::use_query_map;
 use serde::{Deserialize, Serialize};
-use url::Url;use crate::frontend::api::CLIENT;
+use url::Url;
 
 #[derive(Default, Clone, Deserialize, Serialize, Debug)]
 struct SearchResults {

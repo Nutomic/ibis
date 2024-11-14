@@ -12,20 +12,12 @@ use crate::{
                 search_article,
             },
             instance::{follow_instance, get_instance, resolve_instance},
-            user::{
-                get_user,
-                login_user,
-                logout_user,
-                my_profile,
-                register_user,
-                validate,
-                AUTH_COOKIE,
-            },
+            user::{get_user, login_user, logout_user, my_profile, register_user, validate},
         },
         database::IbisData,
         error::MyResult,
     },
-    common::LocalUserView,
+    common::{LocalUserView, AUTH_COOKIE},
 };
 use activitypub_federation::config::Data;
 use anyhow::anyhow;
@@ -78,8 +70,15 @@ async fn auth(
     mut request: Request<Body>,
     next: Next,
 ) -> Result<Response, StatusCode> {
-    if let Some(auth) = jar.get(AUTH_COOKIE) {
-        if let Ok(user) = validate(auth.value(), &data).await {
+    let auth = request
+        .headers()
+        .get(AUTH_COOKIE)
+        .map(|h| h.to_str().ok())
+        .flatten()
+        .or(jar.get(AUTH_COOKIE).map(|c| c.value()));
+
+    if let Some(auth) = auth {
+        if let Ok(user) = validate(auth, &data).await {
             request.extensions_mut().insert(user);
         }
     }

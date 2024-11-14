@@ -1,5 +1,6 @@
+use crate::frontend::api::CLIENT;
 use leptos::{component, *};
-use url::Url;use crate::frontend::api::CLIENT;
+use url::Url;
 
 #[component]
 pub fn ConnectView<T: Clone + 'static, R: 'static>(res: Resource<T, R>) -> impl IntoView {

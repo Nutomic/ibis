@@ -1,13 +1,14 @@
 use crate::{
     common::{newtypes::ConflictId, ApiConflict, ArticleView, EditArticleForm, Notification},
     frontend::{
+        api::CLIENT,
         components::{
             article_nav::{ActiveTab, ArticleNav},
             editor::EditorView,
         },
         pages::article_resource,
     },
-};use crate::frontend::api::CLIENT;
+};
 use html::Textarea;
 use leptos::*;
 use leptos_router::use_params_map;
@@ -89,9 +90,7 @@ pub fn EditArticle() -> impl IntoView {
                     resolve_conflict_id,
                 };
                 set_wait_for_response.update(|w| *w = true);
-                let res = CLIENT
-                    .edit_article_with_conflict(&form)
-                    .await;
+                let res = CLIENT.edit_article_with_conflict(&form).await;
                 set_wait_for_response.update(|w| *w = false);
                 match res {
                     Ok(Some(conflict)) => {

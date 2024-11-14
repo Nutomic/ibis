@@ -21,6 +21,8 @@ use {
 
 pub const MAIN_PAGE_NAME: &str = "Main_Page";
 
+pub static AUTH_COOKIE: &str = "auth";
+
 #[derive(Clone)]
 pub struct Auth(pub Option<String>);
 

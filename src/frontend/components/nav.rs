@@ -1,6 +1,6 @@
-use crate::frontend::{app::GlobalState, dark_mode::DarkMode};
+use crate::frontend::{api::CLIENT, app::GlobalState, dark_mode::DarkMode};
 use leptos::{component, use_context, view, IntoView, RwSignal, SignalWith, *};
-use leptos_router::*;use crate::frontend::api::CLIENT;
+use leptos_router::*;
 
 #[component]
 pub fn Nav() -> impl IntoView {
@@ -21,12 +21,7 @@ pub fn Nav() -> impl IntoView {
     );
     let notification_count = create_resource(
         || (),
-        move |_| async move {
-            CLIENT
-                .notifications_count()
-                .await
-                .unwrap_or_default()
-        },
+        move |_| async move { CLIENT.notifications_count().await.unwrap_or_default() },
     );
 
     let (search_query, set_search_query) = create_signal(String::new());

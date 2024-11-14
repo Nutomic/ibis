@@ -1,8 +1,8 @@
 use crate::{
     common::LoginUserForm,
-    frontend::{app::GlobalState, components::credentials::*},
+    frontend::{api::CLIENT, app::GlobalState, components::credentials::*},
 };
-use leptos::*;use crate::frontend::api::CLIENT;
+use leptos::*;
 use leptos_router::Redirect;
 
 #[component]

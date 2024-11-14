@@ -1,13 +1,14 @@
 use crate::{
     common::{newtypes::ArticleId, ForkArticleForm, ProtectArticleForm},
     frontend::{
+        api::CLIENT,
         app::GlobalState,
         article_link,
         components::article_nav::{ActiveTab, ArticleNav},
         pages::article_resource,
         DbArticle,
     },
-};use crate::frontend::api::CLIENT;
+};
 use leptos::*;
 use leptos_router::Redirect;
 

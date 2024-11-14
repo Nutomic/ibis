@@ -1,6 +1,9 @@
-use crate::common::{ArticleView, GetArticleForm, MAIN_PAGE_NAME};
+use crate::{
+    common::{ArticleView, GetArticleForm, MAIN_PAGE_NAME},
+    frontend::api::CLIENT,
+};
 use leptos::{create_resource, Resource, SignalGet};
-use leptos_router::use_params_map;use crate::frontend::api::CLIENT;
+use leptos_router::use_params_map;
 
 pub(crate) mod article;
 pub(crate) mod diff;

@@ -1,8 +1,8 @@
 use crate::{
     common::{LocalUserView, RegisterUserForm},
-    frontend::{app::GlobalState, components::credentials::*, error::MyResult},
+    frontend::{api::CLIENT, app::GlobalState, components::credentials::*, error::MyResult},
 };
-use leptos::{logging::log, *};use crate::frontend::api::CLIENT;
+use leptos::{logging::log, *};
 
 #[component]
 pub fn Register() -> impl IntoView {
@@ -17,8 +17,7 @@ pub fn Register() -> impl IntoView {
         log!("Try to register new account for {}", credentials.username);
         async move {
             set_wait_for_response.update(|w| *w = true);
-            let result: MyResult<LocalUserView> =
-                CLIENT.register(credentials).await;
+            let result: MyResult<LocalUserView> = CLIENT.register(credentials).await;
             set_wait_for_response.update(|w| *w = false);
             match result {
                 Ok(res) => {

@@ -1,12 +1,13 @@
 use crate::{
     common::{validation::can_edit_article, ArticleView, GetInstance},
     frontend::{
+        api::CLIENT,
         app::GlobalState,
         article_link,
         article_title,
         components::instance_follow_button::InstanceFollowButton,
     },
-};use crate::frontend::api::CLIENT;
+};
 use leptos::*;
 use leptos_router::*;
 

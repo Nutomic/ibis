@@ -13,6 +13,7 @@ use crate::{
         DbInstance,
         DbPerson,
         EditVersion,
+        AUTH_COOKIE,
         MAIN_PAGE_NAME,
     },
     frontend::app::App,
@@ -22,7 +23,7 @@ use activitypub_federation::{
     fetch::object_id::ObjectId,
     http_signatures::generate_actor_keypair,
 };
-use api::{api_routes, user::AUTH_COOKIE};
+use api::api_routes;
 use assets::file_and_error_handler;
 use axum::{
     body::Body,

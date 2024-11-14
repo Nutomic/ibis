@@ -12,6 +12,7 @@ use crate::{
         LoginUserForm,
         Notification,
         RegisterUserForm,
+        AUTH_COOKIE,
     },
 };
 use activitypub_federation::config::Data;
@@ -33,8 +34,6 @@ use jsonwebtoken::{
 };
 use serde::{Deserialize, Serialize};
 use time::{Duration, OffsetDateTime};
-
-pub static AUTH_COOKIE: &str = "auth";
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Claims {

@@ -1,11 +1,12 @@
 use crate::{
     common::{utils::http_protocol_str, DbInstance, ListArticlesForm},
     frontend::{
+        api::CLIENT,
         article_link,
         article_title,
         components::instance_follow_button::InstanceFollowButton,
     },
-};use crate::frontend::api::CLIENT;
+};
 use leptos::*;
 use leptos_router::use_params_map;
 use url::Url;
@@ -16,10 +17,7 @@ pub fn InstanceDetails() -> impl IntoView {
     let hostname = move || params.get().get("hostname").cloned().unwrap();
     let instance_profile = create_resource(hostname, move |hostname| async move {
         let url = Url::parse(&format!("{}://{hostname}", http_protocol_str())).unwrap();
-        CLIENT
-            .resolve_instance(url)
-            .await
-            .unwrap()
+        CLIENT.resolve_instance(url).await.unwrap()
     });
 
     view! {

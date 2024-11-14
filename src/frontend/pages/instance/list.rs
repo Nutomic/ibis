@@ -1,5 +1,5 @@
-use crate::frontend::components::connect::ConnectView;
-use leptos::*;use crate::frontend::api::CLIENT;
+use crate::frontend::{api::CLIENT, components::connect::ConnectView};
+use leptos::*;
 
 #[component]
 pub fn ListInstances() -> impl IntoView {

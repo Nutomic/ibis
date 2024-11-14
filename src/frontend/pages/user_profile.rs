@@ -1,9 +1,9 @@
 use crate::{
     common::{DbPerson, GetUserForm},
-    frontend::user_title,
+    frontend::{api::CLIENT, user_title},
 };
 use leptos::*;
-use leptos_router::use_params_map;use crate::frontend::api::CLIENT;
+use leptos_router::use_params_map;
 
 #[component]
 pub fn UserProfile() -> impl IntoView {

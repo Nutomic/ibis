@@ -1,7 +1,7 @@
 use crate::{
     common::ListArticlesForm,
-    frontend::{article_link, article_title, components::connect::ConnectView},
-};use crate::frontend::api::CLIENT;
+    frontend::{api::CLIENT, article_link, article_title, components::connect::ConnectView},
+};
 use html::Input;
 use leptos::*;
 

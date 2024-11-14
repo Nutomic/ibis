@@ -1,6 +1,7 @@
 use crate::{
     common::LocalUserView,
     frontend::{
+        api::CLIENT,
         components::nav::Nav,
         dark_mode::DarkMode,
         pages::{
@@ -38,7 +39,6 @@ use leptos::{
 };
 use leptos_meta::{provide_meta_context, *};
 use leptos_router::{Route, Router, Routes};
-use crate::frontend::api::CLIENT;
 
 // https://book.leptos.dev/15_global_state.html
 #[derive(Clone)]
@@ -47,7 +47,6 @@ pub struct GlobalState {
 }
 
 impl GlobalState {
-
     pub fn update_my_profile() {
         create_local_resource(
             move || (),
@@ -74,9 +73,7 @@ impl GlobalState {
 #[component]
 pub fn App() -> impl IntoView {
     provide_meta_context();
-    let global_state = GlobalState {
-        my_profile: None,
-    };
+    let global_state = GlobalState { my_profile: None };
     // Load user profile in case we are already logged in
     GlobalState::update_my_profile();
     provide_context(create_rw_signal(global_state));

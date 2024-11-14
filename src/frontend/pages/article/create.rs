@@ -1,7 +1,7 @@
 use crate::{
     common::CreateArticleForm,
-    frontend::components::editor::EditorView,
-};use crate::frontend::api::CLIENT;
+    frontend::{api::CLIENT, components::editor::EditorView},
+};
 use html::Textarea;
 use leptos::*;
 use leptos_router::Redirect;

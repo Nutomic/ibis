@@ -1,5 +1,3 @@
-use std::sync::LazyLock;
-
 use crate::{
     common::{
         newtypes::ArticleId,
@@ -32,11 +30,10 @@ use crate::{
 use anyhow::anyhow;
 use reqwest::{Client, RequestBuilder, StatusCode};
 use serde::{Deserialize, Serialize};
+use std::sync::LazyLock;
 use url::Url;
 
-pub static CLIENT: LazyLock<ApiClient> = LazyLock::new(|| {
-    ApiClient::new(Client::new(), None)
-  });
+pub static CLIENT: LazyLock<ApiClient> = LazyLock::new(|| ApiClient::new(Client::new(), None));
 
 #[derive(Clone)]
 pub struct ApiClient {
@@ -276,13 +273,13 @@ where
 
     #[cfg(feature = "ssr")]
     {
-        use crate::common::Auth;
+        use crate::common::{Auth, AUTH_COOKIE};
         use leptos::use_context;
         use reqwest::header::HeaderName;
 
         let auth = use_context::<Auth>();
         if let Some(Auth(Some(auth))) = auth {
-            req = req.header(HeaderName::from_static("auth"), auth);
+            req = req.header(HeaderName::from_static(AUTH_COOKIE), auth);
         }
     }
     let res = req.send().await?;
