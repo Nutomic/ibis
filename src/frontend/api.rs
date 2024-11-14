@@ -267,6 +267,18 @@ where
     {
         req = req.fetch_credentials_include();
     }
+
+    #[cfg(feature = "ssr")]
+    {
+        use crate::common::Auth;
+        use leptos::use_context;
+        use reqwest::header::HeaderName;
+
+        let auth = use_context::<Auth>();
+        if let Some(Auth(Some(auth))) = auth {
+            req = req.header(HeaderName::from_static("auth"), auth);
+        }
+    }
     let res = req.send().await?;
     let status = res.status();
     let text = res.text().await?;

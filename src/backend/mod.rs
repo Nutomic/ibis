@@ -8,6 +8,7 @@ use crate::{
     },
     common::{
         utils::http_protocol_str,
+        Auth,
         DbArticle,
         DbInstance,
         DbPerson,
@@ -21,16 +22,19 @@ use activitypub_federation::{
     fetch::object_id::ObjectId,
     http_signatures::generate_actor_keypair,
 };
-use api::api_routes;
+use api::{api_routes, user::AUTH_COOKIE};
 use assets::file_and_error_handler;
 use axum::{
     body::Body,
+    extract::State,
     http::{HeaderValue, Request},
     middleware::Next,
-    response::Response,
+    response::{IntoResponse, Response},
+    routing::get,
     Router,
     ServiceExt,
 };
+use axum_extra::extract::CookieJar;
 use axum_macros::debug_middleware;
 use chrono::Utc;
 use diesel::{
@@ -42,7 +46,7 @@ use federation::objects::{
     articles_collection::local_articles_url,
     instance_collection::linked_instances_url,
 };
-use leptos::get_configuration;
+use leptos::*;
 use leptos_axum::{generate_route_list, LeptosRoutes};
 use log::info;
 use std::net::SocketAddr;
@@ -97,7 +101,8 @@ pub async fn start(config: IbisConfig, override_hostname: Option<SocketAddr>) ->
 
     let config = data.clone();
     let app = Router::new()
-        .leptos_routes(&leptos_options, routes, App)
+        //.leptos_routes(&leptos_options, routes, App)
+        .leptos_routes_with_handler(routes, get(leptos_routes_handler))
         .fallback(file_and_error_handler)
         .with_state(leptos_options)
         .nest(FEDERATION_ROUTES_PREFIX, federation_routes())
@@ -116,6 +121,24 @@ pub async fn start(config: IbisConfig, override_hostname: Option<SocketAddr>) ->
     axum::serve(listener, app_with_middleware.into_make_service()).await?;
 
     Ok(())
+}
+
+/// Make auth token available in hydrate mode
+async fn leptos_routes_handler(
+    jar: CookieJar,
+    State(option): State<LeptosOptions>,
+    req: Request<Body>,
+) -> Response {
+    let handler = leptos_axum::render_app_async_with_context(
+        option.clone(),
+        move || {
+            let cookie = jar.get(AUTH_COOKIE).map(|c| c.value().to_string());
+            provide_context(Auth(cookie));
+        },
+        move || view! {  <App/> },
+    );
+
+    handler(req).await.into_response()
 }
 
 const MAIN_PAGE_DEFAULT_TEXT: &str = "Welcome to Ibis, the federated Wikipedia alternative!
