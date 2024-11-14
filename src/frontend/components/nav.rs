@@ -1,24 +1,17 @@
-use crate::frontend::{api::CLIENT, app::GlobalState, dark_mode::DarkMode};
-use leptos::{component, use_context, view, IntoView, RwSignal, SignalWith, *};
+use crate::frontend::{
+    api::CLIENT,
+    app::{is_logged_in, site, DefaultResource},
+    dark_mode::DarkMode,
+};
+use leptos::{component, view, IntoView, *};
 use leptos_router::*;
 
 #[component]
 pub fn Nav() -> impl IntoView {
-    let global_state = use_context::<RwSignal<GlobalState>>().unwrap();
     let logout_action = create_action(move |_| async move {
         CLIENT.logout().await.unwrap();
-        GlobalState::update_my_profile();
+        site().refetch();
     });
-    let registration_open = create_local_resource(
-        || (),
-        move |_| async move {
-            CLIENT
-                .get_local_instance()
-                .await
-                .map(|i| i.registration_open)
-                .unwrap_or_default()
-        },
-    );
     let notification_count = create_resource(
         || (),
         move |_| async move { CLIENT.notifications_count().await.unwrap_or_default() },
@@ -56,19 +49,21 @@ pub fn Nav() -> impl IntoView {
                     <li>
                         <A href="/article/list">"Articles"</A>
                     </li>
-                    <Show when=move || global_state.with(|state| state.my_profile.is_some())>
-                        <li>
-                            <A href="/article/create">"Create Article"</A>
-                        </li>
-                        <li>
-                            <A href="/notifications">
-                                "Notifications "
-                                <span class="indicator-item indicator-end badge badge-neutral">
-                                    {notification_count}
-                                </span>
-                            </A>
-                        </li>
-                    </Show>
+                    <Transition>
+                        <Show when=is_logged_in>
+                            <li>
+                                <A href="/article/create">"Create Article"</A>
+                            </li>
+                            <li>
+                                <A href="/notifications">
+                                    "Notifications "
+                                    <span class="indicator-item indicator-end badge badge-neutral">
+                                        {move || notification_count.get()}
+                                    </span>
+                                </A>
+                            </li>
+                        </Show>
+                    </Transition>
                     <li>
                         <form
                             class="form-control m-0 p-1"
@@ -96,42 +91,46 @@ pub fn Nav() -> impl IntoView {
                         </form>
                     </li>
                     <div class="divider"></div>
-                    <Show
-                        when=move || global_state.with(|state| state.my_profile.is_some())
-                        fallback=move || {
-                            view! {
-                                <li>
-                                    <A href="/login">"Login"</A>
-                                </li>
-                                <Show when=move || registration_open.get().unwrap_or_default()>
+                    <Transition>
+                        <Show
+                            when=is_logged_in
+                            fallback=move || {
+                                view! {
                                     <li>
-                                        <A href="/register">"Register"</A>
+                                        <A href="/login">"Login"</A>
                                     </li>
-                                </Show>
+                                    <Show when=move || {
+                                        site().with_default(|s| s.config.registration_open)
+                                    }>
+                                        <li>
+                                            <A href="/register">"Register"</A>
+                                        </li>
+                                    </Show>
+                                }
                             }
-                        }
-                    >
+                        >
 
-                        {
-                            let my_profile = global_state
-                                .with(|state| state.my_profile.clone().unwrap());
-                            let profile_link = format!("/user/{}", my_profile.person.username);
-                            view! {
-                                <p class="self-center pb-2">
-                                    "Logged in as " <a class="link" href=profile_link>
-                                        {my_profile.person.username}
-                                    </a>
-                                </p>
-                                <button
-                                    class="btn btn-outline btn-xs w-min self-center"
-                                    on:click=move |_| logout_action.dispatch(())
-                                >
-                                    Logout
-                                </button>
+                            {
+                                let my_profile = site()
+                                    .with_default(|site| site.clone().my_profile.unwrap());
+                                let profile_link = format!("/user/{}", my_profile.person.username);
+                                view! {
+                                    <p class="self-center pb-2">
+                                        "Logged in as " <a class="link" href=profile_link>
+                                            {my_profile.person.username}
+                                        </a>
+                                    </p>
+                                    <button
+                                        class="btn btn-outline btn-xs w-min self-center"
+                                        on:click=move |_| logout_action.dispatch(())
+                                    >
+                                        Logout
+                                    </button>
+                                }
                             }
-                        }
 
-                    </Show>
+                        </Show>
+                    </Transition>
                     <div class="flex-grow min-h-2"></div>
                     <div class="m-1 grid gap-2">
                         <label class="flex cursor-pointer gap-2">

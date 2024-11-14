@@ -112,7 +112,7 @@ async fn test_follow_instance() -> MyResult<()> {
     let data = TestData::start(false).await;
 
     // check initial state
-    let alpha_user = data.alpha.my_profile().await?;
+    let alpha_user = data.alpha.site().await?.my_profile.unwrap();
     assert_eq!(0, alpha_user.following.len());
     let beta_instance = data.beta.get_local_instance().await?;
     assert_eq!(0, beta_instance.followers.len());
@@ -122,7 +122,7 @@ async fn test_follow_instance() -> MyResult<()> {
         .await?;
 
     // check that follow was federated
-    let alpha_user = data.alpha.my_profile().await?;
+    let alpha_user = data.alpha.site().await?.my_profile.unwrap();
     assert_eq!(1, alpha_user.following.len());
     assert_eq!(beta_instance.instance.ap_id, alpha_user.following[0].ap_id);
 
@@ -610,13 +610,13 @@ async fn test_user_registration_login() -> MyResult<()> {
     };
     data.alpha.login(login_data).await?;
 
-    let my_profile = data.alpha.my_profile().await?;
+    let my_profile = data.alpha.site().await?.my_profile.unwrap();
     assert_eq!(username, my_profile.person.username);
 
     data.alpha.logout().await?;
 
-    let my_profile_after_logout = data.alpha.my_profile().await;
-    assert!(my_profile_after_logout.is_err());
+    let my_profile_after_logout = data.alpha.site().await?.my_profile;
+    assert!(my_profile_after_logout.is_none());
 
     data.stop()
 }
@@ -635,7 +635,7 @@ async fn test_user_profile() -> MyResult<()> {
     data.beta
         .resolve_article(create_res.article.ap_id.into_inner())
         .await?;
-    let domain = extract_domain(&data.alpha.my_profile().await?.person.ap_id);
+    let domain = extract_domain(&data.alpha.site().await?.my_profile.unwrap().person.ap_id);
 
     // Now we can fetch the remote user from local api
     let params = GetUserForm {

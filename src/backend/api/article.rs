@@ -68,7 +68,7 @@ pub(in crate::backend::api) async fn create_article(
         instance_id: local_instance.id,
         local: true,
         protected: false,
-        approved: !data.config.article_approval,
+        approved: !data.config.config.article_approval,
     };
     let article = DbArticle::create(form, &data)?;
 
@@ -214,7 +214,7 @@ pub(in crate::backend::api) async fn fork_article(
         instance_id: local_instance.id,
         local: true,
         protected: false,
-        approved: !data.config.article_approval,
+        approved: !data.config.config.article_approval,
     };
     let article = DbArticle::create(form, &data)?;
 

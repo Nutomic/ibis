@@ -2,7 +2,7 @@ use crate::{
     common::{newtypes::ArticleId, ForkArticleForm, ProtectArticleForm},
     frontend::{
         api::CLIENT,
-        app::GlobalState,
+        app::is_admin,
         article_link,
         components::article_nav::{ActiveTab, ArticleNav},
         pages::article_resource,
@@ -14,7 +14,6 @@ use leptos_router::Redirect;
 
 #[component]
 pub fn ArticleActions() -> impl IntoView {
-    let global_state = use_context::<RwSignal<GlobalState>>().unwrap();
     let article = article_resource();
     let (new_title, set_new_title) = create_signal(String::new());
     let (fork_response, set_fork_response) = create_signal(Option::<DbArticle>::None);
@@ -68,17 +67,7 @@ pub fn ArticleActions() -> impl IntoView {
                                         .map(|err| {
                                             view! { <p class="alert">{err}</p> }
                                         })
-                                }}
-                                <Show when=move || {
-                                    global_state
-                                        .with(|state| {
-                                            state
-                                                .my_profile
-                                                .as_ref()
-                                                .map(|p| p.local_user.admin)
-                                                .unwrap_or_default() && article.article.local
-                                        })
-                                }>
+                                }} <Show when=move || { is_admin() && article.article.local }>
                                     <button
                                         class="btn btn-secondary"
                                         on:click=move |_| {

@@ -1,5 +1,5 @@
 use crate::{
-    common::LocalUserView,
+    common::SiteView,
     frontend::{
         api::CLIENT,
         components::nav::Nav,
@@ -23,60 +23,51 @@ use crate::{
         },
     },
 };
-use leptos::{
-    component,
-    create_local_resource,
-    create_rw_signal,
-    expect_context,
-    provide_context,
-    use_context,
-    view,
-    DynAttrs,
-    IntoView,
-    RwSignal,
-    SignalGet,
-    SignalUpdate,
-};
+use leptos::*;
 use leptos_meta::{provide_meta_context, *};
 use leptos_router::{Route, Router, Routes};
 
-// https://book.leptos.dev/15_global_state.html
-#[derive(Clone)]
-pub struct GlobalState {
-    pub(crate) my_profile: Option<LocalUserView>,
+pub fn site() -> Resource<(), SiteView> {
+    use_context::<Resource<(), SiteView>>().unwrap()
 }
 
-impl GlobalState {
-    pub fn update_my_profile() {
-        create_local_resource(
-            move || (),
-            |_| async move {
-                let my_profile = CLIENT.my_profile().await.ok();
-                expect_context::<RwSignal<GlobalState>>()
-                    .update(|state| state.my_profile = my_profile.clone());
-            },
-        );
-    }
+pub fn is_logged_in() -> bool {
+    site().with_default(|site| site.my_profile.is_some())
+}
+pub fn is_admin() -> bool {
+    site().with_default(|site| {
+        site.my_profile
+            .as_ref()
+            .map(|p| p.local_user.admin)
+            .unwrap_or(false)
+    })
+}
 
-    pub fn is_admin() -> fn() -> bool {
-        move || {
-            use_context::<RwSignal<GlobalState>>()
-                .expect("global state is provided")
-                .get()
-                .my_profile
-                .map(|p| p.local_user.admin)
-                .unwrap_or(false)
-        }
+pub trait DefaultResource<T> {
+    fn with_default<O>(&self, f: impl FnOnce(&T) -> O) -> O;
+}
+
+impl<T: Default> DefaultResource<T> for Resource<(), T> {
+    fn with_default<O>(&self, f: impl FnOnce(&T) -> O) -> O {
+        self.with(|x| match x {
+            Some(x) => f(x),
+            None => f(&T::default()),
+        })
     }
 }
 
 #[component]
 pub fn App() -> impl IntoView {
+    // TODO: should create_resource() but then things break
+    let site_resource = create_local_resource(
+        move || (),
+        |_| async move {
+            let site = CLIENT.site().await.unwrap();
+            site
+        },
+    );
+    provide_context(site_resource);
     provide_meta_context();
-    let global_state = GlobalState { my_profile: None };
-    // Load user profile in case we are already logged in
-    GlobalState::update_my_profile();
-    provide_context(create_rw_signal(global_state));
 
     let darkmode = DarkMode::init();
     provide_context(darkmode.clone());

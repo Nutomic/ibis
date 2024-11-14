@@ -76,7 +76,7 @@ pub(in crate::backend::api) async fn register_user(
     jar: CookieJar,
     Form(form): Form<RegisterUserForm>,
 ) -> MyResult<(CookieJar, Json<LocalUserView>)> {
-    if !data.config.registration_open {
+    if !data.config.config.registration_open {
         return Err(anyhow!("Registration is closed").into());
     }
     let user = DbPerson::create_local(form.username, form.password, false, &data)?;
@@ -119,19 +119,6 @@ fn create_cookie(jwt: String, data: &Data<IbisData>) -> Cookie<'static> {
             OffsetDateTime::now_utc() + Duration::weeks(52),
         ))
         .build()
-}
-
-#[debug_handler]
-pub(in crate::backend::api) async fn my_profile(
-    data: Data<IbisData>,
-    jar: CookieJar,
-) -> MyResult<Json<LocalUserView>> {
-    let jwt = jar.get(AUTH_COOKIE).map(|c| c.value());
-    if let Some(jwt) = jwt {
-        Ok(Json(validate(jwt, &data).await?))
-    } else {
-        Err(anyhow!("invalid/missing auth").into())
-    }
 }
 
 #[debug_handler]

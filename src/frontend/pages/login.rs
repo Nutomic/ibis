@@ -1,6 +1,6 @@
 use crate::{
     common::LoginUserForm,
-    frontend::{api::CLIENT, app::GlobalState, components::credentials::*},
+    frontend::{api::CLIENT, app::site, components::credentials::*},
 };
 use leptos::*;
 use leptos_router::Redirect;
@@ -20,9 +20,8 @@ pub fn Login() -> impl IntoView {
             let result = CLIENT.login(credentials).await;
             set_wait_for_response.update(|w| *w = false);
             match result {
-                Ok(res) => {
-                    expect_context::<RwSignal<GlobalState>>()
-                        .update(|state| state.my_profile = Some(res));
+                Ok(_res) => {
+                    site().refetch();
                     set_login_response.update(|v| *v = Some(()));
                     set_login_error.update(|e| *e = None);
                 }

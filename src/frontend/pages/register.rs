@@ -1,6 +1,6 @@
 use crate::{
     common::{LocalUserView, RegisterUserForm},
-    frontend::{api::CLIENT, app::GlobalState, components::credentials::*, error::MyResult},
+    frontend::{api::CLIENT, app::site, components::credentials::*, error::MyResult},
 };
 use leptos::{logging::log, *};
 
@@ -20,9 +20,8 @@ pub fn Register() -> impl IntoView {
             let result: MyResult<LocalUserView> = CLIENT.register(credentials).await;
             set_wait_for_response.update(|w| *w = false);
             match result {
-                Ok(res) => {
-                    expect_context::<RwSignal<GlobalState>>()
-                        .update(|state| state.my_profile = Some(res));
+                Ok(_res) => {
+                    site().refetch();
                     set_register_response.update(|v| *v = Some(()));
                     set_register_error.update(|e| *e = None);
                 }

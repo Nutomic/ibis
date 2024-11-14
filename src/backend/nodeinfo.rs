@@ -34,7 +34,7 @@ async fn node_info(data: Data<IbisData>) -> MyResult<Json<NodeInfo>> {
             version: env!("CARGO_PKG_VERSION").to_string(),
         },
         protocols: vec!["activitypub".to_string()],
-        open_registrations: data.config.registration_open,
+        open_registrations: data.config.config.registration_open,
     }))
 }
 

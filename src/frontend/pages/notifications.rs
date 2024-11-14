@@ -6,7 +6,7 @@ use leptos::*;
 
 #[component]
 pub fn Notifications() -> impl IntoView {
-    let notifications = create_local_resource(
+    let notifications = create_resource(
         move || {},
         |_| async move { CLIENT.notifications_list().await.unwrap() },
     );

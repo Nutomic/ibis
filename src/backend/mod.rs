@@ -136,7 +136,7 @@ async fn leptos_routes_handler(
             let cookie = jar.get(AUTH_COOKIE).map(|c| c.value().to_string());
             provide_context(Auth(cookie));
         },
-        move || view! {  <App/> },
+        move || view! { <App /> },
     );
 
     handler(req).await.into_response()

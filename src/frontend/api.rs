@@ -24,6 +24,7 @@ use crate::{
         RegisterUserForm,
         ResolveObject,
         SearchArticleForm,
+        SiteView,
     },
     frontend::error::MyResult,
 };
@@ -210,10 +211,8 @@ impl ApiClient {
         }
     }
 
-    pub async fn my_profile(&self) -> MyResult<LocalUserView> {
-        let req = self
-            .client
-            .get(self.request_endpoint("/api/v1/account/my_profile"));
+    pub async fn site(&self) -> MyResult<SiteView> {
+        let req = self.client.get(self.request_endpoint("/api/v1/site"));
         handle_json_res(req).await
     }
 

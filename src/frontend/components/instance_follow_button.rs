@@ -1,24 +1,28 @@
 use crate::{
     common::{newtypes::InstanceId, DbInstance, FollowInstance},
-    frontend::{api::CLIENT, app::GlobalState},
+    frontend::{
+        api::CLIENT,
+        app::{site, DefaultResource},
+    },
 };
 use leptos::{component, *};
 
 #[component]
 pub fn InstanceFollowButton(instance: DbInstance) -> impl IntoView {
-    let global_state = use_context::<RwSignal<GlobalState>>().unwrap();
     let follow_action = create_action(move |instance_id: &InstanceId| {
         let instance_id = *instance_id;
         async move {
             let form = FollowInstance { id: instance_id };
             CLIENT.follow_instance(form).await.unwrap();
-            GlobalState::update_my_profile();
+            site().refetch();
         }
     });
-    let is_following = global_state
-        .get_untracked()
-        .my_profile
-        .map(|p| p.following.contains(&instance))
+    let is_following = site()
+        .with_default(|site| {
+            site.clone()
+                .my_profile
+                .map(|p| p.following.contains(&instance))
+        })
         .unwrap_or(false);
     let follow_text = if is_following {
         "Following instance"

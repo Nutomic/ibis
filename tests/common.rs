@@ -5,7 +5,7 @@ use ibis::{
         config::{IbisConfig, IbisConfigDatabase, IbisConfigFederation},
         start,
     },
-    common::RegisterUserForm,
+    common::{RegisterUserForm, SharedConfig},
     frontend::{api::ApiClient, error::MyResult},
 };
 use reqwest::ClientBuilder;
@@ -124,12 +124,14 @@ impl IbisInstance {
                 connection_url,
                 ..Default::default()
             },
-            registration_open: true,
             federation: IbisConfigFederation {
                 domain: domain.clone(),
                 ..Default::default()
             },
-            article_approval,
+            config: SharedConfig {
+                registration_open: true,
+                article_approval,
+            },
             ..Default::default()
         };
         let client = ClientBuilder::new().cookie_store(true).build().unwrap();

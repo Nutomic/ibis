@@ -86,7 +86,6 @@ impl DbInstance {
         Ok(InstanceView {
             instance,
             followers,
-            registration_open: data.config.registration_open,
         })
     }
 

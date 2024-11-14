@@ -6,6 +6,7 @@ use chrono::{DateTime, Utc};
 use newtypes::{ArticleId, ConflictId, EditId, InstanceId, PersonId};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
+use smart_default::SmartDefault;
 use url::Url;
 use uuid::Uuid;
 #[cfg(feature = "ssr")]
@@ -17,6 +18,7 @@ use {
     },
     activitypub_federation::fetch::{collection_id::CollectionId, object_id::ObjectId},
     diesel::{Identifiable, Queryable, Selectable},
+    doku::Document,
 };
 
 pub const MAIN_PAGE_NAME: &str = "Main_Page";
@@ -311,13 +313,36 @@ impl DbInstance {
 pub struct InstanceView {
     pub instance: DbInstance,
     pub followers: Vec<DbPerson>,
-    pub registration_open: bool,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct GetUserForm {
     pub name: String,
     pub domain: Option<String>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, SmartDefault)]
+#[serde(default)]
+#[serde(deny_unknown_fields)]
+#[cfg_attr(feature = "ssr", derive(Queryable, Document))]
+#[cfg_attr(feature = "ssr", diesel(check_for_backend(diesel::pg::Pg)))]
+pub struct SharedConfig {
+    /// Whether users can create new accounts
+    #[default = true]
+    #[cfg_attr(feature = "ssr", doku(example = "true"))]
+    pub registration_open: bool,
+    /// Whether admins need to approve new articles
+    #[default = false]
+    #[cfg_attr(feature = "ssr", doku(example = "false"))]
+    pub article_approval: bool,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
+#[cfg_attr(feature = "ssr", derive(Queryable))]
+#[cfg_attr(feature = "ssr", diesel(check_for_backend(diesel::pg::Pg)))]
+pub struct SiteView {
+    pub my_profile: Option<LocalUserView>,
+    pub config: SharedConfig,
 }
 
 #[test]

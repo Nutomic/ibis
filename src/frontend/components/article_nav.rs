@@ -2,7 +2,7 @@ use crate::{
     common::{validation::can_edit_article, ArticleView, GetInstance},
     frontend::{
         api::CLIENT,
-        app::GlobalState,
+        app::{is_admin, is_logged_in},
         article_link,
         article_title,
         components::instance_follow_button::InstanceFollowButton,
@@ -32,7 +32,7 @@ pub fn ArticleNav(
                     .get()
                     .map(|article_| {
                         let title = article_title(&article_.article);
-                        let instance = create_local_resource(
+                        let instance = create_resource(
                             move || article_.article.instance_id,
                             move |instance_id| async move {
                                 let form = GetInstance {
@@ -41,7 +41,6 @@ pub fn ArticleNav(
                                 CLIENT.get_instance(&form).await.unwrap()
                             },
                         );
-                        let global_state = use_context::<RwSignal<GlobalState>>().unwrap();
                         let article_link = article_link(&article_.article);
                         let article_link_ = article_link.clone();
                         let protected = article_.article.protected;
@@ -54,24 +53,14 @@ pub fn ArticleNav(
                                     "History"
                                 </A>
                                 <Show when=move || {
-                                    global_state
-                                        .with(|state| {
-                                            let is_admin = state
-                                                .my_profile
-                                                .as_ref()
-                                                .map(|p| p.local_user.admin)
-                                                .unwrap_or(false);
-                                            state.my_profile.is_some()
-                                                && can_edit_article(&article_.article, is_admin).is_ok()
-                                        })
+                                    is_logged_in()
+                                        && can_edit_article(&article_.article, is_admin()).is_ok()
                                 }>
                                     <A class=tab_classes.edit href=format!("{article_link}/edit")>
                                         "Edit"
                                     </A>
                                 </Show>
-                                <Show when=move || {
-                                    global_state.with(|state| state.my_profile.is_some())
-                                }>
+                                <Show when=is_logged_in>
                                     <A
                                         class=tab_classes.actions
                                         href=format!("{article_link_}/actions")
