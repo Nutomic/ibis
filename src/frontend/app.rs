@@ -83,6 +83,9 @@ pub fn App() -> impl IntoView {
                         <Route path="/article/:title/edit/:conflict_id?" view=EditArticle />
                         <Route path="/article/:title/actions" view=ArticleActions />
                         <Route path="/article/:title/diff/:hash" view=EditDiff />
+                        // TODO: use protected route, otherwise user can view 
+                        //       /article/create without login
+                        //https://github.com/leptos-rs/leptos/blob/leptos_0.7/examples/router/src/lib.rs#L51
                         <Route path="/article/create" view=CreateArticle />
                         <Route path="/article/list" view=ListArticles />
                         <Route path="/instance/:hostname" view=InstanceDetails />
