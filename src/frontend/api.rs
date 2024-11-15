@@ -50,7 +50,7 @@ impl ApiClient {
         let ssl;
         #[cfg(not(feature = "ssr"))]
         {
-            use leptos_use::{use_document};
+            use leptos_use::use_document;
             hostname = use_document().location().unwrap().host().unwrap();
             ssl = !cfg!(debug_assertions);
         }

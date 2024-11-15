@@ -119,6 +119,7 @@ async-trait = { version = "0.1.83", optional = true }
 config = { version = "0.14.0", features = ["toml"], optional = true }
 tower = { version = "0.5.1", optional = true }
 tower-layer = { version = "0.3.3", optional = true }
+console_log = "1.0.0"
 
 [dev-dependencies]
 pretty_assertions = "1.4.1"
