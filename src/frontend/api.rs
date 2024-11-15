@@ -31,8 +31,12 @@ use crate::{
 };
 use anyhow::anyhow;
 use reqwest::{Client, RequestBuilder, StatusCode};
+use send_wrapper::SendWrapper;
 use serde::{Deserialize, Serialize};
-use std::sync::LazyLock;
+use std::{
+    future::Future,
+    sync::{LazyLock},
+};
 use url::Url;
 
 pub static CLIENT: LazyLock<ApiClient> = LazyLock::new(|| ApiClient::new(Client::new(), None));
@@ -84,189 +88,277 @@ impl ApiClient {
         handle_json_res::<T>(req).await
     }
 
-    pub async fn get_article(&self, data: GetArticleForm) -> MyResult<ArticleView> {
-        self.get_query("/api/v1/article", Some(data)).await
-    }
-
-    pub async fn list_articles(&self, data: ListArticlesForm) -> MyResult<Vec<DbArticle>> {
-        self.get_query("/api/v1/article/list", Some(data)).await
-    }
-
-    pub async fn register(&self, register_form: RegisterUserForm) -> MyResult<LocalUserView> {
-        let req = self
-            .client
-            .post(self.request_endpoint("/api/v1/account/register"))
-            .form(&register_form);
-        handle_json_res::<LocalUserView>(req).await
-    }
-
-    pub async fn login(&self, login_form: LoginUserForm) -> MyResult<LocalUserView> {
-        let req = self
-            .client
-            .post(self.request_endpoint("/api/v1/account/login"))
-            .form(&login_form);
-        handle_json_res::<LocalUserView>(req).await
-    }
-
-    pub async fn create_article(&self, data: &CreateArticleForm) -> MyResult<ArticleView> {
-        let req = self
-            .client
-            .post(self.request_endpoint("/api/v1/article"))
-            .form(data);
-        handle_json_res(req).await
-    }
-
-    pub async fn edit_article_with_conflict(
+    pub fn get_article(
         &self,
-        edit_form: &EditArticleForm,
-    ) -> MyResult<Option<ApiConflict>> {
-        let req = self
-            .client
-            .patch(self.request_endpoint("/api/v1/article"))
-            .form(edit_form);
-        handle_json_res(req).await
+        data: GetArticleForm,
+    ) -> impl Future<Output = MyResult<ArticleView>> + Send + '_ {
+        SendWrapper::new(async move { self.get_query("/api/v1/article", Some(data)).await })
     }
 
-    pub async fn edit_article(&self, edit_form: &EditArticleForm) -> MyResult<ArticleView> {
-        let edit_res = self.edit_article_with_conflict(edit_form).await?;
-        assert!(edit_res.is_none());
+    pub fn list_articles(
+        &self,
+        data: ListArticlesForm,
+    ) -> impl Future<Output = MyResult<Vec<DbArticle>>> + Send + '_ {
+        SendWrapper::new(async move { self.get_query("/api/v1/article/list", Some(data)).await })
+    }
 
-        self.get_article(GetArticleForm {
-            title: None,
-            domain: None,
-            id: Some(edit_form.article_id),
+    pub fn register(
+        &self,
+        register_form: RegisterUserForm,
+    ) -> impl Future<Output = MyResult<LocalUserView>> + Send + '_ {
+        SendWrapper::new(async move {
+            let req = self
+                .client
+                .post(self.request_endpoint("/api/v1/account/register"))
+                .form(&register_form);
+            handle_json_res::<LocalUserView>(req).await
         })
-        .await
     }
 
-    pub async fn notifications_list(&self) -> MyResult<Vec<Notification>> {
-        let req = self
-            .client
-            .get(self.request_endpoint("/api/v1/user/notifications/list"));
-        handle_json_res(req).await
-    }
-
-    pub async fn notifications_count(&self) -> MyResult<usize> {
-        let req = self
-            .client
-            .get(self.request_endpoint("/api/v1/user/notifications/count"));
-        handle_json_res(req).await
-    }
-
-    pub async fn approve_article(&self, article_id: ArticleId, approve: bool) -> MyResult<()> {
-        let form = ApproveArticleForm {
-            article_id,
-            approve,
-        };
-        let req = self
-            .client
-            .post(self.request_endpoint("/api/v1/article/approve"))
-            .form(&form);
-        handle_json_res(req).await
-    }
-
-    pub async fn delete_conflict(&self, conflict_id: ConflictId) -> MyResult<()> {
-        let form = DeleteConflictForm { conflict_id };
-        let req = self
-            .client
-            .delete(self.request_endpoint("/api/v1/conflict"))
-            .form(&form);
-        handle_json_res(req).await
-    }
-
-    pub async fn search(&self, search_form: &SearchArticleForm) -> MyResult<Vec<DbArticle>> {
-        self.get_query("/api/v1/search", Some(search_form)).await
-    }
-
-    pub async fn get_local_instance(&self) -> MyResult<InstanceView> {
-        self.get_query("/api/v1/instance", None::<i32>).await
-    }
-
-    pub async fn get_instance(&self, get_form: &GetInstance) -> MyResult<InstanceView> {
-        self.get_query("/api/v1/instance", Some(get_form)).await
-    }
-
-    pub async fn list_instances(&self) -> MyResult<Vec<DbInstance>> {
-        self.get_query("/api/v1/instance/list", None::<i32>).await
-    }
-
-    pub async fn follow_instance_with_resolve(
+    pub fn login(
         &self,
-        follow_instance: &str,
-    ) -> MyResult<DbInstance> {
-        // fetch beta instance on alpha
-        let resolve_form = ResolveObject {
-            id: Url::parse(&format!("{}://{}", http_protocol_str(), follow_instance))?,
-        };
-        let instance_resolved: DbInstance = self
-            .get_query("/api/v1/instance/resolve", Some(resolve_form))
-            .await?;
-
-        // send follow
-        let follow_form = FollowInstance {
-            id: instance_resolved.id,
-        };
-        self.follow_instance(follow_form).await?;
-        Ok(instance_resolved)
+        login_form: LoginUserForm,
+    ) -> impl Future<Output = MyResult<LocalUserView>> + Send + '_ {
+        SendWrapper::new(async move {
+            let req = self
+                .client
+                .post(self.request_endpoint("/api/v1/account/login"))
+                .form(&login_form);
+            handle_json_res::<LocalUserView>(req).await
+        })
     }
 
-    pub async fn follow_instance(&self, follow_form: FollowInstance) -> MyResult<()> {
-        // cant use post helper because follow doesnt return json
-        let res = self
-            .client
-            .post(self.request_endpoint("/api/v1/instance/follow"))
-            .form(&follow_form)
-            .send()
-            .await?;
-        if res.status() == StatusCode::OK {
+    pub fn create_article(
+        &self,
+        data: CreateArticleForm,
+    ) -> impl Future<Output = MyResult<ArticleView>> + Send + '_ {
+        SendWrapper::new(async move {
+            let req = self
+                .client
+                .post(self.request_endpoint("/api/v1/article"))
+                .form(&data);
+            handle_json_res(req).await
+        })
+    }
+
+    pub fn edit_article_with_conflict(
+        &self,
+        edit_form: EditArticleForm,
+    ) -> impl Future<Output = MyResult<Option<ApiConflict>>> + Send + '_ {
+        SendWrapper::new(async move {
+            let req = self
+                .client
+                .patch(self.request_endpoint("/api/v1/article"))
+                .form(&edit_form);
+            handle_json_res(req).await
+        })
+    }
+
+    pub fn edit_article(
+        &self,
+        edit_form: EditArticleForm,
+    ) -> impl Future<Output = MyResult<ArticleView>> + Send + '_ {
+        SendWrapper::new(async move {
+            let article_id = edit_form.article_id;
+            let edit_res = self.edit_article_with_conflict(edit_form).await?;
+            assert!(edit_res.is_none());
+
+            self.get_article(GetArticleForm {
+                title: None,
+                domain: None,
+                id: Some(article_id),
+            })
+            .await
+        })
+    }
+
+    pub fn notifications_list(
+        &self,
+    ) -> impl Future<Output = MyResult<Vec<Notification>>> + Send + '_ {
+        SendWrapper::new(async move {
+            let req = self
+                .client
+                .get(self.request_endpoint("/api/v1/user/notifications/list"));
+            handle_json_res(req).await
+        })
+    }
+
+    pub fn notifications_count(&self) -> impl Future<Output = MyResult<usize>> + Send + '_ {
+        SendWrapper::new(async move {
+            let req = self
+                .client
+                .get(self.request_endpoint("/api/v1/user/notifications/count"));
+            handle_json_res(req).await
+        })
+    }
+
+    pub fn approve_article(
+        &self,
+        article_id: ArticleId,
+        approve: bool,
+    ) -> impl Future<Output = MyResult<()>> + Send + '_ {
+        SendWrapper::new(async move {
+            let form = ApproveArticleForm {
+                article_id,
+                approve,
+            };
+            let req = self
+                .client
+                .post(self.request_endpoint("/api/v1/article/approve"))
+                .form(&form);
+            handle_json_res(req).await
+        })
+    }
+
+    pub fn delete_conflict(
+        &self,
+        conflict_id: ConflictId,
+    ) -> impl Future<Output = MyResult<()>> + Send + '_ {
+        SendWrapper::new(async move {
+            let form = DeleteConflictForm { conflict_id };
+            let req = self
+                .client
+                .delete(self.request_endpoint("/api/v1/conflict"))
+                .form(&form);
+            handle_json_res(req).await
+        })
+    }
+
+    pub fn search(
+        &self,
+        search_form: SearchArticleForm,
+    ) -> impl Future<Output = MyResult<Vec<DbArticle>>> + Send + '_ {
+        SendWrapper::new(async move { self.get_query("/api/v1/search", Some(search_form)).await })
+    }
+
+    pub fn get_local_instance(
+        &self,
+    ) -> impl Future<Output = MyResult<Vec<InstanceView>>> + Send + '_ {
+        SendWrapper::new(async move { self.get_query("/api/v1/instance", None::<i32>).await })
+    }
+
+    pub fn get_instance(
+        &self,
+        get_form: GetInstance,
+    ) -> impl Future<Output = MyResult<InstanceView>> + Send + '_ {
+        SendWrapper::new(async move { self.get_query("/api/v1/instance", Some(get_form)).await })
+    }
+
+    pub fn list_instances(&self) -> impl Future<Output = MyResult<Vec<DbInstance>>> + Send + '_ {
+        SendWrapper::new(async move { self.get_query("/api/v1/instance/list", None::<i32>).await })
+    }
+
+    pub fn follow_instance_with_resolve(
+        &self,
+        follow_instance: String,
+    ) -> impl Future<Output = MyResult<DbInstance>> + Send + '_ {
+        SendWrapper::new(async move {
+            // fetch beta instance on alpha
+            let resolve_form = ResolveObject {
+                id: Url::parse(&format!("{}://{}", http_protocol_str(), follow_instance))?,
+            };
+            let instance_resolved: DbInstance = self
+                .get_query("/api/v1/instance/resolve", Some(resolve_form))
+                .await?;
+
+            // send follow
+            let follow_form = FollowInstance {
+                id: instance_resolved.id,
+            };
+            self.follow_instance(follow_form).await?;
+            Ok(instance_resolved)
+        })
+    }
+
+    pub fn follow_instance(
+        &self,
+        follow_form: FollowInstance,
+    ) -> impl Future<Output = MyResult<()>> + Send + '_ {
+        SendWrapper::new(async move {
+            // cant use post helper because follow doesnt return json
+            let res = self
+                .client
+                .post(self.request_endpoint("/api/v1/instance/follow"))
+                .form(&follow_form)
+                .send()
+                .await?;
+            if res.status() == StatusCode::OK {
+                Ok(())
+            } else {
+                Err(anyhow!("API error: {}", res.text().await?).into())
+            }
+        })
+    }
+
+    pub fn site(&self) -> impl Future<Output = MyResult<SiteView>> + Send + '_ {
+        SendWrapper::new(async move {
+            let req = self.client.get(self.request_endpoint("/api/v1/site"));
+            handle_json_res(req).await
+        })
+    }
+
+    pub fn logout(&self) -> impl Future<Output = MyResult<()>> + Send + '_ {
+        SendWrapper::new(async move {
+            self.client
+                .get(self.request_endpoint("/api/v1/account/logout"))
+                .send()
+                .await?;
             Ok(())
-        } else {
-            Err(anyhow!("API error: {}", res.text().await?).into())
-        }
+        })
     }
 
-    pub async fn site(&self) -> MyResult<SiteView> {
-        let req = self.client.get(self.request_endpoint("/api/v1/site"));
-        handle_json_res(req).await
+    pub fn fork_article(
+        &self,
+        form: ForkArticleForm,
+    ) -> impl Future<Output = MyResult<ArticleView>> + Send + '_ {
+        SendWrapper::new(async move {
+            let req = self
+                .client
+                .post(self.request_endpoint("/api/v1/article/fork"))
+                .form(&form);
+            Ok(handle_json_res(req).await.unwrap())
+        })
     }
 
-    pub async fn logout(&self) -> MyResult<()> {
-        self.client
-            .get(self.request_endpoint("/api/v1/account/logout"))
-            .send()
-            .await?;
-        Ok(())
+    pub fn protect_article(
+        &self,
+        params: ProtectArticleForm,
+    ) -> impl Future<Output = MyResult<DbArticle>> + Send + '_ {
+        SendWrapper::new(async move {
+            let req = self
+                .client
+                .post(self.request_endpoint("/api/v1/article/protect"))
+                .form(&params);
+            handle_json_res(req).await
+        })
     }
 
-    pub async fn fork_article(&self, form: &ForkArticleForm) -> MyResult<ArticleView> {
-        let req = self
-            .client
-            .post(self.request_endpoint("/api/v1/article/fork"))
-            .form(form);
-        Ok(handle_json_res(req).await.unwrap())
+    pub fn resolve_article(
+        &self,
+        id: Url,
+    ) -> impl Future<Output = MyResult<ArticleView>> + Send + '_ {
+        SendWrapper::new(async move {
+            let resolve_object = ResolveObject { id };
+            self.get_query("/api/v1/article/resolve", Some(resolve_object))
+                .await
+        })
     }
 
-    pub async fn protect_article(&self, params: &ProtectArticleForm) -> MyResult<DbArticle> {
-        let req = self
-            .client
-            .post(self.request_endpoint("/api/v1/article/protect"))
-            .form(params);
-        handle_json_res(req).await
+    pub fn resolve_instance(
+        &self,
+        id: Url,
+    ) -> impl Future<Output = MyResult<DbInstance>> + Send + '_ {
+        SendWrapper::new(async move {
+            let resolve_object = ResolveObject { id };
+            self.get_query("/api/v1/instance/resolve", Some(resolve_object))
+                .await
+        })
     }
-
-    pub async fn resolve_article(&self, id: Url) -> MyResult<ArticleView> {
-        let resolve_object = ResolveObject { id };
-        self.get_query("/api/v1/article/resolve", Some(resolve_object))
-            .await
-    }
-
-    pub async fn resolve_instance(&self, id: Url) -> MyResult<DbInstance> {
-        let resolve_object = ResolveObject { id };
-        self.get_query("/api/v1/instance/resolve", Some(resolve_object))
-            .await
-    }
-    pub async fn get_user(&self, data: GetUserForm) -> MyResult<DbPerson> {
-        self.get_query("/api/v1/user", Some(data)).await
+    pub fn get_user(
+        &self,
+        data: GetUserForm,
+    ) -> impl Future<Output = MyResult<DbPerson>> + Send + '_ {
+        SendWrapper::new(async move { self.get_query("/api/v1/user", Some(data)).await })
     }
 
     fn request_endpoint(&self, path: &str) -> String {
@@ -275,7 +367,7 @@ impl ApiClient {
     }
 }
 
-async fn handle_json_res<T>(#[allow(unused_mut)] mut req: RequestBuilder) -> MyResult<T>
+async fn handle_json_res<T>(mut req: RequestBuilder) -> MyResult<T>
 where
     T: for<'de> Deserialize<'de>,
 {

@@ -30,8 +30,8 @@ use leptos_router::{
     path,
 };
 
-pub fn site() -> Resource<(), SiteView> {
-    use_context::<Resource<(), SiteView>>().unwrap()
+pub fn site() -> Resource<SiteView> {
+    use_context::<Resource<SiteView>>().unwrap()
 }
 
 pub fn is_logged_in() -> bool {
@@ -51,7 +51,7 @@ pub trait DefaultResource<T> {
     fn with_default<O>(&self, f: impl FnOnce(&T) -> O) -> O;
 }
 
-impl<T: Default> DefaultResource<T> for Resource<(), T> {
+impl<T: Default + Send + Sync> DefaultResource<T> for Resource<T> {
     fn with_default<O>(&self, f: impl FnOnce(&T) -> O) -> O {
         self.with(|x| match x {
             Some(x) => f(x),

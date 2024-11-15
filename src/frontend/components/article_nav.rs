@@ -35,7 +35,7 @@ pub fn ArticleNav(article: Resource<ArticleView>, active_tab: ActiveTab) -> impl
                                 let form = GetInstance {
                                     id: Some(instance_id),
                                 };
-                                CLIENT.get_instance(&form).await.unwrap()
+                                CLIENT.get_instance(form).await.unwrap()
                             },
                         );
                         let article_link = article_link(&article_.article);

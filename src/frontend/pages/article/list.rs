@@ -7,8 +7,8 @@ use leptos::{html::Input, prelude::*};
 #[component]
 pub fn ListArticles() -> impl IntoView {
     let (only_local, set_only_local) = signal(false);
-    let button_only_local = create_node_ref::<Input>();
-    let button_all = create_node_ref::<Input>();
+    let button_only_local = NodeRef::<Input>::new();
+    let button_all = NodeRef::<Input>::new();
     let articles = Resource::new(
         move || only_local.get(),
         |only_local| async move {
@@ -32,8 +32,9 @@ pub fn ListArticles() -> impl IntoView {
                     class="btn rounded-r-none"
                     node_ref=button_only_local
                     on:click=move |_| {
-                        button_all.get().map(|c| c.class("btn-primary", false));
-                        button_only_local.get().map(|c| c.class("btn-primary", true));
+                        // TODO
+                        //button_all.get().map(|c| c.class("btn-primary", false));
+                        //button_only_local.get().map(|c| c.class("btn-primary", true));
                         set_only_local.set(true);
                     }
                 />
@@ -43,8 +44,8 @@ pub fn ListArticles() -> impl IntoView {
                     class="btn btn-primary rounded-l-none"
                     node_ref=button_all
                     on:click=move |_| {
-                        button_all.get().map(|c| c.class("btn-primary", true));
-                        button_only_local.get().map(|c| c.class("btn-primary", false));
+                        //button_all.get().map(|c| c.class("btn-primary", true));
+                        //button_only_local.get().map(|c| c.class("btn-primary", false));
                         set_only_local.set(false);
                     }
                 />

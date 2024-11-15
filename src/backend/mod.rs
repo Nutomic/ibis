@@ -131,7 +131,6 @@ async fn leptos_routes_handler(
     req: Request<Body>,
 ) -> Response {
     let handler = leptos_axum::render_app_async_with_context(
-        option.clone(),
         move || {
             let cookie = jar.get(AUTH_COOKIE).map(|c| c.value().to_string());
             provide_context(Auth(cookie));

@@ -29,7 +29,7 @@ pub fn Search() -> impl IntoView {
         let mut search_results = SearchResults::default();
         let url = Url::parse(&query);
         let search_data = SearchArticleForm { query };
-        let search = CLIENT.search(&search_data);
+        let search = CLIENT.search(search_data);
 
         match search.await {
             Ok(mut a) => search_results.articles.append(&mut a),
