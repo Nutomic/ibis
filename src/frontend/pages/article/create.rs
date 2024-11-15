@@ -2,27 +2,26 @@ use crate::{
     common::CreateArticleForm,
     frontend::{api::CLIENT, components::editor::EditorView},
 };
-use html::Textarea;
-use leptos::*;
-use leptos_router::Redirect;
+use leptos::{html::Textarea, prelude::*};
+use leptos_router::components::Redirect;
 use leptos_use::{use_textarea_autosize, UseTextareaAutosizeReturn};
 
 #[component]
 pub fn CreateArticle() -> impl IntoView {
-    let (title, set_title) = create_signal(String::new());
-    let textarea_ref = create_node_ref::<Textarea>();
+    let (title, set_title) = signal(String::new());
+    let textarea_ref = NodeRef::<Textarea>::new();
     let UseTextareaAutosizeReturn {
         content,
         set_content,
         trigger_resize: _,
     } = use_textarea_autosize(textarea_ref);
-    let (summary, set_summary) = create_signal(String::new());
-    let (create_response, set_create_response) = create_signal(None::<()>);
-    let (create_error, set_create_error) = create_signal(None::<String>);
-    let (wait_for_response, set_wait_for_response) = create_signal(false);
+    let (summary, set_summary) = signal(String::new());
+    let (create_response, set_create_response) = signal(None::<()>);
+    let (create_error, set_create_error) = signal(None::<String>);
+    let (wait_for_response, set_wait_for_response) = signal(false);
     let button_is_disabled =
         Signal::derive(move || wait_for_response.get() || summary.get().is_empty());
-    let submit_action = create_action(move |(title, text, summary): &(String, String, String)| {
+    let submit_action = Action::new(move |(title, text, summary): &(String, String, String)| {
         let title = title.clone();
         let text = text.clone();
         let summary = summary.clone();
@@ -94,7 +93,7 @@ pub fn CreateArticle() -> impl IntoView {
                                 prop:disabled=move || button_is_disabled.get()
                                 on:click=move |_| {
                                     submit_action
-                                        .dispatch((title.get(), content.get(), summary.get()))
+                                        .dispatch((title.get(), content.get(), summary.get()));
                                 }
                             >
                                 Submit

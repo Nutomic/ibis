@@ -9,16 +9,16 @@ use crate::{
         DbArticle,
     },
 };
-use leptos::*;
-use leptos_router::Redirect;
+use leptos::{ev::KeyboardEvent, prelude::*};
+use leptos_router::components::Redirect;
 
 #[component]
 pub fn ArticleActions() -> impl IntoView {
     let article = article_resource();
-    let (new_title, set_new_title) = create_signal(String::new());
-    let (fork_response, set_fork_response) = create_signal(Option::<DbArticle>::None);
-    let (error, set_error) = create_signal(None::<String>);
-    let fork_action = create_action(move |(article_id, new_title): &(ArticleId, String)| {
+    let (new_title, set_new_title) = signal(String::new());
+    let (fork_response, set_fork_response) = signal(Option::<DbArticle>::None);
+    let (error, set_error) = signal(None::<String>);
+    let fork_action = Action::new(move |(article_id, new_title): &(ArticleId, String)| {
         let params = ForkArticleForm {
             article_id: *article_id,
             new_title: new_title.to_string(),
@@ -34,7 +34,7 @@ pub fn ArticleActions() -> impl IntoView {
             }
         }
     });
-    let protect_action = create_action(move |(id, protected): &(ArticleId, bool)| {
+    let protect_action = Action::new(move |(id, protected): &(ArticleId, bool)| {
         let params = ProtectArticleForm {
             article_id: *id,
             protected: !protected,
@@ -72,7 +72,7 @@ pub fn ArticleActions() -> impl IntoView {
                                         class="btn btn-secondary"
                                         on:click=move |_| {
                                             protect_action
-                                                .dispatch((article.article.id, article.article.protected))
+                                                .dispatch((article.article.id, article.article.protected));
                                         }
                                     >
                                         Toggle Article Protection
@@ -82,7 +82,7 @@ pub fn ArticleActions() -> impl IntoView {
                                     <input
                                         class="input"
                                         placeholder="New Title"
-                                        on:keyup=move |ev: ev::KeyboardEvent| {
+                                        on:keyup=move |ev: KeyboardEvent| {
                                             let val = event_target_value(&ev);
                                             set_new_title.update(|v| *v = val);
                                         }
@@ -92,7 +92,7 @@ pub fn ArticleActions() -> impl IntoView {
                                         class="btn"
                                         disabled=move || new_title.get().is_empty()
                                         on:click=move |_| {
-                                            fork_action.dispatch((article.article.id, new_title.get()))
+                                            fork_action.dispatch((article.article.id, new_title.get()));
                                         }
                                     >
 

@@ -5,7 +5,7 @@ use crate::frontend::{
     render_date_time,
     user_link,
 };
-use leptos::*;
+use leptos::prelude::*;
 
 #[component]
 pub fn ArticleHistory() -> impl IntoView {

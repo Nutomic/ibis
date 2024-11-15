@@ -56,7 +56,7 @@ impl ApiClient {
         }
         #[cfg(feature = "ssr")]
         {
-            use leptos::leptos_config::get_config_from_str;
+            use leptos::config::get_config_from_str;
             let leptos_options = get_config_from_str(include_str!("../../Cargo.toml")).unwrap();
             hostname = leptos_options.site_addr.to_string();
             ssl = false;
@@ -287,7 +287,7 @@ where
     #[cfg(feature = "ssr")]
     {
         use crate::common::{Auth, AUTH_COOKIE};
-        use leptos::use_context;
+        use leptos::prelude::use_context;
         use reqwest::header::HeaderName;
 
         let auth = use_context::<Auth>();

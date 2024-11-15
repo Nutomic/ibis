@@ -1,4 +1,4 @@
-use leptos::{ev, *};
+use leptos::{ev::KeyboardEvent, prelude::*};
 
 #[component]
 pub fn CredentialsForm(
@@ -8,8 +8,8 @@ pub fn CredentialsForm(
     error: Signal<Option<String>>,
     disabled: Signal<bool>,
 ) -> impl IntoView {
-    let (password, set_password) = create_signal(String::new());
-    let (username, set_username) = create_signal(String::new());
+    let (password, set_password) = signal(String::new());
+    let (username, set_username) = signal(String::new());
 
     let dispatch_action = move || action.dispatch((username.get(), password.get()));
 
@@ -34,7 +34,7 @@ pub fn CredentialsForm(
                 required
                 placeholder="Username"
                 prop:disabled=move || disabled.get()
-                on:keyup=move |ev: ev::KeyboardEvent| {
+                on:keyup=move |ev: KeyboardEvent| {
                     let val = event_target_value(&ev);
                     set_username.update(|v| *v = val);
                 }
@@ -51,7 +51,7 @@ pub fn CredentialsForm(
                 required
                 placeholder="Password"
                 prop:disabled=move || disabled.get()
-                on:keyup=move |ev: ev::KeyboardEvent| {
+                on:keyup=move |ev: KeyboardEvent| {
                     match &*ev.key() {
                         "Enter" => {
                             dispatch_action();
@@ -73,7 +73,9 @@ pub fn CredentialsForm(
                 <button
                     class="btn btn-primary my-2"
                     prop:disabled=move || button_is_disabled.get()
-                    on:click=move |_| dispatch_action()
+                    on:click=move |_| {
+                        dispatch_action();
+                    }
                 >
                     {action_label}
                 </button>

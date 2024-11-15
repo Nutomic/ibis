@@ -2,15 +2,15 @@ use crate::{
     common::{DbPerson, GetUserForm},
     frontend::{api::CLIENT, user_title},
 };
-use leptos::*;
-use leptos_router::use_params_map;
+use leptos::prelude::*;
+use leptos_router::hooks::use_params_map;
 
 #[component]
 pub fn UserProfile() -> impl IntoView {
     let params = use_params_map();
-    let name = move || params.get().get("name").cloned().unwrap();
-    let (error, set_error) = create_signal(None::<String>);
-    let user_profile = create_resource(name, move |mut name| async move {
+    let name = move || params.get().get("name").clone().unwrap();
+    let (error, set_error) = signal(None::<String>);
+    let user_profile = Resource::new(name, move |mut name| async move {
         set_error.set(None);
         let mut domain = None;
         if let Some((title_, domain_)) = name.clone().split_once('@') {

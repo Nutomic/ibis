@@ -3,6 +3,7 @@ pub mod utils;
 pub mod validation;
 
 use chrono::{DateTime, Utc};
+use codee::{Decoder, Encoder};
 use newtypes::{ArticleId, ConflictId, EditId, InstanceId, PersonId};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
@@ -349,6 +350,25 @@ pub struct Options {
 pub struct SiteView {
     pub my_profile: Option<LocalUserView>,
     pub config: Options,
+}
+
+// TODO: using () doesnt make much sense
+impl Encoder<()> for SiteView {
+    type Error = serde_json::Error;
+    type Encoded = String;
+
+    fn encode(val: &()) -> Result<Self::Encoded, Self::Error> {
+        serde_json::to_string(val)
+    }
+}
+
+impl Decoder<()> for SiteView {
+    type Error = serde_json::Error;
+    type Encoded = str;
+
+    fn decode(stored_value: &Self::Encoded) -> Result<(), Self::Error> {
+        serde_json::from_str(stored_value)
+    }
 }
 
 #[test]

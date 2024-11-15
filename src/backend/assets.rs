@@ -5,7 +5,7 @@ use axum::{
     response::{IntoResponse, Response},
 };
 use axum_macros::debug_handler;
-use leptos::LeptosOptions;
+use leptos::prelude::*;
 use tower::ServiceExt;
 use tower_http::services::ServeDir;
 

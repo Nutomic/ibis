@@ -8,8 +8,8 @@ use crate::{
         components::instance_follow_button::InstanceFollowButton,
     },
 };
-use leptos::*;
-use leptos_router::*;
+use leptos::prelude::*;
+use leptos_router::components::A;
 
 pub enum ActiveTab {
     Read,
@@ -19,10 +19,7 @@ pub enum ActiveTab {
 }
 
 #[component]
-pub fn ArticleNav(
-    article: Resource<Option<String>, ArticleView>,
-    active_tab: ActiveTab,
-) -> impl IntoView {
+pub fn ArticleNav(article: Resource<ArticleView>, active_tab: ActiveTab) -> impl IntoView {
     let tab_classes = tab_classes(&active_tab);
 
     view! {
@@ -32,7 +29,7 @@ pub fn ArticleNav(
                     .get()
                     .map(|article_| {
                         let title = article_title(&article_.article);
-                        let instance = create_resource(
+                        let instance = Resource::new(
                             move || article_.article.instance_id,
                             move |instance_id| async move {
                                 let form = GetInstance {
@@ -46,24 +43,33 @@ pub fn ArticleNav(
                         let protected = article_.article.protected;
                         view! {
                             <div role="tablist" class="tabs tabs-lifted">
-                                <A class=tab_classes.read href=article_link.clone()>
+                                <A href=article_link.clone() {..} class=tab_classes.read>
                                     "Read"
                                 </A>
-                                <A class=tab_classes.history href=format!("{article_link}/history")>
+                                <A
+                                    href=format!("{article_link}/history")
+                                    {..}
+                                    class=tab_classes.history
+                                >
                                     "History"
                                 </A>
                                 <Show when=move || {
                                     is_logged_in()
                                         && can_edit_article(&article_.article, is_admin()).is_ok()
                                 }>
-                                    <A class=tab_classes.edit href=format!("{article_link}/edit")>
+                                    <A
+                                        href=format!("{article_link}/edit")
+                                        {..}
+                                        class=tab_classes.edit
+                                    >
                                         "Edit"
                                     </A>
                                 </Show>
                                 <Show when=is_logged_in>
                                     <A
-                                        class=tab_classes.actions
                                         href=format!("{article_link_}/actions")
+                                        {..}
+                                        class=tab_classes.actions
                                     >
                                         "Actions"
                                     </A>

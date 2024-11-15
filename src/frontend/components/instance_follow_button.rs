@@ -5,11 +5,11 @@ use crate::{
         app::{site, DefaultResource},
     },
 };
-use leptos::{component, *};
+use leptos::prelude::*;
 
 #[component]
 pub fn InstanceFollowButton(instance: DbInstance) -> impl IntoView {
-    let follow_action = create_action(move |instance_id: &InstanceId| {
+    let follow_action = Action::new(move |instance_id: &InstanceId| {
         let instance_id = *instance_id;
         async move {
             let form = FollowInstance { id: instance_id };
@@ -38,7 +38,9 @@ pub fn InstanceFollowButton(instance: DbInstance) -> impl IntoView {
     view! {
         <button
             class=class_
-            on:click=move |_| follow_action.dispatch(instance.id)
+            on:click=move |_| {
+                follow_action.dispatch(instance.id);
+            }
             prop:disabled=move || is_following
             title="Follow the instance so that new edits are synchronized to your instance."
         >

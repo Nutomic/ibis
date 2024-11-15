@@ -2,16 +2,16 @@ use crate::{
     common::LoginUserForm,
     frontend::{api::CLIENT, app::site, components::credentials::*},
 };
-use leptos::*;
-use leptos_router::Redirect;
+use leptos::prelude::*;
+use leptos_router::components::Redirect;
 
 #[component]
 pub fn Login() -> impl IntoView {
-    let (login_response, set_login_response) = create_signal(None::<()>);
-    let (login_error, set_login_error) = create_signal(None::<String>);
-    let (wait_for_response, set_wait_for_response) = create_signal(false);
+    let (login_response, set_login_response) = signal(None::<()>);
+    let (login_error, set_login_error) = signal(None::<String>);
+    let (wait_for_response, set_wait_for_response) = signal(false);
 
-    let login_action = create_action(move |(email, password): &(String, String)| {
+    let login_action = Action::new(move |(email, password): &(String, String)| {
         let username = email.to_string();
         let password = password.to_string();
         let credentials = LoginUserForm { username, password };

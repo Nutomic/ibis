@@ -7,15 +7,15 @@ use crate::{
         components::instance_follow_button::InstanceFollowButton,
     },
 };
-use leptos::*;
-use leptos_router::use_params_map;
+use leptos::prelude::*;
+use leptos_router::hooks::use_params_map;
 use url::Url;
 
 #[component]
 pub fn InstanceDetails() -> impl IntoView {
     let params = use_params_map();
-    let hostname = move || params.get().get("hostname").cloned().unwrap();
-    let instance_profile = create_resource(hostname, move |hostname| async move {
+    let hostname = move || params.get().get("hostname").clone().unwrap();
+    let instance_profile = Resource::new(hostname, move |hostname| async move {
         let url = Url::parse(&format!("{}://{hostname}", http_protocol_str())).unwrap();
         CLIENT.resolve_instance(url).await.unwrap()
     });
@@ -28,7 +28,7 @@ pub fn InstanceDetails() -> impl IntoView {
                 instance_profile
                     .get()
                     .map(|instance: DbInstance| {
-                        let articles = create_resource(
+                        let articles = Resource::new(
                             move || instance.id,
                             |instance_id| async move {
                                 CLIENT

@@ -1,6 +1,6 @@
 use crate::common::{utils::extract_domain, DbArticle, DbPerson};
 use chrono::{DateTime, Local, Utc};
-use leptos::*;
+use leptos::prelude::*;
 
 pub mod api;
 pub mod app;

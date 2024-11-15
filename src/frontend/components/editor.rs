@@ -1,16 +1,14 @@
 use crate::frontend::markdown::render_markdown;
-use html::Textarea;
-use leptos::*;
+use leptos::{html::Textarea, prelude::*};
 
 #[component]
 pub fn EditorView(
-    // this param gives a false warning about being unused, ignore that
-    #[allow(unused)] textarea_ref: NodeRef<Textarea>,
+    textarea_ref: NodeRef<Textarea>,
     content: Signal<String>,
     set_content: WriteSignal<String>,
 ) -> impl IntoView {
-    let (preview, set_preview) = create_signal(render_markdown(&content.get_untracked()));
-    let (show_preview, set_show_preview) = create_signal(false);
+    let (preview, set_preview) = signal(render_markdown(&content.get_untracked()));
+    let (show_preview, set_show_preview) = signal(false);
 
     view! {
         <div>

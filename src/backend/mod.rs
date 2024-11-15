@@ -47,7 +47,7 @@ use federation::objects::{
     articles_collection::local_articles_url,
     instance_collection::linked_instances_url,
 };
-use leptos::*;
+use leptos::prelude::*;
 use leptos_axum::{generate_route_list, LeptosRoutes};
 use log::info;
 use std::net::SocketAddr;
@@ -93,7 +93,7 @@ pub async fn start(config: IbisConfig, override_hostname: Option<SocketAddr>) ->
         setup(&data.to_request_data()).await?;
     }
 
-    let leptos_options = get_configuration(Some("Cargo.toml")).await?.leptos_options;
+    let leptos_options = get_configuration(Some("Cargo.toml"))?.leptos_options;
     let mut addr = leptos_options.site_addr;
     if let Some(override_hostname) = override_hostname {
         addr = override_hostname;

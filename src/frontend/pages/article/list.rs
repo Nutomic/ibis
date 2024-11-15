@@ -2,15 +2,14 @@ use crate::{
     common::ListArticlesForm,
     frontend::{api::CLIENT, article_link, article_title, components::connect::ConnectView},
 };
-use html::Input;
-use leptos::*;
+use leptos::{html::Input, prelude::*};
 
 #[component]
 pub fn ListArticles() -> impl IntoView {
-    let (only_local, set_only_local) = create_signal(false);
+    let (only_local, set_only_local) = signal(false);
     let button_only_local = create_node_ref::<Input>();
     let button_all = create_node_ref::<Input>();
-    let articles = create_resource(
+    let articles = Resource::new(
         move || only_local.get(),
         |only_local| async move {
             CLIENT
