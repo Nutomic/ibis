@@ -33,10 +33,7 @@ use anyhow::anyhow;
 use reqwest::{Client, RequestBuilder, StatusCode};
 use send_wrapper::SendWrapper;
 use serde::{Deserialize, Serialize};
-use std::{
-    future::Future,
-    sync::{LazyLock},
-};
+use std::{future::Future, sync::LazyLock};
 use url::Url;
 
 pub static CLIENT: LazyLock<ApiClient> = LazyLock::new(|| ApiClient::new(Client::new(), None));

@@ -62,10 +62,11 @@ impl<T: Default + Send + Sync> DefaultResource<T> for Resource<T> {
 
 #[component]
 pub fn App() -> impl IntoView {
-    // TODO: should Resource::new() but then things break
-    let site_resource = LocalResource::new(|| async move { CLIENT.site().await.unwrap() });
-    provide_context(site_resource);
     provide_meta_context();
+
+    // TODO: should Resource::new() but then things break
+    let site_resource = Resource::new(|| (), |_| async move { CLIENT.site().await.unwrap() });
+    provide_context(site_resource);
 
     let darkmode = DarkMode::init();
     provide_context(darkmode.clone());

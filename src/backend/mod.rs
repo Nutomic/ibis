@@ -27,7 +27,6 @@ use api::api_routes;
 use assets::file_and_error_handler;
 use axum::{
     body::Body,
-    extract::State,
     http::{HeaderValue, Request},
     middleware::Next,
     response::{IntoResponse, Response},
@@ -102,7 +101,6 @@ pub async fn start(config: IbisConfig, override_hostname: Option<SocketAddr>) ->
 
     let config = data.clone();
     let app = Router::new()
-        //.leptos_routes(&leptos_options, routes, App)
         .leptos_routes_with_handler(routes, get(leptos_routes_handler))
         .fallback(file_and_error_handler)
         .with_state(leptos_options)
@@ -125,11 +123,7 @@ pub async fn start(config: IbisConfig, override_hostname: Option<SocketAddr>) ->
 }
 
 /// Make auth token available in hydrate mode
-async fn leptos_routes_handler(
-    jar: CookieJar,
-    State(option): State<LeptosOptions>,
-    req: Request<Body>,
-) -> Response {
+async fn leptos_routes_handler(jar: CookieJar, req: Request<Body>) -> Response {
     let handler = leptos_axum::render_app_async_with_context(
         move || {
             let cookie = jar.get(AUTH_COOKIE).map(|c| c.value().to_string());
