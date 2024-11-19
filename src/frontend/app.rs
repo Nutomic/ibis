@@ -6,12 +6,8 @@ use crate::{
         dark_mode::DarkMode,
         pages::{
             article::{
-                actions::ArticleActions,
-                create::CreateArticle,
-                edit::EditArticle,
-                history::ArticleHistory,
-                list::ListArticles,
-                read::ReadArticle,
+                actions::ArticleActions, create::CreateArticle, edit::EditArticle,
+                history::ArticleHistory, list::ListArticles, read::ReadArticle,
             },
             diff::EditDiff,
             instance::{details::InstanceDetails, list::ListInstances},
@@ -57,6 +53,23 @@ impl<T: Default + Send + Sync> DefaultResource<T> for Resource<T> {
             Some(x) => f(x),
             None => f(&T::default()),
         })
+    }
+}
+pub fn shell(options: LeptosOptions) -> impl IntoView {
+    view! {
+        <!DOCTYPE html>
+        <html lang="en">
+            <head>
+                <meta charset="utf-8" />
+                <meta name="viewport" content="width=device-width, initial-scale=1" />
+                <AutoReload options=options.clone() />
+                <HydrationScripts options />
+                <MetaTags />
+            </head>
+            <body>
+                <App />
+            </body>
+        </html>
     }
 }
 

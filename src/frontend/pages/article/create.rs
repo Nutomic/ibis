@@ -32,7 +32,7 @@ pub fn CreateArticle() -> impl IntoView {
                 summary,
             };
             set_wait_for_response.update(|w| *w = true);
-            let res = CLIENT.create_article(form).await;
+            let res = CLIENT.create_article(&form).await;
             set_wait_for_response.update(|w| *w = false);
             match res {
                 Ok(_res) => {

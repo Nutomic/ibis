@@ -7,16 +7,10 @@ use crate::{
         utils::generate_activity_id,
     },
     common::{
-        utils::http_protocol_str,
-        Auth,
-        DbArticle,
-        DbInstance,
-        DbPerson,
-        EditVersion,
-        AUTH_COOKIE,
+        utils::http_protocol_str, Auth, DbArticle, DbInstance, DbPerson, EditVersion, AUTH_COOKIE,
         MAIN_PAGE_NAME,
     },
-    frontend::app::App,
+    frontend::app::{shell, App},
 };
 use activitypub_federation::{
     config::{Data, FederationConfig, FederationMiddleware},
@@ -27,12 +21,12 @@ use api::api_routes;
 use assets::file_and_error_handler;
 use axum::{
     body::Body,
+    extract::State,
     http::{HeaderValue, Request},
     middleware::Next,
     response::{IntoResponse, Response},
     routing::get,
-    Router,
-    ServiceExt,
+    Router, ServiceExt,
 };
 use axum_extra::extract::CookieJar;
 use axum_macros::debug_middleware;
@@ -43,8 +37,7 @@ use diesel::{
 };
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 use federation::objects::{
-    articles_collection::local_articles_url,
-    instance_collection::linked_instances_url,
+    articles_collection::local_articles_url, instance_collection::linked_instances_url,
 };
 use leptos::prelude::*;
 use leptos_axum::{generate_route_list, LeptosRoutes};
@@ -123,13 +116,17 @@ pub async fn start(config: IbisConfig, override_hostname: Option<SocketAddr>) ->
 }
 
 /// Make auth token available in hydrate mode
-async fn leptos_routes_handler(jar: CookieJar, req: Request<Body>) -> Response {
+async fn leptos_routes_handler(
+    jar: CookieJar,
+    State(leptos_options): State<LeptosOptions>,
+    req: Request<Body>,
+) -> Response {
     let handler = leptos_axum::render_app_async_with_context(
         move || {
             let cookie = jar.get(AUTH_COOKIE).map(|c| c.value().to_string());
             provide_context(Auth(cookie));
         },
-        move || view! { <App /> },
+        move || shell(leptos_options.clone()),
     );
 
     handler(req).await.into_response()

@@ -89,7 +89,7 @@ pub fn EditArticle() -> impl IntoView {
                     resolve_conflict_id,
                 };
                 set_wait_for_response.update(|w| *w = true);
-                let res = CLIENT.edit_article_with_conflict(form).await;
+                let res = CLIENT.edit_article_with_conflict(&form).await;
                 set_wait_for_response.update(|w| *w = false);
                 match res {
                     Ok(Some(conflict)) => {
