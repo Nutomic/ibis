@@ -36,7 +36,7 @@ pub struct GetArticleForm {
     pub id: Option<ArticleId>,
 }
 
-#[derive(Deserialize, Serialize, Clone, Default)]
+#[derive(Deserialize, Serialize, Clone, Default, Debug)]
 pub struct ListArticlesForm {
     pub only_local: Option<bool>,
     pub instance_id: Option<InstanceId>,
@@ -128,13 +128,13 @@ impl Default for EditVersion {
     }
 }
 
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct RegisterUserForm {
     pub username: String,
     pub password: String,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct LoginUserForm {
     pub username: String,
     pub password: String,
@@ -188,7 +188,7 @@ impl DbPerson {
     }
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct CreateArticleForm {
     pub title: String,
     pub text: String,
@@ -217,19 +217,19 @@ pub struct ProtectArticleForm {
     pub protected: bool,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct ForkArticleForm {
     pub article_id: ArticleId,
     pub new_title: String,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct ApproveArticleForm {
     pub article_id: ArticleId,
     pub approve: bool,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct DeleteConflictForm {
     pub conflict_id: ConflictId,
 }
@@ -244,12 +244,12 @@ pub struct FollowInstance {
     pub id: InstanceId,
 }
 
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct SearchArticleForm {
     pub query: String,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct ResolveObject {
     pub id: Url,
 }

@@ -11,37 +11,40 @@ use crate::{
     frontend::error::MyResult,
 };
 use anyhow::anyhow;
-use reqwest::{Client, RequestBuilder, StatusCode};
+use http::*;
 use serde::{Deserialize, Serialize};
+use std::fmt::Debug;
 use std::sync::LazyLock;
 use url::Url;
 
-pub static CLIENT: LazyLock<ApiClient> = LazyLock::new(|| ApiClient::new(Client::new(), None));
+pub static CLIENT: LazyLock<ApiClient> = LazyLock::new(|| {
+    #[cfg(feature = "ssr")]
+    {
+        ApiClient::new(reqwest::Client::new(), None)
+    }
+    #[cfg(not(feature = "ssr"))]
+    {
+        ApiClient::new()
+    }
+});
 
 #[derive(Clone)]
 pub struct ApiClient {
-    client: Client,
+    #[cfg(feature = "ssr")]
+    client: reqwest::Client,
     pub hostname: String,
     ssl: bool,
 }
 
 impl ApiClient {
-    pub fn new(client: Client, hostname_: Option<String>) -> Self {
+    #[cfg(feature = "ssr")]
+    pub fn new(client: reqwest::Client, hostname_: Option<String>) -> Self {
         let mut hostname;
         let ssl;
-        #[cfg(not(feature = "ssr"))]
-        {
-            use leptos_use::use_document;
-            hostname = use_document().location().unwrap().host().unwrap();
-            ssl = !cfg!(debug_assertions);
-        }
-        #[cfg(feature = "ssr")]
-        {
-            use leptos::config::get_config_from_str;
-            let leptos_options = get_config_from_str(include_str!("../../Cargo.toml")).unwrap();
-            hostname = leptos_options.site_addr.to_string();
-            ssl = false;
-        }
+        use leptos::config::get_config_from_str;
+        let leptos_options = get_config_from_str(include_str!("../../Cargo.toml")).unwrap();
+        hostname = leptos_options.site_addr.to_string();
+        ssl = false;
         // required for tests
         if let Some(hostname_) = hostname_ {
             hostname = hostname_;
@@ -52,17 +55,12 @@ impl ApiClient {
             ssl,
         }
     }
-
-    async fn get<T, R>(&self, endpoint: &str, query: Option<R>) -> MyResult<T>
-    where
-        T: for<'de> Deserialize<'de>,
-        R: Serialize,
-    {
-        let mut req = self.client.get(self.request_endpoint(endpoint));
-        if let Some(query) = query {
-            req = req.query(&query);
-        }
-        self.send::<T>(req).await
+    #[cfg(not(feature = "ssr"))]
+    pub fn new() -> Self {
+        use leptos_use::use_document;
+        let hostname = use_document().location().unwrap().host().unwrap();
+        let ssl = !cfg!(debug_assertions);
+        Self { hostname, ssl }
     }
 
     pub async fn get_article(&self, data: GetArticleForm) -> MyResult<ArticleView> {
@@ -74,38 +72,24 @@ impl ApiClient {
     }
 
     pub async fn register(&self, register_form: RegisterUserForm) -> MyResult<LocalUserView> {
-        let req = self
-            .client
-            .post(self.request_endpoint("/api/v1/account/register"))
-            .form(&register_form);
-        self.send::<LocalUserView>(req).await
+        self.post("/api/v1/account/register", Some(&register_form))
+            .await
     }
 
     pub async fn login(&self, login_form: LoginUserForm) -> MyResult<LocalUserView> {
-        let req = self
-            .client
-            .post(self.request_endpoint("/api/v1/account/login"))
-            .form(&login_form);
-        self.send::<LocalUserView>(req).await
+        self.post("/api/v1/account/login", Some(&login_form)).await
     }
 
     pub async fn create_article(&self, data: &CreateArticleForm) -> MyResult<ArticleView> {
-        let req = self
-            .client
-            .post(self.request_endpoint("/api/v1/article"))
-            .form(data);
-        self.send(req).await
+        self.send(Method::POST, "/api/v1/article", Some(&data))
+            .await
     }
 
     pub async fn edit_article_with_conflict(
         &self,
         edit_form: &EditArticleForm,
     ) -> MyResult<Option<ApiConflict>> {
-        let req = self
-            .client
-            .patch(self.request_endpoint("/api/v1/article"))
-            .form(edit_form);
-        self.send(req).await
+        self.get("/api/v1/article", Some(&edit_form)).await
     }
 
     pub async fn edit_article(&self, edit_form: &EditArticleForm) -> MyResult<ArticleView> {
@@ -121,17 +105,13 @@ impl ApiClient {
     }
 
     pub async fn notifications_list(&self) -> MyResult<Vec<Notification>> {
-        let req = self
-            .client
-            .get(self.request_endpoint("/api/v1/user/notifications/list"));
-        self.send(req).await
+        self.get("/api/v1/user/notifications/list", None::<()>)
+            .await
     }
 
     pub async fn notifications_count(&self) -> MyResult<usize> {
-        let req = self
-            .client
-            .get(self.request_endpoint("/api/v1/user/notifications/count"));
-        self.send(req).await
+        self.get("/api/v1/user/notifications/count", None::<()>)
+            .await
     }
 
     pub async fn approve_article(&self, article_id: ArticleId, approve: bool) -> MyResult<()> {
@@ -139,20 +119,13 @@ impl ApiClient {
             article_id,
             approve,
         };
-        let req = self
-            .client
-            .post(self.request_endpoint("/api/v1/article/approve"))
-            .form(&form);
-        self.send(req).await
+        self.post("/api/v1/article/approve", Some(&form)).await
     }
 
     pub async fn delete_conflict(&self, conflict_id: ConflictId) -> MyResult<()> {
         let form = DeleteConflictForm { conflict_id };
-        let req = self
-            .client
-            .delete(self.request_endpoint("/api/v1/conflict"))
-            .form(&form);
-        self.send(req).await
+        self.send(Method::DELETE, "/api/v1/conflict", Some(form))
+            .await
     }
 
     pub async fn search(&self, search_form: &SearchArticleForm) -> MyResult<Vec<DbArticle>> {
@@ -164,7 +137,7 @@ impl ApiClient {
     }
 
     pub async fn get_instance(&self, get_form: &GetInstance) -> MyResult<InstanceView> {
-        self.get("/api/v1/instance", Some(get_form)).await
+        self.get("/api/v1/instance", Some(&get_form)).await
     }
 
     pub async fn list_instances(&self) -> MyResult<Vec<DbInstance>> {
@@ -210,31 +183,22 @@ impl ApiClient {
     }
 
     pub async fn site(&self) -> MyResult<SiteView> {
-        let req = self.client.get(self.request_endpoint("/api/v1/site"));
-        self.send(req).await
+        self.get("/api/v1/site", None::<()>).await
     }
 
     pub async fn logout(&self) -> MyResult<()> {
-        let req = self
-            .client
-            .get(self.request_endpoint("/api/v1/account/logout"));
-        Ok(self.send(req).await.unwrap())
+        Ok(self
+            .get("/api/v1/account/logout", None::<()>)
+            .await
+            .unwrap())
     }
 
     pub async fn fork_article(&self, form: &ForkArticleForm) -> MyResult<ArticleView> {
-        let req = self
-            .client
-            .post(self.request_endpoint("/api/v1/article/fork"))
-            .form(form);
-        Ok(self.send(req).await.unwrap())
+        Ok(self.post("/api/v1/article/fork", Some(form)).await.unwrap())
     }
 
     pub async fn protect_article(&self, params: &ProtectArticleForm) -> MyResult<DbArticle> {
-        let req = self
-            .client
-            .post(self.request_endpoint("/api/v1/article/protect"))
-            .form(params);
-        self.send(req).await
+        self.post("/api/v1/article/protect", Some(params)).await
     }
 
     pub async fn resolve_article(&self, id: Url) -> MyResult<ArticleView> {
@@ -245,47 +209,67 @@ impl ApiClient {
 
     pub async fn resolve_instance(&self, id: Url) -> MyResult<DbInstance> {
         let resolve_object = ResolveObject { id };
-        self.get("/api/v1/instance/resolve", Some(resolve_object))
-            .await
+        self.get("/api/v1/user", Some(resolve_object)).await
     }
     pub async fn get_user(&self, data: GetUserForm) -> MyResult<DbPerson> {
         self.get("/api/v1/user", Some(data)).await
     }
-    #[cfg(feature = "ssr")]
-    async fn send<T>(&self, mut req: RequestBuilder) -> MyResult<T>
+
+    async fn get<T, R>(&self, endpoint: &str, query: Option<R>) -> MyResult<T>
     where
+        T: for<'de> Deserialize<'de>,
+        R: Serialize + Debug,
+    {
+        self.send(Method::GET, endpoint, query).await
+    }
+
+    async fn post<T, R>(&self, endpoint: &str, query: Option<R>) -> MyResult<T>
+    where
+        T: for<'de> Deserialize<'de>,
+        R: Serialize + Debug,
+    {
+        self.send(Method::POST, endpoint, query).await
+    }
+
+    #[cfg(feature = "ssr")]
+    async fn send<P, T>(&self, method: Method, path: &str, params: Option<P>) -> MyResult<T>
+    where
+        P: Serialize + Debug,
         T: for<'de> Deserialize<'de>,
     {
         use crate::common::{Auth, AUTH_COOKIE};
         use leptos::prelude::use_context;
         use reqwest::header::HeaderName;
-
+        let mut req = self
+            .client
+            .request(method, self.request_endpoint(path))
+            .query(&params);
         let auth = use_context::<Auth>();
         if let Some(Auth(Some(auth))) = auth {
             req = req.header(HeaderName::from_static(AUTH_COOKIE), auth);
         }
         let res = req.send().await?;
         let status = res.status();
-        let text = res.text().await?;
-        if status == StatusCode::OK {
-            Ok(serde_json::from_str(&text).map_err(|e| anyhow!("Json error on {text}: {e}"))?)
-        } else {
-            Err(anyhow!("API error: {text}").into())
-        }
+        let text = res.text().await?.to_string();
+        Self::response(status.into(), text)
     }
 
-    #[cfg(feature = "hydrate")]
-    fn send<T>(
-        &self,
-        mut req: RequestBuilder,
-    ) -> impl std::future::Future<Output = MyResult<T>> + Send
+    #[cfg(not(feature = "ssr"))]
+    fn send<'a, P, T>(
+        &'a self,
+        method: Method,
+        path: &'a str,
+        params: Option<P>,
+    ) -> impl std::future::Future<Output = MyResult<T>> + Send + 'a
     where
+        P: Serialize + Debug + 'a,
         T: for<'de> Deserialize<'de>,
     {
         use gloo_net::http::*;
         use leptos::prelude::on_cleanup;
         use send_wrapper::SendWrapper;
-        use web_sys::RequestCredentials;
+        use std::collections::HashMap;
+        use web_sys::{RequestCredentials, UrlSearchParams};
 
         SendWrapper::new(async move {
             let abort_controller = SendWrapper::new(web_sys::AbortController::new().ok());
@@ -298,24 +282,40 @@ impl ApiClient {
                 }
             });
 
-            /*
-            if status == StatusCode::OK {
-                Ok(serde_json::from_str(&text).map_err(|e| anyhow!("Json error on {text}: {e}"))?)
+            let path_with_endpoint = self.request_endpoint(path);
+            let path = if method == Method::GET {
+                let query = serde_urlencoded::to_string(&params).unwrap();
+                format!("{path_with_endpoint}?{query}")
             } else {
-                Err(anyhow!("API error: {text}").into())
-            }
-            */
-            Ok(RequestBuilder::new("/api/v1/site")
-                .method(Method::GET)
+                path_with_endpoint
+            };
+            log::info!("{path}");
+            let builder = RequestBuilder::new(&path)
+                .method(method.clone())
                 .abort_signal(abort_signal.as_ref())
-                .credentials(RequestCredentials::Include)
-                .send()
-                .await
-                .unwrap()
-                .json()
-                .await
-                .unwrap())
+                .credentials(RequestCredentials::Include);
+            let req = if method == Method::POST {
+                builder.json(&params)
+            } else {
+                builder.build()
+            }
+            .unwrap();
+            let res = req.send().await.unwrap();
+            let status = res.status();
+            let text = res.text().await.unwrap();
+            Self::response(status, text)
         })
+    }
+
+    fn response<T>(status: u16, text: String) -> MyResult<T>
+    where
+        T: for<'de> Deserialize<'de>,
+    {
+        if status == StatusCode::OK {
+            Ok(serde_json::from_str(&text).map_err(|e| anyhow!("Json error on {text}: {e}"))?)
+        } else {
+            Err(anyhow!("API error: {text}").into())
+        }
     }
 
     fn request_endpoint(&self, path: &str) -> String {
