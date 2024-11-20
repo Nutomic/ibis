@@ -2,19 +2,38 @@ use crate::{
     common::{
         newtypes::{ArticleId, ConflictId},
         utils::http_protocol_str,
-        ApiConflict, ApproveArticleForm, ArticleView, CreateArticleForm, DbArticle, DbInstance,
-        DbPerson, DeleteConflictForm, EditArticleForm, FollowInstance, FollowInstanceResponse,
-        ForkArticleForm, GetArticleForm, GetInstance, GetUserForm, InstanceView, ListArticlesForm,
-        LocalUserView, LoginUserForm, Notification, ProtectArticleForm, RegisterUserForm,
-        ResolveObject, SearchArticleForm, SiteView,
+        ApiConflict,
+        ApproveArticleForm,
+        ArticleView,
+        CreateArticleForm,
+        DbArticle,
+        DbInstance,
+        DbPerson,
+        DeleteConflictForm,
+        EditArticleForm,
+        FollowInstance,
+        FollowInstanceResponse,
+        ForkArticleForm,
+        GetArticleForm,
+        GetInstance,
+        GetUserForm,
+        InstanceView,
+        ListArticlesForm,
+        LocalUserView,
+        LoginUserForm,
+        Notification,
+        ProtectArticleForm,
+        RegisterUserForm,
+        ResolveObject,
+        SearchArticleForm,
+        SiteView,
     },
     frontend::error::MyResult,
 };
 use anyhow::anyhow;
 use http::*;
 use serde::{Deserialize, Serialize};
-use std::fmt::Debug;
-use std::sync::LazyLock;
+use std::{fmt::Debug, sync::LazyLock};
 use url::Url;
 
 pub static CLIENT: LazyLock<ApiClient> = LazyLock::new(|| {
@@ -39,12 +58,9 @@ pub struct ApiClient {
 impl ApiClient {
     #[cfg(feature = "ssr")]
     pub fn new(client: reqwest::Client, hostname_: Option<String>) -> Self {
-        let mut hostname;
-        let ssl;
         use leptos::config::get_config_from_str;
         let leptos_options = get_config_from_str(include_str!("../../Cargo.toml")).unwrap();
-        hostname = leptos_options.site_addr.to_string();
-        ssl = false;
+        let mut hostname = leptos_options.site_addr.to_string();
         // required for tests
         if let Some(hostname_) = hostname_ {
             hostname = hostname_;
@@ -52,7 +68,7 @@ impl ApiClient {
         Self {
             client,
             hostname,
-            ssl,
+            ssl: false,
         }
     }
     #[cfg(not(feature = "ssr"))]
@@ -177,10 +193,7 @@ impl ApiClient {
     }
 
     pub async fn logout(&self) -> MyResult<()> {
-        Ok(self
-            .get("/api/v1/account/logout", None::<()>)
-            .await
-            .unwrap())
+        self.get("/api/v1/account/logout", None::<()>).await
     }
 
     pub async fn fork_article(&self, form: &ForkArticleForm) -> MyResult<ArticleView> {
@@ -273,12 +286,13 @@ impl ApiClient {
 
             let path_with_endpoint = self.request_endpoint(path);
             let path = if method == Method::GET {
+                // Cannot pass the struct directly but need to convert it manually
+                // https://github.com/rustwasm/gloo/issues/378
                 let query = serde_urlencoded::to_string(&params).unwrap();
                 format!("{path_with_endpoint}?{query}")
             } else {
                 path_with_endpoint
             };
-            log::info!("{path}");
             let builder = RequestBuilder::new(&path)
                 .method(method.clone())
                 .abort_signal(abort_signal.as_ref())

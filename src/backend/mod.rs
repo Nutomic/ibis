@@ -7,7 +7,13 @@ use crate::{
         utils::generate_activity_id,
     },
     common::{
-        utils::http_protocol_str, Auth, DbArticle, DbInstance, DbPerson, EditVersion, AUTH_COOKIE,
+        utils::http_protocol_str,
+        Auth,
+        DbArticle,
+        DbInstance,
+        DbPerson,
+        EditVersion,
+        AUTH_COOKIE,
         MAIN_PAGE_NAME,
     },
     frontend::app::{shell, App},
@@ -26,7 +32,8 @@ use axum::{
     middleware::Next,
     response::{IntoResponse, Response},
     routing::get,
-    Router, ServiceExt,
+    Router,
+    ServiceExt,
 };
 use axum_extra::extract::CookieJar;
 use axum_macros::debug_middleware;
@@ -37,7 +44,8 @@ use diesel::{
 };
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 use federation::objects::{
-    articles_collection::local_articles_url, instance_collection::linked_instances_url,
+    articles_collection::local_articles_url,
+    instance_collection::linked_instances_url,
 };
 use leptos::prelude::*;
 use leptos_axum::{generate_route_list, LeptosRoutes};

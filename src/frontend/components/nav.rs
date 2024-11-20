@@ -51,7 +51,7 @@ pub fn Nav() -> impl IntoView {
                             <A href="/article/list">"Articles"</A>
                         </li>
                         <Transition>
-                            <Show when=move || is_logged_in()>
+                            <Show when=is_logged_in>
                                 <li>
                                     <A href="/article/create">"Create Article"</A>
                                 </li>

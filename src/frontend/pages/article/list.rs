@@ -32,9 +32,6 @@ pub fn ListArticles() -> impl IntoView {
                     class="btn rounded-r-none"
                     node_ref=button_only_local
                     on:click=move |_| {
-                        // TODO
-                        //button_all.get().map(|c| c.class("btn-primary", false));
-                        //button_only_local.get().map(|c| c.class("btn-primary", true));
                         set_only_local.set(true);
                     }
                 />
@@ -44,8 +41,6 @@ pub fn ListArticles() -> impl IntoView {
                     class="btn btn-primary rounded-l-none"
                     node_ref=button_all
                     on:click=move |_| {
-                        //button_all.get().map(|c| c.class("btn-primary", true));
-                        //button_only_local.get().map(|c| c.class("btn-primary", false));
                         set_only_local.set(false);
                     }
                 />

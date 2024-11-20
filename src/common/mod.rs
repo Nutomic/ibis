@@ -246,7 +246,7 @@ pub struct FollowInstance {
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct FollowInstanceResponse {
-    pub success: bool
+    pub success: bool,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]

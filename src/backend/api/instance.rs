@@ -1,8 +1,13 @@
 use crate::{
     backend::{database::IbisData, error::MyResult, federation::activities::follow::Follow},
     common::{
-        DbInstance, FollowInstance, FollowInstanceResponse, GetInstance, InstanceView,
-        LocalUserView, ResolveObject,
+        DbInstance,
+        FollowInstance,
+        FollowInstanceResponse,
+        GetInstance,
+        InstanceView,
+        LocalUserView,
+        ResolveObject,
     },
 };
 use activitypub_federation::{config::Data, fetch::object_id::ObjectId};
