@@ -1,8 +1,6 @@
 use crate::{
     common::SiteView,
-    frontend::{
-        api::CLIENT, components::nav::Nav, dark_mode::DarkMode, pages::notifications::Notifications,
-    },
+    frontend::{api::CLIENT, components::nav::Nav, pages::notifications::Notifications},
 };
 use leptos::prelude::*;
 use leptos_meta::{provide_meta_context, *};
@@ -65,9 +63,6 @@ pub fn App() -> impl IntoView {
     // TODO: should Resource::new() but then things break
     let site_resource = Resource::new(|| (), |_| async move { CLIENT.site().await.unwrap() });
     provide_context(site_resource);
-
-    let darkmode = DarkMode::init();
-    provide_context(darkmode.clone());
 
     view! {
         <Html attr:data-theme=darkmode.theme {..} class="h-full" />
