@@ -244,6 +244,11 @@ pub struct FollowInstance {
     pub id: InstanceId,
 }
 
+#[derive(Deserialize, Serialize, Debug)]
+pub struct FollowInstanceResponse {
+    pub success: bool
+}
+
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct SearchArticleForm {
     pub query: String,

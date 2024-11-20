@@ -3,10 +3,10 @@ use crate::{
         newtypes::{ArticleId, ConflictId},
         utils::http_protocol_str,
         ApiConflict, ApproveArticleForm, ArticleView, CreateArticleForm, DbArticle, DbInstance,
-        DbPerson, DeleteConflictForm, EditArticleForm, FollowInstance, ForkArticleForm,
-        GetArticleForm, GetInstance, GetUserForm, InstanceView, ListArticlesForm, LocalUserView,
-        LoginUserForm, Notification, ProtectArticleForm, RegisterUserForm, ResolveObject,
-        SearchArticleForm, SiteView,
+        DbPerson, DeleteConflictForm, EditArticleForm, FollowInstance, FollowInstanceResponse,
+        ForkArticleForm, GetArticleForm, GetInstance, GetUserForm, InstanceView, ListArticlesForm,
+        LocalUserView, LoginUserForm, Notification, ProtectArticleForm, RegisterUserForm,
+        ResolveObject, SearchArticleForm, SiteView,
     },
     frontend::error::MyResult,
 };
@@ -164,22 +164,12 @@ impl ApiClient {
         Ok(instance_resolved)
     }
 
-    pub async fn follow_instance(&self, follow_form: FollowInstance) -> MyResult<()> {
-        todo!();
-        /*
-        // cant use post helper because follow doesnt return json
-        let res = self
-            .client
-            .post(self.request_endpoint("/api/v1/instance/follow"))
-            .form(&follow_form)
-            .send()
-            .await?;
-        if res.status() == StatusCode::OK {
-            Ok(())
-        } else {
-            Err(anyhow!("API error: {}", res.text().await?).into())
-        }
-        */
+    pub async fn follow_instance(
+        &self,
+        follow_form: FollowInstance,
+    ) -> MyResult<FollowInstanceResponse> {
+        self.post("/api/v1/instance/follow", Some(follow_form))
+            .await
     }
 
     pub async fn site(&self) -> MyResult<SiteView> {
@@ -268,8 +258,7 @@ impl ApiClient {
         use gloo_net::http::*;
         use leptos::prelude::on_cleanup;
         use send_wrapper::SendWrapper;
-        use std::collections::HashMap;
-        use web_sys::{RequestCredentials, UrlSearchParams};
+        use web_sys::RequestCredentials;
 
         SendWrapper::new(async move {
             let abort_controller = SendWrapper::new(web_sys::AbortController::new().ok());

@@ -1,6 +1,9 @@
 use crate::{
     backend::{database::IbisData, error::MyResult, federation::activities::follow::Follow},
-    common::{DbInstance, FollowInstance, GetInstance, InstanceView, LocalUserView, ResolveObject},
+    common::{
+        DbInstance, FollowInstance, FollowInstanceResponse, GetInstance, InstanceView,
+        LocalUserView, ResolveObject,
+    },
 };
 use activitypub_federation::{config::Data, fetch::object_id::ObjectId};
 use axum::{extract::Query, Extension, Form, Json};
@@ -23,13 +26,13 @@ pub(in crate::backend::api) async fn follow_instance(
     Extension(user): Extension<LocalUserView>,
     data: Data<IbisData>,
     Form(query): Form<FollowInstance>,
-) -> MyResult<()> {
+) -> MyResult<Json<FollowInstanceResponse>> {
     let target = DbInstance::read(query.id, &data)?;
     let pending = !target.local;
     DbInstance::follow(&user.person, &target, pending, &data)?;
     let instance = DbInstance::read(query.id, &data)?;
     Follow::send(user.person, &instance, &data).await?;
-    Ok(())
+    Ok(Json(FollowInstanceResponse { success: true }))
 }
 
 /// Fetch a remote instance actor. This automatically synchronizes the remote articles collection to
