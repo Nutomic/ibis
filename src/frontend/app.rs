@@ -1,26 +1,7 @@
 use crate::{
     common::SiteView,
     frontend::{
-        api::CLIENT,
-        components::nav::Nav,
-        dark_mode::DarkMode,
-        pages::{
-            article::{
-                actions::ArticleActions,
-                create::CreateArticle,
-                edit::EditArticle,
-                history::ArticleHistory,
-                list::ListArticles,
-                read::ReadArticle,
-            },
-            diff::EditDiff,
-            instance::{details::InstanceDetails, list::ListInstances},
-            login::Login,
-            notifications::Notifications,
-            register::Register,
-            search::Search,
-            user_profile::UserProfile,
-        },
+        api::CLIENT, components::nav::Nav, dark_mode::DarkMode, pages::notifications::Notifications,
     },
 };
 use leptos::prelude::*;
@@ -61,7 +42,7 @@ impl<T: Default + Send + Sync> DefaultResource<T> for Resource<T> {
 }
 pub fn shell(options: LeptosOptions) -> impl IntoView {
     view! {
-        <!DOCTYPE html> 
+        <!DOCTYPE html>
         <html lang="en">
             <head>
                 <meta charset="utf-8" />
@@ -98,24 +79,7 @@ pub fn App() -> impl IntoView {
                 <Nav />
                 <main class="p-4 md:ml-64">
                     <Routes fallback=|| "Page not found.".into_view()>
-                        <Route path=path!("/") view=ReadArticle />
-                        <Route path=path!("/article/:title") view=ReadArticle />
-                        <Route path=path!("/article/:title/history") view=ArticleHistory />
-                        <Route path=path!("/article/:title/edit/:conflict_id?") view=EditArticle />
-                        <Route path=path!("/article/:title/actions") view=ArticleActions />
-                        <Route path=path!("/article/:title/diff/:hash") view=EditDiff />
-                        // TODO: use protected route, otherwise user can view
-                        // /article/create without login
-                        // https://github.com/leptos-rs/leptos/blob/leptos_0.7/examples/router/src/lib.rs#L51
-                        <Route path=path!("/article/create") view=CreateArticle />
-                        <Route path=path!("/article/list") view=ListArticles />
-                        <Route path=path!("/instance/:hostname") view=InstanceDetails />
-                        <Route path=path!("/instance/list") view=ListInstances />
-                        <Route path=path!("/user/:name") view=UserProfile />
-                        <Route path=path!("/login") view=Login />
-                        <Route path=path!("/register") view=Register />
-                        <Route path=path!("/search") view=Search />
-                        <Route path=path!("/notifications") view=Notifications />
+                        <Route path=path!("/") view=Notifications />
                     </Routes>
                 </main>
             </Router>
