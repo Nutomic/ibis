@@ -286,11 +286,11 @@ impl ApiClient {
             });
 
             let path_with_endpoint = self.request_endpoint(path);
+            let params_encoded = serde_urlencoded::to_string(&params).unwrap();
             let path = if method == Method::GET {
                 // Cannot pass the struct directly but need to convert it manually
                 // https://github.com/rustwasm/gloo/issues/378
-                let query = serde_urlencoded::to_string(&params).unwrap();
-                format!("{path_with_endpoint}?{query}")
+                format!("{path_with_endpoint}?{params_encoded}")
             } else {
                 path_with_endpoint
             };
@@ -299,7 +299,9 @@ impl ApiClient {
                 .abort_signal(abort_signal.as_ref())
                 .credentials(RequestCredentials::Include);
             let req = if method == Method::POST {
-                builder.json(&params)
+                builder
+                    .header("content-type", "application/x-www-form-urlencoded")
+                    .body(params_encoded)
             } else {
                 builder.build()
             }
