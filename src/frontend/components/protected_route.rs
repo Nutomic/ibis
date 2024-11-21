@@ -1,9 +1,10 @@
+use crate::frontend::app::is_logged_in;
 use leptos::prelude::*;
 use leptos_router::{
     components::{ProtectedRoute, ProtectedRouteProps},
-    NestedRoute, SsrMode,
+    NestedRoute,
+    SsrMode,
 };
-use crate::frontend::app::is_logged_in;
 
 #[component(transparent)]
 pub fn IbisProtectedRoute<Segments, ViewFn, View>(

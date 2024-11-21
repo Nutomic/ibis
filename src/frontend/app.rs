@@ -1,14 +1,17 @@
-use crate::frontend::components::protected_route::IbisProtectedRoute;
 use crate::{
     common::SiteView,
     frontend::{
         api::CLIENT,
-        components::nav::Nav,
+        components::{nav::Nav, protected_route::IbisProtectedRoute},
         dark_mode::DarkMode,
         pages::{
             article::{
-                actions::ArticleActions, create::CreateArticle, edit::EditArticle,
-                history::ArticleHistory, list::ListArticles, read::ReadArticle,
+                actions::ArticleActions,
+                create::CreateArticle,
+                edit::EditArticle,
+                history::ArticleHistory,
+                list::ListArticles,
+                read::ReadArticle,
             },
             diff::EditDiff,
             instance::{details::InstanceDetails, list::ListInstances},
@@ -59,7 +62,7 @@ impl<T: Default + Send + Sync> DefaultResource<T> for Resource<T> {
 }
 pub fn shell(options: LeptosOptions) -> impl IntoView {
     view! {
-        <!DOCTYPE html> 
+        <!DOCTYPE html>
         <html lang="en">
             <head>
                 <meta charset="utf-8" />
