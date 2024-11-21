@@ -61,7 +61,7 @@ impl<T: Default + Send + Sync> DefaultResource<T> for Resource<T> {
 }
 pub fn shell(options: LeptosOptions) -> impl IntoView {
     view! {
-        <!DOCTYPE html> 
+        <!DOCTYPE html>
         <html lang="en">
             <head>
                 <meta charset="utf-8" />
@@ -107,10 +107,10 @@ pub fn App() -> impl IntoView {
                         // TODO: use protected route, otherwise user can view
                         // /article/create without login
                         // https://github.com/leptos-rs/leptos/blob/leptos_0.7/examples/router/src/lib.rs#L51
-                        <Route path=path!("/article/create") view=CreateArticle />
-                        <Route path=path!("/article/list") view=ListArticles />
+                        <Route path=path!("/create-article") view=CreateArticle />
+                        <Route path=path!("/articles") view=ListArticles />
+                        <Route path=path!("/instances") view=ListInstances />
                         <Route path=path!("/instance/:hostname") view=InstanceDetails />
-                        <Route path=path!("/instance/list") view=ListInstances />
                         <Route path=path!("/user/:name") view=UserProfile />
                         <Route path=path!("/login") view=Login />
                         <Route path=path!("/register") view=Register />

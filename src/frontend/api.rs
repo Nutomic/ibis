@@ -212,7 +212,8 @@ impl ApiClient {
 
     pub async fn resolve_instance(&self, id: Url) -> MyResult<DbInstance> {
         let resolve_object = ResolveObject { id };
-        self.get("/api/v1/user", Some(resolve_object)).await
+        self.get("/api/v1/instance/resolve", Some(resolve_object))
+            .await
     }
     pub async fn get_user(&self, data: GetUserForm) -> MyResult<DbPerson> {
         self.get("/api/v1/user", Some(data)).await

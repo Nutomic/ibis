@@ -45,15 +45,15 @@ pub fn Nav() -> impl IntoView {
                             <A href="/">"Main Page"</A>
                         </li>
                         <li>
-                            <A href="/instance/list">"Instances"</A>
+                            <A href="/instances">"Instances"</A>
                         </li>
                         <li>
-                            <A href="/article/list">"Articles"</A>
+                            <A href="/articles">"Articles"</A>
                         </li>
                         <Transition>
                             <Show when=is_logged_in>
                                 <li>
-                                    <A href="/article/create">"Create Article"</A>
+                                    <A href="/create-article">"Create Article"</A>
                                 </li>
                                 <li>
                                     <A href="/notifications">
