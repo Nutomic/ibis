@@ -9,9 +9,8 @@ use crate::{
         pages::article_resource,
     },
 };
-use html::Textarea;
-use leptos::*;
-use leptos_router::use_params_map;
+use leptos::{html::Textarea, prelude::*};
+use leptos_router::hooks::use_params_map;
 use leptos_use::{use_textarea_autosize, UseTextareaAutosizeReturn};
 
 #[derive(Clone, PartialEq)]
@@ -26,12 +25,12 @@ const CONFLICT_MESSAGE: &str = "There was an edit conflict. Resolve it manually 
 #[component]
 pub fn EditArticle() -> impl IntoView {
     let article = article_resource();
-    let (edit_response, set_edit_response) = create_signal(EditResponse::None);
-    let (edit_error, set_edit_error) = create_signal(None::<String>);
+    let (edit_response, set_edit_response) = signal(EditResponse::None);
+    let (edit_error, set_edit_error) = signal(None::<String>);
 
-    let conflict_id = move || use_params_map().get_untracked().get("conflict_id").cloned();
+    let conflict_id = move || use_params_map().get_untracked().get("conflict_id").clone();
     if let Some(conflict_id) = conflict_id() {
-        create_action(move |conflict_id: &String| {
+        Action::new(move |conflict_id: &String| {
             let conflict_id = ConflictId(conflict_id.parse().unwrap());
             async move {
                 let conflict = CLIENT
@@ -52,17 +51,17 @@ pub fn EditArticle() -> impl IntoView {
         .dispatch(conflict_id);
     }
 
-    let textarea_ref = create_node_ref::<Textarea>();
+    let textarea_ref = NodeRef::<Textarea>::new();
     let UseTextareaAutosizeReturn {
         content,
         set_content,
         trigger_resize: _,
     } = use_textarea_autosize(textarea_ref);
-    let (summary, set_summary) = create_signal(String::new());
-    let (wait_for_response, set_wait_for_response) = create_signal(false);
+    let (summary, set_summary) = signal(String::new());
+    let (wait_for_response, set_wait_for_response) = signal(false);
     let button_is_disabled =
         Signal::derive(move || wait_for_response.get() || summary.get().is_empty());
-    let submit_action = create_action(
+    let submit_action = Action::new(
         move |(new_text, summary, article, edit_response): &(
             String,
             String,
@@ -161,7 +160,7 @@ pub fn EditArticle() -> impl IntoView {
                                                                 summary.get(),
                                                                 article_.clone(),
                                                                 edit_response.get(),
-                                                            ))
+                                                            ));
                                                     }
                                                 >
 

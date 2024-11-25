@@ -12,6 +12,7 @@ use crate::{
         DeleteConflictForm,
         EditArticleForm,
         FollowInstance,
+        FollowInstanceResponse,
         ForkArticleForm,
         GetArticleForm,
         GetInstance,
@@ -30,37 +31,36 @@ use crate::{
     frontend::error::MyResult,
 };
 use anyhow::anyhow;
-use reqwest::{Client, RequestBuilder, StatusCode};
+use http::*;
 use serde::{Deserialize, Serialize};
-use std::sync::LazyLock;
+use std::{fmt::Debug, sync::LazyLock};
 use url::Url;
 
-pub static CLIENT: LazyLock<ApiClient> = LazyLock::new(|| ApiClient::new(Client::new(), None));
+pub static CLIENT: LazyLock<ApiClient> = LazyLock::new(|| {
+    #[cfg(feature = "ssr")]
+    {
+        ApiClient::new(reqwest::Client::new(), None)
+    }
+    #[cfg(not(feature = "ssr"))]
+    {
+        ApiClient::new()
+    }
+});
 
 #[derive(Clone)]
 pub struct ApiClient {
-    client: Client,
+    #[cfg(feature = "ssr")]
+    client: reqwest::Client,
     pub hostname: String,
     ssl: bool,
 }
 
 impl ApiClient {
-    pub fn new(client: Client, hostname_: Option<String>) -> Self {
-        let mut hostname;
-        let ssl;
-        #[cfg(not(feature = "ssr"))]
-        {
-            use leptos_use::use_document;
-            hostname = use_document().location().unwrap().host().unwrap();
-            ssl = !cfg!(debug_assertions);
-        }
-        #[cfg(feature = "ssr")]
-        {
-            use leptos::leptos_config::get_config_from_str;
-            let leptos_options = get_config_from_str(include_str!("../../Cargo.toml")).unwrap();
-            hostname = leptos_options.site_addr.to_string();
-            ssl = false;
-        }
+    #[cfg(feature = "ssr")]
+    pub fn new(client: reqwest::Client, hostname_: Option<String>) -> Self {
+        use leptos::config::get_config_from_str;
+        let leptos_options = get_config_from_str(include_str!("../../Cargo.toml")).unwrap();
+        let mut hostname = leptos_options.site_addr.to_string();
         // required for tests
         if let Some(hostname_) = hostname_ {
             hostname = hostname_;
@@ -68,63 +68,44 @@ impl ApiClient {
         Self {
             client,
             hostname,
-            ssl,
+            ssl: false,
         }
     }
-
-    async fn get_query<T, R>(&self, endpoint: &str, query: Option<R>) -> MyResult<T>
-    where
-        T: for<'de> Deserialize<'de>,
-        R: Serialize,
-    {
-        let mut req = self.client.get(self.request_endpoint(endpoint));
-        if let Some(query) = query {
-            req = req.query(&query);
-        }
-        handle_json_res::<T>(req).await
+    #[cfg(not(feature = "ssr"))]
+    pub fn new() -> Self {
+        use leptos_use::use_document;
+        let hostname = use_document().location().unwrap().host().unwrap();
+        let ssl = !cfg!(debug_assertions);
+        Self { hostname, ssl }
     }
 
     pub async fn get_article(&self, data: GetArticleForm) -> MyResult<ArticleView> {
-        self.get_query("/api/v1/article", Some(data)).await
+        self.get("/api/v1/article", Some(data)).await
     }
 
     pub async fn list_articles(&self, data: ListArticlesForm) -> MyResult<Vec<DbArticle>> {
-        self.get_query("/api/v1/article/list", Some(data)).await
+        self.get("/api/v1/article/list", Some(data)).await
     }
 
     pub async fn register(&self, register_form: RegisterUserForm) -> MyResult<LocalUserView> {
-        let req = self
-            .client
-            .post(self.request_endpoint("/api/v1/account/register"))
-            .form(&register_form);
-        handle_json_res::<LocalUserView>(req).await
+        self.post("/api/v1/account/register", Some(&register_form))
+            .await
     }
 
     pub async fn login(&self, login_form: LoginUserForm) -> MyResult<LocalUserView> {
-        let req = self
-            .client
-            .post(self.request_endpoint("/api/v1/account/login"))
-            .form(&login_form);
-        handle_json_res::<LocalUserView>(req).await
+        self.post("/api/v1/account/login", Some(&login_form)).await
     }
 
     pub async fn create_article(&self, data: &CreateArticleForm) -> MyResult<ArticleView> {
-        let req = self
-            .client
-            .post(self.request_endpoint("/api/v1/article"))
-            .form(data);
-        handle_json_res(req).await
+        self.send(Method::POST, "/api/v1/article", Some(&data))
+            .await
     }
 
     pub async fn edit_article_with_conflict(
         &self,
         edit_form: &EditArticleForm,
     ) -> MyResult<Option<ApiConflict>> {
-        let req = self
-            .client
-            .patch(self.request_endpoint("/api/v1/article"))
-            .form(edit_form);
-        handle_json_res(req).await
+        self.get("/api/v1/article", Some(&edit_form)).await
     }
 
     pub async fn edit_article(&self, edit_form: &EditArticleForm) -> MyResult<ArticleView> {
@@ -140,17 +121,13 @@ impl ApiClient {
     }
 
     pub async fn notifications_list(&self) -> MyResult<Vec<Notification>> {
-        let req = self
-            .client
-            .get(self.request_endpoint("/api/v1/user/notifications/list"));
-        handle_json_res(req).await
+        self.get("/api/v1/user/notifications/list", None::<()>)
+            .await
     }
 
     pub async fn notifications_count(&self) -> MyResult<usize> {
-        let req = self
-            .client
-            .get(self.request_endpoint("/api/v1/user/notifications/count"));
-        handle_json_res(req).await
+        self.get("/api/v1/user/notifications/count", None::<()>)
+            .await
     }
 
     pub async fn approve_article(&self, article_id: ArticleId, approve: bool) -> MyResult<()> {
@@ -158,36 +135,29 @@ impl ApiClient {
             article_id,
             approve,
         };
-        let req = self
-            .client
-            .post(self.request_endpoint("/api/v1/article/approve"))
-            .form(&form);
-        handle_json_res(req).await
+        self.post("/api/v1/article/approve", Some(&form)).await
     }
 
     pub async fn delete_conflict(&self, conflict_id: ConflictId) -> MyResult<()> {
         let form = DeleteConflictForm { conflict_id };
-        let req = self
-            .client
-            .delete(self.request_endpoint("/api/v1/conflict"))
-            .form(&form);
-        handle_json_res(req).await
+        self.send(Method::DELETE, "/api/v1/conflict", Some(form))
+            .await
     }
 
     pub async fn search(&self, search_form: &SearchArticleForm) -> MyResult<Vec<DbArticle>> {
-        self.get_query("/api/v1/search", Some(search_form)).await
+        self.get("/api/v1/search", Some(search_form)).await
     }
 
     pub async fn get_local_instance(&self) -> MyResult<InstanceView> {
-        self.get_query("/api/v1/instance", None::<i32>).await
+        self.get("/api/v1/instance", None::<i32>).await
     }
 
     pub async fn get_instance(&self, get_form: &GetInstance) -> MyResult<InstanceView> {
-        self.get_query("/api/v1/instance", Some(get_form)).await
+        self.get("/api/v1/instance", Some(&get_form)).await
     }
 
     pub async fn list_instances(&self) -> MyResult<Vec<DbInstance>> {
-        self.get_query("/api/v1/instance/list", None::<i32>).await
+        self.get("/api/v1/instance/list", None::<i32>).await
     }
 
     pub async fn follow_instance_with_resolve(
@@ -199,7 +169,7 @@ impl ApiClient {
             id: Url::parse(&format!("{}://{}", http_protocol_str(), follow_instance))?,
         };
         let instance_resolved: DbInstance = self
-            .get_query("/api/v1/instance/resolve", Some(resolve_form))
+            .get("/api/v1/instance/resolve", Some(resolve_form))
             .await?;
 
         // send follow
@@ -210,97 +180,152 @@ impl ApiClient {
         Ok(instance_resolved)
     }
 
-    pub async fn follow_instance(&self, follow_form: FollowInstance) -> MyResult<()> {
-        // cant use post helper because follow doesnt return json
-        let res = self
-            .client
-            .post(self.request_endpoint("/api/v1/instance/follow"))
-            .form(&follow_form)
-            .send()
-            .await?;
-        if res.status() == StatusCode::OK {
-            Ok(())
-        } else {
-            Err(anyhow!("API error: {}", res.text().await?).into())
-        }
+    pub async fn follow_instance(
+        &self,
+        follow_form: FollowInstance,
+    ) -> MyResult<FollowInstanceResponse> {
+        self.post("/api/v1/instance/follow", Some(follow_form))
+            .await
     }
 
     pub async fn site(&self) -> MyResult<SiteView> {
-        let req = self.client.get(self.request_endpoint("/api/v1/site"));
-        handle_json_res(req).await
+        self.get("/api/v1/site", None::<()>).await
     }
 
     pub async fn logout(&self) -> MyResult<()> {
-        self.client
-            .get(self.request_endpoint("/api/v1/account/logout"))
-            .send()
-            .await?;
-        Ok(())
+        self.get("/api/v1/account/logout", None::<()>).await
     }
 
     pub async fn fork_article(&self, form: &ForkArticleForm) -> MyResult<ArticleView> {
-        let req = self
-            .client
-            .post(self.request_endpoint("/api/v1/article/fork"))
-            .form(form);
-        Ok(handle_json_res(req).await.unwrap())
+        Ok(self.post("/api/v1/article/fork", Some(form)).await.unwrap())
     }
 
     pub async fn protect_article(&self, params: &ProtectArticleForm) -> MyResult<DbArticle> {
-        let req = self
-            .client
-            .post(self.request_endpoint("/api/v1/article/protect"))
-            .form(params);
-        handle_json_res(req).await
+        self.post("/api/v1/article/protect", Some(params)).await
     }
 
     pub async fn resolve_article(&self, id: Url) -> MyResult<ArticleView> {
         let resolve_object = ResolveObject { id };
-        self.get_query("/api/v1/article/resolve", Some(resolve_object))
+        self.get("/api/v1/article/resolve", Some(resolve_object))
             .await
     }
 
     pub async fn resolve_instance(&self, id: Url) -> MyResult<DbInstance> {
         let resolve_object = ResolveObject { id };
-        self.get_query("/api/v1/instance/resolve", Some(resolve_object))
+        self.get("/api/v1/instance/resolve", Some(resolve_object))
             .await
     }
     pub async fn get_user(&self, data: GetUserForm) -> MyResult<DbPerson> {
-        self.get_query("/api/v1/user", Some(data)).await
+        self.get("/api/v1/user", Some(data)).await
+    }
+
+    async fn get<T, R>(&self, endpoint: &str, query: Option<R>) -> MyResult<T>
+    where
+        T: for<'de> Deserialize<'de>,
+        R: Serialize + Debug,
+    {
+        self.send(Method::GET, endpoint, query).await
+    }
+
+    async fn post<T, R>(&self, endpoint: &str, query: Option<R>) -> MyResult<T>
+    where
+        T: for<'de> Deserialize<'de>,
+        R: Serialize + Debug,
+    {
+        self.send(Method::POST, endpoint, query).await
+    }
+
+    #[cfg(feature = "ssr")]
+    async fn send<P, T>(&self, method: Method, path: &str, params: Option<P>) -> MyResult<T>
+    where
+        P: Serialize + Debug,
+        T: for<'de> Deserialize<'de>,
+    {
+        use crate::common::{Auth, AUTH_COOKIE};
+        use leptos::prelude::use_context;
+        use reqwest::header::HeaderName;
+        let mut req = self
+            .client
+            .request(method, self.request_endpoint(path))
+            .query(&params);
+        let auth = use_context::<Auth>();
+        if let Some(Auth(Some(auth))) = auth {
+            req = req.header(HeaderName::from_static(AUTH_COOKIE), auth);
+        }
+        let res = req.send().await?;
+        let status = res.status();
+        let text = res.text().await?.to_string();
+        Self::response(status.into(), text)
+    }
+
+    #[cfg(not(feature = "ssr"))]
+    fn send<'a, P, T>(
+        &'a self,
+        method: Method,
+        path: &'a str,
+        params: Option<P>,
+    ) -> impl std::future::Future<Output = MyResult<T>> + Send + 'a
+    where
+        P: Serialize + Debug + 'a,
+        T: for<'de> Deserialize<'de>,
+    {
+        use gloo_net::http::*;
+        use leptos::prelude::on_cleanup;
+        use send_wrapper::SendWrapper;
+        use web_sys::RequestCredentials;
+
+        SendWrapper::new(async move {
+            let abort_controller = SendWrapper::new(web_sys::AbortController::new().ok());
+            let abort_signal = abort_controller.as_ref().map(|a| a.signal());
+
+            // abort in-flight requests if, e.g., we've navigated away from this page
+            on_cleanup(move || {
+                if let Some(abort_controller) = abort_controller.take() {
+                    abort_controller.abort()
+                }
+            });
+
+            let path_with_endpoint = self.request_endpoint(path);
+            let params_encoded = serde_urlencoded::to_string(&params).unwrap();
+            let path = if method == Method::GET {
+                // Cannot pass the struct directly but need to convert it manually
+                // https://github.com/rustwasm/gloo/issues/378
+                format!("{path_with_endpoint}?{params_encoded}")
+            } else {
+                path_with_endpoint
+            };
+            let builder = RequestBuilder::new(&path)
+                .method(method.clone())
+                .abort_signal(abort_signal.as_ref())
+                .credentials(RequestCredentials::Include);
+            let req = if method == Method::POST {
+                builder
+                    .header("content-type", "application/x-www-form-urlencoded")
+                    .body(params_encoded)
+            } else {
+                builder.build()
+            }
+            .unwrap();
+            let res = req.send().await.unwrap();
+            let status = res.status();
+            let text = res.text().await.unwrap();
+            Self::response(status, text)
+        })
+    }
+
+    fn response<T>(status: u16, text: String) -> MyResult<T>
+    where
+        T: for<'de> Deserialize<'de>,
+    {
+        if status == StatusCode::OK {
+            Ok(serde_json::from_str(&text).map_err(|e| anyhow!("Json error on {text}: {e}"))?)
+        } else {
+            Err(anyhow!("API error: {text}").into())
+        }
     }
 
     fn request_endpoint(&self, path: &str) -> String {
         let protocol = if self.ssl { "https" } else { "http" };
         format!("{protocol}://{}{path}", &self.hostname)
-    }
-}
-
-async fn handle_json_res<T>(#[allow(unused_mut)] mut req: RequestBuilder) -> MyResult<T>
-where
-    T: for<'de> Deserialize<'de>,
-{
-    #[cfg(not(feature = "ssr"))]
-    {
-        req = req.fetch_credentials_include();
-    }
-
-    #[cfg(feature = "ssr")]
-    {
-        use crate::common::{Auth, AUTH_COOKIE};
-        use leptos::use_context;
-        use reqwest::header::HeaderName;
-
-        let auth = use_context::<Auth>();
-        if let Some(Auth(Some(auth))) = auth {
-            req = req.header(HeaderName::from_static(AUTH_COOKIE), auth);
-        }
-    }
-    let res = req.send().await?;
-    let status = res.status();
-    let text = res.text().await?;
-    if status == StatusCode::OK {
-        Ok(serde_json::from_str(&text).map_err(|e| anyhow!("Json error on {text}: {e}"))?)
-    } else {
-        Err(anyhow!("API error: {text}").into())
     }
 }

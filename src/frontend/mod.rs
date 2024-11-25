@@ -1,6 +1,6 @@
 use crate::common::{utils::extract_domain, DbArticle, DbPerson};
 use chrono::{DateTime, Local, Utc};
-use leptos::*;
+use leptos::prelude::*;
 
 pub mod api;
 pub mod app;
@@ -16,7 +16,7 @@ pub fn hydrate() {
     use crate::frontend::app::App;
     console_log::init_with_level(log::Level::Debug).expect("error initializing logger");
     console_error_panic_hook::set_once();
-    leptos::mount_to_body(App);
+    leptos::mount::hydrate_body(App);
 }
 
 fn article_link(article: &DbArticle) -> String {

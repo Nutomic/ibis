@@ -2,15 +2,12 @@ use crate::{
     common::ListArticlesForm,
     frontend::{api::CLIENT, article_link, article_title, components::connect::ConnectView},
 };
-use html::Input;
-use leptos::*;
+use leptos::prelude::*;
 
 #[component]
 pub fn ListArticles() -> impl IntoView {
-    let (only_local, set_only_local) = create_signal(false);
-    let button_only_local = create_node_ref::<Input>();
-    let button_all = create_node_ref::<Input>();
-    let articles = create_resource(
+    let (only_local, set_only_local) = signal(false);
+    let articles = Resource::new(
         move || only_local.get(),
         |only_local| async move {
             CLIENT
@@ -22,6 +19,28 @@ pub fn ListArticles() -> impl IntoView {
                 .unwrap()
         },
     );
+    let only_local_class = Resource::new(
+        move || only_local.get(),
+        |only_local| async move {
+            if only_local {
+                "btn rounded-r-none btn-primary"
+            } else {
+                "btn rounded-r-none"
+            }
+            .to_string()
+        },
+    );
+    let all_class = Resource::new(
+        move || only_local.get(),
+        |only_local| async move {
+            if !only_local {
+                "btn rounded-l-none btn-primary"
+            } else {
+                "btn rounded-l-none"
+            }
+            .to_string()
+        },
+    );
 
     view! {
         <h1 class="text-4xl font-bold font-serif my-4">Most recently edited Articles</h1>
@@ -30,22 +49,16 @@ pub fn ListArticles() -> impl IntoView {
                 <input
                     type="button"
                     value="Only Local"
-                    class="btn rounded-r-none"
-                    node_ref=button_only_local
+                    class=move || only_local_class.get()
                     on:click=move |_| {
-                        button_all.get().map(|c| c.class("btn-primary", false));
-                        button_only_local.get().map(|c| c.class("btn-primary", true));
                         set_only_local.set(true);
                     }
                 />
                 <input
                     type="button"
                     value="All"
-                    class="btn btn-primary rounded-l-none"
-                    node_ref=button_all
+                    class=move || all_class.get()
                     on:click=move |_| {
-                        button_all.get().map(|c| c.class("btn-primary", true));
-                        button_only_local.get().map(|c| c.class("btn-primary", false));
                         set_only_local.set(false);
                     }
                 />

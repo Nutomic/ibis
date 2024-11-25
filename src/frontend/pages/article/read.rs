@@ -3,7 +3,7 @@ use crate::frontend::{
     markdown::render_markdown,
     pages::article_resource,
 };
-use leptos::*;
+use leptos::prelude::*;
 
 #[component]
 pub fn ReadArticle() -> impl IntoView {

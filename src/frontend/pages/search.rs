@@ -2,8 +2,8 @@ use crate::{
     common::{DbArticle, DbInstance, SearchArticleForm},
     frontend::{api::CLIENT, article_link, article_title},
 };
-use leptos::*;
-use leptos_router::use_query_map;
+use leptos::prelude::*;
+use leptos_router::hooks::use_query_map;
 use serde::{Deserialize, Serialize};
 use url::Url;
 
@@ -22,9 +22,9 @@ impl SearchResults {
 #[component]
 pub fn Search() -> impl IntoView {
     let params = use_query_map();
-    let query = move || params.get().get("query").cloned().unwrap();
-    let (error, set_error) = create_signal(None::<String>);
-    let search_results = create_resource(query, move |query| async move {
+    let query = move || params.get().get("query").clone().unwrap();
+    let (error, set_error) = signal(None::<String>);
+    let search_results = Resource::new(query, move |query| async move {
         set_error.set(None);
         let mut search_results = SearchResults::default();
         let url = Url::parse(&query);
@@ -89,7 +89,7 @@ pub fn Search() -> impl IntoView {
                                             view! {
                                                 <li>
                                                     <a class="link text-lg" href=format!("/instance/{domain}")>
-                                                        {domain}
+                                                        {domain.to_string()}
                                                     </a>
                                                 </li>
                                             },

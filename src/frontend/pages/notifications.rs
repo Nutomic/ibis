@@ -2,11 +2,11 @@ use crate::{
     common::Notification,
     frontend::{api::CLIENT, article_link, article_title},
 };
-use leptos::*;
+use leptos::prelude::*;
 
 #[component]
 pub fn Notifications() -> impl IntoView {
-    let notifications = create_resource(
+    let notifications = Resource::new(
         move || {},
         |_| async move { CLIENT.notifications_list().await.unwrap() },
     );
@@ -43,7 +43,7 @@ pub fn Notifications() -> impl IntoView {
                                         }
                                     };
                                     let notif_ = notif.clone();
-                                    let click_approve = create_action(move |_: &()| {
+                                    let click_approve = Action::new(move |_: &()| {
                                         let notif_ = notif_.clone();
                                         async move {
                                             if let ArticleApprovalRequired(a) = notif_ {
@@ -53,7 +53,7 @@ pub fn Notifications() -> impl IntoView {
                                         }
                                     });
                                     let notif_ = notif.clone();
-                                    let click_reject = create_action(move |_: &()| {
+                                    let click_reject = Action::new(move |_: &()| {
                                         let notif_ = notif_.clone();
                                         async move {
                                             match notif_ {
@@ -76,13 +76,17 @@ pub fn Notifications() -> impl IntoView {
                                                 <button
                                                     class="btn btn-sm btn-outline"
                                                     style=my_style
-                                                    on:click=move |_| click_approve.dispatch(())
+                                                    on:click=move |_| {
+                                                        click_approve.dispatch(());
+                                                    }
                                                 >
                                                     Approve
                                                 </button>
                                                 <button
                                                     class="btn btn-sm btn-outline"
-                                                    on:click=move |_| click_reject.dispatch(())
+                                                    on:click=move |_| {
+                                                        click_reject.dispatch(());
+                                                    }
                                                 >
                                                     Reject
                                                 </button>

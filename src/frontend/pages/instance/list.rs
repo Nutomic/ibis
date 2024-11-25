@@ -1,9 +1,9 @@
 use crate::frontend::{api::CLIENT, components::connect::ConnectView};
-use leptos::*;
+use leptos::prelude::*;
 
 #[component]
 pub fn ListInstances() -> impl IntoView {
-    let instances = create_resource(
+    let instances = Resource::new(
         move || (),
         |_| async move { CLIENT.list_instances().await.unwrap() },
     );
@@ -21,14 +21,14 @@ pub fn ListInstances() -> impl IntoView {
                             .get()
                             .map(|a| {
                                 a.into_iter()
-                                    .map(|i| {
+                                    .map(|ref i| {
                                         view! {
                                             <li>
                                                 <a
                                                     class="link text-lg"
                                                     href=format!("/instance/{}", i.domain)
                                                 >
-                                                    {i.domain}
+                                                    {i.domain.to_string()}
                                                 </a>
                                             </li>
                                         }

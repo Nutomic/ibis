@@ -3,21 +3,21 @@ use crate::frontend::{
     app::{is_logged_in, site, DefaultResource},
     dark_mode::DarkMode,
 };
-use leptos::{component, view, IntoView, *};
-use leptos_router::*;
+use leptos::{component, prelude::*, view, IntoView, *};
+use leptos_router::{components::A, hooks::use_navigate};
 
 #[component]
 pub fn Nav() -> impl IntoView {
-    let logout_action = create_action(move |_| async move {
+    let logout_action = Action::new(move |_| async move {
         CLIENT.logout().await.unwrap();
         site().refetch();
     });
-    let notification_count = create_resource(
+    let notification_count = Resource::new(
         || (),
         move |_| async move { CLIENT.notifications_count().await.unwrap_or_default() },
     );
 
-    let (search_query, set_search_query) = create_signal(String::new());
+    let (search_query, set_search_query) = signal(String::new());
     let mut dark_mode = expect_context::<DarkMode>();
     view! {
         <nav class="max-sm:navbar p-2.5 h-full md:fixed md:w-64 max-sm: border-b md:border-e border-slate-400 border-solid">
@@ -45,32 +45,32 @@ pub fn Nav() -> impl IntoView {
                             <A href="/">"Main Page"</A>
                         </li>
                         <li>
-                            <A href="/instance/list">"Instances"</A>
+                            <A href="/instances">"Instances"</A>
                         </li>
                         <li>
-                            <A href="/article/list">"Articles"</A>
+                            <A href="/articles">"Articles"</A>
                         </li>
-                        <Transition>
+                        <Suspense>
                             <Show when=is_logged_in>
                                 <li>
-                                    <A href="/article/create">"Create Article"</A>
+                                    <A href="/create-article">"Create Article"</A>
                                 </li>
                                 <li>
                                     <A href="/notifications">
                                         "Notifications "
                                         <span class="indicator-item indicator-end badge badge-neutral">
-                                            {move || notification_count.get()}
+                                            <Suspense>{move || notification_count.get()}</Suspense>
                                         </span>
                                     </A>
                                 </li>
                             </Show>
-                        </Transition>
+                        </Suspense>
                         <li>
                             <form
                                 class="form-control m-0 p-1"
                                 on:submit=move |ev| {
                                     ev.prevent_default();
-                                    let navigate = leptos_router::use_navigate();
+                                    let navigate = use_navigate();
                                     let query = search_query.get();
                                     if !query.is_empty() {
                                         navigate(
@@ -96,7 +96,7 @@ pub fn Nav() -> impl IntoView {
                         </li>
                     </ul>
                     <div class="divider"></div>
-                    <Transition>
+                    <Suspense>
                         <Show
                             when=is_logged_in
                             fallback=move || {
@@ -127,7 +127,9 @@ pub fn Nav() -> impl IntoView {
                                     </p>
                                     <button
                                         class="btn btn-outline btn-xs w-min self-center"
-                                        on:click=move |_| logout_action.dispatch(())
+                                        on:click=move |_| {
+                                            logout_action.dispatch(());
+                                        }
                                     >
                                         Logout
                                     </button>
@@ -135,7 +137,7 @@ pub fn Nav() -> impl IntoView {
                             }
 
                         </Show>
-                    </Transition>
+                    </Suspense>
                     <div class="grow min-h-2"></div>
                     <div class="m-1 grid gap-2">
                         <label class="flex cursor-pointer gap-2">

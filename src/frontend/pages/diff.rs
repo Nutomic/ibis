@@ -4,8 +4,8 @@ use crate::frontend::{
     render_date_time,
     user_link,
 };
-use leptos::*;
-use leptos_router::*;
+use leptos::prelude::*;
+use leptos_router::hooks::use_params_map;
 
 #[component]
 pub fn EditDiff() -> impl IntoView {
@@ -21,7 +21,7 @@ pub fn EditDiff() -> impl IntoView {
                 article
                     .get()
                     .map(|article| {
-                        let hash = params.get_untracked().get("hash").cloned().unwrap();
+                        let hash = params.get_untracked().get("hash").clone().unwrap();
                         let edit = article
                             .edits
                             .iter()
