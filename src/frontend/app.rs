@@ -6,8 +6,12 @@ use crate::{
         dark_mode::DarkMode,
         pages::{
             article::{
-                actions::ArticleActions, create::CreateArticle, edit::EditArticle,
-                history::ArticleHistory, list::ListArticles, read::ReadArticle,
+                actions::ArticleActions,
+                create::CreateArticle,
+                edit::EditArticle,
+                history::ArticleHistory,
+                list::ListArticles,
+                read::ReadArticle,
             },
             diff::EditDiff,
             instance::{details::InstanceDetails, list::ListInstances},

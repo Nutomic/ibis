@@ -1,6 +1,10 @@
 use crate::{
     common::CreateArticleForm,
-    frontend::{api::CLIENT, components::editor::EditorView},
+    frontend::{
+        api::CLIENT,
+        app::{is_admin, site, DefaultResource},
+        components::editor::EditorView,
+    },
 };
 use leptos::{html::Textarea, prelude::*};
 use leptos_router::components::Redirect;
@@ -47,9 +51,19 @@ pub fn CreateArticle() -> impl IntoView {
             }
         }
     });
+    let show_approval_message = Signal::derive(move || {
+        site().with_default(|site| site.config.article_approval) && !is_admin()
+    });
 
     view! {
         <h1 class="text-4xl font-bold font-serif my-4">Create new Article</h1>
+        <Suspense>
+            <Show when=move || show_approval_message.get()>
+                <div class="alert alert-warning mb-4">
+                    New articles require admin approval before being published
+                </div>
+            </Show>
+        </Suspense>
         <Show
             when=move || create_response.get().is_some()
             fallback=move || {
