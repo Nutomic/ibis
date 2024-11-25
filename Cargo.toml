@@ -29,7 +29,8 @@ ssr = [
   "config",
   "tower",
   "tower-layer",
-  "reqwest","diesel-derive-newtype"
+  "reqwest",
+  "diesel-derive-newtype",
 ]
 hydrate = ["leptos/hydrate", "katex/wasm-js", "gloo-net"]
 
