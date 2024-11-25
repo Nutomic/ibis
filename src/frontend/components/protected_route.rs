@@ -24,6 +24,7 @@ where
         condition,
         redirect_path,
         ssr,
+        fallback: Default::default(),
     };
     ProtectedRoute(props)
 }
