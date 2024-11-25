@@ -6,33 +6,12 @@ edition = "2021"
 [features]
 default = ["ssr"]
 ssr = [
-  "axum",
-  "axum-macros",
-  "axum-extra",
-  "tower-http",
-  "diesel",
-  "diesel-derive-newtype",
-  "diesel_migrations",
-  "tokio",
-  "leptos_axum",
-  "activitypub_federation",
-  "jsonwebtoken",
   "katex/duktape",
   "leptos/ssr",
   "leptos-use/ssr",
   "leptos-use/axum",
-  "doku",
-  "bcrypt",
-  "diffy",
-  "enum_delegate",
-  "async-trait",
-  "config",
-  "tower",
-  "tower-layer",
-  "reqwest",
-  "diesel-derive-newtype",
 ]
-hydrate = ["leptos/hydrate", "katex/wasm-js", "gloo-net"]
+hydrate = ["leptos/hydrate", "katex/wasm-js"]
 
 # This profile significantly speeds up build time. If debug info is needed you can comment the line
 # out temporarily, but make sure to leave this in the main branch.
@@ -55,14 +34,13 @@ panic = "abort"
 dbg_macro = "deny"
 unwrap_used = "deny"
 
+# frontend and shared deps
 [dependencies]
 anyhow = "1.0.93"
 leptos = "0.7.0-rc2"
 leptos_meta = "0.7.0-rc2"
 leptos_router = "0.7.0-rc2"
 chrono = { version = "0.4.38", features = ["serde"] }
-env_logger = { version = "0.11.5", default-features = false }
-futures = "0.3.31"
 hex = "0.4.3"
 rand = "0.8.5"
 getrandom = { version = "0.2", features = ["js"] }
@@ -71,10 +49,6 @@ sha2 = "0.10.8"
 uuid = { version = "1.11.0", features = ["serde"] }
 serde = { version = "1.0.215", features = ["derive"] }
 url = { version = "2.5.3", features = ["serde"] }
-reqwest = { version = "0.12.9", features = [
-  "json",
-  "cookies",
-], optional = true }
 log = "0.4"
 tracing = "0.1.40"
 once_cell = "1.20.2"
@@ -91,41 +65,48 @@ markdown-it-sup = "1.0.0"
 leptos-use = "0.14.0-rc3"
 codee = "0.2.0"
 wasm-bindgen = "=0.2.95"
+gloo-net = "0.6.0"
+console_log = "1.0.0"
+send_wrapper = "0.6.0"
+web-sys = "0.3.72"
+http = "1.1.0"
+serde_urlencoded = "0.7.1"
 
-# backend-only features
-axum = { version = "0.7.7", optional = true }
-axum-macros = { version = "0.4.2", optional = true }
-axum-extra = { version = "0.9.4", features = ["cookie"], optional = true }
-tokio = { version = "1.41.1", features = ["full"], optional = true }
-tower-http = { version = "0.6.1", features = ["cors", "fs"], optional = true }
+# backend-only deps
+[target.'cfg(not(target_family = "wasm"))'.dependencies]
+axum = "0.7.7"
+axum-macros = "0.4.2"
+axum-extra = { version = "0.9.4", features = ["cookie"] }
+tokio = { version = "1.41.1", features = ["full"] }
+tower-http = { version = "0.6.1", features = ["cors", "fs"] }
 activitypub_federation = { version = "0.6.0", features = [
   "axum",
   "diesel",
-], default-features = false, optional = true }
+], default-features = false }
 diesel = { version = "2.2.4", default-features = false, features = [
   "postgres",
   "chrono",
   "uuid",
   "r2d2",
-], optional = true }
-diesel-derive-newtype = { version = "2.1.2", optional = true }
-diesel_migrations = { version = "2.2.0", optional = true }
-doku = { version = "0.21.1", optional = true }
-jsonwebtoken = { version = "9.3.0", optional = true }
-leptos_axum = { version = "0.7.0-rc2", optional = true }
-bcrypt = { version = "0.15.1", optional = true }
-diffy = { version = "0.4.0", optional = true }
-enum_delegate = { version = "0.2.0", optional = true }
-async-trait = { version = "0.1.83", optional = true }
-config = { version = "0.14.1", features = ["toml"], optional = true }
-tower = { version = "0.5.1", optional = true }
-tower-layer = { version = "0.3.3", optional = true }
-console_log = "1.0.0"
-send_wrapper = "0.6.0"
-gloo-net = { version = "0.6.0", optional = true }
-web-sys = "0.3.72"
-http = "1.1.0"
-serde_urlencoded = "0.7.1"
+] }
+diesel-derive-newtype = { version = "2.1.2" }
+diesel_migrations = { version = "2.2.0" }
+doku = { version = "0.21.1" }
+jsonwebtoken = { version = "9.3.0" }
+leptos_axum = { version = "0.7.0-rc2" }
+bcrypt = { version = "0.15.1" }
+diffy = { version = "0.4.0" }
+enum_delegate = { version = "0.2.0" }
+async-trait = { version = "0.1.83" }
+config = { version = "0.14.1", features = ["toml"] }
+tower = { version = "0.5.1" }
+tower-layer = { version = "0.3.3" }
+reqwest = { version = "0.12.9", features = [
+  "json",
+  "cookies",
+] }
+futures = "0.3.31"
+env_logger = { version = "0.11.5", default-features = false }
 
 [dev-dependencies]
 pretty_assertions = "1.4.1"
