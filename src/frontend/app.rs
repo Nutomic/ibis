@@ -6,12 +6,8 @@ use crate::{
         dark_mode::DarkMode,
         pages::{
             article::{
-                actions::ArticleActions,
-                create::CreateArticle,
-                edit::EditArticle,
-                history::ArticleHistory,
-                list::ListArticles,
-                read::ReadArticle,
+                actions::ArticleActions, create::CreateArticle, edit::EditArticle,
+                history::ArticleHistory, list::ListArticles, read::ReadArticle,
             },
             diff::EditDiff,
             instance::{details::InstanceDetails, list::ListInstances},
@@ -45,8 +41,6 @@ pub fn is_admin() -> bool {
             .unwrap_or(false)
     })
 }
-
-// TODO: can probably get rid of this
 pub trait DefaultResource<T> {
     fn with_default<O>(&self, f: impl FnOnce(&T) -> O) -> O;
 }
