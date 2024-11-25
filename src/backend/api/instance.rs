@@ -3,11 +3,11 @@ use crate::{
     common::{
         DbInstance,
         FollowInstance,
-        FollowInstanceResponse,
         GetInstance,
         InstanceView,
         LocalUserView,
         ResolveObject,
+        SuccessResponse,
     },
 };
 use activitypub_federation::{config::Data, fetch::object_id::ObjectId};
@@ -31,13 +31,13 @@ pub(in crate::backend::api) async fn follow_instance(
     Extension(user): Extension<LocalUserView>,
     data: Data<IbisData>,
     Form(query): Form<FollowInstance>,
-) -> MyResult<Json<FollowInstanceResponse>> {
+) -> MyResult<Json<SuccessResponse>> {
     let target = DbInstance::read(query.id, &data)?;
     let pending = !target.local;
     DbInstance::follow(&user.person, &target, pending, &data)?;
     let instance = DbInstance::read(query.id, &data)?;
     Follow::send(user.person, &instance, &data).await?;
-    Ok(Json(FollowInstanceResponse { success: true }))
+    Ok(Json(SuccessResponse::default()))
 }
 
 /// Fetch a remote instance actor. This automatically synchronizes the remote articles collection to

@@ -12,7 +12,6 @@ use crate::{
         DeleteConflictForm,
         EditArticleForm,
         FollowInstance,
-        FollowInstanceResponse,
         ForkArticleForm,
         GetArticleForm,
         GetInstance,
@@ -27,6 +26,7 @@ use crate::{
         ResolveObject,
         SearchArticleForm,
         SiteView,
+        SuccessResponse,
     },
     frontend::error::MyResult,
 };
@@ -105,7 +105,8 @@ impl ApiClient {
         &self,
         edit_form: &EditArticleForm,
     ) -> MyResult<Option<ApiConflict>> {
-        self.get("/api/v1/article", Some(&edit_form)).await
+        self.send(Method::PATCH, "/api/v1/article", Some(&edit_form))
+            .await
     }
 
     pub async fn edit_article(&self, edit_form: &EditArticleForm) -> MyResult<ArticleView> {
@@ -180,10 +181,7 @@ impl ApiClient {
         Ok(instance_resolved)
     }
 
-    pub async fn follow_instance(
-        &self,
-        follow_form: FollowInstance,
-    ) -> MyResult<FollowInstanceResponse> {
+    pub async fn follow_instance(&self, follow_form: FollowInstance) -> MyResult<SuccessResponse> {
         self.post("/api/v1/instance/follow", Some(follow_form))
             .await
     }
@@ -192,8 +190,8 @@ impl ApiClient {
         self.get("/api/v1/site", None::<()>).await
     }
 
-    pub async fn logout(&self) -> MyResult<()> {
-        self.get("/api/v1/account/logout", None::<()>).await
+    pub async fn logout(&self) -> MyResult<SuccessResponse> {
+        self.post("/api/v1/account/logout", None::<()>).await
     }
 
     pub async fn fork_article(&self, form: &ForkArticleForm) -> MyResult<ArticleView> {
@@ -246,8 +244,12 @@ impl ApiClient {
         use reqwest::header::HeaderName;
         let mut req = self
             .client
-            .request(method, self.request_endpoint(path))
-            .query(&params);
+            .request(method.clone(), self.request_endpoint(path));
+        req = if method == Method::GET {
+            req.query(&params)
+        } else {
+            req.form(&params)
+        };
         let auth = use_context::<Auth>();
         if let Some(Auth(Some(auth))) = auth {
             req = req.header(HeaderName::from_static(AUTH_COOKIE), auth);
@@ -288,17 +290,18 @@ impl ApiClient {
             let path_with_endpoint = self.request_endpoint(path);
             let params_encoded = serde_urlencoded::to_string(&params).unwrap();
             let path = if method == Method::GET {
-                // Cannot pass the struct directly but need to convert it manually
+                // Cannot pass the form data directly but need to convert it manually
                 // https://github.com/rustwasm/gloo/issues/378
                 format!("{path_with_endpoint}?{params_encoded}")
             } else {
                 path_with_endpoint
             };
+
             let builder = RequestBuilder::new(&path)
                 .method(method.clone())
                 .abort_signal(abort_signal.as_ref())
                 .credentials(RequestCredentials::Include);
-            let req = if method == Method::POST {
+            let req = if method != Method::GET {
                 builder
                     .header("content-type", "application/x-www-form-urlencoded")
                     .body(params_encoded)

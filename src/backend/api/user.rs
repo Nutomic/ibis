@@ -12,6 +12,7 @@ use crate::{
         LoginUserForm,
         Notification,
         RegisterUserForm,
+        SuccessResponse,
         AUTH_COOKIE,
     },
 };
@@ -125,9 +126,9 @@ fn create_cookie(jwt: String, data: &Data<IbisData>) -> Cookie<'static> {
 pub(in crate::backend::api) async fn logout_user(
     data: Data<IbisData>,
     jar: CookieJar,
-) -> MyResult<CookieJar> {
+) -> MyResult<(CookieJar, Json<SuccessResponse>)> {
     let jar = jar.remove(create_cookie(String::new(), &data));
-    Ok(jar)
+    Ok((jar, Json(SuccessResponse::default())))
 }
 
 #[debug_handler]

@@ -5,12 +5,7 @@ edition = "2021"
 
 [features]
 default = ["ssr"]
-ssr = [
-  "katex/duktape",
-  "leptos/ssr",
-  "leptos-use/ssr",
-  "leptos-use/axum",
-]
+ssr = ["katex/duktape", "leptos/ssr", "leptos-use/ssr", "leptos-use/axum"]
 hydrate = ["leptos/hydrate", "katex/wasm-js"]
 
 # This profile significantly speeds up build time. If debug info is needed you can comment the line
@@ -101,10 +96,7 @@ async-trait = { version = "0.1.83" }
 config = { version = "0.14.1", features = ["toml"] }
 tower = { version = "0.5.1" }
 tower-layer = { version = "0.3.3" }
-reqwest = { version = "0.12.9", features = [
-  "json",
-  "cookies",
-] }
+reqwest = { version = "0.12.9", features = ["json", "cookies"] }
 futures = "0.3.31"
 env_logger = { version = "0.11.5", default-features = false }
 

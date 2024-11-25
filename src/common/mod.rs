@@ -245,8 +245,14 @@ pub struct FollowInstance {
 }
 
 #[derive(Deserialize, Serialize, Debug)]
-pub struct FollowInstanceResponse {
-    pub success: bool,
+pub struct SuccessResponse {
+    success: bool,
+}
+
+impl Default for SuccessResponse {
+    fn default() -> Self {
+        Self { success: true }
+    }
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]

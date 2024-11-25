@@ -161,6 +161,7 @@ pub(in crate::backend::api) async fn get_article(
     Query(query): Query<GetArticleForm>,
     data: Data<IbisData>,
 ) -> MyResult<Json<ArticleView>> {
+    dbg!(&query);
     match (query.title, query.id) {
         (Some(title), None) => Ok(Json(DbArticle::read_view_title(
             &title,

@@ -63,7 +63,7 @@ pub fn api_routes() -> Router<()> {
         .route("/user/notifications/count", get(count_notifications))
         .route("/account/register", post(register_user))
         .route("/account/login", post(login_user))
-        .route("/account/logout", get(logout_user))
+        .route("/account/logout", post(logout_user))
         .route("/site", get(site_view))
         .route_layer(middleware::from_fn(auth))
 }
