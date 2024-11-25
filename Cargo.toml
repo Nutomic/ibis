@@ -142,3 +142,6 @@ tailwind-config-file = "tailwind.config.js"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
+
+[package.metadata.cargo-shear]
+ignored = ["getrandom"]
