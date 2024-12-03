@@ -50,7 +50,7 @@ pub fn Nav() -> impl IntoView {
                         <li>
                             <A href="/articles">"Articles"</A>
                         </li>
-                        <Suspense>
+                        <Transition>
                             <Show when=is_logged_in>
                                 <li>
                                     <A href="/create-article">"Create Article"</A>
@@ -59,12 +59,12 @@ pub fn Nav() -> impl IntoView {
                                     <A href="/notifications">
                                         "Notifications "
                                         <span class="indicator-item indicator-end badge badge-neutral">
-                                            <Suspense>{move || notification_count.get()}</Suspense>
+                                            {move || notification_count.get()}
                                         </span>
                                     </A>
                                 </li>
                             </Show>
-                        </Suspense>
+                        </Transition>
                         <li>
                             <form
                                 class="form-control m-0 p-1"
@@ -96,7 +96,7 @@ pub fn Nav() -> impl IntoView {
                         </li>
                     </ul>
                     <div class="divider"></div>
-                    <Suspense>
+                    <Transition>
                         <Show
                             when=is_logged_in
                             fallback=move || {
@@ -137,7 +137,7 @@ pub fn Nav() -> impl IntoView {
                             }
 
                         </Show>
-                    </Suspense>
+                    </Transition>
                     <div class="grow min-h-2"></div>
                     <div class="m-1 grid gap-2">
                         <label class="flex cursor-pointer gap-2">

@@ -35,7 +35,8 @@ pub fn site() -> Resource<SiteView> {
 }
 
 pub fn is_logged_in() -> bool {
-    site().with_default(|site| site.my_profile.is_some())
+    //site().with_default(|site| site.my_profile.is_some())
+    false
 }
 pub fn is_admin() -> bool {
     site().with_default(|site| {
