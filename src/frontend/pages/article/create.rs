@@ -44,7 +44,7 @@ pub fn CreateArticle() -> impl IntoView {
                     set_create_error.update(|e| *e = None);
                 }
                 Err(err) => {
-                    let msg = err.0.to_string();
+                    let msg = err.to_string();
                     log::warn!("Unable to create: {msg}");
                     set_create_error.update(|e| *e = Some(msg));
                 }

@@ -29,7 +29,7 @@ pub fn ArticleActions() -> impl IntoView {
             match result {
                 Ok(res) => set_fork_response.set(Some(res.article)),
                 Err(err) => {
-                    set_error.update(|e| *e = Some(err.0.to_string()));
+                    set_error.update(|e| *e = Some(err.to_string()));
                 }
             }
         }
@@ -45,7 +45,7 @@ pub fn ArticleActions() -> impl IntoView {
             match result {
                 Ok(_res) => article.refetch(),
                 Err(err) => {
-                    set_error.update(|e| *e = Some(err.0.to_string()));
+                    set_error.update(|e| *e = Some(err.to_string()));
                 }
             }
         }

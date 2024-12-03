@@ -1,12 +1,13 @@
-#![allow(clippy::unwrap_used)]
+#![expect(clippy::unwrap_used)]
 
+use anyhow::Result;
 use ibis::{
     backend::{
         config::{IbisConfig, IbisConfigDatabase, IbisConfigFederation},
         start,
     },
     common::{Options, RegisterUserForm},
-    frontend::{api::ApiClient, error::MyResult},
+    frontend::api::ApiClient,
 };
 use reqwest::ClientBuilder;
 use std::{
@@ -75,7 +76,7 @@ impl TestData {
         Self { alpha, beta, gamma }
     }
 
-    pub fn stop(self) -> MyResult<()> {
+    pub fn stop(self) -> Result<()> {
         for j in [self.alpha.stop(), self.beta.stop(), self.gamma.stop()] {
             j.join().unwrap();
         }

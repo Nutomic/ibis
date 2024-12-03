@@ -1,6 +1,6 @@
 use crate::{
     common::{DbPerson, GetUserForm},
-    frontend::{api::CLIENT, user_title},
+    frontend::{api::CLIENT, app::DefaultResource, user_title},
 };
 use leptos::prelude::*;
 use leptos_router::hooks::use_params_map;
@@ -8,7 +8,7 @@ use leptos_router::hooks::use_params_map;
 #[component]
 pub fn UserProfile() -> impl IntoView {
     let params = use_params_map();
-    let name = move || params.get().get("name").clone().unwrap();
+    let name = move || params.get().get("name").clone().unwrap_or_default();
     let (error, set_error) = signal(None::<String>);
     let user_profile = Resource::new(name, move |mut name| async move {
         set_error.set(None);
@@ -18,7 +18,7 @@ pub fn UserProfile() -> impl IntoView {
             domain = Some(domain_.to_string());
         }
         let params = GetUserForm { name, domain };
-        CLIENT.get_user(params).await.unwrap()
+        CLIENT.get_user(params).await
     });
 
     view! {
@@ -35,7 +35,7 @@ pub fn UserProfile() -> impl IntoView {
         }>
             {move || {
                 user_profile
-                    .get()
+                    .get_default()
                     .map(|person: DbPerson| {
                         view! {
                             <h1 class="text-4xl font-bold font-serif my-6 grow flex-auto">

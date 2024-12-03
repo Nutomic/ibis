@@ -8,7 +8,7 @@ use leptos::prelude::*;
 pub fn Notifications() -> impl IntoView {
     let notifications = Resource::new(
         move || {},
-        |_| async move { CLIENT.notifications_list().await.unwrap() },
+        |_| async move { CLIENT.notifications_list().await.unwrap_or_default() },
     );
 
     view! {

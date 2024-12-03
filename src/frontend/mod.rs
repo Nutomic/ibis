@@ -6,7 +6,6 @@ pub mod api;
 pub mod app;
 mod components;
 pub mod dark_mode;
-pub mod error;
 pub mod markdown;
 pub mod pages;
 

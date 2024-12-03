@@ -31,7 +31,6 @@ unwrap_used = "deny"
 
 # frontend and shared deps
 [dependencies]
-anyhow = "1.0.93"
 leptos = "0.7.0"
 leptos_meta = "0.7.0"
 leptos_router = "0.7.0"
@@ -99,6 +98,7 @@ tower-layer = { version = "0.3.3" }
 reqwest = { version = "0.12.9", features = ["json", "cookies"] }
 futures = "0.3.31"
 env_logger = { version = "0.11.5", default-features = false }
+anyhow = "1.0.93"
 
 [dev-dependencies]
 pretty_assertions = "1.4.1"

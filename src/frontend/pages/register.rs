@@ -1,6 +1,6 @@
 use crate::{
-    common::{LocalUserView, RegisterUserForm},
-    frontend::{api::CLIENT, app::site, components::credentials::*, error::MyResult},
+    common::RegisterUserForm,
+    frontend::{api::CLIENT, app::site, components::credentials::*},
 };
 use leptos::prelude::*;
 use log::info;
@@ -18,7 +18,7 @@ pub fn Register() -> impl IntoView {
         info!("Try to register new account for {}", credentials.username);
         async move {
             set_wait_for_response.update(|w| *w = true);
-            let result: MyResult<LocalUserView> = CLIENT.register(credentials).await;
+            let result = CLIENT.register(credentials).await;
             set_wait_for_response.update(|w| *w = false);
             match result {
                 Ok(_res) => {
@@ -27,7 +27,7 @@ pub fn Register() -> impl IntoView {
                     set_register_error.update(|e| *e = None);
                 }
                 Err(err) => {
-                    let msg = err.0.to_string();
+                    let msg = err.to_string();
                     log::warn!("Unable to register new account: {msg}");
                     set_register_error.update(|e| *e = Some(msg));
                 }

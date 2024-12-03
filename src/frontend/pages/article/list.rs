@@ -1,6 +1,9 @@
 use crate::{
     common::ListArticlesForm,
-    frontend::{api::CLIENT, article_link, article_title, components::connect::ConnectView},
+    frontend::{
+        api::CLIENT, app::DefaultResource, article_link, article_title,
+        components::connect::ConnectView,
+    },
 };
 use leptos::prelude::*;
 
@@ -16,7 +19,6 @@ pub fn ListArticles() -> impl IntoView {
                     instance_id: None,
                 })
                 .await
-                .unwrap()
         },
     );
     let only_local_class = Resource::new(
@@ -64,27 +66,27 @@ pub fn ListArticles() -> impl IntoView {
                 />
             </div>
             <Show
-                when=move || { articles.get().unwrap_or_default().len() > 1 || only_local.get() }
+                when=move || {
+                    articles.get_default().unwrap_or_default().len() > 1 || only_local.get()
+                }
                 fallback=move || view! { <ConnectView res=articles /> }
             >
                 <ul class="list-none my-4">
-                    {move || {
-                        articles
-                            .get()
-                            .map(|a| {
-                                a.into_iter()
-                                    .map(|a| {
-                                        view! {
-                                            <li>
-                                                <a class="link text-lg" href=article_link(&a)>
-                                                    {article_title(&a)}
-                                                </a>
-                                            </li>
-                                        }
-                                    })
-                                    .collect::<Vec<_>>()
-                            })
-                    }}
+                    <For
+                        each=move || articles.get_default().unwrap_or_default()
+                        key=|article| article.id
+                        let:article
+                    >
+                        {
+                            view! {
+                                <li>
+                                    <a class="link text-lg" href=article_link(&article)>
+                                        {article_title(&article)}
+                                    </a>
+                                </li>
+                            }
+                        }
+                    </For>
 
                 </ul>
             </Show>

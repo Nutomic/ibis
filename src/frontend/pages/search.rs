@@ -22,7 +22,7 @@ impl SearchResults {
 #[component]
 pub fn Search() -> impl IntoView {
     let params = use_query_map();
-    let query = move || params.get().get("query").clone().unwrap();
+    let query = move || params.get().get("query").clone().unwrap_or_default();
     let (error, set_error) = signal(None::<String>);
     let search_results = Resource::new(query, move |query| async move {
         set_error.set(None);
@@ -33,18 +33,18 @@ pub fn Search() -> impl IntoView {
 
         match search.await {
             Ok(mut a) => search_results.articles.append(&mut a),
-            Err(e) => set_error.set(Some(e.0.to_string())),
+            Err(e) => set_error.set(Some(e.to_string())),
         }
 
         // If its a valid url, also attempt to resolve as federation object
         if let Ok(url) = url {
             match CLIENT.resolve_article(url.clone()).await {
                 Ok(a) => search_results.articles.push(a.article),
-                Err(e) => set_error.set(Some(e.0.to_string())),
+                Err(e) => set_error.set(Some(e.to_string())),
             }
             match CLIENT.resolve_instance(url).await {
                 Ok(a) => search_results.instance = Some(a),
-                Err(e) => set_error.set(Some(e.0.to_string())),
+                Err(e) => set_error.set(Some(e.to_string())),
             }
         }
         search_results

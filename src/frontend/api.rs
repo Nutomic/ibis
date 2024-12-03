@@ -1,37 +1,11 @@
-use crate::{
-    common::{
-        newtypes::{ArticleId, ConflictId},
-        utils::http_protocol_str,
-        ApiConflict,
-        ApproveArticleForm,
-        ArticleView,
-        CreateArticleForm,
-        DbArticle,
-        DbInstance,
-        DbPerson,
-        DeleteConflictForm,
-        EditArticleForm,
-        FollowInstance,
-        ForkArticleForm,
-        GetArticleForm,
-        GetInstance,
-        GetUserForm,
-        InstanceView,
-        ListArticlesForm,
-        LocalUserView,
-        LoginUserForm,
-        Notification,
-        ProtectArticleForm,
-        RegisterUserForm,
-        ResolveObject,
-        SearchArticleForm,
-        SiteView,
-        SuccessResponse,
-    },
-    frontend::error::MyResult,
+use crate::common::{
+    newtypes::{ArticleId, ConflictId},
+    utils::http_protocol_str,
+    *,
 };
-use anyhow::anyhow;
-use http::*;
+use http::{Method, StatusCode};
+use leptos::prelude::ServerFnError;
+use log::error;
 use serde::{Deserialize, Serialize};
 use std::{fmt::Debug, sync::LazyLock};
 use url::Url;
@@ -79,24 +53,30 @@ impl ApiClient {
         Self { hostname, ssl }
     }
 
-    pub async fn get_article(&self, data: GetArticleForm) -> MyResult<ArticleView> {
+    pub async fn get_article(&self, data: GetArticleForm) -> Option<ArticleView> {
         self.get("/api/v1/article", Some(data)).await
     }
 
-    pub async fn list_articles(&self, data: ListArticlesForm) -> MyResult<Vec<DbArticle>> {
-        self.get("/api/v1/article/list", Some(data)).await
+    pub async fn list_articles(&self, data: ListArticlesForm) -> Option<Vec<DbArticle>> {
+        Some(self.get("/api/v1/article/list", Some(data)).await.unwrap())
     }
 
-    pub async fn register(&self, register_form: RegisterUserForm) -> MyResult<LocalUserView> {
+    pub async fn register(
+        &self,
+        register_form: RegisterUserForm,
+    ) -> Result<LocalUserView, ServerFnError> {
         self.post("/api/v1/account/register", Some(&register_form))
             .await
     }
 
-    pub async fn login(&self, login_form: LoginUserForm) -> MyResult<LocalUserView> {
+    pub async fn login(&self, login_form: LoginUserForm) -> Result<LocalUserView, ServerFnError> {
         self.post("/api/v1/account/login", Some(&login_form)).await
     }
 
-    pub async fn create_article(&self, data: &CreateArticleForm) -> MyResult<ArticleView> {
+    pub async fn create_article(
+        &self,
+        data: &CreateArticleForm,
+    ) -> Result<ArticleView, ServerFnError> {
         self.send(Method::POST, "/api/v1/article", Some(&data))
             .await
     }
@@ -104,13 +84,17 @@ impl ApiClient {
     pub async fn edit_article_with_conflict(
         &self,
         edit_form: &EditArticleForm,
-    ) -> MyResult<Option<ApiConflict>> {
+    ) -> Result<Option<ApiConflict>, ServerFnError> {
         self.send(Method::PATCH, "/api/v1/article", Some(&edit_form))
             .await
     }
 
-    pub async fn edit_article(&self, edit_form: &EditArticleForm) -> MyResult<ArticleView> {
-        let edit_res = self.edit_article_with_conflict(edit_form).await?;
+    pub async fn edit_article(&self, edit_form: &EditArticleForm) -> Option<ArticleView> {
+        let edit_res = self
+            .edit_article_with_conflict(edit_form)
+            .await
+            .map_err(|e| error!("edit failed {e}"))
+            .ok()?;
         assert!(edit_res.is_none());
 
         self.get_article(GetArticleForm {
@@ -121,53 +105,58 @@ impl ApiClient {
         .await
     }
 
-    pub async fn notifications_list(&self) -> MyResult<Vec<Notification>> {
+    pub async fn notifications_list(&self) -> Option<Vec<Notification>> {
         self.get("/api/v1/user/notifications/list", None::<()>)
             .await
     }
 
-    pub async fn notifications_count(&self) -> MyResult<usize> {
+    pub async fn notifications_count(&self) -> Option<usize> {
         self.get("/api/v1/user/notifications/count", None::<()>)
             .await
     }
 
-    pub async fn approve_article(&self, article_id: ArticleId, approve: bool) -> MyResult<()> {
+    pub async fn approve_article(&self, article_id: ArticleId, approve: bool) -> Option<()> {
         let form = ApproveArticleForm {
             article_id,
             approve,
         };
-        self.post("/api/v1/article/approve", Some(&form)).await
+        result_to_option(self.post("/api/v1/article/approve", Some(&form)).await)
     }
 
-    pub async fn delete_conflict(&self, conflict_id: ConflictId) -> MyResult<()> {
+    pub async fn delete_conflict(&self, conflict_id: ConflictId) -> Option<()> {
         let form = DeleteConflictForm { conflict_id };
-        self.send(Method::DELETE, "/api/v1/conflict", Some(form))
+        result_to_option(
+            self.send(Method::DELETE, "/api/v1/conflict", Some(form))
+                .await,
+        )
+    }
+
+    pub async fn search(
+        &self,
+        search_form: &SearchArticleForm,
+    ) -> Result<Vec<DbArticle>, ServerFnError> {
+        self.send(Method::GET, "/api/v1/search", Some(search_form))
             .await
     }
 
-    pub async fn search(&self, search_form: &SearchArticleForm) -> MyResult<Vec<DbArticle>> {
-        self.get("/api/v1/search", Some(search_form)).await
-    }
-
-    pub async fn get_local_instance(&self) -> MyResult<InstanceView> {
+    pub async fn get_local_instance(&self) -> Option<InstanceView> {
         self.get("/api/v1/instance", None::<i32>).await
     }
 
-    pub async fn get_instance(&self, get_form: &GetInstance) -> MyResult<InstanceView> {
+    pub async fn get_instance(&self, get_form: &GetInstance) -> Option<InstanceView> {
         self.get("/api/v1/instance", Some(&get_form)).await
     }
 
-    pub async fn list_instances(&self) -> MyResult<Vec<DbInstance>> {
+    pub async fn list_instances(&self) -> Option<Vec<DbInstance>> {
         self.get("/api/v1/instance/list", None::<i32>).await
     }
 
-    pub async fn follow_instance_with_resolve(
-        &self,
-        follow_instance: &str,
-    ) -> MyResult<DbInstance> {
+    pub async fn follow_instance_with_resolve(&self, follow_instance: &str) -> Option<DbInstance> {
         // fetch beta instance on alpha
         let resolve_form = ResolveObject {
-            id: Url::parse(&format!("{}://{}", http_protocol_str(), follow_instance))?,
+            id: Url::parse(&format!("{}://{}", http_protocol_str(), follow_instance))
+                .map_err(|e| error!("invalid url {e}"))
+                .ok()?,
         };
         let instance_resolved: DbInstance = self
             .get("/api/v1/instance/resolve", Some(resolve_form))
@@ -178,54 +167,63 @@ impl ApiClient {
             id: instance_resolved.id,
         };
         self.follow_instance(follow_form).await?;
-        Ok(instance_resolved)
+        Some(instance_resolved)
     }
 
-    pub async fn follow_instance(&self, follow_form: FollowInstance) -> MyResult<SuccessResponse> {
-        self.post("/api/v1/instance/follow", Some(follow_form))
-            .await
+    pub async fn follow_instance(&self, follow_form: FollowInstance) -> Option<SuccessResponse> {
+        result_to_option(
+            self.post("/api/v1/instance/follow", Some(follow_form))
+                .await,
+        )
     }
 
-    pub async fn site(&self) -> MyResult<SiteView> {
+    pub async fn site(&self) -> Option<SiteView> {
         self.get("/api/v1/site", None::<()>).await
     }
 
-    pub async fn logout(&self) -> MyResult<SuccessResponse> {
-        self.post("/api/v1/account/logout", None::<()>).await
+    pub async fn logout(&self) -> Option<SuccessResponse> {
+        result_to_option(self.post("/api/v1/account/logout", None::<()>).await)
     }
 
-    pub async fn fork_article(&self, form: &ForkArticleForm) -> MyResult<ArticleView> {
-        Ok(self.post("/api/v1/article/fork", Some(form)).await.unwrap())
+    pub async fn fork_article(&self, form: &ForkArticleForm) -> Result<ArticleView, ServerFnError> {
+        self.post("/api/v1/article/fork", Some(form)).await
     }
 
-    pub async fn protect_article(&self, params: &ProtectArticleForm) -> MyResult<DbArticle> {
+    pub async fn protect_article(
+        &self,
+        params: &ProtectArticleForm,
+    ) -> Result<DbArticle, ServerFnError> {
         self.post("/api/v1/article/protect", Some(params)).await
     }
 
-    pub async fn resolve_article(&self, id: Url) -> MyResult<ArticleView> {
+    pub async fn resolve_article(&self, id: Url) -> Result<ArticleView, ServerFnError> {
         let resolve_object = ResolveObject { id };
-        self.get("/api/v1/article/resolve", Some(resolve_object))
+        self.send(Method::GET, "/api/v1/article/resolve", Some(resolve_object))
             .await
     }
 
-    pub async fn resolve_instance(&self, id: Url) -> MyResult<DbInstance> {
+    pub async fn resolve_instance(&self, id: Url) -> Result<DbInstance, ServerFnError> {
         let resolve_object = ResolveObject { id };
-        self.get("/api/v1/instance/resolve", Some(resolve_object))
-            .await
+        self.send(
+            Method::GET,
+            "/api/v1/instance/resolve",
+            Some(resolve_object),
+        )
+        .await
     }
-    pub async fn get_user(&self, data: GetUserForm) -> MyResult<DbPerson> {
+    pub async fn get_user(&self, data: GetUserForm) -> Option<DbPerson> {
         self.get("/api/v1/user", Some(data)).await
     }
 
-    async fn get<T, R>(&self, endpoint: &str, query: Option<R>) -> MyResult<T>
+    async fn get<T, R>(&self, endpoint: &str, query: Option<R>) -> Option<T>
     where
         T: for<'de> Deserialize<'de>,
         R: Serialize + Debug,
     {
-        self.send(Method::GET, endpoint, query).await
+        result_to_option(self.send(Method::GET, endpoint, query).await)
     }
 
-    async fn post<T, R>(&self, endpoint: &str, query: Option<R>) -> MyResult<T>
+    async fn post<T, R>(&self, endpoint: &str, query: Option<R>) -> Result<T, ServerFnError>
     where
         T: for<'de> Deserialize<'de>,
         R: Serialize + Debug,
@@ -234,7 +232,12 @@ impl ApiClient {
     }
 
     #[cfg(feature = "ssr")]
-    async fn send<P, T>(&self, method: Method, path: &str, params: Option<P>) -> MyResult<T>
+    async fn send<P, T>(
+        &self,
+        method: Method,
+        path: &str,
+        params: Option<P>,
+    ) -> Result<T, ServerFnError>
     where
         P: Serialize + Debug,
         T: for<'de> Deserialize<'de>,
@@ -266,7 +269,7 @@ impl ApiClient {
         method: Method,
         path: &'a str,
         params: Option<P>,
-    ) -> impl std::future::Future<Output = MyResult<T>> + Send + 'a
+    ) -> impl std::future::Future<Output = Result<T, ServerFnError>> + Send + 'a
     where
         P: Serialize + Debug + 'a,
         T: for<'de> Deserialize<'de>,
@@ -309,26 +312,37 @@ impl ApiClient {
                 builder.build()
             }
             .unwrap();
-            let res = req.send().await.unwrap();
+            let res = req.send().await?;
             let status = res.status();
-            let text = res.text().await.unwrap();
+            let text = res.text().await?;
             Self::response(status, text)
         })
     }
 
-    fn response<T>(status: u16, text: String) -> MyResult<T>
+    fn response<T>(status: u16, text: String) -> Result<T, ServerFnError>
     where
         T: for<'de> Deserialize<'de>,
     {
+        let json = serde_json::from_str(&text)?;
         if status == StatusCode::OK {
-            Ok(serde_json::from_str(&text).map_err(|e| anyhow!("Json error on {text}: {e}"))?)
+            Ok(json)
         } else {
-            Err(anyhow!("API error: {text}").into())
+            Err(ServerFnError::Response(format!("API error: {text}")))
         }
     }
 
     fn request_endpoint(&self, path: &str) -> String {
         let protocol = if self.ssl { "https" } else { "http" };
         format!("{protocol}://{}{path}", &self.hostname)
+    }
+}
+
+fn result_to_option<T>(val: Result<T, ServerFnError>) -> Option<T> {
+    match val {
+        Ok(v) => Some(v),
+        Err(e) => {
+            error!("API error: {e}");
+            None
+        }
     }
 }

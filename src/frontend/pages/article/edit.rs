@@ -100,7 +100,7 @@ pub fn EditArticle() -> impl IntoView {
                         set_edit_response.update(|v| *v = EditResponse::Success);
                     }
                     Err(err) => {
-                        let msg = err.0.to_string();
+                        let msg = err.to_string();
                         log::warn!("Unable to edit: {msg}");
                         set_edit_error.update(|e| *e = Some(msg));
                     }

@@ -2,10 +2,7 @@ use katex;
 use markdown_it::{
     parser::inline::{InlineRule, InlineState},
     plugins::cmark::block::{heading::ATXHeading, lheading::SetextHeader},
-    MarkdownIt,
-    Node,
-    NodeValue,
-    Renderer,
+    MarkdownIt, Node, NodeValue, Renderer,
 };
 use once_cell::sync::OnceCell;
 
@@ -102,9 +99,9 @@ impl NodeValue for MathEquation {
             .throw_on_error(false)
             .display_mode(self.display_mode)
             .build()
-            .unwrap();
-        let katex_equation = katex::render_with_opts(&self.equation, opts).unwrap();
-        fmt.text_raw(&katex_equation)
+            .ok();
+        let katex_equation = opts.and_then(|o| katex::render_with_opts(&self.equation, o).ok());
+        fmt.text_raw(katex_equation.as_ref().unwrap_or(&self.equation))
     }
 }
 
@@ -153,6 +150,7 @@ fn test_markdown_article_link() {
 }
 
 #[test]
+#[expect(clippy::unwrap_used)]
 fn test_markdown_equation_katex() {
     let parser = markdown_parser();
     let rendered = parser

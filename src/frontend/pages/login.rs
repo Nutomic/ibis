@@ -26,7 +26,7 @@ pub fn Login() -> impl IntoView {
                     set_login_error.update(|e| *e = None);
                 }
                 Err(err) => {
-                    let msg = err.0.to_string();
+                    let msg = err.to_string();
                     log::warn!("Unable to login: {msg}");
                     set_login_error.update(|e| *e = Some(msg));
                 }
