@@ -32,9 +32,9 @@ unwrap_used = "deny"
 # frontend and shared deps
 [dependencies]
 anyhow = "1.0.93"
-leptos = "0.7.0-rc2"
-leptos_meta = "0.7.0-rc2"
-leptos_router = "0.7.0-rc2"
+leptos = "0.7.0"
+leptos_meta = "0.7.0"
+leptos_router = "0.7.0"
 chrono = { version = "0.4.38", features = ["serde"] }
 hex = "0.4.3"
 rand = "0.8.5"
@@ -88,7 +88,7 @@ diesel-derive-newtype = { version = "2.1.2" }
 diesel_migrations = { version = "2.2.0" }
 doku = { version = "0.21.1" }
 jsonwebtoken = { version = "9.3.0" }
-leptos_axum = { version = "0.7.0-rc2" }
+leptos_axum = { version = "0.7.0" }
 bcrypt = { version = "0.15.1" }
 diffy = { version = "0.4.0" }
 enum_delegate = { version = "0.2.0" }
