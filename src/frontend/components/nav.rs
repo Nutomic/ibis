@@ -4,7 +4,7 @@ use crate::frontend::{
     dark_mode::DarkMode,
 };
 use leptos::{component, prelude::*, view, IntoView, *};
-use leptos_router::{components::A, hooks::use_navigate};
+use leptos_router::hooks::use_navigate;
 
 #[component]
 pub fn Nav() -> impl IntoView {
@@ -36,79 +36,77 @@ pub fn Nav() -> impl IntoView {
                     tabindex="0"
                     class="menu dropdown-content p-2 max-sm:rounded-box max-sm:z-[1] max-sm:shadow md:h-full"
                 >
-                    <img src="/logo.png" class="m-auto max-sm:hidden" />
-                    <h1 class="px-4 py-2 text-3xl font-bold font-serif sm:hidden">
-                        {CLIENT.hostname.clone()}
-                    </h1>
-                    <ul>
-                        <li>
-                            <A href="/">"Main Page"</A>
-                        </li>
-                        <li>
-                            <A href="/instances">"Instances"</A>
-                        </li>
-                        <li>
-                            <A href="/articles">"Articles"</A>
-                        </li>
-                        <Transition>
+                    <Transition>
+                        <img src="/logo.png" class="m-auto max-sm:hidden" />
+                        <h1 class="px-4 py-2 text-3xl font-bold font-serif sm:hidden">
+                            {CLIENT.hostname.clone()}
+                        </h1>
+                        <ul>
+                            <li>
+                                <a href="/">"Main Page"</a>
+                            </li>
+                            <li>
+                                <a href="/instances">"Instances"</a>
+                            </li>
+                            <li>
+                                <a href="/articles">"Articles"</a>
+                            </li>
                             <Show when=is_logged_in>
                                 <li>
-                                    <A href="/create-article">"Create Article"</A>
+                                    <a href="/create-article">"Create Article"</a>
                                 </li>
                                 <li>
-                                    <A href="/notifications">
+                                    <a href="/notifications">
                                         "Notifications "
                                         <span class="indicator-item indicator-end badge badge-neutral">
-                                            {move || notification_count.get()}
+                                            {notification_count}
                                         </span>
-                                    </A>
+                                    </a>
                                 </li>
                             </Show>
-                        </Transition>
-                        <li>
-                            <form
-                                class="form-control m-0 p-1"
-                                on:submit=move |ev| {
-                                    ev.prevent_default();
-                                    let navigate = use_navigate();
-                                    let query = search_query.get();
-                                    if !query.is_empty() {
-                                        navigate(
-                                            &format!("/search?query={query}"),
-                                            Default::default(),
-                                        );
+                            <li>
+                                <form
+                                    class="form-control m-0 p-1"
+                                    on:submit=move |ev| {
+                                        ev.prevent_default();
+                                        let navigate = use_navigate();
+                                        let query = search_query.get();
+                                        if !query.is_empty() {
+                                            navigate(
+                                                &format!("/search?query={query}"),
+                                                Default::default(),
+                                            );
+                                        }
                                     }
-                                }
-                            >
-                                <input
-                                    type="text"
-                                    class="input input-secondary input-bordered input-xs w-full rounded"
-                                    placeholder="Search"
-                                    prop:value=search_query
-                                    on:keyup=move |ev: ev::KeyboardEvent| {
-                                        let val = event_target_value(&ev);
-                                        set_search_query.update(|v| *v = val);
-                                    }
-                                />
+                                >
+                                    <input
+                                        type="text"
+                                        class="input input-secondary input-bordered input-xs w-full rounded"
+                                        placeholder="Search"
+                                        prop:value=search_query
+                                        on:keyup=move |ev: ev::KeyboardEvent| {
+                                            let val = event_target_value(&ev);
+                                            set_search_query.update(|v| *v = val);
+                                        }
+                                    />
 
-                                <button class="btn btn-xs btn-secondary">Go</button>
-                            </form>
-                        </li>
-                    </ul>
-                    <div class="divider"></div>
-                    <Transition>
+                                    <button class="btn btn-xs btn-secondary">Go</button>
+                                </form>
+                            </li>
+                        </ul>
+                        <div class="divider"></div>
                         <Show
                             when=is_logged_in
                             fallback=move || {
                                 view! {
                                     <li>
-                                        <A href="/login">"Login"</A>
+                                        <a href="/login">"Login"</a>
                                     </li>
                                     <Show when=move || {
                                         site().with_default(|s| s.config.registration_open)
                                     }>
                                         <li>
-                                            <A href="/register">"Register"</A>
+                                            <a href="/register">"Register"</a>
                                         </li>
                                     </Show>
                                 }
@@ -137,26 +135,26 @@ pub fn Nav() -> impl IntoView {
                             }
 
                         </Show>
+                        <div class="grow min-h-2"></div>
+                        <div class="m-1 grid gap-2">
+                            <label class="flex cursor-pointer gap-2">
+                                <span class="label-text">Light</span>
+                                <input
+                                    type="checkbox"
+                                    class="toggle"
+                                    prop:checked=dark_mode.is_dark
+                                    on:click=move |_| { dark_mode.toggle() }
+                                />
+                                <span class="label-text">Dark</span>
+                            </label>
+                            <p>"Version "{env!("CARGO_PKG_VERSION")}</p>
+                            <p>
+                                <a href="https://github.com/Nutomic/ibis" class="link">
+                                    Source Code
+                                </a>
+                            </p>
+                        </div>
                     </Transition>
-                    <div class="grow min-h-2"></div>
-                    <div class="m-1 grid gap-2">
-                        <label class="flex cursor-pointer gap-2">
-                            <span class="label-text">Light</span>
-                            <input
-                                type="checkbox"
-                                class="toggle"
-                                prop:checked=dark_mode.is_dark
-                                on:click=move |_| { dark_mode.toggle() }
-                            />
-                            <span class="label-text">Dark</span>
-                        </label>
-                        <p>"Version "{env!("CARGO_PKG_VERSION")}</p>
-                        <p>
-                            <a href="https://github.com/Nutomic/ibis" class="link">
-                                Source Code
-                            </a>
-                        </p>
-                    </div>
                 </div>
             </div>
         </nav>

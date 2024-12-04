@@ -65,23 +65,25 @@ pub fn ArticleNav(article: Resource<ArticleView>, active_tab: ActiveTab) -> impl
                                         "Edit"
                                     </A>
                                 </Show>
-                                <Show when=is_logged_in>
-                                    <A
-                                        href=format!("{article_link_}/actions")
-                                        {..}
-                                        class=tab_classes.actions
-                                    >
-                                        "Actions"
-                                    </A>
-                                    {instance
-                                        .get()
-                                        .map(|i| {
-                                            view! {
-                                                <InstanceFollowButton instance=i.instance.clone() />
-                                            }
-                                        })}
+                                <Suspense>
+                                    <Show when=is_logged_in>
+                                        <A
+                                            href=format!("{article_link_}/actions")
+                                            {..}
+                                            class=tab_classes.actions
+                                        >
+                                            "Actions"
+                                        </A>
+                                        {instance
+                                            .get()
+                                            .map(|i| {
+                                                view! {
+                                                    <InstanceFollowButton instance=i.instance.clone() />
+                                                }
+                                            })}
 
-                                </Show>
+                                    </Show>
+                                </Suspense>
                             </div>
                             <div class="flex flex-row">
                                 <h1 class="text-4xl font-bold font-serif my-6 grow flex-auto">

@@ -6,8 +6,12 @@ use crate::{
         dark_mode::DarkMode,
         pages::{
             article::{
-                actions::ArticleActions, create::CreateArticle, edit::EditArticle,
-                history::ArticleHistory, list::ListArticles, read::ReadArticle,
+                actions::ArticleActions,
+                create::CreateArticle,
+                edit::EditArticle,
+                history::ArticleHistory,
+                list::ListArticles,
+                read::ReadArticle,
             },
             diff::EditDiff,
             instance::{details::InstanceDetails, list::ListInstances},
@@ -31,10 +35,7 @@ pub fn site() -> Resource<SiteView> {
 }
 
 pub fn is_logged_in() -> bool {
-    // TODO: this prevents crashes
-    // https://github.com/leptos-rs/leptos/issues/3283
-    //site().with_default(|site| site.my_profile.is_some())
-    false
+    site().with_default(|site| site.my_profile.is_some())
 }
 pub fn is_admin() -> bool {
     site().with_default(|site| {
