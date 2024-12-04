@@ -1,5 +1,6 @@
 use crate::frontend::markdown::render_markdown;
-use leptos::{html::Textarea, prelude::*};
+use leptos::{ev::beforeunload, html::Textarea, prelude::*};
+use leptos_use::{use_event_listener, use_window};
 
 #[component]
 pub fn EditorView(
@@ -9,6 +10,14 @@ pub fn EditorView(
 ) -> impl IntoView {
     let (preview, set_preview) = signal(render_markdown(&content.get_untracked()));
     let (show_preview, set_show_preview) = signal(false);
+
+    // Prevent user from accidentally closing the page while editing. Doesnt prevent navigation
+    // within Ibis.
+    // https://github.com/Nutomic/ibis/issues/87
+    let _ = use_event_listener(use_window(), beforeunload, |evt| {
+        evt.stop_propagation();
+        evt.prevent_default();
+    });
 
     view! {
         <div>
