@@ -37,7 +37,9 @@ pub fn Nav() -> impl IntoView {
                     class="menu dropdown-content p-2 max-sm:rounded-box max-sm:z-[1] max-sm:shadow md:h-full"
                 >
                     <Transition>
-                        <img src="/logo.png" class="m-auto max-sm:hidden" />
+                        <a href="/">
+                            <img src="/logo.png" class="m-auto max-sm:hidden" />
+                        </a>
                         <h1 class="px-4 py-2 text-3xl font-bold font-serif sm:hidden">
                             {CLIENT.hostname.clone()}
                         </h1>
