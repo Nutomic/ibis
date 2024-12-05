@@ -1,6 +1,6 @@
 use crate::{
     common::{DbArticle, DbInstance, SearchArticleForm},
-    frontend::{api::CLIENT, article_link, article_title},
+    frontend::{api::CLIENT, article_path, article_title},
 };
 use leptos::prelude::*;
 use leptos_router::hooks::use_query_map;
@@ -103,7 +103,7 @@ pub fn Search() -> impl IntoView {
                                         .map(|a| {
                                             view! {
                                                 <li>
-                                                    <a class="link text-lg" href=article_link(a)>
+                                                    <a class="link text-lg" href=article_path(a)>
                                                         {article_title(a)}
                                                     </a>
                                                 </li>

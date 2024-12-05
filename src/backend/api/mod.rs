@@ -1,3 +1,4 @@
+use super::database::edit::ViewEditParams;
 use crate::{
     backend::{
         api::{
@@ -17,13 +18,14 @@ use crate::{
         database::IbisData,
         error::MyResult,
     },
-    common::{LocalUserView, SiteView, AUTH_COOKIE},
+    common::{DbEdit, EditView, GetEditList, LocalUserView, SiteView, AUTH_COOKIE},
 };
 use activitypub_federation::config::Data;
 use anyhow::anyhow;
 use article::{approve_article, delete_conflict};
 use axum::{
     body::Body,
+    extract::Query,
     http::{Request, StatusCode},
     middleware::{self, Next},
     response::Response,
@@ -52,6 +54,7 @@ pub fn api_routes() -> Router<()> {
         .route("/article/resolve", get(resolve_article))
         .route("/article/protect", post(protect_article))
         .route("/article/approve", post(approve_article))
+        .route("/edit/list", get(edit_list))
         .route("/conflict", delete(delete_conflict))
         .route("/instance", get(get_instance))
         .route("/instance/follow", post(follow_instance))
@@ -105,4 +108,20 @@ pub(in crate::backend::api) async fn site_view(
         my_profile: user.map(|u| u.0),
         config: data.config.options.clone(),
     }))
+}
+
+/// Get a list of all unresolved edit conflicts.
+#[debug_handler]
+pub async fn edit_list(
+    Query(query): Query<GetEditList>,
+    data: Data<IbisData>,
+) -> MyResult<Json<Vec<EditView>>> {
+    let params = if let Some(article_id) = query.article_id {
+        ViewEditParams::ArticleId(article_id)
+    } else if let Some(person_id) = query.person_id {
+        ViewEditParams::PersonId(person_id)
+    } else {
+        return Err(anyhow!("Must provide article_id or person_id").into());
+    };
+    Ok(Json(DbEdit::view(params, &data)?))
 }

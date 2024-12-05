@@ -2,7 +2,7 @@ use crate::{
     common::{utils::http_protocol_str, DbInstance, ListArticlesForm},
     frontend::{
         api::CLIENT,
-        article_link,
+        article_path,
         article_title,
         components::instance_follow_button::InstanceFollowButton,
     },
@@ -62,7 +62,7 @@ pub fn InstanceDetails() -> impl IntoView {
                                                     .map(|a| {
                                                         view! {
                                                             <li>
-                                                                <a class="link text-lg" href=article_link(&a)>
+                                                                <a class="link text-lg" href=article_path(&a)>
                                                                     {article_title(&a)}
                                                                 </a>
                                                             </li>

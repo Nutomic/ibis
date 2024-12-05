@@ -18,7 +18,7 @@ pub fn hydrate() {
     leptos::mount::hydrate_body(App);
 }
 
-fn article_link(article: &DbArticle) -> String {
+fn article_path(article: &DbArticle) -> String {
     if article.local {
         format!("/article/{}", article.title)
     } else {
@@ -27,6 +27,15 @@ fn article_link(article: &DbArticle) -> String {
             article.title,
             extract_domain(&article.ap_id)
         )
+    }
+}
+
+fn article_link(article: &DbArticle) -> impl IntoView {
+    let article_path = article_path(article);
+    view! {
+        <a class="link" href=article_path>
+            {article.title.clone()}
+        </a>
     }
 }
 

@@ -1,6 +1,6 @@
 use crate::{
     common::Notification,
-    frontend::{api::CLIENT, article_link, article_title},
+    frontend::{api::CLIENT, article_path, article_title},
 };
 use leptos::prelude::*;
 
@@ -26,7 +26,7 @@ pub fn Notifications() -> impl IntoView {
                                         EditConflict(c) => {
                                             (
                                                 "visibility: hidden",
-                                                format!("{}/edit/{}", article_link(&c.article), c.id.0),
+                                                format!("{}/edit/{}", article_path(&c.article), c.id.0),
                                                 format!(
                                                     "Conflict: {} - {}",
                                                     article_title(&c.article),
@@ -37,7 +37,7 @@ pub fn Notifications() -> impl IntoView {
                                         ArticleApprovalRequired(a) => {
                                             (
                                                 "",
-                                                article_link(a),
+                                                article_path(a),
                                                 format!("Approval required: {}", a.title),
                                             )
                                         }

@@ -1,6 +1,6 @@
 use crate::{
-    common::{DbPerson, GetUserForm},
-    frontend::{api::CLIENT, app::DefaultResource, user_title},
+    common::GetUserForm,
+    frontend::{api::CLIENT, components::edit_list::EditList, user_title},
 };
 use leptos::prelude::*;
 use leptos_router::hooks::use_params_map;
@@ -18,8 +18,18 @@ pub fn UserProfile() -> impl IntoView {
             domain = Some(domain_.to_string());
         }
         let params = GetUserForm { name, domain };
-        CLIENT.get_user(params).await
+        CLIENT.get_user(params).await.unwrap()
     });
+
+    let edits = Resource::new(
+        move || user_profile.get(),
+        move |_| async move {
+            CLIENT
+                .get_person_edits(user_profile.await.id)
+                .await
+                .unwrap_or_default()
+        },
+    );
 
     view! {
         {move || {
@@ -33,18 +43,18 @@ pub fn UserProfile() -> impl IntoView {
         <Suspense fallback=|| {
             view! { "Loading..." }
         }>
-            {move || {
-                user_profile
-                    .get_default()
-                    .map(|person: DbPerson| {
-                        view! {
-                            <h1 class="text-4xl font-bold font-serif my-6 grow flex-auto">
-                                {user_title(&person)}
-                            </h1>
-                            <p>TODO: create actual user profile</p>
-                        }
-                    })
-            }}
+            {move || Suspend::new(async move {
+                let edits = edits.await;
+                let person = user_profile.await;
+                view! {
+                    <h1 class="text-4xl font-bold font-serif my-6 grow flex-auto">
+                        {user_title(&person)}
+                    </h1>
+
+                    <h2 class="text-xl font-bold font-serif">Edits</h2>
+                    <EditList edits=edits for_article=false />
+                }
+            })}
 
         </Suspense>
     }

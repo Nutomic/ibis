@@ -3,7 +3,7 @@ use crate::{
     frontend::{
         api::CLIENT,
         app::{is_admin, is_logged_in},
-        article_link,
+        article_path,
         article_title,
         components::instance_follow_button::InstanceFollowButton,
     },
@@ -38,7 +38,7 @@ pub fn ArticleNav(article: Resource<ArticleView>, active_tab: ActiveTab) -> impl
                                 CLIENT.get_instance(&form).await.unwrap()
                             },
                         );
-                        let article_link = article_link(&article_.article);
+                        let article_link = article_path(&article_.article);
                         let article_link_ = article_link.clone();
                         let protected = article_.article.protected;
                         view! {

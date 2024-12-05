@@ -137,8 +137,8 @@ pub(in crate::backend::api) async fn edit_article(
     } else {
         // There have been other changes since this edit was initiated. Get the common ancestor
         // version and generate a diff to find out what exactly has changed.
-        let ancestor =
-            generate_article_version(&original_article.edits, &edit_form.previous_version_id)?;
+        let edits = DbEdit::list_for_article(original_article.article.id, &data)?;
+        let ancestor = generate_article_version(&edits, &edit_form.previous_version_id)?;
         let patch = create_patch(&ancestor, &edit_form.new_text);
 
         let previous_version = DbEdit::read(&edit_form.previous_version_id, &data)?;
@@ -221,11 +221,8 @@ pub(in crate::backend::api) async fn fork_article(
 
     // copy edits to new article
     // this could also be done in sql
-    let edits = original_article
-        .edits
-        .into_iter()
-        .map(|e| e.edit)
-        .collect::<Vec<_>>();
+
+    let edits = DbEdit::list_for_article(original_article.article.id, &data)?;
     for e in edits {
         let ap_id = DbEditForm::generate_ap_id(&article, &e.hash)?;
         let form = DbEditForm {
@@ -254,16 +251,9 @@ pub(super) async fn resolve_article(
     data: Data<IbisData>,
 ) -> MyResult<Json<ArticleView>> {
     let article: DbArticle = ObjectId::from(query.id).dereference(&data).await?;
-    let edits = DbEdit::read_for_article(&article, &data)?;
-    let latest_version = edits
-        .last()
-        .expect("has at least one edit")
-        .edit
-        .hash
-        .clone();
+    let latest_version = article.latest_edit_version(&data)?;
     Ok(Json(ArticleView {
         article,
-        edits,
         latest_version,
     }))
 }

@@ -25,11 +25,7 @@ use std::{
 use tokio::{join, task::JoinHandle};
 use tracing::log::LevelFilter;
 
-pub struct TestData {
-    pub alpha: IbisInstance,
-    pub beta: IbisInstance,
-    pub gamma: IbisInstance,
-}
+pub struct TestData(pub IbisInstance, pub IbisInstance, pub IbisInstance);
 
 impl TestData {
     pub async fn start(article_approval: bool) -> Self {
@@ -73,11 +69,11 @@ impl TestData {
             IbisInstance::start(gamma_db_path, port_gamma, "gamma", article_approval)
         );
 
-        Self { alpha, beta, gamma }
+        Self(alpha, beta, gamma)
     }
 
-    pub fn stop(self) -> Result<()> {
-        for j in [self.alpha.stop(), self.beta.stop(), self.gamma.stop()] {
+    pub fn stop(alpha: IbisInstance, beta: IbisInstance, gamma: IbisInstance) -> Result<()> {
+        for j in [alpha.stop(), beta.stop(), gamma.stop()] {
             j.join().unwrap();
         }
         Ok(())

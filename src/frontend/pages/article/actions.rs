@@ -3,7 +3,7 @@ use crate::{
     frontend::{
         api::CLIENT,
         app::is_admin,
-        article_link,
+        article_path,
         components::article_nav::{ActiveTab, ArticleNav},
         pages::article_resource,
         DbArticle,
@@ -110,7 +110,7 @@ pub fn ArticleActions() -> impl IntoView {
 
         </Suspense>
         <Show when=move || fork_response.get().is_some()>
-            <Redirect path=article_link(&fork_response.get().unwrap()) />
+            <Redirect path=article_path(&fork_response.get().unwrap()) />
         </Show>
         <p>"TODO: add option for admin to delete article etc"</p>
     }

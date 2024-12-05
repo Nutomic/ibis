@@ -1,6 +1,6 @@
 use crate::{
     backend::{
-        database::schema::{edit, person},
+        database::schema::{article, edit, person},
         error::MyResult,
         IbisData,
     },
@@ -91,13 +91,31 @@ impl DbEdit {
             .get_result(conn.deref_mut())?)
     }
 
-    // TODO: create internal variant which doesnt return person?
-    pub fn read_for_article(article: &DbArticle, data: &IbisData) -> MyResult<Vec<EditView>> {
+    pub fn list_for_article(id: ArticleId, data: &IbisData) -> MyResult<Vec<Self>> {
         let mut conn = data.db_pool.get()?;
         Ok(edit::table
-            .inner_join(person::table)
-            .filter(edit::article_id.eq(article.id))
+            .filter(edit::article_id.eq(id))
             .order(edit::published)
             .get_results(conn.deref_mut())?)
     }
+
+    pub fn view(params: ViewEditParams, data: &IbisData) -> MyResult<Vec<EditView>> {
+        let mut conn = data.db_pool.get()?;
+        let query = edit::table
+            .inner_join(article::table)
+            .inner_join(person::table)
+            .into_boxed();
+
+        let query = match params {
+            ViewEditParams::PersonId(person_id) => query.filter(edit::creator_id.eq(person_id)),
+            ViewEditParams::ArticleId(article_id) => query.filter(edit::article_id.eq(article_id)),
+        };
+
+        Ok(query.order(edit::published).get_results(conn.deref_mut())?)
+    }
+}
+
+pub enum ViewEditParams {
+    PersonId(PersonId),
+    ArticleId(ArticleId),
 }

@@ -89,7 +89,7 @@ impl DbConflict {
         let original_article = article.article.ap_id.dereference_forced(data).await?;
 
         // create common ancestor version
-        let edits = DbEdit::read_for_article(&original_article, data)?;
+        let edits = DbEdit::list_for_article(original_article.id, data)?;
         let ancestor = generate_article_version(&edits, &self.previous_version_id)?;
 
         let patch = Patch::from_str(&self.diff)?;

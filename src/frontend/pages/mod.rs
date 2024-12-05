@@ -1,5 +1,5 @@
 use crate::{
-    common::{ArticleView, GetArticleForm, MAIN_PAGE_NAME},
+    common::{ArticleView, EditView, GetArticleForm, MAIN_PAGE_NAME},
     frontend::api::CLIENT,
 };
 use leptos::prelude::*;
@@ -33,4 +33,15 @@ fn article_resource() -> Resource<ArticleView> {
             .await
             .unwrap()
     })
+}
+fn article_edits_resource(article: Resource<ArticleView>) -> Resource<Vec<EditView>> {
+    Resource::new(
+        move || article.get(),
+        move |_| async move {
+            CLIENT
+                .get_article_edits(article.await.article.id)
+                .await
+                .unwrap_or_default()
+        },
+    )
 }

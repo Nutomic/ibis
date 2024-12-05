@@ -48,7 +48,6 @@ pub struct ListArticlesForm {
 pub struct ArticleView {
     pub article: DbArticle,
     pub latest_version: EditVersion,
-    pub edits: Vec<EditView>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
@@ -93,11 +92,18 @@ pub struct DbEdit {
     pub published: DateTime<Utc>,
 }
 
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
+pub struct GetEditList {
+    pub article_id: Option<ArticleId>,
+    pub person_id: Option<PersonId>,
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[cfg_attr(feature = "ssr", derive(Queryable))]
 #[cfg_attr(feature = "ssr", diesel(check_for_backend(diesel::pg::Pg)))]
 pub struct EditView {
     pub edit: DbEdit,
+    pub article: DbArticle,
     pub creator: DbPerson,
 }
 

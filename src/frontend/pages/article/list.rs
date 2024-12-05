@@ -1,7 +1,10 @@
 use crate::{
     common::ListArticlesForm,
     frontend::{
-        api::CLIENT, app::DefaultResource, article_link, article_title,
+        api::CLIENT,
+        app::DefaultResource,
+        article_path,
+        article_title,
         components::connect::ConnectView,
     },
 };
@@ -80,7 +83,7 @@ pub fn ListArticles() -> impl IntoView {
                         {
                             view! {
                                 <li>
-                                    <a class="link text-lg" href=article_link(&article)>
+                                    <a class="link text-lg" href=article_path(&article)>
                                         {article_title(&article)}
                                     </a>
                                 </li>

@@ -32,22 +32,21 @@ impl Collection for DbEditCollection {
     type Error = Error;
 
     async fn read_local(
-        owner: &Self::Owner,
+        article: &Self::Owner,
         data: &Data<Self::DataType>,
     ) -> Result<Self::Kind, Self::Error> {
-        let article = DbArticle::read_view(owner.id, data)?;
-
+        let article = DbArticle::read(article.id, data)?;
+        let edits = DbEdit::list_for_article(article.id, data)?;
         let edits = future::try_join_all(
-            article
-                .edits
+            edits
                 .into_iter()
-                .map(|a| a.edit.into_json(data))
+                .map(|e| e.into_json(data))
                 .collect::<Vec<_>>(),
         )
         .await?;
         let collection = ApubEditCollection {
             r#type: Default::default(),
-            id: Url::from(article.article.edits_id()?),
+            id: Url::from(article.edits_id()?),
             total_items: edits.len() as i32,
             items: edits,
         };

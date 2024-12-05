@@ -6,6 +6,7 @@ use crate::common::{
 use http::{Method, StatusCode};
 use leptos::prelude::ServerFnError;
 use log::error;
+use newtypes::PersonId;
 use serde::{Deserialize, Serialize};
 use std::{fmt::Debug, sync::LazyLock};
 use url::Url;
@@ -211,8 +212,25 @@ impl ApiClient {
         )
         .await
     }
+
     pub async fn get_user(&self, data: GetUserForm) -> Option<DbPerson> {
         self.get("/api/v1/user", Some(data)).await
+    }
+
+    pub async fn get_article_edits(&self, article_id: ArticleId) -> Option<Vec<EditView>> {
+        let data = GetEditList {
+            article_id: Some(article_id),
+            ..Default::default()
+        };
+        self.get("/api/v1/edit/list", Some(data)).await
+    }
+
+    pub async fn get_person_edits(&self, person_id: PersonId) -> Option<Vec<EditView>> {
+        let data = GetEditList {
+            person_id: Some(person_id),
+            ..Default::default()
+        };
+        self.get("/api/v1/edit/list", Some(data)).await
     }
 
     async fn get<T, R>(&self, endpoint: &str, query: Option<R>) -> Option<T>

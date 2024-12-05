@@ -11,7 +11,6 @@ use crate::{
         newtypes::{ArticleId, InstanceId},
         ArticleView,
         DbArticle,
-        DbEdit,
         EditVersion,
     },
 };
@@ -92,15 +91,20 @@ impl DbArticle {
         Ok(diesel::delete(article::dsl::article.find(id)).get_result::<Self>(conn.deref_mut())?)
     }
 
+    pub fn read(id: ArticleId, data: &IbisData) -> MyResult<Self> {
+        let mut conn = data.db_pool.get()?;
+        Ok(article::table
+            .find(id)
+            .get_result::<Self>(conn.deref_mut())?)
+    }
+
     pub fn read_view(id: ArticleId, data: &IbisData) -> MyResult<ArticleView> {
         let mut conn = data.db_pool.get()?;
         let query = article::table.find(id).into_boxed();
         let article: DbArticle = query.get_result(conn.deref_mut())?;
         let latest_version = article.latest_edit_version(data)?;
-        let edits = DbEdit::read_for_article(&article, data)?;
         Ok(ArticleView {
             article,
-            edits,
             latest_version,
         })
     }
@@ -126,10 +130,8 @@ impl DbArticle {
                 .get_result(conn.deref_mut())?
         };
         let latest_version = article.latest_edit_version(data)?;
-        let edits = DbEdit::read_for_article(&article, data)?;
         Ok(ArticleView {
             article,
-            edits,
             latest_version,
         })
     }
