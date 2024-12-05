@@ -16,18 +16,15 @@ use std::{
     ops::Deref,
     process::{Command, Stdio},
     sync::{
-        atomic::{AtomicI32, AtomicUsize, Ordering},
+        atomic::{AtomicI32, Ordering},
         Once,
     },
-    thread::{available_parallelism, sleep, spawn},
-    time::Duration,
+    thread::spawn,
 };
 use tokio::{join, sync::oneshot, task::JoinHandle};
 use tracing::log::LevelFilter;
 
 pub struct TestData(pub IbisInstance, pub IbisInstance, pub IbisInstance);
-
-static ACTIVE_TESTS: AtomicUsize = AtomicUsize::new(0);
 
 impl TestData {
     pub async fn start(article_approval: bool) -> Self {
@@ -43,13 +40,6 @@ impl TestData {
         // Run things on different ports and db paths to allow parallel tests
         static COUNTER: AtomicI32 = AtomicI32::new(0);
         let current_run = COUNTER.fetch_add(1, Ordering::Relaxed);
-
-        // Limit number of parallel test runs based on number of cpu cores
-        let cores = available_parallelism().unwrap().get();
-        while ACTIVE_TESTS.load(Ordering::Acquire) >= cores {
-            sleep(Duration::from_millis(1000));
-        }
-        ACTIVE_TESTS.fetch_add(1, Ordering::AcqRel);
 
         let first_port = 8100 + (current_run * 3);
         let port_alpha = first_port;
@@ -82,7 +72,6 @@ impl TestData {
         for j in [alpha.stop(), beta.stop(), gamma.stop()] {
             j.join().unwrap();
         }
-        ACTIVE_TESTS.fetch_sub(1, Ordering::AcqRel);
         Ok(())
     }
 }
