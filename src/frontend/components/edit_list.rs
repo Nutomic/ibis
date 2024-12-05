@@ -40,9 +40,9 @@ pub fn EditList(edits: Vec<EditView>, for_article: bool) -> impl IntoView {
                             )
                         };
                         view! {
-                            <li class="card card-compact bg-base-100 card-bordered m-2 rounded-s">
+                            <li class="m-2 card card-compact bg-base-100 card-bordered rounded-s">
                                 <div class="card-body">
-                                    <a class="link link-primary text-lg w-full" href=path>
+                                    <a class="w-full text-lg link link-primary" href=path>
                                         {edit.edit.summary}
                                     </a>
                                     <p>{second_line}</p>

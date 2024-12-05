@@ -47,11 +47,11 @@ pub fn UserProfile() -> impl IntoView {
                 let edits = edits.await;
                 let person = user_profile.await;
                 view! {
-                    <h1 class="text-4xl font-bold font-serif my-6 grow flex-auto">
+                    <h1 class="flex-auto my-6 font-serif text-4xl font-bold grow">
                         {user_title(&person)}
                     </h1>
 
-                    <h2 class="text-xl font-bold font-serif">Edits</h2>
+                    <h2 class="font-serif text-xl font-bold">Edits</h2>
                     <EditList edits=edits for_article=false />
                 }
             })}

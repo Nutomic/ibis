@@ -9,13 +9,13 @@ pub fn ListInstances() -> impl IntoView {
     );
 
     view! {
-        <h1 class="text-4xl font-bold font-serif my-4">Instances</h1>
+        <h1 class="my-4 font-serif text-4xl font-bold">Instances</h1>
         <Suspense fallback=|| view! { "Loading..." }>
             <Show
                 when=move || { !instances.get().unwrap_or_default().is_empty() }
                 fallback=move || view! { <ConnectView res=instances /> }
             >
-                <ul class="list-none my-4">
+                <ul class="my-4 list-none">
                     {move || {
                         instances
                             .get()
@@ -25,7 +25,7 @@ pub fn ListInstances() -> impl IntoView {
                                         view! {
                                             <li>
                                                 <a
-                                                    class="link text-lg"
+                                                    class="text-lg link"
                                                     href=format!("/instance/{}", i.domain)
                                                 >
                                                     {i.domain.to_string()}

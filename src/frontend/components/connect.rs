@@ -26,7 +26,7 @@ where
     view! {
         <div class="flex justify-center h-screen">
             <button
-                class="btn btn-primary place-self-center"
+                class="place-self-center btn btn-primary"
                 on:click=move |_| {
                     connect_ibis_wiki.dispatch(());
                 }

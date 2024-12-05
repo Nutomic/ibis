@@ -19,7 +19,7 @@ pub fn CredentialsForm(
 
     view! {
         <form class="form-control max-w-80" on:submit=|ev| ev.prevent_default()>
-            <h1 class="text-4xl font-bold font-serif my-4 grow max-w-fit">{title}</h1>
+            <h1 class="my-4 font-serif text-4xl font-bold grow max-w-fit">{title}</h1>
             {move || {
                 error
                     .get()
@@ -71,7 +71,7 @@ pub fn CredentialsForm(
 
             <div>
                 <button
-                    class="btn btn-primary my-2"
+                    class="my-2 btn btn-primary"
                     prop:disabled=move || button_is_disabled.get()
                     on:click=move |_| {
                         dispatch_action();

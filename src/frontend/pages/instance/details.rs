@@ -44,7 +44,7 @@ pub fn InstanceDetails() -> impl IntoView {
                         view! {
                             <div class="grid gap-3 mt-4">
                                 <div class="flex flex-row items-center">
-                                    <h1 class="text-4xl font-bold font-serif w-full">
+                                    <h1 class="w-full font-serif text-4xl font-bold">
                                         {instance.domain}
                                     </h1>
                                     <InstanceFollowButton instance=instance_.clone() />
@@ -52,7 +52,7 @@ pub fn InstanceDetails() -> impl IntoView {
 
                                 <div class="divider"></div>
                                 <div>{instance.description}</div>
-                                <h2 class="text-xl font-bold font-serif">Articles</h2>
+                                <h2 class="font-serif text-xl font-bold">Articles</h2>
                                 <ul class="list-none">
                                     {move || {
                                         articles
@@ -62,7 +62,7 @@ pub fn InstanceDetails() -> impl IntoView {
                                                     .map(|a| {
                                                         view! {
                                                             <li>
-                                                                <a class="link text-lg" href=article_path(&a)>
+                                                                <a class="text-lg link" href=article_path(&a)>
                                                                     {article_title(&a)}
                                                                 </a>
                                                             </li>

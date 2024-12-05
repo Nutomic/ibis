@@ -21,11 +21,11 @@ pub fn EditorView(
 
     view! {
         <div>
-            <div class="my-4 w-full flex max-sm:flex-col">
+            <div class="flex my-4 w-full max-sm:flex-col">
                 <textarea
                     prop:value=content
                     placeholder="Article text..."
-                    class="grow textarea textarea-primary min-h-80 resize-none text-base text-base"
+                    class="text-base text-base resize-none grow textarea textarea-primary min-h-80"
                     on:input=move |evt| {
                         let val = event_target_value(&evt);
                         set_preview.set(render_markdown(&val));
@@ -34,14 +34,14 @@ pub fn EditorView(
                     node_ref=textarea_ref
                 ></textarea>
                 <Show when=move || { show_preview.get() }>
-                    <div class="divider md:hidden"></div>
+                    <div class="md:hidden divider"></div>
                     <div
-                        class="prose prose-slate basis-6/12 md:ms-4 text-base py-2 max-sm:px-2"
+                        class="py-2 text-base prose prose-slate basis-6/12 max-sm:px-2 md:ms-4"
                         inner_html=move || preview.get()
                     ></div>
                 </Show>
             </div>
-            <div class="flex h-min items-center mb-4">
+            <div class="flex items-center mb-4 h-min">
                 <button
                     class="btn btn-secondary"
                     on:click=move |_| { set_show_preview.update(|s| *s = !*s) }

@@ -12,7 +12,7 @@ pub fn Notifications() -> impl IntoView {
     );
 
     view! {
-        <h1 class="text-4xl font-bold font-serif my-6 grow flex-auto">Notifications</h1>
+        <h1 class="flex-auto my-6 font-serif text-4xl font-bold grow">Notifications</h1>
         <Suspense fallback=|| view! { "Loading..." }>
             <ul class="divide-y divide-solid">
                 {move || {
@@ -69,10 +69,10 @@ pub fn Notifications() -> impl IntoView {
                                     });
                                     view! {
                                         <li class="py-2">
-                                            <a class="link text-lg" href=link>
+                                            <a class="text-lg link" href=link>
                                                 {title}
                                             </a>
-                                            <div class="card-actions mt-2">
+                                            <div class="mt-2 card-actions">
                                                 <button
                                                     class="btn btn-sm btn-outline"
                                                     style=my_style

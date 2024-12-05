@@ -56,10 +56,10 @@ pub fn CreateArticle() -> impl IntoView {
     });
 
     view! {
-        <h1 class="text-4xl font-bold font-serif my-4">Create new Article</h1>
+        <h1 class="my-4 font-serif text-4xl font-bold">Create new Article</h1>
         <Suspense>
             <Show when=move || show_approval_message.get()>
-                <div class="alert alert-warning mb-4">
+                <div class="mb-4 alert alert-warning">
                     New articles require admin approval before being published
                 </div>
             </Show>
@@ -70,7 +70,7 @@ pub fn CreateArticle() -> impl IntoView {
                 view! {
                     <div class="item-view">
                         <input
-                            class="input input-primary w-full"
+                            class="w-full input input-primary"
                             type="text"
                             required
                             placeholder="Title"
@@ -93,7 +93,7 @@ pub fn CreateArticle() -> impl IntoView {
 
                         <div class="flex flex-row">
                             <input
-                                class="input input-primary grow mr-4"
+                                class="mr-4 input input-primary grow"
                                 type="text"
                                 placeholder="Edit summary"
                                 on:keyup=move |ev| {

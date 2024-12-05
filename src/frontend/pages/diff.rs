@@ -28,9 +28,9 @@ pub fn EditDiff() -> impl IntoView {
                     render_date_time(edit.edit.published),
                 );
                 view! {
-                    <h2 class="text-xl font-bold font-serif my-2">{label}</h2>
+                    <h2 class="my-2 font-serif text-xl font-bold">{label}</h2>
                     <p>"by " {user_link(&edit.creator)}</p>
-                    <div class="bg-gray-200 p-2 rounded my-2">
+                    <div class="p-2 my-2 bg-gray-200 rounded">
                         <pre class="text-wrap">
                             <code>{edit.edit.diff.clone()}</code>
                         </pre>

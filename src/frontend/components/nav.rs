@@ -20,27 +20,27 @@ pub fn Nav() -> impl IntoView {
     let (search_query, set_search_query) = signal(String::new());
     let mut dark_mode = expect_context::<DarkMode>();
     view! {
-        <nav class="max-sm:navbar p-2.5 h-full md:fixed md:w-64 max-sm: border-b md:border-e border-slate-400 border-solid">
+        <nav class="p-2.5 h-full border-b border-solid md:fixed md:w-64 max-sm:navbar max-sm: border-slate-400 md:border-e">
             <div
                 id="navbar-start"
-                class="max-sm:navbar-start max-sm:flex max-sm:dropdown max-sm:dropdown-bottom max-sm:dropdown-end max-sm:w-full md:h-full"
+                class="md:h-full max-sm:navbar-start max-sm:flex max-sm:dropdown max-sm:dropdown-bottom max-sm:dropdown-end max-sm:w-full"
             >
-                <h1 class="w-min md:hidden text-3xl font-bold font-serif">
+                <h1 class="w-min font-serif text-3xl font-bold md:hidden">
                     {CLIENT.hostname.clone()}
                 </h1>
                 <div class="flex-grow md:hidden"></div>
-                <button tabindex="0" class="btn btn-outline lg:hidden">
+                <button tabindex="0" class="lg:hidden btn btn-outline">
                     Menu
                 </button>
                 <div
                     tabindex="0"
-                    class="menu dropdown-content p-2 max-sm:rounded-box max-sm:z-[1] max-sm:shadow md:h-full"
+                    class="p-2 md:h-full menu dropdown-content max-sm:rounded-box max-sm:z-[1] max-sm:shadow"
                 >
                     <Transition>
                         <a href="/">
                             <img src="/logo.png" class="m-auto max-sm:hidden" />
                         </a>
-                        <h1 class="px-4 py-2 text-3xl font-bold font-serif sm:hidden">
+                        <h1 class="py-2 px-4 font-serif text-3xl font-bold sm:hidden">
                             {CLIENT.hostname.clone()}
                         </h1>
                         <ul>
@@ -68,7 +68,7 @@ pub fn Nav() -> impl IntoView {
                             </Show>
                             <li>
                                 <form
-                                    class="form-control m-0 p-1"
+                                    class="p-1 m-0 form-control"
                                     on:submit=move |ev| {
                                         ev.prevent_default();
                                         let navigate = use_navigate();
@@ -83,7 +83,7 @@ pub fn Nav() -> impl IntoView {
                                 >
                                     <input
                                         type="text"
-                                        class="input input-secondary input-bordered input-xs w-full rounded"
+                                        class="w-full rounded input input-secondary input-bordered input-xs"
                                         placeholder="Search"
                                         prop:value=search_query
                                         on:keyup=move |ev: ev::KeyboardEvent| {
@@ -126,7 +126,7 @@ pub fn Nav() -> impl IntoView {
                                         </a>
                                     </p>
                                     <button
-                                        class="btn btn-outline btn-xs w-min self-center"
+                                        class="self-center w-min btn btn-outline btn-xs"
                                         on:click=move |_| {
                                             logout_action.dispatch(());
                                         }
@@ -138,8 +138,8 @@ pub fn Nav() -> impl IntoView {
 
                         </Show>
                         <div class="grow min-h-2"></div>
-                        <div class="m-1 grid gap-2">
-                            <label class="flex cursor-pointer gap-2">
+                        <div class="grid gap-2 m-1">
+                            <label class="flex gap-2 cursor-pointer">
                                 <span class="label-text">Light</span>
                                 <input
                                     type="checkbox"

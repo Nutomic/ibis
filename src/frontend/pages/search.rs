@@ -51,7 +51,7 @@ pub fn Search() -> impl IntoView {
     });
 
     view! {
-        <h1 class="text-4xl font-bold font-serif my-6 grow flex-auto">
+        <h1 class="flex-auto my-6 font-serif text-4xl font-bold grow">
             "Search results for " {query}
         </h1>
         <Suspense fallback=|| {
@@ -88,7 +88,7 @@ pub fn Search() -> impl IntoView {
                                         vec![
                                             view! {
                                                 <li>
-                                                    <a class="link text-lg" href=format!("/instance/{domain}")>
+                                                    <a class="text-lg link" href=format!("/instance/{domain}")>
                                                         {domain.to_string()}
                                                     </a>
                                                 </li>
@@ -103,7 +103,7 @@ pub fn Search() -> impl IntoView {
                                         .map(|a| {
                                             view! {
                                                 <li>
-                                                    <a class="link text-lg" href=article_path(a)>
+                                                    <a class="text-lg link" href=article_path(a)>
                                                         {article_title(a)}
                                                     </a>
                                                 </li>

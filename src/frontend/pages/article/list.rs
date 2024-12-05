@@ -48,7 +48,7 @@ pub fn ListArticles() -> impl IntoView {
     );
 
     view! {
-        <h1 class="text-4xl font-bold font-serif my-4">Most recently edited Articles</h1>
+        <h1 class="my-4 font-serif text-4xl font-bold">Most recently edited Articles</h1>
         <Suspense fallback=|| view! { "Loading..." }>
             <div class="divide-x">
                 <input
@@ -74,7 +74,7 @@ pub fn ListArticles() -> impl IntoView {
                 }
                 fallback=move || view! { <ConnectView res=articles /> }
             >
-                <ul class="list-none my-4">
+                <ul class="my-4 list-none">
                     <For
                         each=move || articles.get_default().unwrap_or_default()
                         key=|article| article.id
@@ -83,7 +83,7 @@ pub fn ListArticles() -> impl IntoView {
                         {
                             view! {
                                 <li>
-                                    <a class="link text-lg" href=article_path(&article)>
+                                    <a class="text-lg link" href=article_path(&article)>
                                         {article_title(&article)}
                                     </a>
                                 </li>

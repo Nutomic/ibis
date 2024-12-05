@@ -86,7 +86,7 @@ pub fn ArticleNav(article: Resource<ArticleView>, active_tab: ActiveTab) -> impl
                                 </Suspense>
                             </div>
                             <div class="flex flex-row">
-                                <h1 class="text-4xl font-bold font-serif my-6 grow flex-auto">
+                                <h1 class="flex-auto my-6 font-serif text-4xl font-bold grow">
                                     {title}
                                 </h1>
                                 <Show when=move || protected>
