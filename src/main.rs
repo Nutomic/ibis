@@ -16,6 +16,6 @@ pub async fn main() -> ibis::backend::error::MyResult<()> {
         .init();
 
     let ibis_config = IbisConfig::read()?;
-    ibis::backend::start(ibis_config, None).await?;
+    ibis::backend::start(ibis_config, None, None).await?;
     Ok(())
 }

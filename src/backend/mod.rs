@@ -51,7 +51,7 @@ use leptos::prelude::*;
 use leptos_axum::{generate_route_list, LeptosRoutes};
 use log::info;
 use std::net::SocketAddr;
-use tokio::net::TcpListener;
+use tokio::{net::TcpListener, sync::oneshot};
 use tower_http::cors::CorsLayer;
 use tower_layer::Layer;
 
@@ -68,7 +68,11 @@ const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
 
 const FEDERATION_ROUTES_PREFIX: &str = "/federation_routes";
 
-pub async fn start(config: IbisConfig, override_hostname: Option<SocketAddr>) -> MyResult<()> {
+pub async fn start(
+    config: IbisConfig,
+    override_hostname: Option<SocketAddr>,
+    notify_start: Option<oneshot::Sender<()>>,
+) -> MyResult<()> {
     let manager = ConnectionManager::<PgConnection>::new(&config.database.connection_url);
     let db_pool = Pool::builder()
         .max_size(config.database.pool_size)
@@ -118,6 +122,9 @@ pub async fn start(config: IbisConfig, override_hostname: Option<SocketAddr>) ->
 
     info!("Listening on {}", &addr);
     let listener = TcpListener::bind(&addr).await?;
+    if let Some(notify_start) = notify_start {
+        notify_start.send(()).expect("send oneshot");
+    }
     axum::serve(listener, app_with_middleware.into_make_service()).await?;
 
     Ok(())

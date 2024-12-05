@@ -16,16 +16,18 @@ use std::{
     ops::Deref,
     process::{Command, Stdio},
     sync::{
-        atomic::{AtomicI32, Ordering},
+        atomic::{AtomicI32, AtomicUsize, Ordering},
         Once,
     },
-    thread::{sleep, spawn},
+    thread::{available_parallelism, sleep, spawn},
     time::Duration,
 };
-use tokio::{join, task::JoinHandle};
+use tokio::{join, sync::oneshot, task::JoinHandle};
 use tracing::log::LevelFilter;
 
 pub struct TestData(pub IbisInstance, pub IbisInstance, pub IbisInstance);
+
+static ACTIVE_TESTS: AtomicUsize = AtomicUsize::new(0);
 
 impl TestData {
     pub async fn start(article_approval: bool) -> Self {
@@ -42,8 +44,12 @@ impl TestData {
         static COUNTER: AtomicI32 = AtomicI32::new(0);
         let current_run = COUNTER.fetch_add(1, Ordering::Relaxed);
 
-        // Give each test a moment to start its postgres databases
-        sleep(Duration::from_millis(current_run as u64 * 2000));
+        // Limit number of parallel test runs based on number of cpu cores
+        let cores = available_parallelism().unwrap().get();
+        while ACTIVE_TESTS.load(Ordering::Acquire) >= cores {
+            sleep(Duration::from_millis(1000));
+        }
+        ACTIVE_TESTS.fetch_add(1, Ordering::AcqRel);
 
         let first_port = 8100 + (current_run * 3);
         let port_alpha = first_port;
@@ -76,6 +82,7 @@ impl TestData {
         for j in [alpha.stop(), beta.stop(), gamma.stop()] {
             j.join().unwrap();
         }
+        ACTIVE_TESTS.fetch_sub(1, Ordering::AcqRel);
         Ok(())
     }
 }
@@ -133,13 +140,14 @@ impl IbisInstance {
         };
         let client = ClientBuilder::new().cookie_store(true).build().unwrap();
         let api_client = ApiClient::new(client, Some(domain));
+        let (tx, rx) = oneshot::channel::<()>();
         let handle = tokio::task::spawn(async move {
-            start(config, Some(hostname.parse().unwrap()))
+            start(config, Some(hostname.parse().unwrap()), Some(tx))
                 .await
                 .unwrap();
         });
-        // wait a moment for the backend to start
-        tokio::time::sleep(Duration::from_millis(5000)).await;
+        // wait for the backend to start
+        rx.await.unwrap();
         let form = RegisterUserForm {
             username: username.to_string(),
             password: "hunter2".to_string(),
