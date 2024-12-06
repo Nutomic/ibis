@@ -21,7 +21,6 @@ use crate::{
 use activitypub_federation::{
     config::{Data, FederationConfig, FederationMiddleware},
     fetch::object_id::ObjectId,
-    http_signatures::generate_actor_keypair,
 };
 use api::api_routes;
 use assets::file_and_error_handler;
@@ -54,6 +53,7 @@ use std::net::SocketAddr;
 use tokio::{net::TcpListener, sync::oneshot};
 use tower_http::cors::CorsLayer;
 use tower_layer::Layer;
+use utils::generate_keypair;
 
 pub mod api;
 mod assets;
@@ -156,7 +156,7 @@ async fn setup(data: &Data<IbisData>) -> Result<(), Error> {
     let domain = &data.config.federation.domain;
     let ap_id = ObjectId::parse(&format!("{}://{domain}", http_protocol_str()))?;
     let inbox_url = format!("{}://{domain}/inbox", http_protocol_str());
-    let keypair = generate_actor_keypair()?;
+    let keypair = generate_keypair()?;
     let form = DbInstanceForm {
         domain: domain.to_string(),
         ap_id,
