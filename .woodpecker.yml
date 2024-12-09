@@ -42,7 +42,6 @@ steps:
   check_diesel_schema:
     image: willsquire/diesel-cli
     environment:
-      CARGO_HOME: .cargo_home
       DATABASE_URL: postgres://ibis:password@database:5432/ibis
     commands:
       - diesel migration run
@@ -103,3 +102,10 @@ steps:
         from_secret: github_token
     when:
       - event: tag
+
+services:
+  database:
+    image: postgres:15.2-alpine
+    environment:
+      POSTGRES_USER: ibis
+      POSTGRES_PASSWORD: password
