@@ -2,10 +2,14 @@ use crate::{
     backend::{database::IbisData, error::MyResult},
     common::{utils, DbEdit, EditVersion},
 };
-use activitypub_federation::config::Data;
+use activitypub_federation::{
+    config::Data,
+    http_signatures::{generate_actor_keypair, Keypair},
+};
 use anyhow::anyhow;
 use diffy::{apply, Patch};
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
+use std::sync::LazyLock;
 use url::{ParseError, Url};
 
 pub fn generate_activity_id(data: &Data<IbisData>) -> Result<Url, ParseError> {
@@ -99,5 +103,17 @@ mod test {
         let generated = generate_article_version(&edits, &EditVersion::default())?;
         assert_eq!("", generated);
         Ok(())
+    }
+}
+
+/// Use a single static keypair during testing which is signficantly faster than
+/// generating dozens of keys from scratch.
+pub fn generate_keypair() -> MyResult<Keypair> {
+    if cfg!(debug_assertions) {
+        static KEYPAIR: LazyLock<Keypair> =
+            LazyLock::new(|| generate_actor_keypair().expect("generate keypair"));
+        Ok(KEYPAIR.clone())
+    } else {
+        Ok(generate_actor_keypair()?)
     }
 }

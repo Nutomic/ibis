@@ -5,6 +5,7 @@ use crate::{
             IbisData,
         },
         error::MyResult,
+        utils::generate_keypair,
     },
     common::{
         newtypes::PersonId,
@@ -15,11 +16,7 @@ use crate::{
         LocalUserView,
     },
 };
-use activitypub_federation::{
-    config::Data,
-    fetch::object_id::ObjectId,
-    http_signatures::generate_actor_keypair,
-};
+use activitypub_federation::{config::Data, fetch::object_id::ObjectId};
 use bcrypt::{hash, DEFAULT_COST};
 use chrono::{DateTime, Utc};
 use diesel::{
@@ -83,7 +80,7 @@ impl DbPerson {
             http_protocol_str()
         ))?;
         let inbox_url = format!("{}://{domain}/inbox", http_protocol_str());
-        let keypair = generate_actor_keypair()?;
+        let keypair = generate_keypair()?;
         let person_form = DbPersonForm {
             username,
             ap_id,
@@ -185,7 +182,7 @@ impl DbPerson {
                 http_protocol_str()
             ))?;
             let inbox_url = format!("{}://{domain}/inbox", http_protocol_str());
-            let keypair = generate_actor_keypair()?;
+            let keypair = generate_keypair()?;
             let person_form = DbPersonForm {
                 username: username.to_string(),
                 ap_id,
