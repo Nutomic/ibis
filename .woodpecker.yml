@@ -82,6 +82,7 @@ steps:
       - cp /usr/local/rustup /home/testuser/.rustup -r
       - chown testuser:testuser . -R
       - chown testuser:testuser /home/testuser -R
+      - ls -lah .cargo_home
       - export PATH="/usr/lib/postgresql/15/bin:/usr/local/cargo/bin:$PATH"
       - sudo -u testuser env "PATH=$PATH" cargo test --no-fail-fast
 
