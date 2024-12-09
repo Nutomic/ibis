@@ -32,8 +32,6 @@ steps:
     commands:
       - cargo run -- --print-config > config/defaults_current.toml
       - diff config/defaults.toml config/defaults_current.toml
-      - echo $CARGO_HOME
-      - ls -lah .cargo_home
 
   ignored_files:
     image: alpine:3
@@ -58,6 +56,14 @@ steps:
       - diesel migration run
       - diesel print-schema --config-file=diesel.toml > tmp.schema
       - diff tmp.schema src/backend/database/schema.rs
+
+  cargo_clippy:
+    image: *rust_image
+    environment:
+      CARGO_HOME: .cargo_home
+    commands:
+      - rustup component add clippy
+      - cargo clippy --tests --all-targets --all-features
 
   cargo_test:
     image: *rust_image
@@ -97,10 +103,3 @@ steps:
         from_secret: github_token
     when:
       - event: tag
-
-services:
-  database:
-    image: postgres:15.2-alpine
-    environment:
-      POSTGRES_USER: ibis
-      POSTGRES_PASSWORD: password
