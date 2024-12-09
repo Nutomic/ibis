@@ -51,8 +51,8 @@ Main objects in terms of federation are the `Instance` and `Article`. Each artic
 Developing a project like this takes a significant amount of work. You can help funding it with donations:
 
 - [Liberapay](https://liberapay.com/Ibis/)
-- [Bitcoin](bitcoin:bc1q6mqlqc84q2h55jkkjvex4kc6h9h534rj87rv2l)
-- [Monero](monero:84xnACZv82UNTEGNkttLTH8sCeV9Cdr8dHMJSNP6V2hEJW7C17S9xQTUCghwG8TePrRD9wfiPRWcwYvSTHUNoyJ4AXnQYLD)
+- Bitcoin: `bc1q6mqlqc84q2h55jkkjvex4kc6h9h534rj87rv2l`
+- Monero: `84xnACZv82UNTEGNkttLTH8sCeV9Cdr8dHMJSNP6V2hEJW7C17S9xQTUCghwG8TePrRD9wfiPRWcwYvSTHUNoyJ4AXnQYLD`
 
 ## License
 
