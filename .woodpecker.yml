@@ -25,14 +25,6 @@ steps:
     commands:
       - taplo format --check
 
-  check_config_defaults_updated:
-    image: *rust_image
-    environment:
-      CARGO_HOME: .cargo_home
-    commands:
-      - cargo run -- --print-config > config/defaults_current.toml
-      - diff config/defaults.toml config/defaults_current.toml
-
   ignored_files:
     image: alpine:3
     commands:
@@ -64,6 +56,14 @@ steps:
     commands:
       - rustup component add clippy
       - cargo clippy --tests --all-targets --all-features
+
+  check_config_defaults_updated:
+    image: *rust_image
+    environment:
+      CARGO_HOME: .cargo_home
+    commands:
+      - cargo run -- --print-config > config/defaults_current.toml
+      - diff config/defaults.toml config/defaults_current.toml
 
   cargo_test:
     image: *rust_image
