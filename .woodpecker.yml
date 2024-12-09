@@ -64,10 +64,10 @@ steps:
     environment:
       CARGO_HOME: .cargo_home
     commands:
-      - rustup component add clippy
-      - cargo clippy --tests --all-targets --all-features
       - echo $CARGO_HOME
       - ls -lah .cargo_home
+      - rustup component add clippy
+      - cargo clippy --tests --all-targets --all-features
 
   cargo_test:
     image: *rust_image
