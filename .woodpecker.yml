@@ -32,6 +32,8 @@ steps:
     commands:
       - cargo run -- --print-config > config/defaults_current.toml
       - diff config/defaults.toml config/defaults_current.toml
+      - echo $CARGO_HOME
+      - ls -lah .cargo_home
 
   ignored_files:
     image: alpine:3
