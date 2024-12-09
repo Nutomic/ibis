@@ -21,7 +21,7 @@ steps:
       - leptosfmt -c .leptosfmt.toml --check src
 
   toml_fmt:
-    image: tamasfe/taplo:0.8.1
+    image: tamasfe/taplo:0.9.3
     commands:
       - taplo format --check
 
@@ -105,7 +105,7 @@ steps:
 
 services:
   database:
-    image: postgres:15.2-alpine
+    image: postgres:16-alpine
     environment:
       POSTGRES_USER: ibis
       POSTGRES_PASSWORD: password
