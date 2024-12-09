@@ -72,7 +72,6 @@ steps:
   cargo_test:
     image: *rust_image
     environment:
-      LEMMY_DATABASE_URL: postgres://ibis:password@database:5432/ibis
       CARGO_HOME: .cargo_home
     commands:
       - apt-get update
@@ -82,9 +81,8 @@ steps:
       - cp /usr/local/rustup /home/testuser/.rustup -r
       - chown testuser:testuser . -R
       - chown testuser:testuser /home/testuser -R
-      - ls -lah .cargo_home
       - export PATH="/usr/lib/postgresql/15/bin:/usr/local/cargo/bin:$PATH"
-      - sudo -u testuser env "PATH=$PATH" cargo test --no-fail-fast
+      - sudo -u testuser env "PATH=$PATH CARGO_HOME=$CARGO_HOME" cargo test --no-fail-fast
 
   build_release:
     image: *rust_image
