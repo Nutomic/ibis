@@ -66,6 +66,8 @@ steps:
     commands:
       - rustup component add clippy
       - cargo clippy --tests --all-targets --all-features
+      - echo $CARGO_HOME
+      - ls -lah .cargo_home
 
   cargo_test:
     image: *rust_image
