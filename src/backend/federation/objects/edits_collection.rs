@@ -9,6 +9,7 @@ use activitypub_federation::{
     traits::{Collection, Object},
 };
 use futures::{future, future::try_join_all};
+use log::warn;
 use serde::{Deserialize, Serialize};
 use url::Url;
 
@@ -64,10 +65,13 @@ impl Collection for DbEditCollection {
 
     async fn from_json(
         apub: Self::Kind,
-        _owner: &Self::Owner,
+        owner: &Self::Owner,
         data: &Data<Self::DataType>,
     ) -> Result<Self, Self::Error> {
-        try_join_all(apub.items.into_iter().map(|i| DbEdit::from_json(i, data))).await?;
+        try_join_all(apub.items.into_iter().map(|i| DbEdit::from_json(i, data)))
+            .await
+            .map_err(|e| warn!("Failed to synchronize edits for {}: {e}", owner.ap_id))
+            .ok();
         Ok(DbEditCollection())
     }
 }
