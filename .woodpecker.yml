@@ -79,6 +79,11 @@ steps:
       - export PATH="/usr/lib/postgresql/15/bin:/usr/local/cargo/bin:$PATH"
       - sudo -u testuser env "PATH=$PATH" "CARGO_HOME=$CARGO_HOME" cargo test --no-fail-fast
 
+  npm_install:
+    image: node:current-alpine
+    commands:
+      - npm install
+
   build_release:
     image: *rust_image
     environment:
