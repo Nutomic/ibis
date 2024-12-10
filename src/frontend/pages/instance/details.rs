@@ -54,24 +54,25 @@ pub fn InstanceDetails() -> impl IntoView {
                                 <div>{instance.description}</div>
                                 <h2 class="font-serif text-xl font-bold">Articles</h2>
                                 <ul class="list-none">
-                                    {move || {
-                                        articles
-                                            .get()
-                                            .map(|a| {
-                                                a.into_iter()
-                                                    .map(|a| {
-                                                        view! {
-                                                            <li>
-                                                                <a class="text-lg link" href=article_path(&a)>
-                                                                    {article_title(&a)}
-                                                                </a>
-                                                            </li>
-                                                        }
-                                                    })
-                                                    .collect::<Vec<_>>()
-                                            })
-                                    }}
-
+                                    <Suspense>
+                                        {move || {
+                                            articles
+                                                .get()
+                                                .map(|a| {
+                                                    a.into_iter()
+                                                        .map(|a| {
+                                                            view! {
+                                                                <li>
+                                                                    <a class="text-lg link" href=article_path(&a)>
+                                                                        {article_title(&a)}
+                                                                    </a>
+                                                                </li>
+                                                            }
+                                                        })
+                                                        .collect::<Vec<_>>()
+                                                })
+                                        }}
+                                    </Suspense>
                                 </ul>
                             </div>
                         }
