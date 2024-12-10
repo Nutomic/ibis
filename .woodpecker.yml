@@ -10,7 +10,7 @@ steps:
       CARGO_HOME: .cargo_home
     commands:
       - apt-get update
-      - apt-get install postgresql -y --no-install-recommends --no-install-suggests npm
+      - apt-get install postgresql -y --no-install-recommends --no-install-suggests npm wget
       - npm install
       - *install_binstall
       - rustup target add wasm32-unknown-unknown
