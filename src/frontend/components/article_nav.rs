@@ -1,11 +1,9 @@
 use crate::{
-    common::{validation::can_edit_article, ArticleView, GetInstance},
+    common::{validation::can_edit_article, ArticleView},
     frontend::{
-        api::CLIENT,
         app::{is_admin, is_logged_in},
         article_path,
         article_title,
-        components::instance_follow_button::InstanceFollowButton,
     },
 };
 use leptos::prelude::*;
@@ -29,15 +27,6 @@ pub fn ArticleNav(article: Resource<ArticleView>, active_tab: ActiveTab) -> impl
                     .get()
                     .map(|article_| {
                         let title = article_title(&article_.article);
-                        let instance = Resource::new(
-                            move || article_.article.instance_id,
-                            move |instance_id| async move {
-                                let form = GetInstance {
-                                    id: Some(instance_id),
-                                };
-                                CLIENT.get_instance(&form).await.unwrap()
-                            },
-                        );
                         let article_link = article_path(&article_.article);
                         let article_link_ = article_link.clone();
                         let protected = article_.article.protected;
@@ -74,14 +63,6 @@ pub fn ArticleNav(article: Resource<ArticleView>, active_tab: ActiveTab) -> impl
                                         >
                                             "Actions"
                                         </A>
-                                        {instance
-                                            .get()
-                                            .map(|i| {
-                                                view! {
-                                                    <InstanceFollowButton instance=i.instance.clone() />
-                                                }
-                                            })}
-
                                     </Show>
                                 </Suspense>
                             </div>
