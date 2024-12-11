@@ -4,7 +4,7 @@ use crate::common::{
     *,
 };
 use http::{Method, StatusCode};
-use leptos::prelude::ServerFnError;
+use leptos::{prelude::ServerFnError, server_fn::error::NoCustomError};
 use log::error;
 use newtypes::PersonId;
 use serde::{Deserialize, Serialize};
@@ -22,7 +22,7 @@ pub static CLIENT: LazyLock<ApiClient> = LazyLock::new(|| {
     }
 });
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct ApiClient {
     #[cfg(feature = "ssr")]
     client: reqwest::Client,
@@ -277,8 +277,9 @@ impl ApiClient {
         }
         let res = req.send().await?;
         let status = res.status();
+        let url = res.url().to_string();
         let text = res.text().await?.to_string();
-        Self::response(status.into(), text)
+        Self::response(status.into(), text, &url)
     }
 
     #[cfg(not(feature = "ssr"))]
@@ -333,19 +334,25 @@ impl ApiClient {
             let res = req.send().await?;
             let status = res.status();
             let text = res.text().await?;
-            Self::response(status, text)
+            Self::response(status, text, &res.url())
         })
     }
 
-    fn response<T>(status: u16, text: String) -> Result<T, ServerFnError>
+    fn response<T>(status: u16, text: String, url: &str) -> Result<T, ServerFnError>
     where
         T: for<'de> Deserialize<'de>,
     {
-        let json = serde_json::from_str(&text)?;
+        let json = serde_json::from_str(&text).map_err(|e| {
+            ServerFnError::<NoCustomError>::Deserialization(format!(
+                "Serde error: {e} from {text}on {url}"
+            ))
+        })?;
         if status == StatusCode::OK {
             Ok(json)
         } else {
-            Err(ServerFnError::Response(format!("API error: {text}")))
+            Err(ServerFnError::Response(format!(
+                "API error: {text} on {url} status {status}"
+            )))
         }
     }
 
