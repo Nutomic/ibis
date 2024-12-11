@@ -40,6 +40,10 @@ pub async fn file_and_error_handler(
                     .unwrap_or_else(|| APPLICATION_OCTET_STREAM.essence_str()),
             )?,
         );
+        headers.insert(
+            HeaderName::from_static("cache-control"),
+            HeaderValue::from_static("max-age=3600, public"),
+        );
         Ok((headers, content.contents()).into_response())
     }
 }
