@@ -72,7 +72,7 @@ axum = "0.7.7"
 axum-macros = "0.4.2"
 axum-extra = { version = "0.9.4", features = ["cookie"] }
 tokio = { version = "1.41.1", features = ["full"] }
-tower-http = { version = "0.6.1", features = ["cors", "fs"] }
+tower-http = { version = "0.6.1", features = ["cors", "fs", "compression-full"] }
 activitypub_federation = { version = "0.6.0", features = [
   "axum",
   "diesel",
@@ -112,6 +112,7 @@ assets-dir = "assets"
 bin-features = ["ssr"]
 lib-features = ["hydrate"]
 lib-profile-release = "wasm-release"
+style-file = "assets/ibis.css"
 tailwind-input-file = "assets/ibis.css"
 tailwind-config-file = "tailwind.config.js"
 

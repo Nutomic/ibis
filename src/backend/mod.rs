@@ -51,7 +51,7 @@ use leptos_axum::{generate_route_list, LeptosRoutes};
 use log::info;
 use std::net::SocketAddr;
 use tokio::{net::TcpListener, sync::oneshot};
-use tower_http::cors::CorsLayer;
+use tower_http::{compression::CompressionLayer, cors::CorsLayer};
 use tower_layer::Layer;
 use utils::generate_keypair;
 
@@ -113,7 +113,8 @@ pub async fn start(
         .nest("/api/v1", api_routes())
         .nest("", nodeinfo::config())
         .layer(FederationMiddleware::new(config))
-        .layer(CorsLayer::permissive());
+        .layer(CorsLayer::permissive())
+        .layer(CompressionLayer::new());
 
     // Rewrite federation routes
     // https://docs.rs/axum/0.7.4/axum/middleware/index.html#rewriting-request-uri-in-middleware
