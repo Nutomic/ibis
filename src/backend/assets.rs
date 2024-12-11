@@ -1,12 +1,16 @@
+use super::error::MyResult;
+use anyhow::anyhow;
 use axum::{
     body::Body,
     extract::{Request, State},
-    http::StatusCode,
     response::{IntoResponse, Response},
 };
 use axum_macros::debug_handler;
+use http::{HeaderMap, HeaderName, HeaderValue};
+use include_dir::include_dir;
 use leptos::prelude::*;
-use tower::ServiceExt;
+use mime_guess::mime::APPLICATION_OCTET_STREAM;
+use tower::util::ServiceExt;
 use tower_http::services::ServeDir;
 
 // from https://github.com/leptos-rs/start-axum
@@ -14,35 +18,28 @@ use tower_http::services::ServeDir;
 #[debug_handler]
 pub async fn file_and_error_handler(
     State(options): State<LeptosOptions>,
-    req: Request<Body>,
-) -> Result<Response<Body>, StatusCode> {
-    let root = options.site_root.clone();
-    let (parts, _) = req.into_parts();
-
-    let mut static_parts = parts.clone();
-    static_parts.headers.clear();
-    if let Some(encodings) = parts.headers.get("accept-encoding") {
-        static_parts
-            .headers
-            .insert("accept-encoding", encodings.clone());
-    }
-
-    let res = get_static_file(Request::from_parts(static_parts, Body::empty()), &root).await?;
-
-    if res.status() == StatusCode::OK {
-        Ok(res.into_response())
+    request: Request<Body>,
+) -> MyResult<Response<Body>> {
+    if cfg!(debug_assertions) {
+        // in debug mode serve assets directly from local folder
+        Ok(ServeDir::new(options.site_root.as_ref())
+            .oneshot(request)
+            .await
+            .into_response())
     } else {
-        Err(StatusCode::NOT_FOUND)
+        // for production embed assets in binary
+        let mut headers = HeaderMap::new();
+        let dir = include_dir!("target/site/");
+        let path = request.uri().path().replacen('/', "", 1);
+        let content = dir.get_file(&path).ok_or(anyhow!("not found"))?;
+        headers.insert(
+            HeaderName::from_static("content-type"),
+            HeaderValue::from_str(
+                mime_guess::from_path(path)
+                    .first_raw()
+                    .unwrap_or_else(|| APPLICATION_OCTET_STREAM.essence_str()),
+            )?,
+        );
+        Ok((headers, content.contents()).into_response())
     }
-}
-
-async fn get_static_file(request: Request<Body>, root: &str) -> Result<Response<Body>, StatusCode> {
-    // `ServeDir` implements `tower::Service` so we can call it with `tower::ServiceExt::oneshot`
-    // This path is relative to the cargo root
-    Ok(ServeDir::new(root)
-        .precompressed_gzip()
-        .precompressed_br()
-        .oneshot(request)
-        .await
-        .into_response())
 }

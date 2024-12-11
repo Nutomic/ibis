@@ -65,6 +65,8 @@ send_wrapper = "0.6.0"
 web-sys = "0.3.72"
 http = "1.1.0"
 serde_urlencoded = "0.7.1"
+include_dir = "0.7.4"
+mime_guess = "2.0.5"
 
 # backend-only deps
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
