@@ -21,7 +21,7 @@ pub fn ReadArticle() -> impl IntoView {
                     .map(|article| {
                         view! {
                             <div
-                                class="prose prose-slate max-w-full"
+                                class="max-w-full prose prose-slate"
                                 inner_html=render_markdown(&article.article.text)
                             ></div>
                         }
