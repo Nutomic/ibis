@@ -97,7 +97,7 @@ pub async fn start(
         setup(&data.to_request_data()).await?;
     }
 
-    let leptos_options = get_configuration(Some("Cargo.toml"))?.leptos_options;
+    let leptos_options = get_config_from_str(include_str!("../../Cargo.toml"))?;
     let mut addr = leptos_options.site_addr;
     if let Some(override_hostname) = override_hostname {
         addr = override_hostname;
