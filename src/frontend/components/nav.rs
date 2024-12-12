@@ -20,14 +20,12 @@ pub fn Nav() -> impl IntoView {
     let (search_query, set_search_query) = signal(String::new());
     let mut dark_mode = expect_context::<DarkMode>();
     view! {
-        <nav class="p-2.5 h-full border-b border-solid md:fixed md:w-64 max-sm:navbar max-sm: border-slate-400 md:border-e">
+        <nav class="p-2.5 border-b border-solid md:fixed md:w-64 md:h-full max-sm:navbar max-sm: border-slate-400 md:border-e">
             <div
                 id="navbar-start"
                 class="md:h-full max-sm:navbar-start max-sm:flex max-sm:dropdown max-sm:dropdown-bottom max-sm:dropdown-end max-sm:w-full"
             >
-                <h1 class="w-min font-serif text-3xl font-bold md:hidden">
-                    {CLIENT.hostname.clone()}
-                </h1>
+                <h1 class="w-min font-serif text-3xl font-bold md:hidden">Ibis</h1>
                 <div class="flex-grow md:hidden"></div>
                 <button tabindex="0" class="lg:hidden btn btn-outline">
                     Menu
@@ -40,9 +38,6 @@ pub fn Nav() -> impl IntoView {
                         <a href="/">
                             <img src="/logo.png" class="m-auto max-sm:hidden" />
                         </a>
-                        <h1 class="py-2 px-4 font-serif text-3xl font-bold sm:hidden">
-                            {CLIENT.hostname.clone()}
-                        </h1>
                         <ul>
                             <li>
                                 <a href="/">"Main Page"</a>

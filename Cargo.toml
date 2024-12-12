@@ -72,7 +72,11 @@ axum = "0.7.7"
 axum-macros = "0.4.2"
 axum-extra = { version = "0.9.4", features = ["cookie"] }
 tokio = { version = "1.41.1", features = ["full"] }
-tower-http = { version = "0.6.1", features = ["cors", "fs", "compression-full"] }
+tower-http = { version = "0.6.1", features = [
+  "cors",
+  "fs",
+  "compression-full",
+] }
 activitypub_federation = { version = "0.6.0", features = [
   "axum",
   "diesel",
