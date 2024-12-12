@@ -1811,7 +1811,7 @@ dependencies = [
 
 [[package]]
 name = "ibis"
-version = "0.2.0-rc.4"
+version = "0.2.0-rc.5"
 dependencies = [
  "activitypub_federation",
  "anyhow",
