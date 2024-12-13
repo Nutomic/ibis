@@ -2,10 +2,7 @@ use katex;
 use markdown_it::{
     parser::inline::{InlineRule, InlineState},
     plugins::cmark::block::{heading::ATXHeading, lheading::SetextHeader},
-    MarkdownIt,
-    Node,
-    NodeValue,
-    Renderer,
+    MarkdownIt, Node, NodeValue, Renderer,
 };
 use once_cell::sync::OnceCell;
 
@@ -28,17 +25,54 @@ pub fn render_markdown(text: &str) -> String {
 
 fn markdown_parser() -> MarkdownIt {
     let mut parser = MarkdownIt::new();
-    markdown_it::plugins::cmark::add(&mut parser);
-    markdown_it_heading_anchors::add(&mut parser);
-    markdown_it_footnote::add(&mut parser);
-    markdown_it::plugins::extra::strikethrough::add(&mut parser);
-    markdown_it::plugins::extra::tables::add(&mut parser);
-    markdown_it::plugins::extra::typographer::add(&mut parser);
-    markdown_it_block_spoiler::add(&mut parser);
-    markdown_it_sub::add(&mut parser);
-    markdown_it_sup::add(&mut parser);
+    let p = &mut parser;
+    {
+        // Markdown-it inline core features. Image is disabled to prevent embedding external
+        // images. Later we need to add proper image support using pictrs.
+        use markdown_it::plugins::cmark::inline::*;
+        newline::add(p);
+        escape::add(p);
+        backticks::add(p);
+        emphasis::add(p);
+        link::add(p);
+        image::add(p);
+        autolink::add(p);
+        entity::add(p);
+    }
+
+    {
+        // Markdown-it block core features. Unchanged from defaults.
+        use markdown_it::plugins::cmark::block::*;
+        code::add(p);
+        fence::add(p);
+        blockquote::add(p);
+        hr::add(p);
+        list::add(p);
+        reference::add(p);
+        heading::add(p);
+        lheading::add(p);
+        paragraph::add(p);
+    }
+
+    {
+        // Some of the extras from markdown-it, others are intentionally excluded.
+        use markdown_it::plugins::extra::*;
+        strikethrough::add(p);
+        tables::add(p);
+        typographer::add(p);
+    }
+
+    // Extensions from various authors
+    markdown_it_heading_anchors::add(p);
+    markdown_it_block_spoiler::add(p);
+    markdown_it_footnote::add(p);
+    markdown_it_sub::add(p);
+    markdown_it_sup::add(p);
+
+    // Ibis custom extensions
     parser.inline.add_rule::<ArticleLinkScanner>();
     parser.inline.add_rule::<MathEquationScanner>();
+
     parser
 }
 
