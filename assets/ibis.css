@@ -48,6 +48,22 @@ pre {
     margin: 5px;
 }
 
+#table-of-contents ul {
+    list-style-type: none;
+    padding-left: 0;
+}
+
+#table-of-contents li {
+    padding-left: 40px
+}
+
+#table-of-contents {
+    background-color: #f6f6f6;
+    width: 400px;
+    paddign-right: 20px;
+    float: right;
+}
+
 @media only screen and (max-width: 720px) {
     body {
         flex-direction: column;

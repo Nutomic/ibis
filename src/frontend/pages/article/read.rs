@@ -25,7 +25,7 @@ pub fn ReadArticle() -> impl IntoView {
                         view! {
                             <div class="item-view">
                                 <h1>{article_title(&article.article)}</h1>
-                                <div inner_html=table_of_contents::generate_table_of_contents(&article.article.text)></div>
+                                <div id="table-of-contents" inner_html=table_of_contents::generate_table_of_contents(&article.article.text)></div>
                                 <div inner_html=render_markdown(&article.article.text)></div>
                             </div>
                         }
