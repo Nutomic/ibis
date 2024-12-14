@@ -1,3 +1,5 @@
 /target
 /.idea
+/.vscode
 /assets/dist
+/node_modules

@@ -1,58 +1,57 @@
 use crate::{
-    common::{ForkArticleForm, ProtectArticleForm},
+    common::{newtypes::ArticleId, ForkArticleForm, ProtectArticleForm},
     frontend::{
-        app::GlobalState,
-        article_link,
-        article_title,
-        components::article_nav::ArticleNav,
+        api::CLIENT,
+        app::is_admin,
+        article_path,
+        components::article_nav::{ActiveTab, ArticleNav},
         pages::article_resource,
         DbArticle,
     },
 };
-use leptos::*;
-use leptos_router::Redirect;
+use leptos::{ev::KeyboardEvent, prelude::*};
+use leptos_router::components::Redirect;
 
 #[component]
 pub fn ArticleActions() -> impl IntoView {
-    let global_state = use_context::<RwSignal<GlobalState>>().unwrap();
     let article = article_resource();
-    let (new_title, set_new_title) = create_signal(String::new());
-    let (fork_response, set_fork_response) = create_signal(Option::<DbArticle>::None);
-    let (error, set_error) = create_signal(None::<String>);
-    let fork_action = create_action(move |(article_id, new_title): &(i32, String)| {
+    let (new_title, set_new_title) = signal(String::new());
+    let (fork_response, set_fork_response) = signal(Option::<DbArticle>::None);
+    let (error, set_error) = signal(None::<String>);
+    let fork_action = Action::new(move |(article_id, new_title): &(ArticleId, String)| {
         let params = ForkArticleForm {
             article_id: *article_id,
             new_title: new_title.to_string(),
         };
         async move {
             set_error.update(|e| *e = None);
-            let result = GlobalState::api_client().fork_article(&params).await;
+            let result = CLIENT.fork_article(&params).await;
             match result {
                 Ok(res) => set_fork_response.set(Some(res.article)),
                 Err(err) => {
-                    set_error.update(|e| *e = Some(err.0.to_string()));
+                    set_error.update(|e| *e = Some(err.to_string()));
                 }
             }
         }
     });
-    let protect_action = create_action(move |(id, protected): &(i32, bool)| {
+    let protect_action = Action::new(move |(id, protected): &(ArticleId, bool)| {
         let params = ProtectArticleForm {
             article_id: *id,
             protected: !protected,
         };
         async move {
             set_error.update(|e| *e = None);
-            let result = GlobalState::api_client().protect_article(&params).await;
+            let result = CLIENT.protect_article(&params).await;
             match result {
                 Ok(_res) => article.refetch(),
                 Err(err) => {
-                    set_error.update(|e| *e = Some(err.0.to_string()));
+                    set_error.update(|e| *e = Some(err.to_string()));
                 }
             }
         }
     });
     view! {
-        <ArticleNav article=article />
+        <ArticleNav article=article active_tab=ActiveTab::Actions />
         <Suspense fallback=|| {
             view! { "Loading..." }
         }>
@@ -61,45 +60,39 @@ pub fn ArticleActions() -> impl IntoView {
                     .get()
                     .map(|article| {
                         view! {
-                            <div class="item-view">
-                                <h1>{article_title(&article.article)}</h1>
+                            <div>
                                 {move || {
                                     error
                                         .get()
                                         .map(|err| {
-                                            view! { <p style="color:red;">{err}</p> }
+                                            view! { <p class="alert">{err}</p> }
                                         })
-                                }}
-
-                                <Show when=move || {
-                                    global_state
-                                        .with(|state| {
-                                            state
-                                                .my_profile
-                                                .as_ref()
-                                                .map(|p| p.local_user.admin)
-                                                .unwrap_or_default() && article.article.local
-                                        })
-                                }>
-                                    <button on:click=move |_| {
-                                        protect_action
-                                            .dispatch((article.article.id, article.article.protected))
-                                    }>Toggle Article Protection</button>
+                                }} <Show when=move || { is_admin() && article.article.local }>
+                                    <button
+                                        class="btn btn-secondary"
+                                        on:click=move |_| {
+                                            protect_action
+                                                .dispatch((article.article.id, article.article.protected));
+                                        }
+                                    >
+                                        Toggle Article Protection
+                                    </button>
                                     <p>"Protect a local article so that only admins can edit it"</p>
-                                </Show>
-                                <Show when=move || !article.article.local>
+                                </Show> <Show when=move || !article.article.local>
                                     <input
+                                        class="input"
                                         placeholder="New Title"
-                                        on:keyup=move |ev: ev::KeyboardEvent| {
+                                        on:keyup=move |ev: KeyboardEvent| {
                                             let val = event_target_value(&ev);
                                             set_new_title.update(|v| *v = val);
                                         }
                                     />
 
                                     <button
+                                        class="btn"
                                         disabled=move || new_title.get().is_empty()
                                         on:click=move |_| {
-                                            fork_action.dispatch((article.article.id, new_title.get()))
+                                            fork_action.dispatch((article.article.id, new_title.get()));
                                         }
                                     >
 
@@ -117,7 +110,7 @@ pub fn ArticleActions() -> impl IntoView {
 
         </Suspense>
         <Show when=move || fork_response.get().is_some()>
-            <Redirect path=article_link(&fork_response.get().unwrap()) />
+            <Redirect path=article_path(&fork_response.get().unwrap()) />
         </Show>
         <p>"TODO: add option for admin to delete article etc"</p>
     }

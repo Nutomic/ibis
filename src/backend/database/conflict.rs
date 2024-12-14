@@ -5,9 +5,17 @@ use crate::{
         federation::activities::submit_article_update,
         utils::generate_article_version,
     },
-    common::{ApiConflict, DbArticle, DbEdit, DbLocalUser, EditVersion},
+    common::{
+        newtypes::{ArticleId, ConflictId, PersonId},
+        ApiConflict,
+        DbArticle,
+        DbEdit,
+        DbPerson,
+        EditVersion,
+    },
 };
 use activitypub_federation::config::Data;
+use chrono::{DateTime, Utc};
 use diesel::{
     delete,
     insert_into,
@@ -28,13 +36,14 @@ use std::ops::DerefMut;
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Queryable, Selectable, Identifiable)]
 #[diesel(table_name = conflict, check_for_backend(diesel::pg::Pg), belongs_to(DbArticle, foreign_key = article_id))]
 pub struct DbConflict {
-    pub id: i32,
+    pub id: ConflictId,
     pub hash: EditVersion,
     pub diff: String,
     pub summary: String,
-    pub creator_id: i32,
-    pub article_id: i32,
+    pub creator_id: PersonId,
+    pub article_id: ArticleId,
     pub previous_version_id: EditVersion,
+    pub published: DateTime<Utc>,
 }
 
 #[derive(Debug, Clone, Insertable)]
@@ -43,8 +52,8 @@ pub struct DbConflictForm {
     pub hash: EditVersion,
     pub diff: String,
     pub summary: String,
-    pub creator_id: i32,
-    pub article_id: i32,
+    pub creator_id: PersonId,
+    pub article_id: ArticleId,
     pub previous_version_id: EditVersion,
 }
 
@@ -56,26 +65,31 @@ impl DbConflict {
             .get_result(conn.deref_mut())?)
     }
 
-    pub fn list(local_user: &DbLocalUser, data: &IbisData) -> MyResult<Vec<Self>> {
+    pub fn list(person: &DbPerson, data: &IbisData) -> MyResult<Vec<Self>> {
         let mut conn = data.db_pool.get()?;
         Ok(conflict::table
-            .filter(conflict::dsl::creator_id.eq(local_user.id))
+            .filter(conflict::dsl::creator_id.eq(person.id))
             .get_results(conn.deref_mut())?)
     }
 
-    /// Delete a merge conflict after it is resolved.
-    pub fn delete(id: i32, data: &IbisData) -> MyResult<Self> {
+    /// Delete merge conflict which was created by specific user
+    pub fn delete(id: ConflictId, creator_id: PersonId, data: &IbisData) -> MyResult<Self> {
         let mut conn = data.db_pool.get()?;
-        Ok(delete(conflict::table.find(id)).get_result(conn.deref_mut())?)
+        Ok(delete(
+            conflict::table
+                .filter(conflict::dsl::creator_id.eq(creator_id))
+                .find(id),
+        )
+        .get_result(conn.deref_mut())?)
     }
 
     pub async fn to_api_conflict(&self, data: &Data<IbisData>) -> MyResult<Option<ApiConflict>> {
-        let article = DbArticle::read(self.article_id, data)?;
+        let article = DbArticle::read_view(self.article_id, data)?;
         // Make sure to get latest version from origin so that all conflicts can be resolved
-        let original_article = article.ap_id.dereference_forced(data).await?;
+        let original_article = article.article.ap_id.dereference_forced(data).await?;
 
         // create common ancestor version
-        let edits = DbEdit::read_for_article(&original_article, data)?;
+        let edits = DbEdit::list_for_article(original_article.id, data)?;
         let ancestor = generate_article_version(&edits, &self.previous_version_id)?;
 
         let patch = Patch::from_str(&self.diff)?;
@@ -94,7 +108,7 @@ impl DbConflict {
                     data,
                 )
                 .await?;
-                DbConflict::delete(self.id, data)?;
+                DbConflict::delete(self.id, self.creator_id, data)?;
                 Ok(None)
             }
             Err(three_way_merge) => {
@@ -106,6 +120,7 @@ impl DbConflict {
                     summary: self.summary.clone(),
                     article: original_article.clone(),
                     previous_version_id: original_article.latest_edit_version(data)?,
+                    published: self.published,
                 }))
             }
         }

@@ -1,15 +1,17 @@
 use crate::{
-    common::{ApiConflict, ArticleView, EditArticleForm},
+    common::{newtypes::ConflictId, ApiConflict, ArticleView, EditArticleForm, Notification},
     frontend::{
-        app::GlobalState,
-        article_title,
-        components::article_nav::ArticleNav,
-        markdown::render_markdown,
+        api::CLIENT,
+        components::{
+            article_nav::{ActiveTab, ArticleNav},
+            editor::EditorView,
+        },
         pages::article_resource,
     },
 };
-use leptos::*;
-use leptos_router::use_params_map;
+use leptos::{html::Textarea, prelude::*};
+use leptos_router::hooks::use_params_map;
+use leptos_use::{use_textarea_autosize, UseTextareaAutosizeReturn};
 
 #[derive(Clone, PartialEq)]
 enum EditResponse {
@@ -23,19 +25,23 @@ const CONFLICT_MESSAGE: &str = "There was an edit conflict. Resolve it manually 
 #[component]
 pub fn EditArticle() -> impl IntoView {
     let article = article_resource();
-    let (edit_response, set_edit_response) = create_signal(EditResponse::None);
-    let (edit_error, set_edit_error) = create_signal(None::<String>);
+    let (edit_response, set_edit_response) = signal(EditResponse::None);
+    let (edit_error, set_edit_error) = signal(None::<String>);
 
-    let conflict_id = move || use_params_map().get().get("conflict_id").cloned();
+    let conflict_id = move || use_params_map().get_untracked().get("conflict_id").clone();
     if let Some(conflict_id) = conflict_id() {
-        create_action(move |conflict_id: &String| {
-            let conflict_id: i32 = conflict_id.parse().unwrap();
+        Action::new(move |conflict_id: &String| {
+            let conflict_id = ConflictId(conflict_id.parse().unwrap());
             async move {
-                let conflict = GlobalState::api_client()
-                    .get_conflicts()
+                let conflict = CLIENT
+                    .notifications_list()
                     .await
                     .unwrap()
                     .into_iter()
+                    .filter_map(|n| match n {
+                        Notification::EditConflict(c) => Some(c),
+                        _ => None,
+                    })
                     .find(|c| c.id == conflict_id)
                     .unwrap();
                 set_edit_response.set(EditResponse::Conflict(conflict));
@@ -45,14 +51,17 @@ pub fn EditArticle() -> impl IntoView {
         .dispatch(conflict_id);
     }
 
-    let (text, set_text) = create_signal(String::new());
-    let (summary, set_summary) = create_signal(String::new());
-    let (show_preview, set_show_preview) = create_signal(false);
-    let (preview, set_preview) = create_signal(String::new());
-    let (wait_for_response, set_wait_for_response) = create_signal(false);
+    let textarea_ref = NodeRef::<Textarea>::new();
+    let UseTextareaAutosizeReturn {
+        content,
+        set_content,
+        trigger_resize: _,
+    } = use_textarea_autosize(textarea_ref);
+    let (summary, set_summary) = signal(String::new());
+    let (wait_for_response, set_wait_for_response) = signal(false);
     let button_is_disabled =
         Signal::derive(move || wait_for_response.get() || summary.get().is_empty());
-    let submit_action = create_action(
+    let submit_action = Action::new(
         move |(new_text, summary, article, edit_response): &(
             String,
             String,
@@ -80,9 +89,7 @@ pub fn EditArticle() -> impl IntoView {
                     resolve_conflict_id,
                 };
                 set_wait_for_response.update(|w| *w = true);
-                let res = GlobalState::api_client()
-                    .edit_article_with_conflict(&form)
-                    .await;
+                let res = CLIENT.edit_article_with_conflict(&form).await;
                 set_wait_for_response.update(|w| *w = false);
                 match res {
                     Ok(Some(conflict)) => {
@@ -93,7 +100,7 @@ pub fn EditArticle() -> impl IntoView {
                         set_edit_response.update(|v| *v = EditResponse::Success);
                     }
                     Err(err) => {
-                        let msg = err.0.to_string();
+                        let msg = err.to_string();
                         log::warn!("Unable to edit: {msg}");
                         set_edit_error.update(|e| *e = Some(msg));
                     }
@@ -103,7 +110,7 @@ pub fn EditArticle() -> impl IntoView {
     );
 
     view! {
-        <ArticleNav article=article />
+        <ArticleNav article=article active_tab=ActiveTab::Edit />
         <Show
             when=move || edit_response.get() == EditResponse::Success
             fallback=move || {
@@ -119,48 +126,22 @@ pub fn EditArticle() -> impl IntoView {
                                         article.article.text = conflict.three_way_merge;
                                         set_summary.set(conflict.summary);
                                     }
-                                    set_text.set(article.article.text.clone());
-                                    set_preview.set(render_markdown(&article.article.text));
+                                    set_content.set(article.article.text.clone());
                                     let article_ = article.clone();
-                                    let rows = article.article.text.lines().count() + 1;
                                     view! {
                                         // set initial text, otherwise submit with no changes results in empty text
-                                        <div id="edit-article" class="item-view">
-                                            <h1>{article_title(&article.article)}</h1>
+                                        <div>
                                             {move || {
                                                 edit_error
                                                     .get()
                                                     .map(|err| {
                                                         view! { <p style="color:red;">{err}</p> }
                                                     })
-                                            }}
-
-                                            <textarea
-                                                id="edit-article-textarea"
-                                                rows=rows
-                                                on:keyup=move |ev| {
-                                                    let val = event_target_value(&ev);
-                                                    set_preview.set(render_markdown(&val));
-                                                    set_text.set(val);
-                                                }
-                                            >
-                                                {article.article.text.clone()}
-                                            </textarea>
-                                            <button on:click=move |_| {
-                                                set_show_preview.update(|s| *s = !*s)
-                                            }>Preview</button>
-                                            <Show when=move || { show_preview.get() }>
-                                                <div id="preview" inner_html=move || preview.get()></div>
-                                            </Show>
-                                            <div>
-                                                <a href="https://commonmark.org/help/" target="blank_">
-                                                    Markdown
-                                                </a>
-                                                " formatting is supported"
-                                            </div>
-                                            <div class="inputs">
+                                            }} <EditorView textarea_ref content set_content />
+                                            <div class="flex flex-row mr-2">
                                                 <input
                                                     type="text"
+                                                    class="input input-primary grow me-4"
                                                     placeholder="Edit summary"
                                                     value=summary.get_untracked()
                                                     on:keyup=move |ev| {
@@ -170,15 +151,16 @@ pub fn EditArticle() -> impl IntoView {
                                                 />
 
                                                 <button
+                                                    class="btn btn-primary"
                                                     prop:disabled=move || button_is_disabled.get()
                                                     on:click=move |_| {
                                                         submit_action
                                                             .dispatch((
-                                                                text.get(),
+                                                                content.get(),
                                                                 summary.get(),
                                                                 article_.clone(),
                                                                 edit_response.get(),
-                                                            ))
+                                                            ));
                                                     }
                                                 >
 

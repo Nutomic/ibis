@@ -1,9 +1,9 @@
 use crate::{
     common::{DbArticle, DbInstance, SearchArticleForm},
-    frontend::{app::GlobalState, article_link, article_title},
+    frontend::{api::CLIENT, article_path, article_title},
 };
-use leptos::*;
-use leptos_router::use_query_map;
+use leptos::prelude::*;
+use leptos_router::hooks::use_query_map;
 use serde::{Deserialize, Serialize};
 use url::Url;
 
@@ -22,37 +22,38 @@ impl SearchResults {
 #[component]
 pub fn Search() -> impl IntoView {
     let params = use_query_map();
-    let query = move || params.get().get("query").cloned().unwrap();
-    let (error, set_error) = create_signal(None::<String>);
-    let search_results = create_resource(query, move |query| async move {
+    let query = move || params.get().get("query").clone().unwrap_or_default();
+    let (error, set_error) = signal(None::<String>);
+    let search_results = Resource::new(query, move |query| async move {
         set_error.set(None);
         let mut search_results = SearchResults::default();
-        let api_client = GlobalState::api_client();
         let url = Url::parse(&query);
         let search_data = SearchArticleForm { query };
-        let search = api_client.search(&search_data);
+        let search = CLIENT.search(&search_data);
 
         match search.await {
             Ok(mut a) => search_results.articles.append(&mut a),
-            Err(e) => set_error.set(Some(e.0.to_string())),
+            Err(e) => set_error.set(Some(e.to_string())),
         }
 
         // If its a valid url, also attempt to resolve as federation object
         if let Ok(url) = url {
-            match api_client.resolve_article(url.clone()).await {
+            match CLIENT.resolve_article(url.clone()).await {
                 Ok(a) => search_results.articles.push(a.article),
-                Err(e) => set_error.set(Some(e.0.to_string())),
+                Err(e) => set_error.set(Some(e.to_string())),
             }
-            match api_client.resolve_instance(url).await {
+            match CLIENT.resolve_instance(url).await {
                 Ok(a) => search_results.instance = Some(a),
-                Err(e) => set_error.set(Some(e.0.to_string())),
+                Err(e) => set_error.set(Some(e.to_string())),
             }
         }
         search_results
     });
 
     view! {
-        <h1>"Search results for " {query}</h1>
+        <h1 class="flex-auto my-6 font-serif text-4xl font-bold grow">
+            "Search results for " {query}
+        </h1>
         <Suspense fallback=|| {
             view! { "Loading..." }
         }>
@@ -87,7 +88,9 @@ pub fn Search() -> impl IntoView {
                                         vec![
                                             view! {
                                                 <li>
-                                                    <a href=format!("/instance/{domain}")>{domain}</a>
+                                                    <a class="text-lg link" href=format!("/instance/{domain}")>
+                                                        {domain.to_string()}
+                                                    </a>
                                                 </li>
                                             },
                                         ]
@@ -100,7 +103,9 @@ pub fn Search() -> impl IntoView {
                                         .map(|a| {
                                             view! {
                                                 <li>
-                                                    <a href=article_link(a)>{article_title(a)}</a>
+                                                    <a class="text-lg link" href=article_path(a)>
+                                                        {article_title(a)}
+                                                    </a>
                                                 </li>
                                             }
                                         })

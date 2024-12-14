@@ -5,9 +5,12 @@ use crate::{
             IbisData,
         },
         error::MyResult,
-        federation::objects::articles_collection::DbArticleCollection,
+        federation::objects::{
+            articles_collection::DbArticleCollection,
+            instance_collection::DbInstanceCollection,
+        },
     },
-    common::{DbInstance, DbPerson, InstanceView},
+    common::{newtypes::InstanceId, DbInstance, DbPerson, InstanceView},
 };
 use activitypub_federation::{
     config::Data,
@@ -31,12 +34,13 @@ pub struct DbInstanceForm {
     pub domain: String,
     pub ap_id: ObjectId<DbInstance>,
     pub description: Option<String>,
-    pub articles_url: CollectionId<DbArticleCollection>,
+    pub articles_url: Option<CollectionId<DbArticleCollection>>,
     pub inbox_url: String,
     pub public_key: String,
     pub private_key: Option<String>,
     pub last_refreshed_at: DateTime<Utc>,
     pub local: bool,
+    pub instances_url: Option<CollectionId<DbInstanceCollection>>,
 }
 
 impl DbInstance {
@@ -50,7 +54,7 @@ impl DbInstance {
             .get_result(conn.deref_mut())?)
     }
 
-    pub fn read(id: i32, data: &IbisData) -> MyResult<Self> {
+    pub fn read(id: InstanceId, data: &IbisData) -> MyResult<Self> {
         let mut conn = data.db_pool.get()?;
         Ok(instance::table.find(id).get_result(conn.deref_mut())?)
     }
@@ -72,7 +76,7 @@ impl DbInstance {
             .get_result(conn.deref_mut())?)
     }
 
-    pub fn read_view(id: Option<i32>, data: &Data<IbisData>) -> MyResult<InstanceView> {
+    pub fn read_view(id: Option<InstanceId>, data: &Data<IbisData>) -> MyResult<InstanceView> {
         let instance = match id {
             Some(id) => DbInstance::read(id, data),
             None => DbInstance::read_local_instance(data),
@@ -82,7 +86,6 @@ impl DbInstance {
         Ok(InstanceView {
             instance,
             followers,
-            registration_open: data.config.registration_open,
         })
     }
 
@@ -109,7 +112,7 @@ impl DbInstance {
         Ok(())
     }
 
-    pub fn read_followers(id_: i32, data: &IbisData) -> MyResult<Vec<DbPerson>> {
+    pub fn read_followers(id_: InstanceId, data: &IbisData) -> MyResult<Vec<DbPerson>> {
         use crate::backend::database::schema::person;
         use instance_follow::dsl::{follower_id, instance_id};
         let mut conn = data.db_pool.get()?;
@@ -117,6 +120,13 @@ impl DbInstance {
             .inner_join(person::table.on(follower_id.eq(person::id)))
             .filter(instance_id.eq(id_))
             .select(person::all_columns)
+            .get_results(conn.deref_mut())?)
+    }
+
+    pub fn read_remote(data: &Data<IbisData>) -> MyResult<Vec<DbInstance>> {
+        let mut conn = data.db_pool.get()?;
+        Ok(instance::table
+            .filter(instance::local.eq(false))
             .get_results(conn.deref_mut())?)
     }
 }

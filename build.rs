@@ -1,20 +1,7 @@
-use std::{
-    fs::{create_dir_all, File},
-    io::Result,
-    path::Path,
-};
+use std::{fs::create_dir_all, io::Result};
 
-/// Create placeholders for wasm files so that `cargo check` etc work without explicitly building
-/// frontend.
+/// Create site folder so include_dir macro for assets doesn't throw error in clean repo
 fn main() -> Result<()> {
-    create_dir_all("assets/dist/")?;
-    let js = "assets/dist/ibis.js";
-    if !Path::new(js).exists() {
-        File::create(js)?;
-    }
-    let wasm = "assets/dist/ibis_bg.wasm";
-    if !Path::new(wasm).exists() {
-        File::create(wasm)?;
-    }
+    create_dir_all("target/site/")?;
     Ok(())
 }

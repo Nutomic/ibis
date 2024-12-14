@@ -1,17 +1,29 @@
+use super::check_is_admin;
 use crate::{
     backend::{
-        database::{read_jwt_secret, IbisData},
+        database::{conflict::DbConflict, read_jwt_secret, IbisData},
         error::MyResult,
     },
-    common::{DbPerson, GetUserForm, LocalUserView, LoginUserForm, RegisterUserForm},
+    common::{
+        DbArticle,
+        DbPerson,
+        GetUserForm,
+        LocalUserView,
+        LoginUserForm,
+        Notification,
+        RegisterUserForm,
+        SuccessResponse,
+        AUTH_COOKIE,
+    },
 };
 use activitypub_federation::config::Data;
 use anyhow::anyhow;
-use axum::{extract::Query, Form, Json};
+use axum::{extract::Query, Extension, Form, Json};
 use axum_extra::extract::cookie::{Cookie, CookieJar, Expiration, SameSite};
 use axum_macros::debug_handler;
 use bcrypt::verify;
 use chrono::Utc;
+use futures::future::try_join_all;
 use jsonwebtoken::{
     decode,
     encode,
@@ -23,8 +35,6 @@ use jsonwebtoken::{
 };
 use serde::{Deserialize, Serialize};
 use time::{Duration, OffsetDateTime};
-
-pub static AUTH_COOKIE: &str = "auth";
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Claims {
@@ -67,7 +77,7 @@ pub(in crate::backend::api) async fn register_user(
     jar: CookieJar,
     Form(form): Form<RegisterUserForm>,
 ) -> MyResult<(CookieJar, Json<LocalUserView>)> {
-    if !data.config.registration_open {
+    if !data.config.options.registration_open {
         return Err(anyhow!("Registration is closed").into());
     }
     let user = DbPerson::create_local(form.username, form.password, false, &data)?;
@@ -113,25 +123,12 @@ fn create_cookie(jwt: String, data: &Data<IbisData>) -> Cookie<'static> {
 }
 
 #[debug_handler]
-pub(in crate::backend::api) async fn my_profile(
-    data: Data<IbisData>,
-    jar: CookieJar,
-) -> MyResult<Json<LocalUserView>> {
-    let jwt = jar.get(AUTH_COOKIE).map(|c| c.value());
-    if let Some(jwt) = jwt {
-        Ok(Json(validate(jwt, &data).await?))
-    } else {
-        Err(anyhow!("invalid/missing auth").into())
-    }
-}
-
-#[debug_handler]
 pub(in crate::backend::api) async fn logout_user(
     data: Data<IbisData>,
     jar: CookieJar,
-) -> MyResult<CookieJar> {
+) -> MyResult<(CookieJar, Json<SuccessResponse>)> {
     let jar = jar.remove(create_cookie(String::new(), &data));
-    Ok(jar)
+    Ok((jar, Json(SuccessResponse::default())))
 }
 
 #[debug_handler]
@@ -144,4 +141,50 @@ pub(in crate::backend::api) async fn get_user(
         &params.domain,
         &data,
     )?))
+}
+
+#[debug_handler]
+pub(crate) async fn list_notifications(
+    Extension(user): Extension<LocalUserView>,
+    data: Data<IbisData>,
+) -> MyResult<Json<Vec<Notification>>> {
+    let conflicts = DbConflict::list(&user.person, &data)?;
+    let conflicts: Vec<_> = try_join_all(conflicts.into_iter().map(|c| {
+        let data = data.reset_request_count();
+        async move { c.to_api_conflict(&data).await }
+    }))
+    .await?;
+    let mut notifications: Vec<_> = conflicts
+        .into_iter()
+        .flatten()
+        .map(Notification::EditConflict)
+        .collect();
+
+    if check_is_admin(&user).is_ok() {
+        let articles = DbArticle::list_approval_required(&data)?;
+        notifications.extend(
+            articles
+                .into_iter()
+                .map(Notification::ArticleApprovalRequired),
+        )
+    }
+    notifications.sort_by(|a, b| a.published().cmp(b.published()));
+
+    Ok(Json(notifications))
+}
+
+#[debug_handler]
+pub(crate) async fn count_notifications(
+    Extension(user): Extension<LocalUserView>,
+    data: Data<IbisData>,
+) -> MyResult<Json<usize>> {
+    let mut count = 0;
+    let conflicts = DbConflict::list(&user.person, &data)?;
+    count += conflicts.len();
+    if check_is_admin(&user).is_ok() {
+        let articles = DbArticle::list_approval_required(&data)?;
+        count += articles.len();
+    }
+
+    Ok(Json(count))
 }

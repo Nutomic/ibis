@@ -12,6 +12,7 @@ use activitypub_federation::{
     traits::Object,
 };
 use chrono::{DateTime, Utc};
+use log::warn;
 use serde::{Deserialize, Serialize};
 use url::Url;
 
@@ -51,7 +52,7 @@ impl Object for DbEdit {
     }
 
     async fn into_json(self, data: &Data<Self::DataType>) -> Result<Self::Kind, Self::Error> {
-        let article = DbArticle::read(self.article_id, data)?;
+        let article = DbArticle::read_view(self.article_id, data)?;
         let creator = DbPerson::read(self.creator_id, data)?;
         Ok(ApubEdit {
             kind: PatchType::Patch,
@@ -60,9 +61,9 @@ impl Object for DbEdit {
             summary: self.summary,
             version: self.hash,
             previous_version: self.previous_version_id,
-            object: article.ap_id,
+            object: article.article.ap_id,
             attributed_to: creator.ap_id,
-            published: self.created,
+            published: self.published,
         })
     }
 
@@ -77,7 +78,14 @@ impl Object for DbEdit {
 
     async fn from_json(json: Self::Kind, data: &Data<Self::DataType>) -> Result<Self, Self::Error> {
         let article = json.object.dereference(data).await?;
-        let creator = json.attributed_to.dereference(data).await?;
+        let creator = match json.attributed_to.dereference(data).await {
+            Ok(c) => c,
+            Err(e) => {
+                // If actor couldnt be fetched, use ghost as placeholder
+                warn!("Failed to fetch user {}: {e}", json.attributed_to);
+                DbPerson::ghost(data)?
+            }
+        };
         let form = DbEditForm {
             creator_id: creator.id,
             ap_id: json.id,
@@ -86,7 +94,7 @@ impl Object for DbEdit {
             article_id: article.id,
             hash: json.version,
             previous_version_id: json.previous_version,
-            created: json.published,
+            published: json.published,
         };
         let edit = DbEdit::create(&form, data)?;
         Ok(edit)

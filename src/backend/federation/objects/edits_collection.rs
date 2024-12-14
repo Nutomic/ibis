@@ -9,6 +9,7 @@ use activitypub_federation::{
     traits::{Collection, Object},
 };
 use futures::{future, future::try_join_all};
+use log::warn;
 use serde::{Deserialize, Serialize};
 use url::Url;
 
@@ -22,7 +23,7 @@ pub struct ApubEditCollection {
 }
 
 #[derive(Clone, Debug)]
-pub struct DbEditCollection(pub Vec<DbEdit>);
+pub struct DbEditCollection();
 
 #[async_trait::async_trait]
 impl Collection for DbEditCollection {
@@ -32,22 +33,21 @@ impl Collection for DbEditCollection {
     type Error = Error;
 
     async fn read_local(
-        owner: &Self::Owner,
+        article: &Self::Owner,
         data: &Data<Self::DataType>,
     ) -> Result<Self::Kind, Self::Error> {
-        let article = DbArticle::read_view(owner.id, data)?;
-
+        let article = DbArticle::read(article.id, data)?;
+        let edits = DbEdit::list_for_article(article.id, data)?;
         let edits = future::try_join_all(
-            article
-                .edits
+            edits
                 .into_iter()
-                .map(|a| a.edit.into_json(data))
+                .map(|e| e.into_json(data))
                 .collect::<Vec<_>>(),
         )
         .await?;
         let collection = ApubEditCollection {
             r#type: Default::default(),
-            id: Url::from(article.article.edits_id()?),
+            id: Url::from(article.edits_id()?),
             total_items: edits.len() as i32,
             items: edits,
         };
@@ -65,12 +65,13 @@ impl Collection for DbEditCollection {
 
     async fn from_json(
         apub: Self::Kind,
-        _owner: &Self::Owner,
+        owner: &Self::Owner,
         data: &Data<Self::DataType>,
     ) -> Result<Self, Self::Error> {
-        let edits =
-            try_join_all(apub.items.into_iter().map(|i| DbEdit::from_json(i, data))).await?;
-        // TODO: return value propably not needed
-        Ok(DbEditCollection(edits))
+        try_join_all(apub.items.into_iter().map(|i| DbEdit::from_json(i, data)))
+            .await
+            .map_err(|e| warn!("Failed to synchronize edits for {}: {e}", owner.ap_id))
+            .ok();
+        Ok(DbEditCollection())
     }
 }

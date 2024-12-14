@@ -1,10 +1,9 @@
 use crate::frontend::{
-    article_title,
-    components::article_nav::ArticleNav,
+    components::article_nav::{ActiveTab, ArticleNav},
     markdown::render_markdown,
     pages::article_resource,
 };
-use leptos::*;
+use leptos::prelude::*;
 
 use crate::frontend::pages::article::table_of_contents;
 
@@ -13,7 +12,7 @@ pub fn ReadArticle() -> impl IntoView {
     let article = article_resource();
 
     view! {
-        <ArticleNav article=article />
+        <ArticleNav article=article active_tab=ActiveTab::Read />
         <Suspense fallback=|| {
             view! { "Loading..." }
         }>
@@ -23,11 +22,17 @@ pub fn ReadArticle() -> impl IntoView {
                     .get()
                     .map(|article| {
                         view! {
-                            <div class="item-view">
-                                <h1>{article_title(&article.article)}</h1>
-                                <div id="table-of-contents" inner_html=table_of_contents::generate_table_of_contents(&article.article.text)></div>
-                                <div inner_html=render_markdown(&article.article.text)></div>
-                            </div>
+
+                            <div 
+                                id="table-of-contents" 
+                                inner_html=table_of_contents::generate_table_of_contents(&article.article.text)
+                            >
+                                </div>
+                            <div
+                                class="max-w-full prose prose-slate"
+                                inner_html=render_markdown(&article.article.text)
+                            >
+                                </div>
                         }
                     })
             }}

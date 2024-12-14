@@ -1,7 +1,7 @@
 #[cfg(feature = "ssr")]
 #[tokio::main]
-pub async fn main() -> ibis_lib::backend::error::MyResult<()> {
-    use ibis_lib::backend::config::IbisConfig;
+pub async fn main() -> ibis::backend::error::MyResult<()> {
+    use ibis::backend::config::IbisConfig;
     use log::LevelFilter;
 
     if std::env::args().collect::<Vec<_>>().get(1) == Some(&"--print-config".to_string()) {
@@ -16,18 +16,6 @@ pub async fn main() -> ibis_lib::backend::error::MyResult<()> {
         .init();
 
     let ibis_config = IbisConfig::read()?;
-    ibis_lib::backend::start(ibis_config).await?;
+    ibis::backend::start(ibis_config, None, None).await?;
     Ok(())
-}
-
-#[cfg(not(feature = "ssr"))]
-fn main() {
-    use ibis_lib::frontend::app::App;
-    use leptos::{mount_to_body, view};
-
-    _ = console_log::init_with_level(log::Level::Debug);
-    console_error_panic_hook::set_once();
-    mount_to_body(|| {
-        view! { <App /> }
-    });
 }

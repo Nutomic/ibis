@@ -1,19 +1,24 @@
 use crate::common::{utils::extract_domain, DbArticle, DbPerson};
 use chrono::{DateTime, Local, Utc};
-use leptos::*;
+use leptos::prelude::*;
 
 pub mod api;
 pub mod app;
 mod components;
-pub mod error;
+pub mod dark_mode;
 pub mod markdown;
 pub mod pages;
 
 #[cfg(feature = "hydrate")]
 #[wasm_bindgen::prelude::wasm_bindgen]
-pub fn hydrate() {}
+pub fn hydrate() {
+    use crate::frontend::app::App;
+    console_log::init_with_level(log::Level::Debug).expect("error initializing logger");
+    console_error_panic_hook::set_once();
+    leptos::mount::hydrate_body(App);
+}
 
-fn article_link(article: &DbArticle) -> String {
+fn article_path(article: &DbArticle) -> String {
     if article.local {
         format!("/article/{}", article.title)
     } else {
@@ -22,6 +27,15 @@ fn article_link(article: &DbArticle) -> String {
             article.title,
             extract_domain(&article.ap_id)
         )
+    }
+}
+
+fn article_link(article: &DbArticle) -> impl IntoView {
+    let article_path = article_path(article);
+    view! {
+        <a class="link" href=article_path>
+            {article.title.clone()}
+        </a>
     }
 }
 
@@ -52,7 +66,11 @@ fn user_link(person: &DbPerson) -> impl IntoView {
             extract_domain(&person.ap_id)
         )
     };
-    view! { <a href=creator_path>{user_title(person)}</a> }
+    view! {
+        <a class="link" href=creator_path>
+            {user_title(person)}
+        </a>
+    }
 }
 
 fn render_date_time(date_time: DateTime<Utc>) -> String {

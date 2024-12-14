@@ -1,3 +1,4 @@
+use super::instance_collection::DbInstanceCollection;
 use crate::{
     backend::{
         database::{instance::DbInstanceForm, IbisData},
@@ -13,7 +14,7 @@ use activitypub_federation::{
     protocol::{public_key::PublicKey, verification::verify_domains_match},
     traits::{ActivityHandler, Actor, Object},
 };
-use chrono::{DateTime, Local, Utc};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 use url::Url;
@@ -23,9 +24,10 @@ use url::Url;
 pub struct ApubInstance {
     #[serde(rename = "type")]
     kind: ServiceType,
-    id: ObjectId<DbInstance>,
+    pub id: ObjectId<DbInstance>,
     content: Option<String>,
-    articles: CollectionId<DbArticleCollection>,
+    articles: Option<CollectionId<DbArticleCollection>>,
+    instances: Option<CollectionId<DbInstanceCollection>>,
     inbox: Url,
     public_key: PublicKey,
 }
@@ -86,6 +88,7 @@ impl Object for DbInstance {
             id: self.ap_id.clone(),
             content: self.description.clone(),
             articles: self.articles_url.clone(),
+            instances: self.instances_url.clone(),
             inbox: Url::parse(&self.inbox_url)?,
             public_key: self.public_key(),
         })
@@ -107,15 +110,33 @@ impl Object for DbInstance {
             ap_id: json.id,
             description: json.content,
             articles_url: json.articles,
+            instances_url: json.instances,
             inbox_url: json.inbox.to_string(),
             public_key: json.public_key.public_key_pem,
             private_key: None,
-            last_refreshed_at: Local::now().into(),
+            last_refreshed_at: Utc::now(),
             local: false,
         };
         let instance = DbInstance::create(&form, data)?;
+
         // TODO: very inefficient to sync all articles every time
-        instance.articles_url.dereference(&instance, data).await?;
+        let instance_ = instance.clone();
+        let data_ = data.reset_request_count();
+        tokio::spawn(async move {
+            if let Some(articles_url) = &instance_.articles_url {
+                let res = articles_url.dereference(&(), &data_).await;
+                if let Err(e) = res {
+                    tracing::warn!("error in spawn: {e}");
+                }
+            }
+            if let Some(instances_url) = &instance_.instances_url {
+                let res = instances_url.dereference(&(), &data_).await;
+                if let Err(e) = res {
+                    tracing::warn!("error in spawn: {e}");
+                }
+            }
+        });
+
         Ok(instance)
     }
 }

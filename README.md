@@ -1,5 +1,12 @@
+
+![GitHub tag (latest SemVer)](https://img.shields.io/github/tag/Nutomic/ibis.svg)
+[![Build Status](https://woodpecker.join-lemmy.org/api/badges/Nutomic/ibis/status.svg)](https://woodpecker.join-lemmy.org/Nutomic/ibis)
+[![License](https://img.shields.io/github/license/Nutomic/ibis.svg)](LICENSE)
+
 About Ibis
 ===
+
+![](assets/logo.png)
 
 Ibis is a federated online encyclopedia similar to Wikipedia.  Users can read, create and edit articles seamlessly across instances. It uses the Activitypub protocol to connect users across different websites, similar to Mastodon or Lemmy. This ensures that there is no single point of control which may be used for global censorship. Instead each Ibis instance is independent and controlled by its admin. Admins can decide which rules to enforce, which content to allow and which instances to connect with. Users who are unhappy with the rules can easily setup their own Ibis instance with their own rules. 
 
@@ -31,9 +38,9 @@ psql -c "CREATE USER ibis WITH PASSWORD 'ibis' SUPERUSER;" -U postgres
 psql -c "CREATE DATABASE ibis WITH OWNER ibis;" -U postgres
 ```
 
-You need to install [cargo](https://rustup.rs/), [trunk](https://trunkrs.dev) and [cargo watch](https://github.com/watchexec/cargo-watch). Run `./scripts/watch.sh` which automatically rebuilds the project after changes. Then open the site at [127.0.0.1:8080](http://127.0.0.1:8080/). Then login with user `ibis` and password `ibis`.
+You need to install [cargo](https://rustup.rs/), [pnpm](https://pnpm.io/) and [cargo-leptos](https://github.com/leptos-rs/cargo-leptos). Use `pnpm install` to get Javascript dependencies. Then run `cargo leptos watch` which automatically rebuilds the project after changes. Open the site at [localhost:3000](http://localhost:3000/). You can login with user `ibis` and password `ibis`.
 
-By default the frontend runs on port 8080, which can be changed with env var `TRUNK_SERVE_PORT`. The backend port is 8081 and can be changed with `IBIS_BACKEND_PORT`.
+By default the frontend runs on port 3000, which can be changed with env var `TRUNK_SERVE_PORT`. The backend port is 8081 and can be changed with `IBIS_BACKEND_PORT`.
 
 ## Federation
 
@@ -44,8 +51,8 @@ Main objects in terms of federation are the `Instance` and `Article`. Each artic
 Developing a project like this takes a significant amount of work. You can help funding it with donations:
 
 - [Liberapay](https://liberapay.com/Ibis/)
-- [Bitcoin](bitcoin:bc1q6mqlqc84q2h55jkkjvex4kc6h9h534rj87rv2l)
-- [Monero](monero:84xnACZv82UNTEGNkttLTH8sCeV9Cdr8dHMJSNP6V2hEJW7C17S9xQTUCghwG8TePrRD9wfiPRWcwYvSTHUNoyJ4AXnQYLD)
+- Bitcoin: `bc1q6mqlqc84q2h55jkkjvex4kc6h9h534rj87rv2l`
+- Monero: `84xnACZv82UNTEGNkttLTH8sCeV9Cdr8dHMJSNP6V2hEJW7C17S9xQTUCghwG8TePrRD9wfiPRWcwYvSTHUNoyJ4AXnQYLD`
 
 ## License
 

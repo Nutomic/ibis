@@ -1,76 +1,113 @@
 use crate::{
-    common::{validation::can_edit_article, ArticleView, GetInstance},
+    common::{validation::can_edit_article, ArticleView},
     frontend::{
-        app::GlobalState,
-        article_link,
-        components::instance_follow_button::InstanceFollowButton,
+        app::{is_admin, is_logged_in},
+        article_path,
+        article_title,
     },
 };
-use leptos::*;
-use leptos_router::*;
+use leptos::prelude::*;
+use leptos_router::components::A;
+
+pub enum ActiveTab {
+    Read,
+    History,
+    Edit,
+    Actions,
+}
 
 #[component]
-pub fn ArticleNav(article: Resource<Option<String>, ArticleView>) -> impl IntoView {
+pub fn ArticleNav(article: Resource<ArticleView>, active_tab: ActiveTab) -> impl IntoView {
+    let tab_classes = tab_classes(&active_tab);
+
     view! {
         <Suspense>
             {move || {
                 article
                     .get()
                     .map(|article_| {
-                        let instance = create_local_resource(
-                            move || article_.article.instance_id,
-                            move |instance_id| async move {
-                                let form = GetInstance {
-                                    id: Some(instance_id),
-                                };
-                                GlobalState::api_client().get_instance(&form).await.unwrap()
-                            },
-                        );
-                        let global_state = use_context::<RwSignal<GlobalState>>().unwrap();
-                        let article_link = article_link(&article_.article);
+                        let title = article_title(&article_.article);
+                        let article_link = article_path(&article_.article);
                         let article_link_ = article_link.clone();
                         let protected = article_.article.protected;
                         view! {
-                            <nav class="inner">
-                                <A href=article_link.clone()>"Read"</A>
-                                <A href=format!("{article_link}/history")>"History"</A>
+                            <div role="tablist" class="tabs tabs-lifted">
+                                <A href=article_link.clone() {..} class=tab_classes.read>
+                                    "Read"
+                                </A>
+                                <A
+                                    href=format!("{article_link}/history")
+                                    {..}
+                                    class=tab_classes.history
+                                >
+                                    "History"
+                                </A>
                                 <Show when=move || {
-                                    global_state
-                                        .with(|state| {
-                                            let is_admin = state
-                                                .my_profile
-                                                .as_ref()
-                                                .map(|p| p.local_user.admin)
-                                                .unwrap_or(false);
-                                            state.my_profile.is_some()
-                                                && can_edit_article(&article_.article, is_admin).is_ok()
-                                        })
+                                    is_logged_in()
+                                        && can_edit_article(&article_.article, is_admin()).is_ok()
                                 }>
-                                    <A href=format!("{article_link}/edit")>"Edit"</A>
+                                    <A
+                                        href=format!("{article_link}/edit")
+                                        {..}
+                                        class=tab_classes.edit
+                                    >
+                                        "Edit"
+                                    </A>
                                 </Show>
-                                <Show when=move || {
-                                    global_state.with(|state| state.my_profile.is_some())
-                                }>
-                                    <A href=format!("{article_link_}/actions")>"Actions"</A>
-                                    {instance
-                                        .get()
-                                        .map(|i| {
-                                            view! {
-                                                <InstanceFollowButton instance=i.instance.clone() />
-                                            }
-                                        })}
-
-                                </Show>
+                                <Suspense>
+                                    <Show when=is_logged_in>
+                                        <A
+                                            href=format!("{article_link_}/actions")
+                                            {..}
+                                            class=tab_classes.actions
+                                        >
+                                            "Actions"
+                                        </A>
+                                    </Show>
+                                </Suspense>
+                            </div>
+                            <div class="flex flex-row">
+                                <h1 class="flex-auto my-6 font-serif text-4xl font-bold grow">
+                                    {title}
+                                </h1>
                                 <Show when=move || protected>
-                                    <span title="Article can only be edited by local admins">
+                                    <span
+                                        class="place-self-center"
+                                        title="Article can only be edited by local admins"
+                                    >
                                         "Protected"
                                     </span>
                                 </Show>
-                            </nav>
+                            </div>
                         }
                     })
             }}
 
         </Suspense>
     }
+}
+
+struct ActiveTabClasses {
+    read: &'static str,
+    history: &'static str,
+    edit: &'static str,
+    actions: &'static str,
+}
+
+fn tab_classes(active_tab: &ActiveTab) -> ActiveTabClasses {
+    const TAB_INACTIVE: &str = "tab";
+    const TAB_ACTIVE: &str = "tab tab-active";
+    let mut classes = ActiveTabClasses {
+        read: TAB_INACTIVE,
+        history: TAB_INACTIVE,
+        edit: TAB_INACTIVE,
+        actions: TAB_INACTIVE,
+    };
+    match active_tab {
+        ActiveTab::Read => classes.read = TAB_ACTIVE,
+        ActiveTab::History => classes.history = TAB_ACTIVE,
+        ActiveTab::Edit => classes.edit = TAB_ACTIVE,
+        ActiveTab::Actions => classes.actions = TAB_ACTIVE,
+    }
+    classes
 }

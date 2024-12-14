@@ -1,3 +1,4 @@
+use super::objects::instance_collection::{DbInstanceCollection, InstanceCollection};
 use crate::{
     backend::{
         database::IbisData,
@@ -47,6 +48,7 @@ pub fn federation_routes() -> Router<()> {
         .route("/", get(http_get_instance))
         .route("/user/:name", get(http_get_person))
         .route("/all_articles", get(http_get_all_articles))
+        .route("/linked_instances", get(http_get_linked_instances))
         .route("/article/:title", get(http_get_article))
         .route("/article/:title/edits", get(http_get_article_edits))
         .route("/inbox", post(http_post_inbox))
@@ -75,8 +77,15 @@ async fn http_get_person(
 async fn http_get_all_articles(
     data: Data<IbisData>,
 ) -> MyResult<FederationJson<WithContext<ArticleCollection>>> {
-    let local_instance = DbInstance::read_local_instance(&data)?;
-    let collection = DbArticleCollection::read_local(&local_instance, &data).await?;
+    let collection = DbArticleCollection::read_local(&(), &data).await?;
+    Ok(FederationJson(WithContext::new_default(collection)))
+}
+
+#[debug_handler]
+async fn http_get_linked_instances(
+    data: Data<IbisData>,
+) -> MyResult<FederationJson<WithContext<InstanceCollection>>> {
+    let collection = DbInstanceCollection::read_local(&(), &data).await?;
     Ok(FederationJson(WithContext::new_default(collection)))
 }
 
@@ -85,8 +94,8 @@ async fn http_get_article(
     Path(title): Path<String>,
     data: Data<IbisData>,
 ) -> MyResult<FederationJson<WithContext<ApubArticle>>> {
-    let article = DbArticle::read_local_title(&title, &data)?;
-    let json = article.into_json(&data).await?;
+    let article = DbArticle::read_view_title(&title, None, &data)?;
+    let json = article.article.into_json(&data).await?;
     Ok(FederationJson(WithContext::new_default(json)))
 }
 
@@ -95,8 +104,8 @@ async fn http_get_article_edits(
     Path(title): Path<String>,
     data: Data<IbisData>,
 ) -> MyResult<FederationJson<WithContext<ApubEditCollection>>> {
-    let article = DbArticle::read_local_title(&title, &data)?;
-    let json = DbEditCollection::read_local(&article, &data).await?;
+    let article = DbArticle::read_view_title(&title, None, &data)?;
+    let json = DbEditCollection::read_local(&article.article, &data).await?;
     Ok(FederationJson(WithContext::new_default(json)))
 }
 

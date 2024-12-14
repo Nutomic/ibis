@@ -7,7 +7,13 @@ use crate::{
             update_remote_article::UpdateRemoteArticle,
         },
     },
-    common::{DbArticle, DbEdit, DbInstance, EditVersion},
+    common::{
+        newtypes::{EditId, PersonId},
+        DbArticle,
+        DbEdit,
+        DbInstance,
+        EditVersion,
+    },
 };
 use activitypub_federation::config::Data;
 use chrono::Utc;
@@ -24,7 +30,7 @@ pub async fn submit_article_update(
     summary: String,
     previous_version: EditVersion,
     original_article: &DbArticle,
-    creator_id: i32,
+    creator_id: PersonId,
     data: &Data<IbisData>,
 ) -> Result<(), Error> {
     let form = DbEditForm::new(
@@ -42,7 +48,7 @@ pub async fn submit_article_update(
     } else {
         // dont insert edit into db, might be invalid in case of conflict
         let edit = DbEdit {
-            id: -1,
+            id: EditId(-1),
             creator_id,
             hash: form.hash,
             ap_id: form.ap_id,
@@ -50,7 +56,7 @@ pub async fn submit_article_update(
             summary: form.summary,
             article_id: form.article_id,
             previous_version_id: form.previous_version_id,
-            created: Utc::now(),
+            published: Utc::now(),
         };
         let instance = DbInstance::read(original_article.instance_id, data)?;
         UpdateRemoteArticle::send(edit, instance, data).await?;

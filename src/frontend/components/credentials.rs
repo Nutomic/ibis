@@ -1,4 +1,4 @@
-use leptos::{ev, *};
+use leptos::{ev::KeyboardEvent, prelude::*};
 
 #[component]
 pub fn CredentialsForm(
@@ -8,8 +8,8 @@ pub fn CredentialsForm(
     error: Signal<Option<String>>,
     disabled: Signal<bool>,
 ) -> impl IntoView {
-    let (password, set_password) = create_signal(String::new());
-    let (username, set_username) = create_signal(String::new());
+    let (password, set_password) = signal(String::new());
+    let (username, set_username) = signal(String::new());
 
     let dispatch_action = move || action.dispatch((username.get(), password.get()));
 
@@ -18,22 +18,23 @@ pub fn CredentialsForm(
     });
 
     view! {
-        <form on:submit=|ev| ev.prevent_default()>
-            <p>{title}</p>
+        <form class="form-control max-w-80" on:submit=|ev| ev.prevent_default()>
+            <h1 class="my-4 font-serif text-4xl font-bold grow max-w-fit">{title}</h1>
             {move || {
                 error
                     .get()
                     .map(|err| {
-                        view! { <p style="color:red;">{err}</p> }
+                        view! { <p class="alert alert-error">{err}</p> }
                     })
             }}
 
             <input
                 type="text"
+                class="input input-primary input-bordered"
                 required
                 placeholder="Username"
                 prop:disabled=move || disabled.get()
-                on:keyup=move |ev: ev::KeyboardEvent| {
+                on:keyup=move |ev: KeyboardEvent| {
                     let val = event_target_value(&ev);
                     set_username.update(|v| *v = val);
                 }
@@ -43,13 +44,14 @@ pub fn CredentialsForm(
                     set_username.update(|v| *v = val);
                 }
             />
-
+            <div class="h-2"></div>
             <input
                 type="password"
+                class="input input-primary input-bordered"
                 required
                 placeholder="Password"
                 prop:disabled=move || disabled.get()
-                on:keyup=move |ev: ev::KeyboardEvent| {
+                on:keyup=move |ev: KeyboardEvent| {
                     match &*ev.key() {
                         "Enter" => {
                             dispatch_action();
@@ -69,8 +71,11 @@ pub fn CredentialsForm(
 
             <div>
                 <button
+                    class="my-2 btn btn-primary"
                     prop:disabled=move || button_is_disabled.get()
-                    on:click=move |_| dispatch_action()
+                    on:click=move |_| {
+                        dispatch_action();
+                    }
                 >
                     {action_label}
                 </button>

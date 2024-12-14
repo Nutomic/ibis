@@ -1,52 +1,6 @@
-html {
-    height: 100%;
-    width: 100%;
-}
-
-body {
-    flex-direction: row;
-    display: flex;
-    min-height: 100%;
-    min-width: 100%;
-    padding: 0;
-}
-
-nav {
-    background-color: #f6f6f6;
-    padding: 10px;
-    list-style: none;
-}
-
-main {
-    background-color: #ffffff;
-    flex-grow: 2;
-    padding: 0 30px 30px 30px;
-}
-
-main .inner {
-    margin: 0 -30px;
-}
-
-nav form {
-    margin: 0.5rem 1rem 0rem 0rem;
-}
-
-pre {
-    white-space: pre-wrap;
-}
-
-#edit-article textarea  {
-    height: auto;
-    width: 100%;
-}
-
-#edit-article .inputs {
-    display: flex;
-}
-#edit-article .inputs input {
-    flex: 1;
-    margin: 5px;
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 #table-of-contents ul {
     list-style-type: none;
@@ -72,4 +26,7 @@ pre {
         max-width: 200px;
     }
     nav li { display: inline-block }
+
+.anchor svg {
+    display: inline;
 }

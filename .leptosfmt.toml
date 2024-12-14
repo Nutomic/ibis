@@ -1,2 +1,5 @@
 max_width = 100
 attr_value_brace_style = "WhenRequired" # "Always", "AlwaysUnlessLit", "WhenRequired" or "Preserve"
+
+[attr_values]
+class = "Tailwind"

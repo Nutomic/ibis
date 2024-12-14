@@ -12,7 +12,7 @@ use activitypub_federation::{
     protocol::{public_key::PublicKey, verification::verify_domains_match},
     traits::{Actor, Object},
 };
-use chrono::{DateTime, Local, Utc};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 use url::Url;
@@ -71,7 +71,7 @@ impl Object for DbPerson {
             inbox_url: json.inbox.to_string(),
             public_key: json.public_key.public_key_pem,
             private_key: None,
-            last_refreshed_at: Local::now().into(),
+            last_refreshed_at: Utc::now(),
             local: false,
         };
         DbPerson::create(&form, data)

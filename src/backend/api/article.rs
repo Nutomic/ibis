@@ -1,3 +1,4 @@
+use super::check_is_admin;
 use crate::{
     backend::{
         database::{
@@ -14,11 +15,13 @@ use crate::{
         utils::{extract_domain, http_protocol_str},
         validation::can_edit_article,
         ApiConflict,
+        ApproveArticleForm,
         ArticleView,
         CreateArticleForm,
         DbArticle,
         DbEdit,
         DbInstance,
+        DeleteConflictForm,
         EditArticleForm,
         EditVersion,
         ForkArticleForm,
@@ -40,7 +43,7 @@ use diffy::create_patch;
 /// Create a new article with empty text, and federate it to followers.
 #[debug_handler]
 pub(in crate::backend::api) async fn create_article(
-    Extension(user): Extension<LocalUserView>,
+    user: Extension<LocalUserView>,
     data: Data<IbisData>,
     Form(create_article): Form<CreateArticleForm>,
 ) -> MyResult<Json<ArticleView>> {
@@ -66,6 +69,7 @@ pub(in crate::backend::api) async fn create_article(
         instance_id: local_instance.id,
         local: true,
         protected: false,
+        approved: !data.config.options.article_approval,
     };
     let article = DbArticle::create(form, &data)?;
 
@@ -76,8 +80,10 @@ pub(in crate::backend::api) async fn create_article(
         previous_version_id: article.latest_edit_version(&data)?,
         resolve_conflict_id: None,
     };
-    let _ = edit_article(Extension(user), data.reset_request_count(), Form(edit_data)).await?;
 
+    let _ = edit_article(user, data.reset_request_count(), Form(edit_data)).await?;
+
+    // allow reading unapproved article here
     let article_view = DbArticle::read_view(article.id, &data)?;
     CreateArticle::send_to_followers(article_view.article.clone(), &data).await?;
 
@@ -101,7 +107,7 @@ pub(in crate::backend::api) async fn edit_article(
 ) -> MyResult<Json<Option<ApiConflict>>> {
     // resolve conflict if any
     if let Some(resolve_conflict_id) = edit_form.resolve_conflict_id {
-        DbConflict::delete(resolve_conflict_id, &data)?;
+        DbConflict::delete(resolve_conflict_id, user.person.id, &data)?;
     }
     let original_article = DbArticle::read_view(edit_form.article_id, &data)?;
     if edit_form.new_text == original_article.article.text {
@@ -131,8 +137,8 @@ pub(in crate::backend::api) async fn edit_article(
     } else {
         // There have been other changes since this edit was initiated. Get the common ancestor
         // version and generate a diff to find out what exactly has changed.
-        let ancestor =
-            generate_article_version(&original_article.edits, &edit_form.previous_version_id)?;
+        let edits = DbEdit::list_for_article(original_article.article.id, &data)?;
+        let ancestor = generate_article_version(&edits, &edit_form.previous_version_id)?;
         let patch = create_patch(&ancestor, &edit_form.new_text);
 
         let previous_version = DbEdit::read(&edit_form.previous_version_id, &data)?;
@@ -140,7 +146,7 @@ pub(in crate::backend::api) async fn edit_article(
             hash: EditVersion::new(&patch.to_string()),
             diff: patch.to_string(),
             summary: edit_form.summary.clone(),
-            creator_id: user.local_user.id,
+            creator_id: user.person.id,
             article_id: original_article.article.id,
             previous_version_id: previous_version.hash,
         };
@@ -165,7 +171,8 @@ pub(in crate::backend::api) async fn get_article(
             if query.domain.is_some() {
                 return Err(anyhow!("Cant combine id and instance_domain").into());
             }
-            Ok(Json(DbArticle::read_view(id, &data)?))
+            let article = DbArticle::read_view(id, &data)?;
+            Ok(Json(article))
         }
         _ => Err(anyhow!("Must pass exactly one of title, id").into()),
     }
@@ -176,8 +183,11 @@ pub(in crate::backend::api) async fn list_articles(
     Query(query): Query<ListArticlesForm>,
     data: Data<IbisData>,
 ) -> MyResult<Json<Vec<DbArticle>>> {
-    let only_local = query.only_local.unwrap_or(false);
-    Ok(Json(DbArticle::read_all(only_local, &data)?))
+    Ok(Json(DbArticle::read_all(
+        query.only_local,
+        query.instance_id,
+        &data,
+    )?))
 }
 
 /// Fork a remote article to local instance. This is useful if there are disagreements about
@@ -189,7 +199,7 @@ pub(in crate::backend::api) async fn fork_article(
     Form(fork_form): Form<ForkArticleForm>,
 ) -> MyResult<Json<ArticleView>> {
     // TODO: lots of code duplicated from create_article(), can move it into helper
-    let original_article = DbArticle::read(fork_form.article_id, &data)?;
+    let original_article = DbArticle::read_view(fork_form.article_id, &data)?;
 
     let local_instance = DbInstance::read_local_instance(&data)?;
     let ap_id = ObjectId::parse(&format!(
@@ -200,20 +210,19 @@ pub(in crate::backend::api) async fn fork_article(
     ))?;
     let form = DbArticleForm {
         title: fork_form.new_title,
-        text: original_article.text.clone(),
+        text: original_article.article.text.clone(),
         ap_id,
         instance_id: local_instance.id,
         local: true,
         protected: false,
+        approved: !data.config.options.article_approval,
     };
     let article = DbArticle::create(form, &data)?;
 
     // copy edits to new article
     // this could also be done in sql
-    let edits = DbEdit::read_for_article(&original_article, &data)?
-        .into_iter()
-        .map(|e| e.edit)
-        .collect::<Vec<_>>();
+
+    let edits = DbEdit::list_for_article(original_article.article.id, &data)?;
     for e in edits {
         let ap_id = DbEditForm::generate_ap_id(&article, &e.hash)?;
         let form = DbEditForm {
@@ -224,7 +233,7 @@ pub(in crate::backend::api) async fn fork_article(
             article_id: article.id,
             hash: e.hash,
             previous_version_id: e.previous_version_id,
-            created: Utc::now(),
+            published: Utc::now(),
         };
         DbEdit::create(&form, &data)?;
     }
@@ -242,16 +251,9 @@ pub(super) async fn resolve_article(
     data: Data<IbisData>,
 ) -> MyResult<Json<ArticleView>> {
     let article: DbArticle = ObjectId::from(query.id).dereference(&data).await?;
-    let edits = DbEdit::read_for_article(&article, &data)?;
-    let latest_version = edits
-        .last()
-        .expect("has at least one edit")
-        .edit
-        .hash
-        .clone();
+    let latest_version = article.latest_edit_version(&data)?;
     Ok(Json(ArticleView {
         article,
-        edits,
         latest_version,
     }))
 }
@@ -275,10 +277,35 @@ pub(in crate::backend::api) async fn protect_article(
     data: Data<IbisData>,
     Form(lock_params): Form<ProtectArticleForm>,
 ) -> MyResult<Json<DbArticle>> {
-    if !user.local_user.admin {
-        return Err(anyhow!("Only admin can lock articles").into());
-    }
+    check_is_admin(&user)?;
     let article =
         DbArticle::update_protected(lock_params.article_id, lock_params.protected, &data)?;
     Ok(Json(article))
+}
+
+/// Get a list of all unresolved edit conflicts.
+#[debug_handler]
+pub async fn approve_article(
+    Extension(user): Extension<LocalUserView>,
+    data: Data<IbisData>,
+    Form(params): Form<ApproveArticleForm>,
+) -> MyResult<Json<()>> {
+    check_is_admin(&user)?;
+    if params.approve {
+        DbArticle::update_approved(params.article_id, true, &data)?;
+    } else {
+        DbArticle::delete(params.article_id, &data)?;
+    }
+    Ok(Json(()))
+}
+
+/// Get a list of all unresolved edit conflicts.
+#[debug_handler]
+pub async fn delete_conflict(
+    Extension(user): Extension<LocalUserView>,
+    data: Data<IbisData>,
+    Form(params): Form<DeleteConflictForm>,
+) -> MyResult<Json<()>> {
+    DbConflict::delete(params.conflict_id, user.person.id, &data)?;
+    Ok(Json(()))
 }

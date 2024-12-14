@@ -7,7 +7,12 @@ use crate::{
         error::MyResult,
         federation::objects::edits_collection::DbEditCollection,
     },
-    common::{ArticleView, DbArticle, DbEdit, EditVersion},
+    common::{
+        newtypes::{ArticleId, InstanceId},
+        ArticleView,
+        DbArticle,
+        EditVersion,
+    },
 };
 use activitypub_federation::fetch::{collection_id::CollectionId, object_id::ObjectId};
 use diesel::{
@@ -29,9 +34,10 @@ pub struct DbArticleForm {
     pub title: String,
     pub text: String,
     pub ap_id: ObjectId<DbArticle>,
-    pub instance_id: i32,
+    pub instance_id: InstanceId,
     pub local: bool,
     pub protected: bool,
+    pub approved: bool,
 }
 
 // TODO: get rid of unnecessary methods
@@ -59,33 +65,46 @@ impl DbArticle {
             .get_result(conn.deref_mut())?)
     }
 
-    pub fn update_text(id: i32, text: &str, data: &IbisData) -> MyResult<Self> {
+    pub fn update_text(id: ArticleId, text: &str, data: &IbisData) -> MyResult<Self> {
         let mut conn = data.db_pool.get()?;
         Ok(diesel::update(article::dsl::article.find(id))
             .set(article::dsl::text.eq(text))
             .get_result::<Self>(conn.deref_mut())?)
     }
 
-    pub fn update_protected(id: i32, locked: bool, data: &IbisData) -> MyResult<Self> {
+    pub fn update_protected(id: ArticleId, locked: bool, data: &IbisData) -> MyResult<Self> {
         let mut conn = data.db_pool.get()?;
         Ok(diesel::update(article::dsl::article.find(id))
             .set(article::dsl::protected.eq(locked))
             .get_result::<Self>(conn.deref_mut())?)
     }
 
-    pub fn read(id: i32, data: &IbisData) -> MyResult<Self> {
+    pub fn update_approved(id: ArticleId, approved: bool, data: &IbisData) -> MyResult<Self> {
         let mut conn = data.db_pool.get()?;
-        Ok(article::table.find(id).get_result(conn.deref_mut())?)
+        Ok(diesel::update(article::dsl::article.find(id))
+            .set(article::dsl::approved.eq(approved))
+            .get_result::<Self>(conn.deref_mut())?)
     }
 
-    pub fn read_view(id: i32, data: &IbisData) -> MyResult<ArticleView> {
+    pub fn delete(id: ArticleId, data: &IbisData) -> MyResult<Self> {
         let mut conn = data.db_pool.get()?;
-        let article: DbArticle = { article::table.find(id).get_result(conn.deref_mut())? };
+        Ok(diesel::delete(article::dsl::article.find(id)).get_result::<Self>(conn.deref_mut())?)
+    }
+
+    pub fn read(id: ArticleId, data: &IbisData) -> MyResult<Self> {
+        let mut conn = data.db_pool.get()?;
+        Ok(article::table
+            .find(id)
+            .get_result::<Self>(conn.deref_mut())?)
+    }
+
+    pub fn read_view(id: ArticleId, data: &IbisData) -> MyResult<ArticleView> {
+        let mut conn = data.db_pool.get()?;
+        let query = article::table.find(id).into_boxed();
+        let article: DbArticle = query.get_result(conn.deref_mut())?;
         let latest_version = article.latest_edit_version(data)?;
-        let edits = DbEdit::read_for_article(&article, data)?;
         Ok(ArticleView {
             article,
-            edits,
             latest_version,
         })
     }
@@ -111,10 +130,8 @@ impl DbArticle {
                 .get_result(conn.deref_mut())?
         };
         let latest_version = article.latest_edit_version(data)?;
-        let edits = DbEdit::read_for_article(&article, data)?;
         Ok(ArticleView {
             article,
-            edits,
             latest_version,
         })
     }
@@ -126,29 +143,31 @@ impl DbArticle {
             .get_result(conn.deref_mut())?)
     }
 
-    pub fn read_local_title(title: &str, data: &IbisData) -> MyResult<Self> {
-        let mut conn = data.db_pool.get()?;
-        Ok(article::table
-            .filter(article::dsl::title.eq(title))
-            .filter(article::dsl::local.eq(true))
-            .get_result(conn.deref_mut())?)
-    }
-
     /// Read all articles, ordered by most recently edited first.
-    pub fn read_all(only_local: bool, data: &IbisData) -> MyResult<Vec<Self>> {
+    ///
+    /// TODO: Should get rid of only_local param and rely on instance_id
+    pub fn read_all(
+        only_local: Option<bool>,
+        instance_id: Option<InstanceId>,
+        data: &IbisData,
+    ) -> MyResult<Vec<Self>> {
         let mut conn = data.db_pool.get()?;
-        let query = article::table
+        let mut query = article::table
             .inner_join(edit::table)
+            .inner_join(instance::table)
+            .filter(article::dsl::approved.eq(true))
             .group_by(article::dsl::id)
-            .order_by(max(edit::dsl::created).desc())
-            .select(article::all_columns);
-        Ok(if only_local {
-            query
-                .filter(article::dsl::local.eq(true))
-                .get_results(&mut conn)?
-        } else {
-            query.get_results(&mut conn)?
-        })
+            .order_by(max(edit::dsl::published).desc())
+            .select(article::all_columns)
+            .into_boxed();
+
+        if let Some(true) = only_local {
+            query = query.filter(article::dsl::local.eq(true));
+        }
+        if let Some(instance_id) = instance_id {
+            query = query.filter(instance::dsl::id.eq(instance_id));
+        }
+        Ok(query.get_results(&mut conn)?)
     }
 
     pub fn search(query: &str, data: &IbisData) -> MyResult<Vec<Self>> {
@@ -180,5 +199,16 @@ impl DbArticle {
             Some(latest_version) => Ok(latest_version),
             None => Ok(EditVersion::default()),
         }
+    }
+
+    pub fn list_approval_required(data: &IbisData) -> MyResult<Vec<Self>> {
+        let mut conn = data.db_pool.get()?;
+        let query = article::table
+            .group_by(article::dsl::id)
+            .filter(article::dsl::approved.eq(false))
+            .select(article::all_columns)
+            .into_boxed();
+
+        Ok(query.get_results(&mut conn)?)
     }
 }

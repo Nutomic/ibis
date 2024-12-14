@@ -10,6 +10,8 @@ diesel::table! {
         instance_id -> Int4,
         local -> Bool,
         protected -> Bool,
+        approved -> Bool,
+        published -> Timestamptz,
     }
 }
 
@@ -22,6 +24,7 @@ diesel::table! {
         creator_id -> Int4,
         article_id -> Int4,
         previous_version_id -> Uuid,
+        published -> Timestamptz,
     }
 }
 
@@ -36,7 +39,7 @@ diesel::table! {
         summary -> Text,
         article_id -> Int4,
         previous_version_id -> Uuid,
-        created -> Timestamptz,
+        published -> Timestamptz,
     }
 }
 
@@ -48,13 +51,15 @@ diesel::table! {
         ap_id -> Varchar,
         description -> Nullable<Text>,
         #[max_length = 255]
-        articles_url -> Varchar,
+        articles_url -> Nullable<Varchar>,
         #[max_length = 255]
         inbox_url -> Varchar,
         public_key -> Text,
         private_key -> Nullable<Text>,
         last_refreshed_at -> Timestamptz,
         local -> Bool,
+        #[max_length = 255]
+        instances_url -> Nullable<Varchar>,
     }
 }
 
@@ -100,7 +105,7 @@ diesel::table! {
 
 diesel::joinable!(article -> instance (instance_id));
 diesel::joinable!(conflict -> article (article_id));
-diesel::joinable!(conflict -> local_user (creator_id));
+diesel::joinable!(conflict -> person (creator_id));
 diesel::joinable!(edit -> article (article_id));
 diesel::joinable!(edit -> person (creator_id));
 diesel::joinable!(instance_follow -> instance (instance_id));

@@ -1,10 +1,16 @@
 use crate::{
     backend::{
-        database::schema::{edit, person},
+        database::schema::{article, edit, person},
         error::MyResult,
         IbisData,
     },
-    common::{DbArticle, DbEdit, EditVersion, EditView},
+    common::{
+        newtypes::{ArticleId, PersonId},
+        DbArticle,
+        DbEdit,
+        EditVersion,
+        EditView,
+    },
 };
 use activitypub_federation::fetch::object_id::ObjectId;
 use chrono::{DateTime, Utc};
@@ -15,20 +21,20 @@ use std::ops::DerefMut;
 #[derive(Debug, Clone, Insertable, AsChangeset)]
 #[diesel(table_name = edit, check_for_backend(diesel::pg::Pg))]
 pub struct DbEditForm {
-    pub creator_id: i32,
+    pub creator_id: PersonId,
     pub hash: EditVersion,
     pub ap_id: ObjectId<DbEdit>,
     pub diff: String,
     pub summary: String,
-    pub article_id: i32,
+    pub article_id: ArticleId,
     pub previous_version_id: EditVersion,
-    pub created: DateTime<Utc>,
+    pub published: DateTime<Utc>,
 }
 
 impl DbEditForm {
     pub fn new(
         original_article: &DbArticle,
-        creator_id: i32,
+        creator_id: PersonId,
         updated_text: &str,
         summary: String,
         previous_version_id: EditVersion,
@@ -44,7 +50,7 @@ impl DbEditForm {
             article_id: original_article.id,
             previous_version_id,
             summary,
-            created: Utc::now(),
+            published: Utc::now(),
         })
     }
 
@@ -85,13 +91,31 @@ impl DbEdit {
             .get_result(conn.deref_mut())?)
     }
 
-    // TODO: create internal variant which doesnt return person?
-    pub fn read_for_article(article: &DbArticle, data: &IbisData) -> MyResult<Vec<EditView>> {
+    pub fn list_for_article(id: ArticleId, data: &IbisData) -> MyResult<Vec<Self>> {
         let mut conn = data.db_pool.get()?;
         Ok(edit::table
-            .inner_join(person::table)
-            .filter(edit::article_id.eq(article.id))
-            .order(edit::created)
+            .filter(edit::article_id.eq(id))
+            .order(edit::published)
             .get_results(conn.deref_mut())?)
     }
+
+    pub fn view(params: ViewEditParams, data: &IbisData) -> MyResult<Vec<EditView>> {
+        let mut conn = data.db_pool.get()?;
+        let query = edit::table
+            .inner_join(article::table)
+            .inner_join(person::table)
+            .into_boxed();
+
+        let query = match params {
+            ViewEditParams::PersonId(person_id) => query.filter(edit::creator_id.eq(person_id)),
+            ViewEditParams::ArticleId(article_id) => query.filter(edit::article_id.eq(article_id)),
+        };
+
+        Ok(query.order(edit::published).get_results(conn.deref_mut())?)
+    }
+}
+
+pub enum ViewEditParams {
+    PersonId(PersonId),
+    ArticleId(ArticleId),
 }

@@ -1,12 +1,13 @@
-#![allow(clippy::unwrap_used)]
+#![expect(clippy::unwrap_used)]
 
-use ibis_lib::{
+use anyhow::Result;
+use ibis::{
     backend::{
         config::{IbisConfig, IbisConfigDatabase, IbisConfigFederation},
         start,
     },
-    common::RegisterUserForm,
-    frontend::{api::ApiClient, error::MyResult},
+    common::{Options, RegisterUserForm},
+    frontend::api::ApiClient,
 };
 use reqwest::ClientBuilder;
 use std::{
@@ -18,20 +19,15 @@ use std::{
         atomic::{AtomicI32, Ordering},
         Once,
     },
-    thread::{sleep, spawn},
-    time::Duration,
+    thread::spawn,
 };
-use tokio::task::JoinHandle;
+use tokio::{join, sync::oneshot, task::JoinHandle};
 use tracing::log::LevelFilter;
 
-pub struct TestData {
-    pub alpha: IbisInstance,
-    pub beta: IbisInstance,
-    pub gamma: IbisInstance,
-}
+pub struct TestData(pub IbisInstance, pub IbisInstance, pub IbisInstance);
 
 impl TestData {
-    pub async fn start() -> Self {
+    pub async fn start(article_approval: bool) -> Self {
         static INIT: Once = Once::new();
         INIT.call_once(|| {
             env_logger::builder()
@@ -44,9 +40,6 @@ impl TestData {
         // Run things on different ports and db paths to allow parallel tests
         static COUNTER: AtomicI32 = AtomicI32::new(0);
         let current_run = COUNTER.fetch_add(1, Ordering::Relaxed);
-
-        // Give each test a moment to start its postgres databases
-        sleep(Duration::from_millis(current_run as u64 * 2000));
 
         let first_port = 8100 + (current_run * 3);
         let port_alpha = first_port;
@@ -66,15 +59,17 @@ impl TestData {
             j.join().unwrap();
         }
 
-        Self {
-            alpha: IbisInstance::start(alpha_db_path, port_alpha, "alpha").await,
-            beta: IbisInstance::start(beta_db_path, port_beta, "beta").await,
-            gamma: IbisInstance::start(gamma_db_path, port_gamma, "gamma").await,
-        }
+        let (alpha, beta, gamma) = join!(
+            IbisInstance::start(alpha_db_path, port_alpha, "alpha", article_approval),
+            IbisInstance::start(beta_db_path, port_beta, "beta", article_approval),
+            IbisInstance::start(gamma_db_path, port_gamma, "gamma", article_approval)
+        );
+
+        Self(alpha, beta, gamma)
     }
 
-    pub fn stop(self) -> MyResult<()> {
-        for j in [self.alpha.stop(), self.beta.stop(), self.gamma.stop()] {
+    pub fn stop(alpha: IbisInstance, beta: IbisInstance, gamma: IbisInstance) -> Result<()> {
+        for j in [alpha.stop(), beta.stop(), gamma.stop()] {
             j.join().unwrap();
         }
         Ok(())
@@ -113,34 +108,39 @@ impl IbisInstance {
         })
     }
 
-    async fn start(db_path: String, port: i32, username: &str) -> Self {
+    async fn start(db_path: String, port: i32, username: &str, article_approval: bool) -> Self {
         let connection_url = format!("postgresql://ibis:password@/ibis?host={db_path}");
-        let hostname = format!("localhost:{port}");
-        let bind = format!("127.0.0.1:{port}").parse().unwrap();
+        let hostname = format!("127.0.0.1:{port}");
+        let domain = format!("localhost:{port}");
         let config = IbisConfig {
-            bind,
             database: IbisConfigDatabase {
                 connection_url,
                 ..Default::default()
             },
-            registration_open: true,
             federation: IbisConfigFederation {
-                domain: hostname.clone(),
+                domain: domain.clone(),
                 ..Default::default()
+            },
+            options: Options {
+                registration_open: true,
+                article_approval,
             },
             ..Default::default()
         };
+        let client = ClientBuilder::new().cookie_store(true).build().unwrap();
+        let api_client = ApiClient::new(client, Some(domain));
+        let (tx, rx) = oneshot::channel::<()>();
         let handle = tokio::task::spawn(async move {
-            start(config).await.unwrap();
+            start(config, Some(hostname.parse().unwrap()), Some(tx))
+                .await
+                .unwrap();
         });
-        // wait a moment for the backend to start
-        tokio::time::sleep(Duration::from_millis(5000)).await;
+        // wait for the backend to start
+        rx.await.unwrap();
         let form = RegisterUserForm {
             username: username.to_string(),
             password: "hunter2".to_string(),
         };
-        let client = ClientBuilder::new().cookie_store(true).build().unwrap();
-        let api_client = ApiClient::new(client, Some(hostname));
         api_client.register(form).await.unwrap();
         Self {
             api_client,

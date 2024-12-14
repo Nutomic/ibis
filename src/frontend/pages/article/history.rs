@@ -1,53 +1,27 @@
 use crate::frontend::{
-    article_title,
-    components::article_nav::ArticleNav,
-    extract_domain,
-    pages::article_resource,
-    render_date_time,
-    user_link,
+    components::{
+        article_nav::{ActiveTab, ArticleNav},
+        edit_list::EditList,
+    },
+    pages::{article_edits_resource, article_resource},
 };
-use leptos::*;
+use leptos::prelude::*;
 
 #[component]
 pub fn ArticleHistory() -> impl IntoView {
     let article = article_resource();
+    let edits = article_edits_resource(article);
 
     view! {
-        <ArticleNav article=article />
+        <ArticleNav article=article active_tab=ActiveTab::History />
         <Suspense fallback=|| {
             view! { "Loading..." }
         }>
             {move || {
-                article
+                edits
                     .get()
-                    .map(|article| {
-                        view! {
-                            <div class="item-view">
-                                <h1>{article_title(&article.article)}</h1>
-
-                                {article
-                                    .edits
-                                    .into_iter()
-                                    .rev()
-                                    .map(|edit| {
-                                        let path = format!(
-                                            "/article/{}@{}/diff/{}",
-                                            article.article.title,
-                                            extract_domain(&article.article.ap_id),
-                                            edit.edit.hash.0,
-                                        );
-                                        view! {
-                                            <li>
-                                                {render_date_time(edit.edit.created)}": "
-                                                <a href=path>{edit.edit.summary}</a> " by "
-                                                {user_link(&edit.creator)}
-                                            </li>
-                                        }
-                                    })
-                                    .collect::<Vec<_>>()}
-
-                            </div>
-                        }
+                    .map(|edits| {
+                        view! { <EditList edits=edits for_article=true /> }
                     })
             }}
 

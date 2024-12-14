@@ -1,14 +1,20 @@
 use crate::{
-    backend::{database::IbisData, error::Error, federation::objects::article::ApubArticle},
-    common::{DbArticle, DbInstance},
+    backend::{
+        database::IbisData,
+        error::{Error, MyResult},
+        federation::objects::article::ApubArticle,
+    },
+    common::{utils::http_protocol_str, DbArticle},
 };
 use activitypub_federation::{
     config::Data,
+    fetch::collection_id::CollectionId,
     kinds::collection::CollectionType,
     protocol::verification::verify_domains_match,
     traits::{Collection, Object},
 };
-use futures::{future, future::try_join_all};
+use futures::future::{join_all, try_join_all};
+use log::warn;
 use serde::{Deserialize, Serialize};
 use url::Url;
 
@@ -24,19 +30,26 @@ pub struct ArticleCollection {
 #[derive(Clone, Debug)]
 pub struct DbArticleCollection(());
 
+pub fn local_articles_url(domain: &str) -> MyResult<CollectionId<DbArticleCollection>> {
+    Ok(CollectionId::parse(&format!(
+        "{}://{domain}/all_articles",
+        http_protocol_str()
+    ))?)
+}
+
 #[async_trait::async_trait]
 impl Collection for DbArticleCollection {
-    type Owner = DbInstance;
+    type Owner = ();
     type DataType = IbisData;
     type Kind = ArticleCollection;
     type Error = Error;
 
     async fn read_local(
-        owner: &Self::Owner,
+        _owner: &Self::Owner,
         data: &Data<Self::DataType>,
     ) -> Result<Self::Kind, Self::Error> {
-        let local_articles = DbArticle::read_all(true, data)?;
-        let articles = future::try_join_all(
+        let local_articles = DbArticle::read_all(Some(true), None, data)?;
+        let articles = try_join_all(
             local_articles
                 .into_iter()
                 .map(|a| a.into_json(data))
@@ -45,7 +58,7 @@ impl Collection for DbArticleCollection {
         .await?;
         let collection = ArticleCollection {
             r#type: Default::default(),
-            id: owner.articles_url.clone().into(),
+            id: local_articles_url(&data.config.federation.domain)?.into(),
             total_items: articles.len() as i32,
             items: articles,
         };
@@ -66,12 +79,19 @@ impl Collection for DbArticleCollection {
         _owner: &Self::Owner,
         data: &Data<Self::DataType>,
     ) -> Result<Self, Self::Error> {
-        try_join_all(
+        let articles =
             apub.items
                 .into_iter()
-                .map(|i| DbArticle::from_json(i, data)),
-        )
-        .await?;
+                .filter(|i| !i.id.is_local(data))
+                .map(|article| async {
+                    let id = article.id.clone();
+                    let res = DbArticle::from_json(article, data).await;
+                    if let Err(e) = &res {
+                        warn!("Failed to synchronize article {id}: {e}");
+                    }
+                    res
+                });
+        join_all(articles).await;
 
         Ok(DbArticleCollection(()))
     }

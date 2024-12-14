@@ -1,9 +1,12 @@
+pub mod newtypes;
 pub mod utils;
 pub mod validation;
 
 use chrono::{DateTime, Utc};
+use newtypes::{ArticleId, ConflictId, EditId, InstanceId, PersonId};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
+use smart_default::SmartDefault;
 use url::Url;
 use uuid::Uuid;
 #[cfg(feature = "ssr")]
@@ -11,24 +14,32 @@ use {
     crate::backend::{
         database::schema::{article, edit, instance, local_user, person},
         federation::objects::articles_collection::DbArticleCollection,
+        federation::objects::instance_collection::DbInstanceCollection,
     },
     activitypub_federation::fetch::{collection_id::CollectionId, object_id::ObjectId},
     diesel::{Identifiable, Queryable, Selectable},
+    doku::Document,
 };
 
 pub const MAIN_PAGE_NAME: &str = "Main_Page";
 
+pub static AUTH_COOKIE: &str = "auth";
+
+#[derive(Clone)]
+pub struct Auth(pub Option<String>);
+
 /// Should be an enum Title/Id but fails due to https://github.com/nox/serde_urlencoded/issues/66
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
 pub struct GetArticleForm {
     pub title: Option<String>,
     pub domain: Option<String>,
-    pub id: Option<i32>,
+    pub id: Option<ArticleId>,
 }
 
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Clone, Default, Debug)]
 pub struct ListArticlesForm {
     pub only_local: Option<bool>,
+    pub instance_id: Option<InstanceId>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
@@ -37,23 +48,24 @@ pub struct ListArticlesForm {
 pub struct ArticleView {
     pub article: DbArticle,
     pub latest_version: EditVersion,
-    pub edits: Vec<EditView>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[cfg_attr(feature = "ssr", derive(Queryable, Selectable, Identifiable))]
 #[cfg_attr(feature = "ssr", diesel(table_name = article, check_for_backend(diesel::pg::Pg), belongs_to(DbInstance, foreign_key = instance_id)))]
 pub struct DbArticle {
-    pub id: i32,
+    pub id: ArticleId,
     pub title: String,
     pub text: String,
     #[cfg(feature = "ssr")]
     pub ap_id: ObjectId<DbArticle>,
     #[cfg(not(feature = "ssr"))]
     pub ap_id: String,
-    pub instance_id: i32,
+    pub instance_id: InstanceId,
     pub local: bool,
     pub protected: bool,
+    pub approved: bool,
+    pub published: DateTime<Utc>,
 }
 
 /// Represents a single change to the article.
@@ -63,9 +75,9 @@ pub struct DbArticle {
 pub struct DbEdit {
     // TODO: we could use hash as primary key, but that gives errors on forking because
     //       the same edit is used for multiple articles
-    pub id: i32,
+    pub id: EditId,
     #[serde(skip)]
-    pub creator_id: i32,
+    pub creator_id: PersonId,
     /// UUID built from sha224 hash of diff
     pub hash: EditVersion,
     #[cfg(feature = "ssr")]
@@ -74,10 +86,16 @@ pub struct DbEdit {
     pub ap_id: String,
     pub diff: String,
     pub summary: String,
-    pub article_id: i32,
+    pub article_id: ArticleId,
     /// First edit of an article always has `EditVersion::default()` here
     pub previous_version_id: EditVersion,
-    pub created: DateTime<Utc>,
+    pub published: DateTime<Utc>,
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
+pub struct GetEditList {
+    pub article_id: Option<ArticleId>,
+    pub person_id: Option<PersonId>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
@@ -85,6 +103,7 @@ pub struct DbEdit {
 #[cfg_attr(feature = "ssr", diesel(check_for_backend(diesel::pg::Pg)))]
 pub struct EditView {
     pub edit: DbEdit,
+    pub article: DbArticle,
     pub creator: DbPerson,
 }
 
@@ -115,13 +134,13 @@ impl Default for EditVersion {
     }
 }
 
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct RegisterUserForm {
     pub username: String,
     pub password: String,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct LoginUserForm {
     pub username: String,
     pub password: String,
@@ -141,10 +160,10 @@ pub struct LocalUserView {
 #[cfg_attr(feature = "ssr", derive(Queryable, Selectable, Identifiable))]
 #[cfg_attr(feature = "ssr", diesel(table_name = local_user, check_for_backend(diesel::pg::Pg)))]
 pub struct DbLocalUser {
-    pub id: i32,
+    pub id: InstanceId,
     #[serde(skip)]
     pub password_encrypted: String,
-    pub person_id: i32,
+    pub person_id: PersonId,
     pub admin: bool,
 }
 
@@ -153,7 +172,7 @@ pub struct DbLocalUser {
 #[cfg_attr(feature = "ssr", derive(Queryable, Selectable, Identifiable))]
 #[cfg_attr(feature = "ssr", diesel(table_name = person, check_for_backend(diesel::pg::Pg)))]
 pub struct DbPerson {
-    pub id: i32,
+    pub id: PersonId,
     pub username: String,
     #[cfg(feature = "ssr")]
     pub ap_id: ObjectId<DbPerson>,
@@ -175,7 +194,7 @@ impl DbPerson {
     }
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct CreateArticleForm {
     pub title: String,
     pub text: String,
@@ -185,7 +204,7 @@ pub struct CreateArticleForm {
 #[derive(Deserialize, Serialize, Debug)]
 pub struct EditArticleForm {
     /// Id of the article to edit
-    pub article_id: i32,
+    pub article_id: ArticleId,
     /// Full, new text of the article. A diff against `previous_version` is generated on the backend
     /// side to handle conflicts.
     pub new_text: String,
@@ -195,56 +214,94 @@ pub struct EditArticleForm {
     /// [ApiConflict.previous_version]
     pub previous_version_id: EditVersion,
     /// If you are resolving a conflict, pass the id to delete conflict from the database
-    pub resolve_conflict_id: Option<i32>,
+    pub resolve_conflict_id: Option<ConflictId>,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct ProtectArticleForm {
-    pub article_id: i32,
+    pub article_id: ArticleId,
     pub protected: bool,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct ForkArticleForm {
-    pub article_id: i32,
+    pub article_id: ArticleId,
     pub new_title: String,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
+pub struct ApproveArticleForm {
+    pub article_id: ArticleId,
+    pub approve: bool,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct DeleteConflictForm {
+    pub conflict_id: ConflictId,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
 pub struct GetInstance {
-    pub id: Option<i32>,
+    pub id: Option<InstanceId>,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct FollowInstance {
-    pub id: i32,
+    pub id: InstanceId,
 }
 
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Debug)]
+pub struct SuccessResponse {
+    success: bool,
+}
+
+impl Default for SuccessResponse {
+    fn default() -> Self {
+        Self { success: true }
+    }
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct SearchArticleForm {
     pub query: String,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Debug)]
 pub struct ResolveObject {
     pub id: Url,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct ApiConflict {
-    pub id: i32,
+    pub id: ConflictId,
     pub hash: EditVersion,
     pub three_way_merge: String,
     pub summary: String,
     pub article: DbArticle,
     pub previous_version_id: EditVersion,
+    pub published: DateTime<Utc>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub enum Notification {
+    EditConflict(ApiConflict),
+    ArticleApprovalRequired(DbArticle),
+}
+
+impl Notification {
+    pub fn published(&self) -> &DateTime<Utc> {
+        match self {
+            Notification::EditConflict(api_conflict) => &api_conflict.published,
+            Notification::ArticleApprovalRequired(db_article) => &db_article.published,
+        }
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[cfg_attr(feature = "ssr", derive(Queryable, Selectable, Identifiable))]
 #[cfg_attr(feature = "ssr", diesel(table_name = instance, check_for_backend(diesel::pg::Pg)))]
 pub struct DbInstance {
-    pub id: i32,
+    pub id: InstanceId,
     pub domain: String,
     #[cfg(feature = "ssr")]
     pub ap_id: ObjectId<DbInstance>,
@@ -252,7 +309,7 @@ pub struct DbInstance {
     pub ap_id: String,
     pub description: Option<String>,
     #[cfg(feature = "ssr")]
-    pub articles_url: CollectionId<DbArticleCollection>,
+    pub articles_url: Option<CollectionId<DbArticleCollection>>,
     #[cfg(not(feature = "ssr"))]
     pub articles_url: String,
     pub inbox_url: String,
@@ -263,6 +320,8 @@ pub struct DbInstance {
     #[serde(skip)]
     pub last_refreshed_at: DateTime<Utc>,
     pub local: bool,
+    #[cfg(feature = "ssr")]
+    pub instances_url: Option<CollectionId<DbInstanceCollection>>,
 }
 
 impl DbInstance {
@@ -277,13 +336,36 @@ impl DbInstance {
 pub struct InstanceView {
     pub instance: DbInstance,
     pub followers: Vec<DbPerson>,
-    pub registration_open: bool,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct GetUserForm {
     pub name: String,
     pub domain: Option<String>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, SmartDefault)]
+#[serde(default)]
+#[serde(deny_unknown_fields)]
+#[cfg_attr(feature = "ssr", derive(Queryable, Document))]
+#[cfg_attr(feature = "ssr", diesel(check_for_backend(diesel::pg::Pg)))]
+pub struct Options {
+    /// Whether users can create new accounts
+    #[default = true]
+    #[cfg_attr(feature = "ssr", doku(example = "true"))]
+    pub registration_open: bool,
+    /// Whether admins need to approve new articles
+    #[default = false]
+    #[cfg_attr(feature = "ssr", doku(example = "false"))]
+    pub article_approval: bool,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
+#[cfg_attr(feature = "ssr", derive(Queryable))]
+#[cfg_attr(feature = "ssr", diesel(check_for_backend(diesel::pg::Pg)))]
+pub struct SiteView {
+    pub my_profile: Option<LocalUserView>,
+    pub config: Options,
 }
 
 #[test]
