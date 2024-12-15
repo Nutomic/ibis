@@ -152,10 +152,10 @@ pub fn generate_table_of_contents(text: &str) -> String {
 }
 
 pub fn to_kebab_case(line: String) -> String {
-    return line
+    line
         .to_lowercase()
         .chars()
         .filter(|x| x.is_alphabetic() || *x == ' ')
         .collect::<String>()
-        .replace(" ", "-");
+        .replace(" ", "-")
 }

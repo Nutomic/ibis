@@ -25,7 +25,7 @@ pub fn ReadArticle() -> impl IntoView {
 
                         view! {
                             <div>
-                                {if toc != "" {
+                                {if !toc.is_empty() {
                                     view! {
                                         <div
                                             class="float-right mr-20 w-80 menu h-fit rounded-box"
@@ -34,7 +34,8 @@ pub fn ReadArticle() -> impl IntoView {
                                     }
                                         .into_any()
                                 } else {
-                                    view! {}.into_any()
+                                    view! {};
+                                    ().into_any()
                                 }}
                                 <div
                                     class="max-w-full prose prose-slate"
