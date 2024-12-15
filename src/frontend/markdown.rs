@@ -2,7 +2,10 @@ use katex;
 use markdown_it::{
     parser::inline::{InlineRule, InlineState},
     plugins::cmark::block::{heading::ATXHeading, lheading::SetextHeader},
-    MarkdownIt, Node, NodeValue, Renderer,
+    MarkdownIt,
+    Node,
+    NodeValue,
+    Renderer,
 };
 use once_cell::sync::OnceCell;
 

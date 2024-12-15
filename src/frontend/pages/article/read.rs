@@ -1,11 +1,9 @@
 use crate::frontend::{
     components::article_nav::{ActiveTab, ArticleNav},
     markdown::render_markdown,
-    pages::article_resource,
+    pages::{article::table_of_contents, article_resource},
 };
 use leptos::prelude::*;
-
-use crate::frontend::pages::article::table_of_contents;
 
 #[component]
 pub fn ReadArticle() -> impl IntoView {
@@ -21,18 +19,29 @@ pub fn ReadArticle() -> impl IntoView {
                 article
                     .get()
                     .map(|article| {
-                        view! {
+                        let toc = table_of_contents::generate_table_of_contents(
+                            &article.article.text,
+                        );
 
-                            <div 
-                                id="table-of-contents" 
-                                inner_html=table_of_contents::generate_table_of_contents(&article.article.text)
-                            >
-                                </div>
-                            <div
-                                class="max-w-full prose prose-slate"
-                                inner_html=render_markdown(&article.article.text)
-                            >
-                                </div>
+                        view! {
+                            <div>
+                                {if toc != "" {
+                                    view! {
+                                        <div
+                                            class="float-right mr-20 w-80 menu h-fit rounded-box"
+                                            inner_html=toc
+                                        ></div>
+                                    }
+                                        .into_any()
+                                } else {
+                                    view! {}.into_any()
+                                }}
+                                <div
+                                    class="max-w-full prose prose-slate"
+                                    inner_html=render_markdown(&article.article.text)
+                                ></div>
+
+                            </div>
                         }
                     })
             }}

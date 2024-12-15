@@ -1,4 +1,3 @@
-
 #[derive(PartialEq)]
 struct Toc {
     entries: Vec<TocEntry>,
@@ -27,10 +26,15 @@ pub(crate) struct TocBuilder {
 
 impl TocBuilder {
     pub(crate) fn new() -> TocBuilder {
-        TocBuilder { top_level: Toc { entries: Vec::new() }, chain: Vec::new() }
+        TocBuilder {
+            top_level: Toc {
+                entries: Vec::new(),
+            },
+            chain: Vec::new(),
+        }
     }
 
-    pub fn into_toc(mut self) -> Toc {
+    fn into_toc(mut self) -> Toc {
         self.fold_until(0);
         self.top_level
     }
@@ -63,15 +67,15 @@ impl TocBuilder {
 
         let mut sec_number;
         {
-            let (toc_level, toc) = match self.chain.last() {
+            let toc = match self.chain.last() {
                 None => {
                     sec_number = String::new();
-                    (0, &self.top_level)
+                    &self.top_level
                 }
                 Some(entry) => {
                     sec_number = entry.sec_number.clone();
                     sec_number.push('.');
-                    (entry.level, &entry.children)
+                    &entry.children
                 }
             };
             let number = toc.count_entries_with_level(level);
@@ -83,7 +87,9 @@ impl TocBuilder {
             name,
             sec_number,
             id,
-            children: Toc { entries: Vec::new() },
+            children: Toc {
+                entries: Vec::new(),
+            },
         });
 
         let just_inserted = self.chain.last_mut().unwrap();
@@ -95,22 +101,24 @@ impl Toc {
     fn print_inner(&self, v: &mut String) {
         use std::fmt::Write as _;
 
-        v.push_str("<ul>");
-        for entry in &self.entries {
-            let _ = write!(
-                v,
-                "\n<li><a href=\"#{id}\">{num} {name}</a>",
-                id = entry.id,
-                num = entry.sec_number,
-                name = entry.name
-            );
-            entry.children.print_inner(&mut *v);
-            v.push_str("</li>");
+        if !&self.entries.is_empty() {
+            v.push_str("<ul>");
+            for entry in &self.entries {
+                let _ = write!(
+                    v,
+                    "\n<li><a href=\"#{id}\">{num} {name}</a>",
+                    id = entry.id,
+                    num = entry.sec_number,
+                    name = entry.name
+                );
+                entry.children.print_inner(&mut *v);
+                v.push_str("</li>");
+            }
+            v.push_str("</ul>");
         }
-        v.push_str("</ul>");
     }
-    pub(crate) fn print(&self) -> String {
-        let mut v = String::new();
+    fn print(&self) -> String {
+        let mut v = String::from("<li class=\"menu-title\">Table of Contents</li>");
         self.print_inner(&mut v);
         v
     }
@@ -119,43 +127,33 @@ impl Toc {
 pub fn generate_table_of_contents(text: &str) -> String {
     let mut toc_builder = TocBuilder::new();
     text.lines()
-        .filter(
-            |x|{
-                if !x.starts_with("#") {
-                    return false;
-                }
-                x.chars()
-                .skip_while(|char| *char == '#' )
+        .filter(|x| {
+            if !x.starts_with("#") {
+                return false;
+            }
+            x.chars()
+                .skip_while(|char| *char == '#')
                 .collect::<String>()
                 .starts_with(" ")
-            }
-        )
-        .for_each(
-        |x| {
-            println!("{}", x);
+        })
+        .for_each(|x| {
             let mut level: u32 = 0;
-            let line = x.chars()
-                .skip_while(
-                    |x| {
-                        level += 1;
-                        *x == '#' || *x == ' '
-                    }
-                ).collect::<String>();
-            toc_builder.push(
-                    level - 2,
-                    line.clone().to_string(),
-                    to_kebab_case(line)
-                );
-
-        }
-        );
+            let line = x
+                .chars()
+                .skip_while(|x| {
+                    level += 1;
+                    *x == '#' || *x == ' '
+                })
+                .collect::<String>();
+            toc_builder.push(level - 2, line.clone().to_string(), to_kebab_case(line));
+        });
     let toc = toc_builder.into_toc();
-    println!("{}", toc.print());
     toc.print()
 }
 
 pub fn to_kebab_case(line: String) -> String {
-    return line.to_lowercase()
+    return line
+        .to_lowercase()
         .chars()
         .filter(|x| x.is_alphabetic() || *x == ' ')
         .collect::<String>()
