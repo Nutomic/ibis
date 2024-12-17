@@ -1835,6 +1835,7 @@ dependencies = [
  "env_logger",
  "futures",
  "getrandom",
+ "github-slugger",
  "gloo-net",
  "hex",
  "http",

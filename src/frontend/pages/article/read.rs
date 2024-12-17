@@ -1,7 +1,7 @@
 use crate::frontend::{
     components::article_nav::{ActiveTab, ArticleNav},
     markdown::render_markdown,
-    pages::{article::table_of_contents, article_resource},
+    pages::{article::table_of_contents::Toc, article_resource},
 };
 use leptos::prelude::*;
 
@@ -19,24 +19,9 @@ pub fn ReadArticle() -> impl IntoView {
                 article
                     .get()
                     .map(|article| {
-                        let toc = table_of_contents::generate_table_of_contents(
-                            &article.article.text,
-                        );
-
                         view! {
                             <div>
-                                {if !toc.is_empty() {
-                                    view! {
-                                        <div
-                                            class="float-right mr-20 w-80 menu h-fit rounded-box"
-                                            inner_html=toc
-                                        ></div>
-                                    }
-                                        .into_any()
-                                } else {
-                                    view! {}
-                                    ().into_any()
-                                }}
+                                <Toc text=article.article.text.clone() />
                                 <div
                                     class="max-w-full prose prose-slate"
                                     inner_html=render_markdown(&article.article.text)

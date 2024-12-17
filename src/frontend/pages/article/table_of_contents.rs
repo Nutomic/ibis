@@ -1,24 +1,26 @@
-#[derive(PartialEq)]
-struct Toc {
+use github_slugger::Slugger;
+use leptos::{component, prelude::*, IntoView};
+
+#[derive(Default)]
+pub struct Toc {
     entries: Vec<TocEntry>,
 }
 
 impl Toc {
-    fn count_entries_with_level(&self, level: u32) -> usize {
+    fn count_entries_with_level(&self, level: u8) -> usize {
         self.entries.iter().filter(|e| e.level == level).count()
     }
 }
 
-#[derive(PartialEq)]
 struct TocEntry {
-    level: u32,
+    level: u8,
     sec_number: String,
     name: String,
     id: String,
     children: Toc,
 }
 
-#[derive(PartialEq)]
+#[derive(Default)]
 pub(crate) struct TocBuilder {
     top_level: Toc,
     chain: Vec<TocEntry>,
@@ -26,12 +28,7 @@ pub(crate) struct TocBuilder {
 
 impl TocBuilder {
     pub(crate) fn new() -> TocBuilder {
-        TocBuilder {
-            top_level: Toc {
-                entries: Vec::new(),
-            },
-            chain: Vec::new(),
-        }
+        TocBuilder::default()
     }
 
     fn into_toc(mut self) -> Toc {
@@ -39,7 +36,7 @@ impl TocBuilder {
         self.top_level
     }
 
-    fn fold_until(&mut self, level: u32) {
+    fn fold_until(&mut self, level: u8) {
         let mut this = None;
         loop {
             match self.chain.pop() {
@@ -60,7 +57,7 @@ impl TocBuilder {
         }
     }
 
-    pub(crate) fn push(&mut self, level: u32, name: String, id: String) -> &str {
+    pub(crate) fn push(&mut self, level: u8, name: String, id: String) -> &str {
         debug_assert!(level >= 1);
 
         self.fold_until(level);
@@ -97,34 +94,8 @@ impl TocBuilder {
     }
 }
 
-impl Toc {
-    fn print_inner(&self, v: &mut String) {
-        use std::fmt::Write as _;
-
-        if !&self.entries.is_empty() {
-            v.push_str("<ul>");
-            for entry in &self.entries {
-                let _ = write!(
-                    v,
-                    "\n<li><a href=\"#{id}\">{num} {name}</a>",
-                    id = entry.id,
-                    num = entry.sec_number,
-                    name = entry.name
-                );
-                entry.children.print_inner(&mut *v);
-                v.push_str("</li>");
-            }
-            v.push_str("</ul>");
-        }
-    }
-    fn print(&self) -> String {
-        let mut v = String::from("<li class=\"menu-title\">Table of Contents</li>");
-        self.print_inner(&mut v);
-        v
-    }
-}
-
-pub fn generate_table_of_contents(text: &str) -> String {
+pub fn generate_table_of_contents(text: &str) -> Toc {
+    let mut slugger = Slugger::default();
     let mut toc_builder = TocBuilder::new();
     text.lines()
         .filter(|x| {
@@ -137,7 +108,7 @@ pub fn generate_table_of_contents(text: &str) -> String {
                 .starts_with(" ")
         })
         .for_each(|x| {
-            let mut level: u32 = 0;
+            let mut level: u8 = 0;
             let line = x
                 .chars()
                 .skip_while(|x| {
@@ -145,16 +116,45 @@ pub fn generate_table_of_contents(text: &str) -> String {
                     *x == '#' || *x == ' '
                 })
                 .collect::<String>();
-            toc_builder.push(level - 2, line.clone().to_string(), to_kebab_case(line));
+            toc_builder.push(level - 2, line.to_string(), slugger.slug(&line));
         });
-    let toc = toc_builder.into_toc();
-    toc.print()
+    toc_builder.into_toc()
 }
 
-pub fn to_kebab_case(line: String) -> String {
-    line.to_lowercase()
-        .chars()
-        .filter(|x| x.is_alphabetic() || *x == ' ')
-        .collect::<String>()
-        .replace(" ", "-")
+#[component]
+fn PrintInner(toc: Toc) -> impl IntoView {
+    view! {
+        <ul>
+            {toc
+                .entries
+                .into_iter()
+                .map(|entry| {
+                    view! {
+                        <li>
+                            <a href="#".to_owned()
+                                + { &entry.id }>{entry.sec_number}" "{entry.name}</a>
+                            <PrintInner toc=entry.children />
+                        </li>
+                    }
+                })
+                .collect::<Vec<_>>()}
+        </ul>
+    }
+    .into_any()
+}
+
+#[component]
+pub fn Toc(text: String) -> impl IntoView {
+    let toc = generate_table_of_contents(&text);
+    if !toc.entries.is_empty() {
+        view! {
+            <div class="float-right mr-20 w-80 menu h-fit rounded-box">
+                <li class="menu-title">Table of Contents</li>
+                <PrintInner toc=toc />
+            </div>
+        }
+        .into_any()
+    } else {
+        ().into_any()
+    }
 }
