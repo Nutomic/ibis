@@ -1,5 +1,12 @@
 use crate::{
-    common::{newtypes::ConflictId, ApiConflict, ArticleView, EditArticleForm, Notification},
+    common::{
+        newtypes::ConflictId,
+        ApiConflict,
+        ArticleView,
+        EditArticleForm,
+        Notification,
+        MAIN_PAGE_NAME,
+    },
     frontend::{
         api::CLIENT,
         components::{
@@ -10,7 +17,7 @@ use crate::{
     },
 };
 use leptos::{html::Textarea, prelude::*};
-use leptos_router::hooks::use_params_map;
+use leptos_router::{components::Redirect, hooks::use_params_map};
 use leptos_use::{use_textarea_autosize, UseTextareaAutosizeReturn};
 
 #[derive(Clone, PartialEq)]
@@ -176,8 +183,11 @@ pub fn EditArticle() -> impl IntoView {
                 }
             }
         >
-
-            Edit successful!
+            <Redirect path={
+                let params = use_params_map();
+                let title = params.get().get("title").clone().unwrap_or(MAIN_PAGE_NAME.to_string());
+                format!("/article/{title}?edit_successful")
+            } />
         </Show>
     }
 }
