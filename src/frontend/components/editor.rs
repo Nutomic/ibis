@@ -1,4 +1,4 @@
-use crate::frontend::markdown::render_markdown;
+use crate::frontend::{markdown::render_markdown, use_cookie};
 use leptos::{ev::beforeunload, html::Textarea, prelude::*};
 use leptos_use::{use_event_listener, use_window};
 
@@ -9,7 +9,8 @@ pub fn EditorView(
     set_content: WriteSignal<String>,
 ) -> impl IntoView {
     let (preview, set_preview) = signal(render_markdown(&content.get_untracked()));
-    let (show_preview, set_show_preview) = signal(false);
+    let cookie = use_cookie("editor_preview");
+    let show_preview = Signal::derive(move || cookie.0.get().unwrap_or_else(|| true));
 
     // Prevent user from accidentally closing the page while editing. Doesnt prevent navigation
     // within Ibis.
@@ -44,7 +45,9 @@ pub fn EditorView(
             <div class="flex items-center mb-4 h-min">
                 <button
                     class="btn btn-secondary"
-                    on:click=move |_| { set_show_preview.update(|s| *s = !*s) }
+                    on:click=move |_| {
+                        cookie.1.set(Some(!show_preview.get_untracked()));
+                    }
                 >
                     Preview
                 </button>

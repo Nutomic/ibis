@@ -1,6 +1,8 @@
 use crate::common::{utils::extract_domain, DbArticle, DbPerson};
-use chrono::{DateTime, Local, Utc};
+use chrono::{DateTime, Duration, Local, Utc};
+use codee::string::FromToStringCodec;
 use leptos::prelude::*;
+use leptos_use::{use_cookie_with_options, SameSite, UseCookieOptions};
 
 pub mod api;
 pub mod app;
@@ -78,4 +80,13 @@ fn render_date_time(date_time: DateTime<Utc>) -> String {
         .with_timezone(&Local)
         .format("%Y-%m-%d %H:%M:%S")
         .to_string()
+}
+
+fn use_cookie(name: &str) -> (Signal<Option<bool>>, WriteSignal<Option<bool>>) {
+    let expires = (Local::now() + Duration::days(356)).timestamp();
+    let cookie_options = UseCookieOptions::default()
+        .path("/")
+        .expires(expires)
+        .same_site(SameSite::Strict);
+    use_cookie_with_options::<bool, FromToStringCodec>(name, cookie_options)
 }

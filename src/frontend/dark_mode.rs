@@ -1,7 +1,6 @@
-use chrono::{Duration, Local};
-use codee::string::FromToStringCodec;
+use super::use_cookie;
 use leptos::prelude::*;
-use leptos_use::{use_cookie_with_options, use_preferred_dark, SameSite, UseCookieOptions};
+use leptos_use::use_preferred_dark;
 
 #[derive(Debug, Clone)]
 pub struct DarkMode {
@@ -12,14 +11,7 @@ pub struct DarkMode {
 
 impl DarkMode {
     pub fn init() -> Self {
-        let expires = (Local::now() + Duration::days(356)).timestamp();
-        let cookie_options = UseCookieOptions::default()
-            .path("/")
-            .expires(expires)
-            .same_site(SameSite::Strict);
-        let cookie =
-            use_cookie_with_options::<bool, FromToStringCodec>("dark_mode", cookie_options);
-
+        let cookie = use_cookie("dark_mode");
         let is_dark = Signal::derive(move || {
             let default = || use_preferred_dark().get_untracked();
             cookie.0.get().unwrap_or_else(default)
