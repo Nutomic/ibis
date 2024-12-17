@@ -34,7 +34,7 @@ pub fn ReadArticle() -> impl IntoView {
                                     }
                                         .into_any()
                                 } else {
-                                    view! {};
+                                    view! {}
                                     ().into_any()
                                 }}
                                 <div
