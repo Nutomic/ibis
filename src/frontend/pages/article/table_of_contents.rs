@@ -61,7 +61,7 @@ impl TocBuilder {
     }
 
     pub(crate) fn push(&mut self, level: u32, name: String, id: String) -> &str {
-        assert!(level >= 1);
+        debug_assert!(level >= 1);
 
         self.fold_until(level);
 
