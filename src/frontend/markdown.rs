@@ -81,6 +81,7 @@ fn markdown_parser() -> MarkdownIt {
 
 #[derive(Debug)]
 pub struct ArticleLink {
+    label: String,
     title: String,
     domain: String,
 }
@@ -94,7 +95,7 @@ impl NodeValue for ArticleLink {
         attrs.push(("href", link));
 
         fmt.open("a", &attrs);
-        fmt.text(&self.title);
+        fmt.text(&self.label);
         fmt.close("a");
     }
 }
@@ -117,7 +118,10 @@ impl InlineRule for ArticleLinkScanner {
             let i = start + length - SEPARATOR_LENGTH;
             let content = &state.src[start..i];
             content.split_once('@').map(|(title, domain)| {
+                // Handle custom link label if provided, otherwise use title as label
+                let (domain, label) = domain.split_once('|').unwrap_or((&domain, &title));
                 let node = Node::new(ArticleLink {
+                    label: label.to_string(),
                     title: title.to_string(),
                     domain: domain.to_string(),
                 });
@@ -180,12 +184,18 @@ impl InlineRule for MathEquationScanner {
 #[test]
 fn test_markdown_article_link() {
     let parser = markdown_parser();
-    let rendered = parser
-        .parse("some text [[Title@example.com]] and more")
+    let plain = parser.parse("[[Title@example.com]]").render();
+    assert_eq!(
+        "<p><a href=\"/article/Title@example.com\">Title</a></p>\n",
+        plain
+    );
+
+    let with_label = parser
+        .parse("[[Title@example.com|Example Article]]")
         .render();
     assert_eq!(
-        "<p>some text <a href=\"/article/Title@example.com\">Title</a> and more</p>\n",
-        rendered
+        "<p><a href=\"/article/Title@example.com\">Example Article</a></p>\n",
+        with_label
     );
 }
 
