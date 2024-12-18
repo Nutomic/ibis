@@ -121,6 +121,10 @@ pub(in crate::backend::api) async fn edit_article(
     if !edit_form.new_text.ends_with('\n') {
         edit_form.new_text.push('\n');
     }
+    let local_link = format!("](https://{}", data.config.federation.domain);
+    if edit_form.new_text.contains(&local_link) {
+        return Err(anyhow!("Links to local instance don't work over federation").into());
+    }
 
     if edit_form.previous_version_id == original_article.latest_version {
         // No intermediate changes, simply submit new version
