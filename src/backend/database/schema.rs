@@ -73,6 +73,16 @@ diesel::table! {
 }
 
 diesel::table! {
+    instance_stats (id) {
+        id -> Int4,
+        users -> Int4,
+        users_active_month -> Int4,
+        users_active_half_year -> Int4,
+        articles -> Int4,
+    }
+}
+
+diesel::table! {
     jwt_secret (id) {
         id -> Int4,
         secret -> Varchar,
@@ -118,6 +128,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     edit,
     instance,
     instance_follow,
+    instance_stats,
     jwt_secret,
     local_user,
     person,

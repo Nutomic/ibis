@@ -49,7 +49,7 @@ use federation::objects::{
 use leptos::prelude::*;
 use leptos_axum::{generate_route_list, LeptosRoutes};
 use log::info;
-use std::net::SocketAddr;
+use std::{net::SocketAddr, thread};
 use tokio::{net::TcpListener, sync::oneshot};
 use tower_http::{compression::CompressionLayer, cors::CorsLayer};
 use tower_layer::Layer;
@@ -62,6 +62,7 @@ pub mod database;
 pub mod error;
 pub mod federation;
 mod nodeinfo;
+mod scheduled_tasks;
 mod utils;
 
 const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
@@ -96,6 +97,11 @@ pub async fn start(
     if DbInstance::read_local_instance(&data).is_err() {
         setup(&data.to_request_data()).await?;
     }
+
+    let db_pool = data.db_pool.clone();
+    thread::spawn(move || {
+        scheduled_tasks::start(db_pool);
+    });
 
     let leptos_options = get_config_from_str(include_str!("../../Cargo.toml"))?;
     let mut addr = leptos_options.site_addr;

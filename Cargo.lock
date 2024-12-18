@@ -530,6 +530,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "clokwerk"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bd108d365fcb6d7eddf17a6718eb6a33db18ba4178f8cc6b667f480710f10d76"
+dependencies = [
+ "chrono",
+]
+
+[[package]]
 name = "codee"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1822,6 +1831,7 @@ dependencies = [
  "axum-macros",
  "bcrypt",
  "chrono",
+ "clokwerk",
  "codee",
  "config",
  "console_error_panic_hook",

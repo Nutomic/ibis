@@ -119,7 +119,7 @@ impl InlineRule for ArticleLinkScanner {
             let content = &state.src[start..i];
             content.split_once('@').map(|(title, domain)| {
                 // Handle custom link label if provided, otherwise use title as label
-                let (domain, label) = domain.split_once('|').unwrap_or((&domain, &title));
+                let (domain, label) = domain.split_once('|').unwrap_or((domain, title));
                 let node = Node::new(ArticleLink {
                     label: label.to_string(),
                     title: title.to_string(),

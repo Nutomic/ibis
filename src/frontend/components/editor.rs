@@ -10,7 +10,7 @@ pub fn EditorView(
 ) -> impl IntoView {
     let (preview, set_preview) = signal(render_markdown(&content.get_untracked()));
     let cookie = use_cookie("editor_preview");
-    let show_preview = Signal::derive(move || cookie.0.get().unwrap_or_else(|| true));
+    let show_preview = Signal::derive(move || cookie.0.get().unwrap_or(true));
 
     // Prevent user from accidentally closing the page while editing. Doesnt prevent navigation
     // within Ibis.

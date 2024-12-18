@@ -11,12 +11,15 @@ pub mod article;
 pub mod conflict;
 pub mod edit;
 pub mod instance;
+pub mod instance_stats;
 pub(crate) mod schema;
 pub mod user;
 
+pub type DbPool = Pool<ConnectionManager<PgConnection>>;
+
 #[derive(Clone)]
 pub struct IbisData {
-    pub db_pool: Pool<ConnectionManager<PgConnection>>,
+    pub db_pool: DbPool,
     pub config: IbisConfig,
 }
 
