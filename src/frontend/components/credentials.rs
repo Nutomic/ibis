@@ -38,7 +38,6 @@ pub fn CredentialsForm(
                     let val = event_target_value(&ev);
                     set_username.update(|v| *v = val);
                 }
-
                 on:change=move |ev| {
                     let val = event_target_value(&ev);
                     set_username.update(|v| *v = val);
@@ -62,7 +61,6 @@ pub fn CredentialsForm(
                         }
                     }
                 }
-
                 on:change=move |ev| {
                     let val = event_target_value(&ev);
                     set_password.update(|p| *p = val);

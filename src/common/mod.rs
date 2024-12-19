@@ -186,6 +186,8 @@ pub struct DbPerson {
     #[serde(skip)]
     pub last_refreshed_at: DateTime<Utc>,
     pub local: bool,
+    pub display_name: Option<String>,
+    pub bio: Option<String>,
 }
 
 impl DbPerson {
@@ -342,6 +344,13 @@ pub struct InstanceView {
 pub struct GetUserForm {
     pub name: String,
     pub domain: Option<String>,
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug)]
+pub struct UpdateUserForm {
+    pub person_id: PersonId,
+    pub display_name: Option<String>,
+    pub bio: Option<String>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, SmartDefault)]

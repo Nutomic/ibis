@@ -19,6 +19,7 @@ use crate::{
             notifications::Notifications,
             register::Register,
             search::Search,
+            user_edit_profile::UserEditProfile,
             user_profile::UserProfile,
         },
     },
@@ -122,6 +123,7 @@ pub fn App() -> impl IntoView {
                         <Route path=path!("/login") view=Login />
                         <Route path=path!("/register") view=Register />
                         <Route path=path!("/search") view=Search />
+                        <IbisProtectedRoute path=path!("/edit_profile") view=UserEditProfile />
                         <IbisProtectedRoute path=path!("/notifications") view=Notifications />
                     </Routes>
                 </main>

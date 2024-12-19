@@ -37,7 +37,7 @@ use axum::{
 use axum_extra::extract::CookieJar;
 use axum_macros::debug_handler;
 use instance::list_remote_instances;
-use user::{count_notifications, list_notifications};
+use user::{count_notifications, list_notifications, update_user_profile};
 
 pub mod article;
 pub mod instance;
@@ -67,6 +67,7 @@ pub fn api_routes() -> Router<()> {
         .route("/account/register", post(register_user))
         .route("/account/login", post(login_user))
         .route("/account/logout", post(logout_user))
+        .route("/account/update", post(update_user_profile))
         .route("/site", get(site_view))
         .route_layer(middleware::from_fn(auth))
 }

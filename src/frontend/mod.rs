@@ -51,10 +51,14 @@ fn article_title(article: &DbArticle) -> String {
 }
 
 fn user_title(person: &DbPerson) -> String {
+    let name = person
+        .display_name
+        .clone()
+        .unwrap_or(person.username.clone());
     if person.local {
-        person.username.clone()
+        name.clone()
     } else {
-        format!("{}@{}", person.username, extract_domain(&person.ap_id))
+        format!("{}@{}", name, extract_domain(&person.ap_id))
     }
 }
 

@@ -1,6 +1,11 @@
 use crate::{
     common::GetUserForm,
-    frontend::{api::CLIENT, components::edit_list::EditList, user_title},
+    frontend::{
+        api::CLIENT,
+        components::edit_list::EditList,
+        markdown::render_markdown,
+        user_title,
+    },
 };
 use leptos::prelude::*;
 use leptos_router::hooks::use_params_map;
@@ -50,6 +55,11 @@ pub fn UserProfile() -> impl IntoView {
                     <h1 class="flex-auto my-6 font-serif text-4xl font-bold grow">
                         {user_title(&person)}
                     </h1>
+
+                    <div
+                        class="mb-2 max-w-full prose prose-slate"
+                        inner_html=render_markdown(&person.bio.unwrap_or_default())
+                    ></div>
 
                     <h2 class="font-serif text-xl font-bold">Edits</h2>
                     <EditList edits=edits for_article=false />

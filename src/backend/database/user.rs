@@ -14,6 +14,7 @@ use crate::{
         DbLocalUser,
         DbPerson,
         LocalUserView,
+        UpdateUserForm,
     },
 };
 use activitypub_federation::{config::Data, fetch::object_id::ObjectId};
@@ -49,6 +50,8 @@ pub struct DbPersonForm {
     pub private_key: Option<String>,
     pub last_refreshed_at: DateTime<Utc>,
     pub local: bool,
+    pub display_name: Option<String>,
+    pub bio: Option<String>,
 }
 
 impl DbPerson {
@@ -89,6 +92,8 @@ impl DbPerson {
             private_key: Some(keypair.private_key),
             last_refreshed_at: Utc::now(),
             local: true,
+            display_name: None,
+            bio: None,
         };
 
         let person = insert_into(person::table)
@@ -143,6 +148,17 @@ impl DbPerson {
         Ok(query.get_result(conn.deref_mut())?)
     }
 
+    pub fn update_profile(params: &UpdateUserForm, data: &Data<IbisData>) -> MyResult<()> {
+        let mut conn = data.db_pool.get()?;
+        diesel::update(person::table.find(params.person_id))
+            .set((
+                person::dsl::display_name.eq(&params.display_name),
+                person::dsl::bio.eq(&params.bio),
+            ))
+            .execute(conn.deref_mut())?;
+        Ok(())
+    }
+
     pub fn read_local_from_name(username: &str, data: &Data<IbisData>) -> MyResult<LocalUserView> {
         let mut conn = data.db_pool.get()?;
         let (person, local_user) = person::table
@@ -191,6 +207,8 @@ impl DbPerson {
                 private_key: Some(keypair.private_key),
                 last_refreshed_at: Utc::now(),
                 local: true,
+                display_name: None,
+                bio: None,
             };
             DbPerson::create(&person_form, data)
         }

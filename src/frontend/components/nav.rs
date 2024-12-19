@@ -115,11 +115,14 @@ pub fn Nav() -> impl IntoView {
                                     .with_default(|site| site.clone().my_profile.unwrap());
                                 let profile_link = format!("/user/{}", my_profile.person.username);
                                 view! {
-                                    <p class="self-center pb-2">
+                                    <p class="self-center">
                                         "Logged in as " <a class="link" href=profile_link>
                                             {my_profile.person.username}
                                         </a>
                                     </p>
+                                    <a class="self-center py-2 link" href="/edit_profile">
+                                        Edit Profile
+                                    </a>
                                     <button
                                         class="self-center w-min btn btn-outline btn-xs"
                                         on:click=move |_| {

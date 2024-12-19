@@ -13,6 +13,7 @@ use crate::{
         Notification,
         RegisterUserForm,
         SuccessResponse,
+        UpdateUserForm,
         AUTH_COOKIE,
     },
 };
@@ -141,6 +142,15 @@ pub(in crate::backend::api) async fn get_user(
         &params.domain,
         &data,
     )?))
+}
+
+#[debug_handler]
+pub(in crate::backend::api) async fn update_user_profile(
+    data: Data<IbisData>,
+    Form(params): Form<UpdateUserForm>,
+) -> MyResult<Json<SuccessResponse>> {
+    DbPerson::update_profile(&params, &data)?;
+    Ok(Json(SuccessResponse::default()))
 }
 
 #[debug_handler]

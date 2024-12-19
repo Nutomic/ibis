@@ -26,7 +26,7 @@ pub fn EditorView(
                 <textarea
                     prop:value=content
                     placeholder="Article text..."
-                    class="text-base text-base resize-none grow textarea textarea-primary min-h-80"
+                    class="text-base resize-none grow textarea textarea-primary min-h-80"
                     on:input=move |evt| {
                         let val = event_target_value(&evt);
                         set_preview.set(render_markdown(&val));
@@ -44,7 +44,7 @@ pub fn EditorView(
             </div>
             <div class="flex items-center mb-4 h-min">
                 <button
-                    class="btn btn-secondary"
+                    class="btn btn-secondary btn-sm"
                     on:click=move |_| {
                         cookie.1.set(Some(!show_preview.get_untracked()));
                     }

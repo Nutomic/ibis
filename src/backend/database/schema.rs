@@ -110,6 +110,10 @@ diesel::table! {
         private_key -> Nullable<Text>,
         last_refreshed_at -> Timestamptz,
         local -> Bool,
+        #[max_length = 20]
+        display_name -> Nullable<Varchar>,
+        #[max_length = 1000]
+        bio -> Nullable<Varchar>,
     }
 }
 

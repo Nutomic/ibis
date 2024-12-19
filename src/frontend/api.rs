@@ -217,6 +217,14 @@ impl ApiClient {
         self.get("/api/v1/user", Some(data)).await
     }
 
+    pub async fn update_user_profile(
+        &self,
+        data: UpdateUserForm,
+    ) -> Result<SuccessResponse, ServerFnError> {
+        log::info!("{:?}", &data);
+        self.post("/api/v1/account/update", Some(data)).await
+    }
+
     pub async fn get_article_edits(&self, article_id: ArticleId) -> Option<Vec<EditView>> {
         let data = GetEditList {
             article_id: Some(article_id),
@@ -344,7 +352,7 @@ impl ApiClient {
     {
         let json = serde_json::from_str(&text).map_err(|e| {
             ServerFnError::<NoCustomError>::Deserialization(format!(
-                "Serde error: {e} from {text}on {url}"
+                "Serde error: {e} from {text} on {url}"
             ))
         })?;
         if status == StatusCode::OK {

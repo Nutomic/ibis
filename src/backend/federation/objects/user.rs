@@ -24,6 +24,9 @@ pub struct ApubUser {
     kind: PersonType,
     id: ObjectId<DbPerson>,
     preferred_username: String,
+    /// displayname
+    name: Option<String>,
+    summary: Option<String>,
     inbox: Url,
     public_key: PublicKey,
 }
@@ -48,10 +51,12 @@ impl Object for DbPerson {
     async fn into_json(self, _data: &Data<Self::DataType>) -> Result<Self::Kind, Self::Error> {
         Ok(ApubUser {
             kind: Default::default(),
-            id: self.ap_id.clone(),
-            preferred_username: self.username.clone(),
-            inbox: Url::parse(&self.inbox_url)?,
-            public_key: self.public_key(),
+            id: __self.ap_id.clone(),
+            preferred_username: __self.username.clone(),
+            inbox: Url::parse(&__self.inbox_url)?,
+            public_key: __self.public_key(),
+            name: self.display_name,
+            summary: self.bio,
         })
     }
 
@@ -73,6 +78,8 @@ impl Object for DbPerson {
             private_key: None,
             last_refreshed_at: Utc::now(),
             local: false,
+            display_name: json.name,
+            bio: json.summary,
         };
         DbPerson::create(&form, data)
     }

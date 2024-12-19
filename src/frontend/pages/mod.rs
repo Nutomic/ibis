@@ -12,6 +12,7 @@ pub(crate) mod login;
 pub(crate) mod notifications;
 pub(crate) mod register;
 pub(crate) mod search;
+pub(crate) mod user_edit_profile;
 pub(crate) mod user_profile;
 
 fn article_resource() -> Resource<ArticleView> {
