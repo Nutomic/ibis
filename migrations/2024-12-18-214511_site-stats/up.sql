@@ -102,7 +102,7 @@ DECLARE
     count_ integer;
 BEGIN
     SELECT
-        count(*) INTO count_
+        count(users) INTO count_
     FROM (
         SELECT
             e.creator_id
@@ -111,7 +111,7 @@ BEGIN
             INNER JOIN person p ON e.creator_id = p.id
         WHERE
             e.published > ('now'::timestamp - i::interval)
-            AND p.local = TRUE);
+            AND p.local = TRUE) as users;
     RETURN count_;
 END;
 $$;
