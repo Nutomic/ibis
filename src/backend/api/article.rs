@@ -126,13 +126,10 @@ pub(in crate::backend::api) async fn edit_article(
         return Err(anyhow!("Links to local instance don't work over federation").into());
     }
 
-    // Markdown formatting
-    let new_text = fmtm::format(&edit_form.new_text, Some(80))?;
-
     if edit_form.previous_version_id == original_article.latest_version {
         // No intermediate changes, simply submit new version
         submit_article_update(
-            new_text.clone(),
+            edit_form.new_text.clone(),
             edit_form.summary.clone(),
             edit_form.previous_version_id,
             &original_article.article,
@@ -146,7 +143,7 @@ pub(in crate::backend::api) async fn edit_article(
         // version and generate a diff to find out what exactly has changed.
         let edits = DbEdit::list_for_article(original_article.article.id, &data)?;
         let ancestor = generate_article_version(&edits, &edit_form.previous_version_id)?;
-        let patch = create_patch(&ancestor, &new_text);
+        let patch = create_patch(&ancestor, &edit_form.new_text);
 
         let previous_version = DbEdit::read(&edit_form.previous_version_id, &data)?;
         let form = DbConflictForm {

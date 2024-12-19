@@ -106,7 +106,6 @@ anyhow = "1.0.94"
 include_dir = "0.7.4"
 mime_guess = "2.0.5"
 clokwerk = "0.4.0"
-fmtm = "0.0.3"
 
 [dev-dependencies]
 pretty_assertions = "1.4.1"
