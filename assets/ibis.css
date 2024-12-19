@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* anchor links in markdown headings */
+
 .anchor svg {
     display: inline;
 }
