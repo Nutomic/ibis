@@ -391,7 +391,7 @@ async fn test_local_edit_conflict() -> Result<()> {
         .await
         .unwrap()
         .unwrap();
-    assert_eq!("<<<<<<< ours\nIpsum Lorem\n||||||| original\nsome\nexample\ntext\n=======\nLorem Ipsum\n>>>>>>> theirs\n", edit_res.three_way_merge);
+    assert_eq!("<<<<<<< ours\nIpsum Lorem\n||||||| original\nsome example text\n=======\nLorem Ipsum\n>>>>>>> theirs\n", edit_res.three_way_merge);
 
     let notifications = alpha.notifications_list().await.unwrap();
     assert_eq!(1, notifications.len());
@@ -516,10 +516,17 @@ async fn test_federated_edit_conflict() -> Result<()> {
 async fn test_overlapping_edits_no_conflict() -> Result<()> {
     let TestData(alpha, beta, gamma) = TestData::start(false).await;
 
-    // create new article
+    // Create new article
+    // Need to use multiple lines to provide enough context for diff/merge.
+    // Also need to use long lines so that markdown formatting doesnt change line breaks.
     let create_form = CreateArticleForm {
         title: "Manu_Chao".to_string(),
-        text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
+        text: r#"1 Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod.
+2 Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod.
+3 Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod.
+4 Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod.
+"#
+        .to_string(),
         summary: "create article".to_string(),
     };
     let create_res = alpha.create_article(&create_form).await.unwrap();
@@ -529,7 +536,12 @@ async fn test_overlapping_edits_no_conflict() -> Result<()> {
     // one user edits article
     let edit_form = EditArticleForm {
         article_id: create_res.article.id,
-        new_text: "my\nexample\ntext\n".to_string(),
+        new_text: r#"1 Lorem **changed** dolor sit amet consectetur adipiscing elit sed do eiusmod.
+2 Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod.
+3 Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod.
+4 Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod.
+"#
+        .to_string(),
         summary: "summary".to_string(),
         previous_version_id: create_res.latest_version.clone(),
         resolve_conflict_id: None,
@@ -542,7 +554,12 @@ async fn test_overlapping_edits_no_conflict() -> Result<()> {
     // another user edits article, without being aware of previous edit
     let edit_form = EditArticleForm {
         article_id: create_res.article.id,
-        new_text: "some\nexample\narticle\n".to_string(),
+        new_text: r#"1 Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod.
+2 Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod.
+3 Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod.
+4 Lorem **changed** dolor sit amet consectetur adipiscing elit sed do eiusmod.
+"#
+        .to_string(),
         summary: "summary".to_string(),
         previous_version_id: create_res.latest_version,
         resolve_conflict_id: None,
@@ -551,7 +568,14 @@ async fn test_overlapping_edits_no_conflict() -> Result<()> {
     let alpha_edits = alpha.get_article_edits(edit_res.article.id).await.unwrap();
     assert_eq!(0, alpha.notifications_count().await.unwrap());
     assert_eq!(3, alpha_edits.len());
-    assert_eq!("my\nexample\narticle\n", edit_res.article.text);
+    assert_eq!(
+        r#"1 Lorem **changed** dolor sit amet consectetur adipiscing elit sed do eiusmod.
+2 Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod.
+3 Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod.
+4 Lorem **changed** dolor sit amet consectetur adipiscing elit sed do eiusmod.
+"#,
+        edit_res.article.text
+    );
 
     TestData::stop(alpha, beta, gamma)
 }

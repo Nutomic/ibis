@@ -90,13 +90,14 @@ impl ApiClient {
             .await
     }
 
+    #[cfg(debug_assertions)]
     pub async fn edit_article(&self, edit_form: &EditArticleForm) -> Option<ArticleView> {
         let edit_res = self
             .edit_article_with_conflict(edit_form)
             .await
             .map_err(|e| error!("edit failed {e}"))
             .ok()?;
-        assert!(edit_res.is_none());
+        assert_eq!(None, edit_res);
 
         self.get_article(GetArticleForm {
             title: None,

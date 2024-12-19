@@ -174,4 +174,4 @@ impl Deref for IbisInstance {
     }
 }
 
-pub const TEST_ARTICLE_DEFAULT_TEXT: &str = "some\nexample\ntext\n";
+pub const TEST_ARTICLE_DEFAULT_TEXT: &str = "some example text\n";
