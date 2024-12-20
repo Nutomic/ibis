@@ -225,9 +225,16 @@ async fn federation_routes_middleware(request: Request<Body>, next: Next) -> Res
     let (mut parts, body) = request.into_parts();
     // rewrite uri based on accept header
     let mut uri = parts.uri.to_string();
-    let accept_value = HeaderValue::from_static("application/activity+json");
-    if Some(&accept_value) == parts.headers.get("Accept")
-        || Some(&accept_value) == parts.headers.get("Content-Type")
+    const VALUE1: HeaderValue = HeaderValue::from_static("application/activity+json");
+    const VALUE2: HeaderValue = HeaderValue::from_static(
+        r#"application/ld+json; profile="https://www.w3.org/ns/activitystreams""#,
+    );
+    let accept = parts.headers.get("Accept");
+    let content_type = parts.headers.get("Content-Type");
+    if Some(&VALUE1) == accept
+        || Some(&VALUE2) == accept
+        || Some(&VALUE1) == content_type
+        || Some(&VALUE2) == content_type
     {
         uri = format!("{FEDERATION_ROUTES_PREFIX}{uri}");
     }
