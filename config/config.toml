@@ -1,2 +1,6 @@
 [federation]
 domain = "127.0.0.1:8080"
+
+[database]
+# The database connection url. use the password set above
+connection_url = "postgres://ibis:ibis@127.0.0.1:5432/ibis"

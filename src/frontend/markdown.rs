@@ -1,6 +1,7 @@
 use katex;
 use markdown_it::{
     parser::inline::{InlineRule, InlineState},
+    parser::core::CoreRule,
     plugins::cmark::block::{heading::ATXHeading, lheading::SetextHeader},
     MarkdownIt,
     Node,
@@ -8,6 +9,7 @@ use markdown_it::{
     Renderer,
 };
 use once_cell::sync::OnceCell;
+use github_slugger::Slugger;
 
 pub fn render_markdown(text: &str) -> String {
     static INSTANCE: OnceCell<MarkdownIt> = OnceCell::new();
@@ -75,6 +77,8 @@ fn markdown_parser() -> MarkdownIt {
     // Ibis custom extensions
     parser.inline.add_rule::<ArticleLinkScanner>();
     parser.inline.add_rule::<MathEquationScanner>();
+    parser.inline.add_rule::<TocMarkerScanner>();
+    parser.add_rule::<TocRule>();
 
     parser
 }
@@ -178,6 +182,75 @@ impl InlineRule for MathEquationScanner {
             });
             Some((node, length + SEPARATOR_LENGTH + 1))
         })?
+    }
+}
+
+#[derive(Debug)]
+pub struct Toc(String);
+
+impl NodeValue for Toc {
+    fn render(&self, node: &Node, fmt: &mut dyn Renderer) {
+        let mut attrs = node.attrs.clone();
+
+        attrs.push(("class", "Toc".into()));
+
+        fmt.cr();
+        fmt.open("div", &attrs);
+        fmt.text(&self.0);
+        fmt.close("div");
+        fmt.cr();
+    }
+}
+
+struct TocRule;
+
+impl CoreRule for TocRule {
+
+    fn run(root: &mut Node, _: &MarkdownIt) {
+        let mut text = String::new();
+        let mut i: usize = 0;
+        let mut indexes: Vec<usize> = Vec::new();
+        root.walk(|node, _| {
+            if node.is::<ATXHeading>() {
+                text += &node.collect_text();
+            } 
+            else if node.is::<TocMarker>() {
+                indexes.push(i);
+            }
+            i += 1;
+        });
+        
+        indexes.into_iter().for_each(|index| {
+            println!("{}", index);
+            root.children.insert(index - 2, Node::new(Toc(text.clone())));   
+        });
+            
+    }
+}
+
+#[derive(Debug)]
+struct TocMarker;
+
+impl NodeValue for TocMarker {
+    fn render(&self, _node: &Node, fmt: &mut dyn Renderer) {
+        
+    }
+
+}
+
+struct TocMarkerScanner;
+
+impl InlineRule for TocMarkerScanner {
+    const MARKER: char = '[';
+
+    fn run(state:&mut InlineState) -> Option<(Node, usize)> {
+        let input = &state.src[state.pos..state.pos_max]; 
+        println!("{}", input);
+        if input.contains("[toc!]") {
+            println!("Marked TOC");
+            return Some((Node::new(TocMarker), 6));
+        }
+        None
     }
 }
 
