@@ -200,11 +200,11 @@ impl Toc {
     }
 
     fn print_entry(&self, fmt: &mut dyn Renderer){
+            fmt.open("ul", &[]);
             self
             .entries
             .iter()
             .for_each( |entry| {
-                    fmt.open("ul", &[]);
                     fmt.open("li", &[]);
                     fmt.open("a", &[("href", "#".to_owned() + &entry.id)]);
                     
@@ -215,8 +215,9 @@ impl Toc {
                     entry.children.print_entry(fmt);
 
                     fmt.close("li");
-                    fmt.close("ul");
             });
+             
+            fmt.close("ul");
         }
 }
 
@@ -225,7 +226,7 @@ impl NodeValue for Toc {
     fn render(&self, node: &Node, fmt: &mut dyn Renderer) {
         let mut attrs = node.attrs.clone();
 
-        attrs.push(("class", "float-right mr-20 w-80 menu rounded-box".into()));
+        attrs.push(("class", "not-prose float-left mr-20 w-80 menu rounded-box".into()));
 
         fmt.open("div", &attrs);
 
