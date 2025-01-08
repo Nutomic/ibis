@@ -1,7 +1,10 @@
+use github_slugger::Slugger;
 use katex;
 use markdown_it::{
-    parser::inline::{InlineRule, InlineState},
-    parser::core::CoreRule,
+    parser::{
+        core::CoreRule,
+        inline::{InlineRule, InlineState},
+    },
     plugins::cmark::block::{heading::ATXHeading, lheading::SetextHeader},
     MarkdownIt,
     Node,
@@ -9,7 +12,6 @@ use markdown_it::{
     Renderer,
 };
 use once_cell::sync::OnceCell;
-use github_slugger::Slugger;
 
 pub fn render_markdown(text: &str) -> String {
     static INSTANCE: OnceCell<MarkdownIt> = OnceCell::new();
@@ -185,12 +187,10 @@ impl InlineRule for MathEquationScanner {
     }
 }
 
-
-
 // TOC SECTION
 
 #[derive(Debug, Default, Clone)]
-pub struct Toc{
+pub struct Toc {
     entries: Vec<TocEntry>,
 }
 
@@ -199,34 +199,33 @@ impl Toc {
         self.entries.iter().filter(|e| e.level == level).count()
     }
 
-    fn print_entry(&self, fmt: &mut dyn Renderer){
-            fmt.open("ul", &[]);
-            self
-            .entries
-            .iter()
-            .for_each( |entry| {
-                    fmt.open("li", &[]);
-                    fmt.open("a", &[("href", "#".to_owned() + &entry.id)]);
-                    
-                    fmt.text(&format!("{} {}", entry.sec_number, entry.name));
+    fn print_entry(&self, fmt: &mut dyn Renderer) {
+        fmt.open("ul", &[]);
+        self.entries.iter().for_each(|entry| {
+            fmt.open("li", &[]);
+            fmt.open("a", &[("href", "#".to_owned() + &entry.id)]);
 
-                    fmt.close("a");
+            fmt.text(&format!("{} {}", entry.sec_number, entry.name));
 
-                    entry.children.print_entry(fmt);
+            fmt.close("a");
 
-                    fmt.close("li");
-            });
-             
-            fmt.close("ul");
-        }
+            entry.children.print_entry(fmt);
+
+            fmt.close("li");
+        });
+
+        fmt.close("ul");
+    }
 }
-
 
 impl NodeValue for Toc {
     fn render(&self, node: &Node, fmt: &mut dyn Renderer) {
         let mut attrs = node.attrs.clone();
 
-        attrs.push(("class", "not-prose float-left mr-20 w-80 menu rounded-box".into()));
+        attrs.push((
+            "class",
+            "not-prose float-left mr-20 w-80 menu rounded-box".into(),
+        ));
 
         fmt.open("div", &attrs);
 
@@ -326,23 +325,25 @@ impl TocBuilder {
 struct TocScanner;
 
 impl CoreRule for TocScanner {
-
     fn run(root: &mut Node, _: &MarkdownIt) {
         let mut slugger = Slugger::default();
         let mut toc_builder = TocBuilder::new();
         root.walk(|node, _| {
             if node.is::<ATXHeading>() {
                 let name = node.collect_text();
-                toc_builder.push(node.cast::<ATXHeading>().unwrap().level, name.clone(), slugger.slug(&name));
-            } 
+                toc_builder.push(
+                    node.cast::<ATXHeading>().unwrap().level,
+                    name.clone(),
+                    slugger.slug(&name),
+                );
+            }
         });
         let toc = toc_builder.into_toc();
         root.walk_mut(|node, _| {
-            if node.is::<TocMarker>(){
+            if node.is::<TocMarker>() {
                 node.replace(toc.clone());
             }
         })
-            
     }
 }
 
@@ -350,10 +351,7 @@ impl CoreRule for TocScanner {
 struct TocMarker;
 
 impl NodeValue for TocMarker {
-    fn render(&self, _node: &Node, _fmt: &mut dyn Renderer) {
-        
-    }
-
+    fn render(&self, _node: &Node, _fmt: &mut dyn Renderer) {}
 }
 
 struct TocMarkerScanner;
@@ -361,8 +359,8 @@ struct TocMarkerScanner;
 impl InlineRule for TocMarkerScanner {
     const MARKER: char = '[';
 
-    fn run(state:&mut InlineState) -> Option<(Node, usize)> {
-        let input = &state.src[state.pos..state.pos_max]; 
+    fn run(state: &mut InlineState) -> Option<(Node, usize)> {
+        let input = &state.src[state.pos..state.pos_max];
         println!("{}", input);
         if input.contains("[toc!]") {
             println!("Marked TOC");
@@ -371,10 +369,6 @@ impl InlineRule for TocMarkerScanner {
         None
     }
 }
-
-
-
-
 
 #[test]
 fn test_markdown_article_link() {
