@@ -362,7 +362,7 @@ impl InlineRule for TocMarkerScanner {
     fn run(state: &mut InlineState) -> Option<(Node, usize)> {
         let input = &state.src[state.pos..state.pos_max];
         println!("{}", input);
-        if input.contains("[toc!]") {
+        if input.contains("[!toc]") {
             println!("Marked TOC");
             return Some((Node::new(TocMarker), 6));
         }
