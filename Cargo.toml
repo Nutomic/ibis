@@ -31,17 +31,17 @@ unwrap_used = "deny"
 
 # frontend and shared deps
 [dependencies]
-leptos = "0.7.1"
-leptos_meta = "0.7.1"
-leptos_router = "0.7.1"
+leptos = "0.7.3"
+leptos_meta = "0.7.3"
+leptos_router = "0.7.3"
 chrono = { version = "0.4.39", features = ["serde"] }
 hex = "0.4.3"
 rand = "0.8.5"
 getrandom = { version = "0.2", features = ["js"] }
-serde_json = "1.0.133"
+serde_json = "1.0.135"
 sha2 = "0.10.8"
 uuid = { version = "1.11.0", features = ["serde"] }
-serde = { version = "1.0.216", features = ["derive"] }
+serde = { version = "1.0.217", features = ["derive"] }
 url = { version = "2.5.4", features = ["serde"] }
 log = "0.4"
 tracing = "0.1.41"
@@ -56,7 +56,7 @@ markdown-it-heading-anchors = "0.3.0"
 markdown-it-footnote = "0.2.0"
 markdown-it-sub = "1.0.1"
 markdown-it-sup = "1.0.1"
-leptos-use = "0.14.0"
+leptos-use = "0.15.3"
 codee = "0.2.0"
 wasm-bindgen = "=0.2.99"
 gloo-net = "0.6.0"
@@ -91,18 +91,18 @@ diesel-derive-newtype = { version = "2.1.2" }
 diesel_migrations = { version = "2.2.0" }
 doku = { version = "0.21.1" }
 jsonwebtoken = { version = "9.3.0" }
-leptos_axum = { version = "0.7.1" }
+leptos_axum = { version = "0.7.3" }
 bcrypt = "0.16.0"
 diffy = { version = "0.4.0" }
 enum_delegate = { version = "0.2.0" }
-async-trait = { version = "0.1.83" }
-config = { version = "0.14.1", features = ["toml"] }
+async-trait = { version = "0.1.85" }
+config = { version = "0.15.4", features = ["toml"] }
 tower = { version = "0.5.2" }
 tower-layer = { version = "0.3.3" }
-reqwest = { version = "0.12.9", features = ["json", "cookies"] }
+reqwest = { version = "0.12.12", features = ["json", "cookies"] }
 futures = "0.3.31"
-env_logger = { version = "0.11.5", default-features = false }
-anyhow = "1.0.94"
+env_logger = { version = "0.11.6", default-features = false }
+anyhow = "1.0.95"
 include_dir = "0.7.4"
 mime_guess = "2.0.5"
 clokwerk = "0.4.0"
