@@ -2011,6 +2011,7 @@ dependencies = [
  "fmtm",
  "futures",
  "getrandom",
+ "github-slugger",
  "gloo-net",
  "hex",
  "http",

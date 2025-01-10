@@ -8,6 +8,7 @@ use markdown_it::{
     Renderer,
 };
 use once_cell::sync::OnceCell;
+pub mod toc;
 
 pub fn render_markdown(text: &str) -> String {
     static INSTANCE: OnceCell<MarkdownIt> = OnceCell::new();
@@ -75,6 +76,8 @@ fn markdown_parser() -> MarkdownIt {
     // Ibis custom extensions
     parser.inline.add_rule::<ArticleLinkScanner>();
     parser.inline.add_rule::<MathEquationScanner>();
+    parser.inline.add_rule::<toc::TocMarkerScanner>();
+    parser.add_rule::<toc::TocScanner>();
 
     parser
 }
