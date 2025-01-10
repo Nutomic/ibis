@@ -47,6 +47,7 @@ pub struct ListArticlesForm {
 #[cfg_attr(feature = "ssr", diesel(table_name = article, check_for_backend(diesel::pg::Pg)))]
 pub struct ArticleView {
     pub article: DbArticle,
+    pub instance: DbInstance,
     pub latest_version: EditVersion,
 }
 
@@ -319,7 +320,6 @@ pub struct DbInstance {
     pub public_key: String,
     #[serde(skip)]
     pub private_key: Option<String>,
-    #[serde(skip)]
     pub last_refreshed_at: DateTime<Utc>,
     pub local: bool,
     #[cfg(feature = "ssr")]

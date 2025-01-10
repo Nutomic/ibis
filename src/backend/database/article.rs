@@ -11,6 +11,7 @@ use crate::{
         newtypes::{ArticleId, InstanceId},
         ArticleView,
         DbArticle,
+        DbInstance,
         EditVersion,
     },
 };
@@ -100,11 +101,15 @@ impl DbArticle {
 
     pub fn read_view(id: ArticleId, data: &IbisData) -> MyResult<ArticleView> {
         let mut conn = data.db_pool.get()?;
-        let query = article::table.find(id).into_boxed();
-        let article: DbArticle = query.get_result(conn.deref_mut())?;
+        let query = article::table
+            .find(id)
+            .inner_join(instance::table)
+            .into_boxed();
+        let (article, instance): (DbArticle, DbInstance) = query.get_result(conn.deref_mut())?;
         let latest_version = article.latest_edit_version(data)?;
         Ok(ArticleView {
             article,
+            instance,
             latest_version,
         })
     }
@@ -115,7 +120,7 @@ impl DbArticle {
         data: &IbisData,
     ) -> MyResult<ArticleView> {
         let mut conn = data.db_pool.get()?;
-        let article: DbArticle = {
+        let (article, instance): (DbArticle, DbInstance) = {
             let query = article::table
                 .inner_join(instance::table)
                 .filter(article::dsl::title.eq(title))
@@ -125,13 +130,12 @@ impl DbArticle {
             } else {
                 query.filter(article::dsl::local.eq(true))
             };
-            query
-                .select(article::all_columns)
-                .get_result(conn.deref_mut())?
+            query.get_result(conn.deref_mut())?
         };
         let latest_version = article.latest_edit_version(data)?;
         Ok(ArticleView {
             article,
+            instance,
             latest_version,
         })
     }

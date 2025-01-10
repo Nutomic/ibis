@@ -258,9 +258,11 @@ pub(super) async fn resolve_article(
     data: Data<IbisData>,
 ) -> MyResult<Json<ArticleView>> {
     let article: DbArticle = ObjectId::from(query.id).dereference(&data).await?;
+    let instance = DbInstance::read(article.instance_id, &data)?;
     let latest_version = article.latest_edit_version(&data)?;
     Ok(Json(ArticleView {
         article,
+        instance,
         latest_version,
     }))
 }

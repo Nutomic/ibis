@@ -16,6 +16,7 @@ use crate::{
         pages::article_resource,
     },
 };
+use chrono::{Days, Utc};
 use leptos::{html::Textarea, prelude::*};
 use leptos_router::{components::Redirect, hooks::use_params_map};
 use leptos_use::{use_textarea_autosize, UseTextareaAutosizeReturn};
@@ -142,9 +143,21 @@ pub fn EditArticle() -> impl IntoView {
                                                 edit_error
                                                     .get()
                                                     .map(|err| {
-                                                        view! { <p style="color:red;">{err}</p> }
+                                                        view! { <p class="alert alert-error">{err}</p> }
                                                     })
-                                            }} <EditorView textarea_ref content set_content />
+                                            }}
+                                            <Show when=move || {
+                                                article.instance.last_refreshed_at + Days::new(3)
+                                                    < Utc::now()
+                                            }>
+                                                <div class="alert alert-warning">
+                                                    This article is hosted on {article.instance.domain.clone()}
+                                                    which hasnt been federated in
+                                                    {(Utc::now() - article.instance.last_refreshed_at)
+                                                        .num_days()}
+                                                    days. Edits will most likely fail. Instead consider forking the article to your local instance (under Actions), or edit a different article.
+                                                </div>
+                                            </Show> <EditorView textarea_ref content set_content />
                                             <div class="flex flex-row mr-2">
                                                 <input
                                                     type="text"
