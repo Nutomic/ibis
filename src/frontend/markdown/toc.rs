@@ -100,7 +100,7 @@ impl TocBuilder {
         }
     }
 
-    fn push(&mut self, level: u8, name: String, id: String) -> &str {
+    fn push(&mut self, level: u8, name: String, id: String) -> String {
         debug_assert!(level >= 1);
 
         self.fold_until(level);
@@ -132,8 +132,10 @@ impl TocBuilder {
             },
         });
 
-        let just_inserted = self.chain.last_mut().unwrap();
-        &just_inserted.sec_number
+        self.chain
+            .last()
+            .map(|l| l.sec_number.clone())
+            .unwrap_or_default()
     }
 }
 
