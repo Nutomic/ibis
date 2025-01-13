@@ -37,6 +37,7 @@ use axum::{
 use axum_extra::extract::CookieJar;
 use axum_macros::debug_handler;
 use instance::list_remote_instances;
+use std::collections::HashSet;
 use user::{count_notifications, list_notifications, update_user_profile};
 
 pub mod article;
@@ -78,15 +79,24 @@ async fn auth(
     mut request: Request<Body>,
     next: Next,
 ) -> Result<Response, StatusCode> {
-    let auth = request
+    // Check all duplicate auth headers and cookies for the first valid one.
+    let auth: HashSet<_> = request
         .headers()
-        .get(AUTH_COOKIE)
-        .and_then(|h| h.to_str().ok())
-        .or(jar.get(AUTH_COOKIE).map(|c| c.value()));
+        .get_all(AUTH_COOKIE)
+        .into_iter()
+        .filter_map(|h| h.to_str().ok())
+        .chain(
+            jar.iter()
+                .filter(|c| c.name() == AUTH_COOKIE)
+                .map(|c| c.value()),
+        )
+        .map(|s| s.to_string())
+        .collect();
 
-    if let Some(auth) = auth {
-        if let Ok(user) = validate(auth, &data).await {
+    for a in &auth {
+        if let Ok(user) = validate(a, &data).await {
             request.extensions_mut().insert(user);
+            continue;
         }
     }
     let response = next.run(request).await;
