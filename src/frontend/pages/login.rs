@@ -7,7 +7,7 @@ use leptos_router::components::Redirect;
 
 #[component]
 pub fn Login() -> impl IntoView {
-    let (login_response, set_login_response) = signal(None::<()>);
+    let (login_response, set_login_response) = signal(false);
     let (login_error, set_login_error) = signal(None::<String>);
     let (wait_for_response, set_wait_for_response) = signal(false);
 
@@ -22,7 +22,7 @@ pub fn Login() -> impl IntoView {
             match result {
                 Ok(_res) => {
                     site().refetch();
-                    set_login_response.update(|v| *v = Some(()));
+                    set_login_response.set(true);
                     set_login_error.update(|e| *e = None);
                 }
                 Err(err) => {
@@ -38,7 +38,7 @@ pub fn Login() -> impl IntoView {
 
     view! {
         <Show
-            when=move || login_response.get().is_some()
+            when=move || login_response.get()
             fallback=move || {
                 view! {
                     <CredentialsForm

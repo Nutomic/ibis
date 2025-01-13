@@ -222,7 +222,6 @@ impl ApiClient {
         &self,
         data: UpdateUserForm,
     ) -> Result<SuccessResponse, ServerFnError> {
-        log::info!("{:?}", &data);
         self.post("/api/v1/account/update", Some(data)).await
     }
 

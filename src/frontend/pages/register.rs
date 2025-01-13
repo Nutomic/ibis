@@ -7,7 +7,7 @@ use log::info;
 
 #[component]
 pub fn Register() -> impl IntoView {
-    let (register_response, set_register_response) = signal(None::<()>);
+    let (register_response, set_register_response) = signal(false);
     let (register_error, set_register_error) = signal(None::<String>);
     let (wait_for_response, set_wait_for_response) = signal(false);
 
@@ -17,19 +17,19 @@ pub fn Register() -> impl IntoView {
         let credentials = RegisterUserForm { username, password };
         info!("Try to register new account for {}", credentials.username);
         async move {
-            set_wait_for_response.update(|w| *w = true);
+            set_wait_for_response.set(true);
             let result = CLIENT.register(credentials).await;
-            set_wait_for_response.update(|w| *w = false);
+            set_wait_for_response.set(false);
             match result {
                 Ok(_res) => {
                     site().refetch();
-                    set_register_response.update(|v| *v = Some(()));
-                    set_register_error.update(|e| *e = None);
+                    set_register_response.set(true);
+                    set_register_error.set(None);
                 }
                 Err(err) => {
                     let msg = err.to_string();
                     log::warn!("Unable to register new account: {msg}");
-                    set_register_error.update(|e| *e = Some(msg));
+                    set_register_error.set(Some(msg));
                 }
             }
         }
@@ -39,7 +39,7 @@ pub fn Register() -> impl IntoView {
 
     view! {
         <Show
-            when=move || register_response.get().is_some()
+            when=move || register_response.get()
             fallback=move || {
                 view! {
                     <CredentialsForm

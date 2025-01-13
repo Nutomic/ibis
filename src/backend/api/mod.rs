@@ -126,3 +126,8 @@ pub async fn edit_list(
     };
     Ok(Json(DbEdit::view(params, &data)?))
 }
+
+/// Trims the string param, and converts to None if it is empty
+fn empty_to_none(val: &mut Option<String>) {
+    (*val) = val.as_ref().map(|s| s.trim().to_owned());
+}

@@ -1,4 +1,4 @@
-use super::check_is_admin;
+use super::{check_is_admin, empty_to_none};
 use crate::{
     backend::{
         database::{conflict::DbConflict, read_jwt_secret, IbisData},
@@ -147,8 +147,10 @@ pub(in crate::backend::api) async fn get_user(
 #[debug_handler]
 pub(in crate::backend::api) async fn update_user_profile(
     data: Data<IbisData>,
-    Form(params): Form<UpdateUserForm>,
+    Form(mut params): Form<UpdateUserForm>,
 ) -> MyResult<Json<SuccessResponse>> {
+    empty_to_none(&mut params.display_name);
+    empty_to_none(&mut params.bio);
     DbPerson::update_profile(&params, &data)?;
     Ok(Json(SuccessResponse::default()))
 }

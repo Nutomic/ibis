@@ -9,6 +9,7 @@ use leptos::prelude::*;
 
 #[component]
 pub fn UserEditProfile() -> impl IntoView {
+    let (saved, set_saved) = signal(false);
     let (submit_error, set_submit_error) = signal(None::<String>);
 
     let submit_action = Action::new(move |form: &UpdateUserForm| {
@@ -17,12 +18,14 @@ pub fn UserEditProfile() -> impl IntoView {
             let result = CLIENT.update_user_profile(form).await;
             match result {
                 Ok(_res) => {
-                    set_submit_error.update(|e| *e = None);
+                    site().refetch();
+                    set_saved.set(true);
+                    set_submit_error.set(None);
                 }
                 Err(err) => {
                     let msg = err.to_string();
                     log::warn!("Unable to update profile: {msg}");
-                    set_submit_error.update(|e| *e = Some(msg));
+                    set_submit_error.set(Some(msg));
                 }
             }
         }
@@ -56,6 +59,7 @@ pub fn UserEditProfile() -> impl IntoView {
                             id="displayname"
                             class="w-80 input input-secondary input-bordered"
                             prop:value=display_name
+                            value=display_name
                             on:change=move |ev| {
                                 let val = event_target_value(&ev);
                                 set_display_name.set(val);
@@ -74,7 +78,9 @@ pub fn UserEditProfile() -> impl IntoView {
                                 let val = evt.target().value();
                                 set_bio.set(val);
                             }
-                        ></textarea>
+                        >
+                            bio.get()
+                        </textarea>
                     </div>
                     <button
                         class="btn btn-primary"
@@ -89,6 +95,14 @@ pub fn UserEditProfile() -> impl IntoView {
                     >
                         Submit
                     </button>
+
+                    <Show when=move || saved.get()>
+                        <div class="toast">
+                            <div class="alert alert-info">
+                                <span>Saved!</span>
+                            </div>
+                        </div>
+                    </Show>
                 }
             }
 
