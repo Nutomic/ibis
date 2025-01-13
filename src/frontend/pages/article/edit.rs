@@ -136,6 +136,9 @@ pub fn EditArticle() -> impl IntoView {
                                     }
                                     set_content.set(article.article.text.clone());
                                     let article_ = article.clone();
+                                    let show_federation_warning = !article.instance.local
+                                        && article.instance.last_refreshed_at + Days::new(3)
+                                            < Utc::now();
                                     view! {
                                         // set initial text, otherwise submit with no changes results in empty text
                                         <div>
@@ -145,17 +148,14 @@ pub fn EditArticle() -> impl IntoView {
                                                     .map(|err| {
                                                         view! { <p class="alert alert-error">{err}</p> }
                                                     })
-                                            }}
-                                            <Show when=move || {
-                                                article.instance.last_refreshed_at + Days::new(3)
-                                                    < Utc::now()
-                                            }>
+                                            }} <Show when=move || show_federation_warning>
                                                 <div class="alert alert-warning">
-                                                    This article is hosted on {article.instance.domain.clone()}
-                                                    which hasnt been federated in
+                                                    "This article is hosted on "
+                                                    {article.instance.domain.clone()}
+                                                    " which hasnt been federated in "
                                                     {(Utc::now() - article.instance.last_refreshed_at)
                                                         .num_days()}
-                                                    days. Edits will most likely fail. Instead consider forking the article to your local instance (under Actions), or edit a different article.
+                                                    " days. Edits will most likely fail. Instead consider forking the article to your local instance (under Actions), or edit a different article."
                                                 </div>
                                             </Show> <EditorView textarea_ref content set_content />
                                             <div class="flex flex-row mr-2">
