@@ -1,6 +1,6 @@
 [package]
 name = "ibis"
-version = "0.2.0"
+version = "0.2.1-rc.1"
 edition = "2021"
 
 [features]
@@ -88,18 +88,18 @@ diesel = { version = "2.2.6", default-features = false, features = [
   "uuid",
   "r2d2",
 ] }
-diesel-derive-newtype = { version = "2.1.2" }
-diesel_migrations = { version = "2.2.0" }
-doku = { version = "0.21.1" }
-jsonwebtoken = { version = "9.3.0" }
-leptos_axum = { version = "0.7.3" }
+diesel-derive-newtype = "2.1.2"
+diesel_migrations = "2.2.0"
+doku = "0.21.1"
+jsonwebtoken = "9.3.0"
+leptos_axum = "0.7.3"
 bcrypt = "0.16.0"
-diffy = { version = "0.4.0" }
-enum_delegate = { version = "0.2.0" }
-async-trait = { version = "0.1.85" }
+diffy = "0.4.0"
+enum_delegate = "0.2.0"
+async-trait = "0.1.85"
 config = { version = "0.15.4", features = ["toml"] }
-tower = { version = "0.5.2" }
-tower-layer = { version = "0.3.3" }
+tower = "0.5.2"
+tower-layer = "0.3.3"
 reqwest = { version = "0.12.12", features = ["json", "cookies"] }
 futures = "0.3.31"
 env_logger = { version = "0.11.6", default-features = false }
