@@ -34,8 +34,8 @@ use axum::{
     Json,
     Router,
 };
-use axum_extra::extract::CookieJar;
 use axum_macros::debug_handler;
+use http::header::COOKIE;
 use instance::list_remote_instances;
 use std::collections::HashSet;
 use user::{count_notifications, list_notifications, update_user_profile};
@@ -75,28 +75,31 @@ pub fn api_routes() -> Router<()> {
 
 async fn auth(
     data: Data<IbisData>,
-    jar: CookieJar,
     mut request: Request<Body>,
     next: Next,
 ) -> Result<Response, StatusCode> {
     // Check all duplicate auth headers and cookies for the first valid one.
-    let auth: HashSet<_> = request
+    // We need to extract cookies manually because CookieJar ignores duplicates.
+    let cookies = request
+        .headers()
+        .get(COOKIE)
+        .and_then(|h| h.to_str().ok())
+        .unwrap_or_default()
+        .split(';')
+        .flat_map(|s| s.split_once('='))
+        .filter(|s| s.0 == AUTH_COOKIE)
+        .map(|s| s.1);
+    let headers = request
         .headers()
         .get_all(AUTH_COOKIE)
         .into_iter()
-        .filter_map(|h| h.to_str().ok())
-        .chain(
-            jar.iter()
-                .filter(|c| c.name() == AUTH_COOKIE)
-                .map(|c| c.value()),
-        )
-        .map(|s| s.to_string())
-        .collect();
+        .filter_map(|h| h.to_str().ok());
+    let auth: HashSet<_> = headers.chain(cookies).map(|s| s.to_string()).collect();
 
     for a in &auth {
         if let Ok(user) = validate(a, &data).await {
             request.extensions_mut().insert(user);
-            continue;
+            break;
         }
     }
     let response = next.run(request).await;
