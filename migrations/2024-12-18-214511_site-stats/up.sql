@@ -104,7 +104,7 @@ BEGIN
     SELECT
         count(users) INTO count_
     FROM (
-        SELECT
+        SELECT DISTINCT
             e.creator_id
         FROM
             edit e
