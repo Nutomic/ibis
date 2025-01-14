@@ -1986,7 +1986,7 @@ dependencies = [
 
 [[package]]
 name = "ibis"
-version = "0.2.1-rc.5"
+version = "0.2.1-rc.6"
 dependencies = [
  "activitypub_federation",
  "anyhow",
