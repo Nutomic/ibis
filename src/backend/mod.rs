@@ -13,7 +13,6 @@ use crate::{
         DbInstance,
         DbPerson,
         EditVersion,
-        AUTH_COOKIE,
         MAIN_PAGE_NAME,
     },
     frontend::app::{shell, App},
@@ -27,15 +26,14 @@ use assets::file_and_error_handler;
 use axum::{
     body::Body,
     extract::State,
-    http::{HeaderValue, Request},
-    middleware::Next,
+    http::Request,
+    middleware::from_fn_with_state,
     response::{IntoResponse, Response},
     routing::get,
+    Extension,
     Router,
     ServiceExt,
 };
-use axum_extra::extract::CookieJar;
-use axum_macros::debug_middleware;
 use chrono::Utc;
 use diesel::{
     r2d2::{ConnectionManager, Pool},
@@ -49,7 +47,8 @@ use federation::objects::{
 use leptos::prelude::*;
 use leptos_axum::{generate_route_list, LeptosRoutes};
 use log::info;
-use std::{net::SocketAddr, thread};
+use middleware::{auth_middleware, federation_routes_middleware, FEDERATION_ROUTES_PREFIX};
+use std::{net::SocketAddr, sync::Arc, thread};
 use tokio::{net::TcpListener, sync::oneshot};
 use tower_http::{compression::CompressionLayer, cors::CorsLayer};
 use tower_layer::Layer;
@@ -61,13 +60,12 @@ pub mod config;
 pub mod database;
 pub mod error;
 pub mod federation;
+mod middleware;
 mod nodeinfo;
 mod scheduled_tasks;
 mod utils;
 
 const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
-
-const FEDERATION_ROUTES_PREFIX: &str = "/federation_routes";
 
 pub async fn start(
     config: IbisConfig,
@@ -83,11 +81,11 @@ pub async fn start(
         .get()?
         .run_pending_migrations(MIGRATIONS)
         .expect("run migrations");
-    let data = IbisData { db_pool, config };
+    let ibis_data = IbisData { db_pool, config };
     let data = FederationConfig::builder()
-        .domain(data.config.federation.domain.clone())
-        .url_verifier(Box::new(VerifyUrlData(data.config.clone())))
-        .app_data(data)
+        .domain(ibis_data.config.federation.domain.clone())
+        .url_verifier(Box::new(VerifyUrlData(ibis_data.config.clone())))
+        .app_data(ibis_data.clone())
         .http_fetch_limit(1000)
         .debug(cfg!(debug_assertions))
         .build()
@@ -111,6 +109,7 @@ pub async fn start(
     let routes = generate_route_list(App);
 
     let config = data.clone();
+    let arc_data = Arc::new(ibis_data);
     let app = Router::new()
         .leptos_routes_with_handler(routes, get(leptos_routes_handler))
         .fallback(file_and_error_handler)
@@ -120,7 +119,8 @@ pub async fn start(
         .nest("", nodeinfo::config())
         .layer(FederationMiddleware::new(config))
         .layer(CorsLayer::permissive())
-        .layer(CompressionLayer::new());
+        .layer(CompressionLayer::new())
+        .route_layer(from_fn_with_state(arc_data.clone(), auth_middleware));
 
     // Rewrite federation routes
     // https://docs.rs/axum/0.7.4/axum/middleware/index.html#rewriting-request-uri-in-middleware
@@ -139,19 +139,20 @@ pub async fn start(
 
 /// Make auth token available in hydrate mode
 async fn leptos_routes_handler(
-    jar: CookieJar,
+    auth: Option<Extension<Auth>>,
     State(leptos_options): State<LeptosOptions>,
-    req: Request<Body>,
+    request: Request<Body>,
 ) -> Response {
     let handler = leptos_axum::render_app_async_with_context(
         move || {
-            let cookie = jar.get(AUTH_COOKIE).map(|c| c.value().to_string());
-            provide_context(Auth(cookie));
+            if let Some(auth) = &auth {
+                provide_context(auth.0.clone());
+            }
         },
         move || shell(leptos_options.clone()),
     );
 
-    handler(req).await.into_response()
+    handler(request).await.into_response()
 }
 
 const MAIN_PAGE_DEFAULT_TEXT: &str = "Welcome to Ibis, the federated Wikipedia alternative!
@@ -214,38 +215,4 @@ async fn setup(data: &Data<IbisData>) -> Result<(), Error> {
     DbPerson::ghost(data)?;
 
     Ok(())
-}
-
-/// Rewrite federation routes to use `FEDERATION_ROUTES_PREFIX`, to avoid conflicts
-/// with frontend routes. If a request is an Activitypub fetch as indicated by
-/// `Accept: application/activity+json` header, use the federation routes. Otherwise
-/// leave the path unchanged so it can go to frontend.
-#[debug_middleware]
-async fn federation_routes_middleware(request: Request<Body>, next: Next) -> Response {
-    let (mut parts, body) = request.into_parts();
-    // rewrite uri based on accept header
-    let mut uri = parts.uri.to_string();
-    const VALUE1: HeaderValue = HeaderValue::from_static("application/activity+json");
-    const VALUE2: HeaderValue = HeaderValue::from_static(
-        r#"application/ld+json; profile="https://www.w3.org/ns/activitystreams""#,
-    );
-    let accept = parts.headers.get("Accept");
-    let content_type = parts.headers.get("Content-Type");
-    if Some(&VALUE1) == accept
-        || Some(&VALUE2) == accept
-        || Some(&VALUE1) == content_type
-        || Some(&VALUE2) == content_type
-    {
-        uri = format!("{FEDERATION_ROUTES_PREFIX}{uri}");
-    }
-    // drop trailing slash
-    if uri.ends_with('/') && uri.len() > 1 {
-        uri.pop();
-    }
-    parts.uri = uri
-        .parse()
-        .expect("can parse uri after dropping trailing slash");
-    let request = Request::from_parts(parts, body);
-
-    next.run(request).await
 }

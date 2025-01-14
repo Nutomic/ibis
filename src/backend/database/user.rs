@@ -159,7 +159,7 @@ impl DbPerson {
         Ok(())
     }
 
-    pub fn read_local_from_name(username: &str, data: &Data<IbisData>) -> MyResult<LocalUserView> {
+    pub fn read_local_from_name(username: &str, data: &IbisData) -> MyResult<LocalUserView> {
         let mut conn = data.db_pool.get()?;
         let (person, local_user) = person::table
             .inner_join(local_user::table)
@@ -175,7 +175,7 @@ impl DbPerson {
         })
     }
 
-    fn read_following(id_: PersonId, data: &Data<IbisData>) -> MyResult<Vec<DbInstance>> {
+    fn read_following(id_: PersonId, data: &IbisData) -> MyResult<Vec<DbInstance>> {
         use instance_follow::dsl::{follower_id, instance_id};
         let mut conn = data.db_pool.get()?;
         Ok(instance_follow::table

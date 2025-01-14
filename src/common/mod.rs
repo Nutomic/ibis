@@ -25,7 +25,7 @@ pub const MAIN_PAGE_NAME: &str = "Main_Page";
 
 pub static AUTH_COOKIE: &str = "auth";
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Auth(pub Option<String>);
 
 /// Should be an enum Title/Id but fails due to https://github.com/nox/serde_urlencoded/issues/66

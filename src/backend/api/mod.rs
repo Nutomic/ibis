@@ -13,31 +13,25 @@ use crate::{
                 search_article,
             },
             instance::{follow_instance, get_instance, resolve_instance},
-            user::{get_user, login_user, logout_user, register_user, validate},
+            user::{get_user, login_user, logout_user, register_user},
         },
         database::IbisData,
         error::MyResult,
     },
-    common::{DbEdit, EditView, GetEditList, LocalUserView, SiteView, AUTH_COOKIE},
+    common::{DbEdit, EditView, GetEditList, LocalUserView, SiteView},
 };
 use activitypub_federation::config::Data;
 use anyhow::anyhow;
 use article::{approve_article, delete_conflict};
 use axum::{
-    body::Body,
     extract::Query,
-    http::{Request, StatusCode},
-    middleware::{self, Next},
-    response::Response,
     routing::{delete, get, post},
     Extension,
     Json,
     Router,
 };
 use axum_macros::debug_handler;
-use http::header::COOKIE;
 use instance::list_remote_instances;
-use std::collections::HashSet;
 use user::{count_notifications, list_notifications, update_user_profile};
 
 pub mod article;
@@ -70,40 +64,6 @@ pub fn api_routes() -> Router<()> {
         .route("/account/logout", post(logout_user))
         .route("/account/update", post(update_user_profile))
         .route("/site", get(site_view))
-        .route_layer(middleware::from_fn(auth))
-}
-
-async fn auth(
-    data: Data<IbisData>,
-    mut request: Request<Body>,
-    next: Next,
-) -> Result<Response, StatusCode> {
-    // Check all duplicate auth headers and cookies for the first valid one.
-    // We need to extract cookies manually because CookieJar ignores duplicates.
-    let cookies = request
-        .headers()
-        .get(COOKIE)
-        .and_then(|h| h.to_str().ok())
-        .unwrap_or_default()
-        .split(';')
-        .flat_map(|s| s.split_once('='))
-        .filter(|s| s.0 == AUTH_COOKIE)
-        .map(|s| s.1);
-    let headers = request
-        .headers()
-        .get_all(AUTH_COOKIE)
-        .into_iter()
-        .filter_map(|h| h.to_str().ok());
-    let auth: HashSet<_> = headers.chain(cookies).map(|s| s.to_string()).collect();
-
-    for a in &auth {
-        if let Ok(user) = validate(a, &data).await {
-            request.extensions_mut().insert(user);
-            break;
-        }
-    }
-    let response = next.run(request).await;
-    Ok(response)
 }
 
 fn check_is_admin(user: &LocalUserView) -> MyResult<()> {

@@ -64,7 +64,7 @@ fn generate_login_token(person: &DbPerson, data: &Data<IbisData>) -> MyResult<St
     Ok(jwt)
 }
 
-pub async fn validate(jwt: &str, data: &Data<IbisData>) -> MyResult<LocalUserView> {
+pub async fn validate(jwt: &str, data: &IbisData) -> MyResult<LocalUserView> {
     let validation = Validation::default();
     let secret = read_jwt_secret(data)?;
     let key = DecodingKey::from_secret(secret.as_bytes());
