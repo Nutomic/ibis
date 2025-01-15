@@ -27,6 +27,7 @@ use crate::{
             ProtectArticleForm,
             SearchArticleForm,
         },
+        comment::DbComment,
         instance::DbInstance,
         user::LocalUserView,
         utils::{extract_domain, http_protocol_str},
@@ -260,10 +261,12 @@ pub(super) async fn resolve_article(
 ) -> MyResult<Json<ArticleView>> {
     let article: DbArticle = ObjectId::from(query.id).dereference(&data).await?;
     let instance = DbInstance::read(article.instance_id, &data)?;
+    let comments = DbComment::read_for_article(article.id, &data)?;
     let latest_version = article.latest_edit_version(&data)?;
     Ok(Json(ArticleView {
         article,
         instance,
+        comments,
         latest_version,
     }))
 }

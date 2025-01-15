@@ -1,4 +1,7 @@
-use super::objects::instance_collection::{DbInstanceCollection, InstanceCollection};
+use super::objects::{
+    comment::ApubComment,
+    instance_collection::{DbInstanceCollection, InstanceCollection},
+};
 use crate::{
     backend::{
         database::IbisData,
@@ -21,7 +24,13 @@ use crate::{
         },
         utils::error::{Error, MyResult},
     },
-    common::{article::DbArticle, instance::DbInstance, user::DbPerson},
+    common::{
+        article::DbArticle,
+        comment::DbComment,
+        instance::DbInstance,
+        newtypes::CommentId,
+        user::DbPerson,
+    },
 };
 use activitypub_federation::{
     axum::{
@@ -51,6 +60,7 @@ pub fn federation_routes() -> Router<()> {
         .route("/linked_instances", get(http_get_linked_instances))
         .route("/article/:title", get(http_get_article))
         .route("/article/:title/edits", get(http_get_article_edits))
+        .route("/comment/:id", get(http_get_comment))
         .route("/inbox", post(http_post_inbox))
 }
 
@@ -106,6 +116,16 @@ async fn http_get_article_edits(
 ) -> MyResult<FederationJson<WithContext<ApubEditCollection>>> {
     let article = DbArticle::read_view_title(&title, None, &data)?;
     let json = DbEditCollection::read_local(&article.article, &data).await?;
+    Ok(FederationJson(WithContext::new_default(json)))
+}
+
+#[debug_handler]
+async fn http_get_comment(
+    Path(id): Path<i32>,
+    data: Data<IbisData>,
+) -> MyResult<FederationJson<WithContext<ApubComment>>> {
+    let comment = DbComment::read(CommentId(id), &data)?;
+    let json = comment.into_json(&data).await?;
     Ok(FederationJson(WithContext::new_default(json)))
 }
 

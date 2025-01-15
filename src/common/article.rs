@@ -1,4 +1,5 @@
 use super::{
+    comment::DbComment,
     instance::DbInstance,
     newtypes::{ArticleId, ConflictId, EditId, InstanceId, PersonId},
     user::DbPerson,
@@ -34,6 +35,7 @@ pub struct ListArticlesForm {
 pub struct ArticleView {
     pub article: DbArticle,
     pub instance: DbInstance,
+    pub comments: Vec<DbComment>,
     pub latest_version: EditVersion,
 }
 

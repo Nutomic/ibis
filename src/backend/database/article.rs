@@ -9,6 +9,7 @@ use crate::{
     },
     common::{
         article::{ArticleView, DbArticle, EditVersion},
+        comment::DbComment,
         instance::DbInstance,
         newtypes::{ArticleId, InstanceId},
     },
@@ -104,10 +105,12 @@ impl DbArticle {
             .inner_join(instance::table)
             .into_boxed();
         let (article, instance): (DbArticle, DbInstance) = query.get_result(conn.deref_mut())?;
+        let comments = DbComment::read_for_article(article.id, data)?;
         let latest_version = article.latest_edit_version(data)?;
         Ok(ArticleView {
             article,
             instance,
+            comments,
             latest_version,
         })
     }
@@ -130,10 +133,12 @@ impl DbArticle {
             };
             query.get_result(conn.deref_mut())?
         };
+        let comments = DbComment::read_for_article(article.id, data)?;
         let latest_version = article.latest_edit_version(data)?;
         Ok(ArticleView {
             article,
             instance,
+            comments,
             latest_version,
         })
     }

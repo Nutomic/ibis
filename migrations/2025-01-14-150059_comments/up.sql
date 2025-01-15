@@ -4,7 +4,7 @@ CREATE TABLE comment (
     article_id int REFERENCES article ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
     parent_id int REFERENCES COMMENT ON UPDATE CASCADE ON DELETE CASCADE,
     content text NOT NULL,
-    ap_id text not null,
+    ap_id varchar(255) not null set default 'http://example.com',
     local boolean NOT NULL,
     deleted boolean not null,
     published timestamptz NOT NULL DEFAULT now(),

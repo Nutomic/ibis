@@ -1,7 +1,7 @@
 use super::article_or_comment::DbArticleOrComment;
 use crate::{
     backend::{
-        database::{comment::DbCommentForm, IbisData},
+        database::{comment::DbCommentInsertForm, IbisData},
         utils::error::Error,
     },
     common::{article::DbArticle, comment::DbComment, user::DbPerson},
@@ -87,11 +87,11 @@ impl Object for DbComment {
         };
         let creator = json.attributed_to.dereference(data).await?;
 
-        let form = DbCommentForm {
+        let form = DbCommentInsertForm {
             article_id,
             creator_id: creator.id,
             parent_id,
-            ap_id: json.id,
+            ap_id: Some(json.id),
             local: false,
             deleted: false,
             published: json.published.unwrap_or_else(|| Utc::now()),
