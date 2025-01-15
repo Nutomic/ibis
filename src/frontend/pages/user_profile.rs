@@ -1,5 +1,5 @@
 use crate::{
-    common::GetUserForm,
+    common::user::GetUserForm,
     frontend::{
         api::CLIENT,
         components::edit_list::EditList,

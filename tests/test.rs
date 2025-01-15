@@ -5,19 +5,19 @@ mod common;
 use crate::common::{TestData, TEST_ARTICLE_DEFAULT_TEXT};
 use anyhow::Result;
 use ibis::common::{
+    article::{
+        ArticleView,
+        CreateArticleForm,
+        EditArticleForm,
+        ForkArticleForm,
+        GetArticleForm,
+        ListArticlesForm,
+        ProtectArticleForm,
+        SearchArticleForm,
+    },
+    user::{GetUserForm, LoginUserForm, RegisterUserForm},
     utils::extract_domain,
-    ArticleView,
-    CreateArticleForm,
-    EditArticleForm,
-    ForkArticleForm,
-    GetArticleForm,
-    GetUserForm,
-    ListArticlesForm,
-    LoginUserForm,
     Notification,
-    ProtectArticleForm,
-    RegisterUserForm,
-    SearchArticleForm,
 };
 use pretty_assertions::{assert_eq, assert_ne};
 use retry_future::{LinearRetryStrategy, RetryFuture, RetryPolicy};

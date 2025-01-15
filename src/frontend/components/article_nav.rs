@@ -1,5 +1,5 @@
 use crate::{
-    common::{validation::can_edit_article, ArticleView},
+    common::{article::ArticleView, validation::can_edit_article},
     frontend::{
         app::{is_admin, is_logged_in},
         article_path,

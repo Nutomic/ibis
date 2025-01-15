@@ -1,4 +1,4 @@
-use crate::common::DbArticle;
+use crate::common::article::DbArticle;
 use leptos::server_fn::error::ServerFnErrorErr;
 
 pub fn can_edit_article(article: &DbArticle, is_admin: bool) -> Result<(), ServerFnErrorErr> {

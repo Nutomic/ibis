@@ -1,4 +1,4 @@
-use crate::common::{utils::extract_domain, DbArticle, DbPerson};
+use crate::common::{article::DbArticle, user::DbPerson, utils::extract_domain};
 use chrono::{DateTime, Duration, Local, Utc};
 use codee::string::FromToStringCodec;
 use leptos::prelude::*;

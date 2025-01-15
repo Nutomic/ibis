@@ -18,7 +18,11 @@ use crate::{
         database::IbisData,
         utils::error::MyResult,
     },
-    common::{DbEdit, EditView, GetEditList, LocalUserView, SiteView},
+    common::{
+        article::{DbEdit, EditView, GetEditList},
+        instance::SiteView,
+        user::LocalUserView,
+    },
 };
 use activitypub_federation::config::Data;
 use anyhow::anyhow;

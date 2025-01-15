@@ -1,6 +1,6 @@
 use crate::{
     backend::{database::IbisData, federation::objects::edit::ApubEdit, utils::error::Error},
-    common::{DbArticle, DbEdit},
+    common::article::{DbArticle, DbEdit},
 };
 use activitypub_federation::{
     config::Data,

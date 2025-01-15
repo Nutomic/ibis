@@ -4,7 +4,10 @@ use crate::{
         federation::objects::edits_collection::DbEditCollection,
         utils::error::Error,
     },
-    common::{DbArticle, DbInstance, EditVersion},
+    common::{
+        article::{DbArticle, EditVersion},
+        instance::DbInstance,
+    },
 };
 use activitypub_federation::{
     config::Data,

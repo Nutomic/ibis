@@ -10,7 +10,7 @@ use crate::{
             generate_activity_id,
         },
     },
-    common::{DbInstance, EditVersion},
+    common::{article::EditVersion, instance::DbInstance},
 };
 use activitypub_federation::{
     config::Data,

@@ -4,7 +4,7 @@ use crate::{
         database::IbisData,
         utils::error::{Error, MyResult},
     },
-    common::{utils::http_protocol_str, DbInstance},
+    common::{instance::DbInstance, utils::http_protocol_str},
 };
 use activitypub_federation::{
     config::Data,

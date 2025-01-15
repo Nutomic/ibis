@@ -3,7 +3,7 @@ use crate::{
         database::{user::DbPersonForm, IbisData},
         utils::error::Error,
     },
-    common::DbPerson,
+    common::user::DbPerson,
 };
 use activitypub_federation::{
     config::Data,

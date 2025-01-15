@@ -1,5 +1,8 @@
 use crate::{
-    common::{newtypes::ArticleId, ForkArticleForm, ProtectArticleForm},
+    common::{
+        article::{ForkArticleForm, ProtectArticleForm},
+        newtypes::ArticleId,
+    },
     frontend::{
         api::CLIENT,
         app::is_admin,

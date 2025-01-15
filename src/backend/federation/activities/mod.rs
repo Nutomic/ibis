@@ -8,11 +8,9 @@ use crate::{
         utils::error::Error,
     },
     common::{
+        article::{DbArticle, DbEdit, EditVersion},
+        instance::DbInstance,
         newtypes::{EditId, PersonId},
-        DbArticle,
-        DbEdit,
-        DbInstance,
-        EditVersion,
     },
 };
 use activitypub_federation::config::Data;

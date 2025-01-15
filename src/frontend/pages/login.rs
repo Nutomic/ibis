@@ -1,5 +1,5 @@
 use crate::{
-    common::LoginUserForm,
+    common::user::LoginUserForm,
     frontend::{api::CLIENT, app::site, components::credentials::*},
 };
 use leptos::prelude::*;

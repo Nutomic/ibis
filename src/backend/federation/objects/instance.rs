@@ -5,7 +5,7 @@ use crate::{
         federation::{objects::articles_collection::DbArticleCollection, send_activity},
         utils::error::{Error, MyResult},
     },
-    common::{utils::extract_domain, DbInstance},
+    common::{instance::DbInstance, utils::extract_domain},
 };
 use activitypub_federation::{
     config::Data,

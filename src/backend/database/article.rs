@@ -8,11 +8,9 @@ use crate::{
         utils::error::MyResult,
     },
     common::{
+        article::{ArticleView, DbArticle, EditVersion},
+        instance::DbInstance,
         newtypes::{ArticleId, InstanceId},
-        ArticleView,
-        DbArticle,
-        DbInstance,
-        EditVersion,
     },
 };
 use activitypub_federation::fetch::{collection_id::CollectionId, object_id::ObjectId};

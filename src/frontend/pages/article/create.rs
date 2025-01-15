@@ -1,5 +1,5 @@
 use crate::{
-    common::CreateArticleForm,
+    common::article::CreateArticleForm,
     frontend::{
         api::CLIENT,
         app::{is_admin, site, DefaultResource},

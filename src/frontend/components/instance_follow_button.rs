@@ -1,5 +1,8 @@
 use crate::{
-    common::{newtypes::InstanceId, DbInstance, FollowInstance},
+    common::{
+        instance::{DbInstance, FollowInstance},
+        newtypes::InstanceId,
+    },
     frontend::{
         api::CLIENT,
         app::{site, DefaultResource},

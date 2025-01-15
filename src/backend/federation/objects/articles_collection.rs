@@ -4,7 +4,7 @@ use crate::{
         federation::objects::article::ApubArticle,
         utils::error::{Error, MyResult},
     },
-    common::{utils::http_protocol_str, DbArticle},
+    common::{article::DbArticle, utils::http_protocol_str},
 };
 use activitypub_federation::{
     config::Data,
