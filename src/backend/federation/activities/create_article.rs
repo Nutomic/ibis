@@ -1,9 +1,11 @@
 use crate::{
     backend::{
         database::IbisData,
-        error::MyResult,
         federation::objects::article::ApubArticle,
-        utils::generate_activity_id,
+        utils::{
+            error::{Error, MyResult},
+            generate_activity_id,
+        },
     },
     common::{DbArticle, DbInstance},
 };
@@ -51,7 +53,7 @@ impl CreateArticle {
 #[async_trait::async_trait]
 impl ActivityHandler for CreateArticle {
     type DataType = IbisData;
-    type Error = crate::backend::error::Error;
+    type Error = Error;
 
     fn id(&self) -> &Url {
         &self.id

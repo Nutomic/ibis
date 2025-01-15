@@ -1,9 +1,8 @@
 use crate::{
     backend::{
         database::{schema::conflict, IbisData},
-        error::MyResult,
         federation::activities::submit_article_update,
-        utils::generate_article_version,
+        utils::{error::MyResult, generate_article_version},
     },
     common::{
         newtypes::{ArticleId, ConflictId, PersonId},

@@ -4,8 +4,8 @@ use crate::{
             schema::{article, edit, instance},
             IbisData,
         },
-        error::MyResult,
         federation::objects::edits_collection::DbEditCollection,
+        utils::error::MyResult,
     },
     common::{
         newtypes::{ArticleId, InstanceId},

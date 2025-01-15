@@ -1,8 +1,8 @@
 use crate::{
     backend::{
         database::{article::DbArticleForm, IbisData},
-        error::Error,
         federation::objects::edits_collection::DbEditCollection,
+        utils::error::Error,
     },
     common::{DbArticle, DbInstance, EditVersion},
 };

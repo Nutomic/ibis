@@ -1,8 +1,8 @@
 use crate::{
     backend::{
         database::IbisData,
-        error::{Error, MyResult},
         federation::objects::article::ApubArticle,
+        utils::error::{Error, MyResult},
     },
     common::{utils::http_protocol_str, DbArticle},
 };

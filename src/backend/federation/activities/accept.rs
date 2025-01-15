@@ -1,9 +1,11 @@
 use crate::{
     backend::{
         database::IbisData,
-        error::MyResult,
         federation::{activities::follow::Follow, send_activity},
-        utils::generate_activity_id,
+        utils::{
+            error::{Error, MyResult},
+            generate_activity_id,
+        },
     },
     common::DbInstance,
 };
@@ -54,7 +56,7 @@ impl Accept {
 #[async_trait::async_trait]
 impl ActivityHandler for Accept {
     type DataType = IbisData;
-    type Error = crate::backend::error::Error;
+    type Error = Error;
 
     fn id(&self) -> &Url {
         &self.id

@@ -1,5 +1,5 @@
 use crate::{
-    backend::{database::IbisData, error::MyResult, federation::activities::follow::Follow},
+    backend::{database::IbisData, federation::activities::follow::Follow, utils::error::MyResult},
     common::{
         DbInstance,
         FollowInstance,

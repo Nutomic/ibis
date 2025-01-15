@@ -1,5 +1,5 @@
 use crate::{
-    backend::{database::IbisData, error::Error, federation::objects::edit::ApubEdit},
+    backend::{database::IbisData, federation::objects::edit::ApubEdit, utils::error::Error},
     common::{DbArticle, DbEdit},
 };
 use activitypub_federation::{

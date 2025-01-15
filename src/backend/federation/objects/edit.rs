@@ -1,7 +1,7 @@
 use crate::{
     backend::{
         database::{edit::DbEditForm, IbisData},
-        error::Error,
+        utils::error::Error,
     },
     common::{DbArticle, DbEdit, DbPerson, EditVersion},
 };

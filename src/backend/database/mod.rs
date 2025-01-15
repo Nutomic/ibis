@@ -1,4 +1,4 @@
-use crate::backend::{config::IbisConfig, database::schema::jwt_secret, error::MyResult};
+use crate::backend::{config::IbisConfig, database::schema::jwt_secret, utils::error::MyResult};
 use diesel::{
     r2d2::{ConnectionManager, Pool},
     PgConnection,

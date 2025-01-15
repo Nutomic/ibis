@@ -1,6 +1,8 @@
-use super::database::instance_stats::InstanceStats;
 use crate::{
-    backend::{database::IbisData, error::MyResult},
+    backend::{
+        database::{instance_stats::InstanceStats, IbisData},
+        utils::error::MyResult,
+    },
     common::utils::http_protocol_str,
 };
 use activitypub_federation::config::Data;
