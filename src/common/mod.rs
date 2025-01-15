@@ -48,6 +48,7 @@ pub struct ListArticlesForm {
 pub struct ArticleView {
     pub article: DbArticle,
     pub instance: DbInstance,
+    pub comments: Vec<DbComment>,
     pub latest_version: EditVersion,
 }
 
