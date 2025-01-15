@@ -2,37 +2,24 @@ use crate::{
     backend::{
         config::IbisConfig,
         database::{article::DbArticleForm, instance::DbInstanceForm, IbisData},
-        error::{Error, MyResult},
-        federation::{activities::submit_article_update, routes::federation_routes, VerifyUrlData},
-        utils::generate_activity_id,
+        federation::{activities::submit_article_update, VerifyUrlData},
+        utils::{
+            error::{Error, MyResult},
+            generate_activity_id,
+        },
     },
     common::{
         utils::http_protocol_str,
-        Auth,
         DbArticle,
         DbInstance,
         DbPerson,
         EditVersion,
         MAIN_PAGE_NAME,
     },
-    frontend::app::{shell, App},
 };
 use activitypub_federation::{
-    config::{Data, FederationConfig, FederationMiddleware},
+    config::{Data, FederationConfig},
     fetch::object_id::ObjectId,
-};
-use api::api_routes;
-use assets::file_and_error_handler;
-use axum::{
-    body::Body,
-    extract::State,
-    http::Request,
-    middleware::from_fn_with_state,
-    response::{IntoResponse, Response},
-    routing::get,
-    Extension,
-    Router,
-    ServiceExt,
 };
 use chrono::Utc;
 use diesel::{
@@ -44,26 +31,18 @@ use federation::objects::{
     articles_collection::local_articles_url,
     instance_collection::linked_instances_url,
 };
-use leptos::prelude::*;
-use leptos_axum::{generate_route_list, LeptosRoutes};
+use tokio::sync::oneshot;
 use log::info;
-use middleware::{auth_middleware, federation_routes_middleware, FEDERATION_ROUTES_PREFIX};
-use std::{net::SocketAddr, sync::Arc, thread};
-use tokio::{net::TcpListener, sync::oneshot};
-use tower_http::{compression::CompressionLayer, cors::CorsLayer};
-use tower_layer::Layer;
-use utils::generate_keypair;
+use server::start_server;
+use std::{net::SocketAddr, thread};
+use utils::{generate_keypair, scheduled_tasks};
 
 pub mod api;
-mod assets;
 pub mod config;
 pub mod database;
-pub mod error;
 pub mod federation;
-mod middleware;
-mod nodeinfo;
-mod scheduled_tasks;
-mod utils;
+mod server;
+pub mod utils;
 
 const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
 
@@ -85,14 +64,14 @@ pub async fn start(
     let data = FederationConfig::builder()
         .domain(ibis_data.config.federation.domain.clone())
         .url_verifier(Box::new(VerifyUrlData(ibis_data.config.clone())))
-        .app_data(ibis_data.clone())
+        .app_data(ibis_data)
         .http_fetch_limit(1000)
         .debug(cfg!(debug_assertions))
         .build()
         .await?;
 
-    // Create local instance if it doesnt exist yet
     if DbInstance::read_local_instance(&data).is_err() {
+        info!("Running setup for new instance");
         setup(&data.to_request_data()).await?;
     }
 
@@ -101,58 +80,9 @@ pub async fn start(
         scheduled_tasks::start(db_pool);
     });
 
-    let leptos_options = get_config_from_str(include_str!("../../Cargo.toml"))?;
-    let mut addr = leptos_options.site_addr;
-    if let Some(override_hostname) = override_hostname {
-        addr = override_hostname;
-    }
-    let routes = generate_route_list(App);
-
-    let config = data.clone();
-    let arc_data = Arc::new(ibis_data);
-    let app = Router::new()
-        .leptos_routes_with_handler(routes, get(leptos_routes_handler))
-        .fallback(file_and_error_handler)
-        .with_state(leptos_options)
-        .nest(FEDERATION_ROUTES_PREFIX, federation_routes())
-        .nest("/api/v1", api_routes())
-        .nest("", nodeinfo::config())
-        .layer(FederationMiddleware::new(config))
-        .layer(CorsLayer::permissive())
-        .layer(CompressionLayer::new())
-        .route_layer(from_fn_with_state(arc_data.clone(), auth_middleware));
-
-    // Rewrite federation routes
-    // https://docs.rs/axum/0.7.4/axum/middleware/index.html#rewriting-request-uri-in-middleware
-    let middleware = axum::middleware::from_fn(federation_routes_middleware);
-    let app_with_middleware = middleware.layer(app);
-
-    info!("Listening on {}", &addr);
-    let listener = TcpListener::bind(&addr).await?;
-    if let Some(notify_start) = notify_start {
-        notify_start.send(()).expect("send oneshot");
-    }
-    axum::serve(listener, app_with_middleware.into_make_service()).await?;
+    start_server(data, override_hostname, notify_start).await?;
 
     Ok(())
-}
-
-/// Make auth token available in hydrate mode
-async fn leptos_routes_handler(
-    auth: Option<Extension<Auth>>,
-    State(leptos_options): State<LeptosOptions>,
-    request: Request<Body>,
-) -> Response {
-    let handler = leptos_axum::render_app_async_with_context(
-        move || {
-            if let Some(auth) = &auth {
-                provide_context(auth.0.clone());
-            }
-        },
-        move || shell(leptos_options.clone()),
-    );
-
-    handler(request).await.into_response()
 }
 
 const MAIN_PAGE_DEFAULT_TEXT: &str = "Welcome to Ibis, the federated Wikipedia alternative!

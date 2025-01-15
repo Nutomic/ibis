@@ -1,7 +1,7 @@
 use crate::{
     backend::{
         database::schema::{article, edit, person},
-        error::MyResult,
+        utils::error::MyResult,
         IbisData,
     },
     common::{

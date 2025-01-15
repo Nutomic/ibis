@@ -4,9 +4,11 @@ use crate::{
             conflict::{DbConflict, DbConflictForm},
             IbisData,
         },
-        error::MyResult,
         federation::{objects::edit::ApubEdit, send_activity},
-        utils::generate_activity_id,
+        utils::{
+            error::{Error, MyResult},
+            generate_activity_id,
+        },
     },
     common::{DbInstance, EditVersion},
 };
@@ -61,7 +63,7 @@ impl RejectEdit {
 #[async_trait::async_trait]
 impl ActivityHandler for RejectEdit {
     type DataType = IbisData;
-    type Error = crate::backend::error::Error;
+    type Error = Error;
 
     fn id(&self) -> &Url {
         &self.id

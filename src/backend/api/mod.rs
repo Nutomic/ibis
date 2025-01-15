@@ -16,7 +16,7 @@ use crate::{
             user::{get_user, login_user, logout_user, register_user},
         },
         database::IbisData,
-        error::MyResult,
+        utils::error::MyResult,
     },
     common::{DbEdit, EditView, GetEditList, LocalUserView, SiteView},
 };

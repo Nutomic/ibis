@@ -7,9 +7,8 @@ use crate::{
             edit::DbEditForm,
             IbisData,
         },
-        error::MyResult,
         federation::activities::{create_article::CreateArticle, submit_article_update},
-        utils::generate_article_version,
+        utils::{error::MyResult, generate_article_version},
     },
     common::{
         utils::{extract_domain, http_protocol_str},

@@ -2,7 +2,7 @@ use super::{check_is_admin, empty_to_none};
 use crate::{
     backend::{
         database::{conflict::DbConflict, read_jwt_secret, IbisData},
-        error::MyResult,
+        utils::error::MyResult,
     },
     common::{
         DbArticle,

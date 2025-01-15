@@ -1,6 +1,5 @@
-use super::api::user::validate;
 use crate::{
-    backend::database::IbisData,
+    backend::{api::user::validate, database::IbisData},
     common::{Auth, AUTH_COOKIE},
 };
 use axum::{body::Body, extract::State, http::Request, middleware::Next, response::Response};

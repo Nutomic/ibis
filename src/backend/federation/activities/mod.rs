@@ -1,11 +1,11 @@
 use crate::{
     backend::{
         database::{edit::DbEditForm, IbisData},
-        error::Error,
         federation::activities::{
             update_local_article::UpdateLocalArticle,
             update_remote_article::UpdateRemoteArticle,
         },
+        utils::error::Error,
     },
     common::{
         newtypes::{EditId, PersonId},

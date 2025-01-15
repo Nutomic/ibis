@@ -1,7 +1,7 @@
 use crate::{
     backend::{
         database::{user::DbPersonForm, IbisData},
-        error::Error,
+        utils::error::Error,
     },
     common::DbPerson,
 };

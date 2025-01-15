@@ -4,11 +4,11 @@ use crate::{
             schema::{instance, instance_follow},
             IbisData,
         },
-        error::MyResult,
         federation::objects::{
             articles_collection::DbArticleCollection,
             instance_collection::DbInstanceCollection,
         },
+        utils::error::MyResult,
     },
     common::{newtypes::InstanceId, DbInstance, DbPerson, InstanceView},
 };

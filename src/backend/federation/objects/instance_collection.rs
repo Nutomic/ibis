@@ -2,7 +2,7 @@ use super::instance::ApubInstance;
 use crate::{
     backend::{
         database::IbisData,
-        error::{Error, MyResult},
+        utils::error::{Error, MyResult},
     },
     common::{utils::http_protocol_str, DbInstance},
 };

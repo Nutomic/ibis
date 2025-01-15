@@ -1,9 +1,9 @@
 use crate::{
     backend::{
         database::IbisData,
-        error::MyResult,
         federation::{activities::accept::Accept, send_activity},
         generate_activity_id,
+        utils::error::{Error, MyResult},
     },
     common::{DbInstance, DbPerson},
 };
@@ -44,7 +44,7 @@ impl Follow {
 #[async_trait::async_trait]
 impl ActivityHandler for Follow {
     type DataType = IbisData;
-    type Error = crate::backend::error::Error;
+    type Error = Error;
 
     fn id(&self) -> &Url {
         &self.id

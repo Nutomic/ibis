@@ -2,7 +2,6 @@ use super::objects::instance_collection::{DbInstanceCollection, InstanceCollecti
 use crate::{
     backend::{
         database::IbisData,
-        error::{Error, MyResult},
         federation::{
             activities::{
                 accept::Accept,
@@ -20,6 +19,7 @@ use crate::{
                 user::ApubUser,
             },
         },
+        utils::error::{Error, MyResult},
     },
     common::{DbArticle, DbInstance, DbPerson},
 };

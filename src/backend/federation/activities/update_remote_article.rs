@@ -1,13 +1,15 @@
 use crate::{
     backend::{
         database::IbisData,
-        error::MyResult,
         federation::{
             activities::{reject::RejectEdit, update_local_article::UpdateLocalArticle},
             objects::edit::ApubEdit,
             send_activity,
         },
-        utils::generate_activity_id,
+        utils::{
+            error::{Error, MyResult},
+            generate_activity_id,
+        },
     },
     common::{validation::can_edit_article, DbArticle, DbEdit, DbInstance},
 };
@@ -64,7 +66,7 @@ impl UpdateRemoteArticle {
 #[async_trait::async_trait]
 impl ActivityHandler for UpdateRemoteArticle {
     type DataType = IbisData;
-    type Error = crate::backend::error::Error;
+    type Error = Error;
 
     fn id(&self) -> &Url {
         &self.id

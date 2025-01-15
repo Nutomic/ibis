@@ -4,8 +4,7 @@ use crate::{
             schema::{instance, instance_follow, local_user, person},
             IbisData,
         },
-        error::MyResult,
-        utils::generate_keypair,
+        utils::{error::MyResult, generate_keypair},
     },
     common::{
         newtypes::PersonId,

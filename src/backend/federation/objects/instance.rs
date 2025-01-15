@@ -2,8 +2,8 @@ use super::instance_collection::DbInstanceCollection;
 use crate::{
     backend::{
         database::{instance::DbInstanceForm, IbisData},
-        error::{Error, MyResult},
         federation::{objects::articles_collection::DbArticleCollection, send_activity},
+        utils::error::{Error, MyResult},
     },
     common::{utils::extract_domain, DbInstance},
 };

@@ -1,63 +1,59 @@
 use crate::{
     backend::{
         database::{article::DbArticleForm, IbisData},
+       utils::error::Error,
         federation::objects::edits_collection::DbEditCollection,
-        utils::error::Error,
     },
-    common::{DbArticle, DbInstance, EditVersion},
+    common::{DbArticle, DbComment, DbInstance, DbPerson, EditVersion},
 };
 use activitypub_federation::{
     config::Data,
     fetch::{collection_id::CollectionId, object_id::ObjectId},
-    kinds::{object::ArticleType, public},
+    kinds::{
+        object::{ArticleType, NoteType},
+        public,
+    },
     protocol::{helpers::deserialize_one_or_many, verification::verify_domains_match},
     traits::Object,
 };
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use url::Url;
 
+use super::article_or_comment::ArticleOrComment;
+
 #[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct ApubArticle {
+pub struct ApubComment {
     #[serde(rename = "type")]
-    pub kind: ArticleType,
+    pub kind: NoteType,
     pub id: ObjectId<DbArticle>,
-    pub attributed_to: ObjectId<DbInstance>,
+    pub attributed_to: ObjectId<DbPerson>,
     #[serde(deserialize_with = "deserialize_one_or_many")]
     pub to: Vec<Url>,
-    pub edits: CollectionId<DbEditCollection>,
-    latest_version: EditVersion,
     content: String,
-    name: String,
-    protected: bool,
+    pub in_reply_to: ObjectId<ArticleOrComment>,
+    pub(crate) published: Option<DateTime<Utc>>,
+    pub(crate) updated: Option<DateTime<Utc>>,
 }
 
 #[async_trait::async_trait]
-impl Object for DbArticle {
+impl Object for DbComment {
     type DataType = IbisData;
-    type Kind = ApubArticle;
+    type Kind = ApubComment;
     type Error = Error;
 
     async fn read_from_id(
         object_id: Url,
         data: &Data<Self::DataType>,
     ) -> Result<Option<Self>, Self::Error> {
-        let article = DbArticle::read_from_ap_id(&object_id.into(), data).ok();
-        Ok(article)
+        Ok(DbComment::read_from_ap_id(&object_id.into(), data).ok())
     }
 
     async fn into_json(self, data: &Data<Self::DataType>) -> Result<Self::Kind, Self::Error> {
         let local_instance = DbInstance::read_local_instance(data)?;
-        Ok(ApubArticle {
-            kind: Default::default(),
-            id: self.ap_id.clone(),
-            attributed_to: local_instance.ap_id.clone(),
-            to: vec![public(), local_instance.followers_url()?],
-            edits: self.edits_id()?,
-            latest_version: self.latest_edit_version(data)?,
-            content: self.text,
-            name: self.title,
-            protected: self.protected,
+        Ok(ApubComment {
+            todo!()
         })
     }
 

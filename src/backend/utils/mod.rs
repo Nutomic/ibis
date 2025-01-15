@@ -1,5 +1,5 @@
 use crate::{
-    backend::{database::IbisData, error::MyResult},
+    backend::{database::IbisData, utils::error::MyResult},
     common::{utils, DbEdit, EditVersion},
 };
 use activitypub_federation::{
@@ -12,7 +12,10 @@ use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use std::sync::LazyLock;
 use url::{ParseError, Url};
 
-pub fn generate_activity_id(data: &Data<IbisData>) -> Result<Url, ParseError> {
+pub mod error;
+pub(super) mod scheduled_tasks;
+
+pub(super) fn generate_activity_id(data: &Data<IbisData>) -> Result<Url, ParseError> {
     let domain = &data.config.federation.domain;
     let id: String = thread_rng()
         .sample_iter(&Alphanumeric)
@@ -32,7 +35,10 @@ pub fn generate_activity_id(data: &Data<IbisData>) -> Result<Url, ParseError> {
 ///
 /// TODO: testing
 /// TODO: should cache all these generated versions
-pub fn generate_article_version(edits: &Vec<DbEdit>, version: &EditVersion) -> MyResult<String> {
+pub(super) fn generate_article_version(
+    edits: &Vec<DbEdit>,
+    version: &EditVersion,
+) -> MyResult<String> {
     let mut generated = String::new();
     if version == &EditVersion::default() {
         return Ok(generated);
