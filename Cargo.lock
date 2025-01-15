@@ -5,8 +5,7 @@ version = 4
 [[package]]
 name = "activitypub_federation"
 version = "0.6.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ee819cada736b6e26c59706f9e6ff89a48060e635c0546ff984d84baefc8c13a"
+source = "git+https://github.com/LemmyNet/activitypub-federation-rust.git?branch=verify_is_remote_object#4aa9658710d3e43d38f7ecce386ed5c70700aeda"
 dependencies = [
  "activitystreams-kinds",
  "async-trait",

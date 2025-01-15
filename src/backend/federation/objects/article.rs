@@ -10,7 +10,10 @@ use activitypub_federation::{
     config::Data,
     fetch::{collection_id::CollectionId, object_id::ObjectId},
     kinds::{object::ArticleType, public},
-    protocol::{helpers::deserialize_one_or_many, verification::verify_domains_match},
+    protocol::{
+        helpers::deserialize_one_or_many,
+        verification::{verify_domains_match, verify_is_remote_object},
+    },
     traits::Object,
 };
 use serde::{Deserialize, Serialize};
@@ -64,9 +67,10 @@ impl Object for DbArticle {
     async fn verify(
         json: &Self::Kind,
         expected_domain: &Url,
-        _data: &Data<Self::DataType>,
+        data: &Data<Self::DataType>,
     ) -> Result<(), Self::Error> {
         verify_domains_match(json.id.inner(), expected_domain)?;
+        verify_is_remote_object(&json.id, data)?;
         Ok(())
     }
 

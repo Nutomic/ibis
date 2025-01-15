@@ -1,8 +1,16 @@
-drop table conflict;
-drop table edit;
-drop table article;
-drop table instance_follow;
-drop table local_user;
-drop table person;
-drop table instance;
-drop table jwt_secret;
+DROP TABLE CONFLICT;
+
+DROP TABLE edit;
+
+DROP TABLE article;
+
+DROP TABLE instance_follow;
+
+DROP TABLE local_user;
+
+DROP TABLE person;
+
+DROP TABLE instance;
+
+DROP TABLE jwt_secret;
+

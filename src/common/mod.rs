@@ -3,7 +3,7 @@ pub mod utils;
 pub mod validation;
 
 use chrono::{DateTime, Utc};
-use newtypes::{ArticleId, ConflictId, EditId, InstanceId, PersonId};
+use newtypes::{ArticleId, CommentId, ConflictId, EditId, InstanceId, PersonId};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use smart_default::SmartDefault;
@@ -12,7 +12,7 @@ use uuid::Uuid;
 #[cfg(feature = "ssr")]
 use {
     crate::backend::{
-        database::schema::{article, edit, instance, local_user, person},
+        database::schema::{article, comment, edit, instance, local_user, person},
         federation::objects::articles_collection::DbArticleCollection,
         federation::objects::instance_collection::DbInstanceCollection,
     },
@@ -91,6 +91,25 @@ pub struct DbEdit {
     /// First edit of an article always has `EditVersion::default()` here
     pub previous_version_id: EditVersion,
     pub published: DateTime<Utc>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[cfg_attr(feature = "ssr", derive(Queryable, Selectable, Identifiable))]
+#[cfg_attr(feature = "ssr", diesel(table_name = comment, check_for_backend(diesel::pg::Pg), belongs_to(DbArticle, foreign_key = instance_id)))]
+pub struct DbComment {
+    pub id: CommentId,
+    pub creator_id: PersonId,
+    pub article_id: ArticleId,
+    pub parent_id: Option<CommentId>,
+    pub content: String,
+    #[cfg(feature = "ssr")]
+    pub ap_id: ObjectId<DbComment>,
+    #[cfg(not(feature = "ssr"))]
+    pub ap_id: String,
+    pub local: bool,
+    pub deleted: bool,
+    pub published: DateTime<Utc>,
+    pub updated: Option<DateTime<Utc>>,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug, Default)]

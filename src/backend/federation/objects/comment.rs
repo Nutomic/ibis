@@ -1,40 +1,38 @@
+use super::article_or_comment::DbArticleOrComment;
 use crate::{
     backend::{
-        database::{article::DbArticleForm, IbisData},
-       utils::error::Error,
-        federation::objects::edits_collection::DbEditCollection,
+        database::{comment::DbCommentForm, IbisData},
+        utils::error::Error,
     },
-    common::{DbArticle, DbComment, DbInstance, DbPerson, EditVersion},
+    common::{DbArticle, DbComment, DbPerson},
 };
 use activitypub_federation::{
     config::Data,
-    fetch::{collection_id::CollectionId, object_id::ObjectId},
-    kinds::{
-        object::{ArticleType, NoteType},
-        public,
+    fetch::object_id::ObjectId,
+    kinds::{object::NoteType, public},
+    protocol::{
+        helpers::deserialize_one_or_many,
+        verification::{verify_domains_match, verify_is_remote_object},
     },
-    protocol::{helpers::deserialize_one_or_many, verification::verify_domains_match},
     traits::Object,
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use url::Url;
 
-use super::article_or_comment::ArticleOrComment;
-
 #[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ApubComment {
     #[serde(rename = "type")]
     pub kind: NoteType,
-    pub id: ObjectId<DbArticle>,
+    pub id: ObjectId<DbComment>,
     pub attributed_to: ObjectId<DbPerson>,
     #[serde(deserialize_with = "deserialize_one_or_many")]
     pub to: Vec<Url>,
     content: String,
-    pub in_reply_to: ObjectId<ArticleOrComment>,
-    pub(crate) published: Option<DateTime<Utc>>,
-    pub(crate) updated: Option<DateTime<Utc>>,
+    pub in_reply_to: ObjectId<DbArticleOrComment>,
+    pub published: Option<DateTime<Utc>>,
+    pub updated: Option<DateTime<Utc>>,
 }
 
 #[async_trait::async_trait]
@@ -51,36 +49,56 @@ impl Object for DbComment {
     }
 
     async fn into_json(self, data: &Data<Self::DataType>) -> Result<Self::Kind, Self::Error> {
-        let local_instance = DbInstance::read_local_instance(data)?;
+        let creator = DbPerson::read(self.creator_id, data)?;
+        let in_reply_to = if let Some(parent_comment_id) = self.parent_id {
+            let comment = DbComment::read(parent_comment_id, data)?;
+            comment.ap_id.into_inner().into()
+        } else {
+            let article = DbArticle::read(self.article_id, data)?;
+            article.ap_id.into_inner().into()
+        };
         Ok(ApubComment {
-            todo!()
+            kind: NoteType::Note,
+            id: self.ap_id,
+            attributed_to: creator.ap_id,
+            to: vec![public()],
+            content: self.content,
+            in_reply_to,
+            published: Some(self.published),
+            updated: self.updated,
         })
     }
 
     async fn verify(
         json: &Self::Kind,
         expected_domain: &Url,
-        _data: &Data<Self::DataType>,
+        data: &Data<Self::DataType>,
     ) -> Result<(), Self::Error> {
         verify_domains_match(json.id.inner(), expected_domain)?;
+        verify_is_remote_object(&json.id, data)?;
         Ok(())
     }
 
     async fn from_json(json: Self::Kind, data: &Data<Self::DataType>) -> Result<Self, Self::Error> {
-        let instance = json.attributed_to.dereference(data).await?;
-        let form = DbArticleForm {
-            title: json.name,
-            text: json.content,
+        let parent = json.in_reply_to.dereference(data).await?;
+        let (article_id, parent_id) = match parent {
+            DbArticleOrComment::Article(db_article) => (db_article.id, None),
+            DbArticleOrComment::Comment(db_comment) => (db_comment.article_id, Some(db_comment.id)),
+        };
+        let creator = json.attributed_to.dereference(data).await?;
+
+        let form = DbCommentForm {
+            article_id,
+            creator_id: creator.id,
+            parent_id,
             ap_id: json.id,
             local: false,
-            instance_id: instance.id,
-            protected: json.protected,
-            approved: true,
+            deleted: false,
+            published: json.published.unwrap_or_else(|| Utc::now()),
+            updated: json.updated,
+            content: json.content,
         };
-        let article = DbArticle::create_or_update(form, data)?;
 
-        json.edits.dereference(&article, data).await?;
-
-        Ok(article)
+        Ok(DbComment::create_or_update(form, data)?)
     }
 }

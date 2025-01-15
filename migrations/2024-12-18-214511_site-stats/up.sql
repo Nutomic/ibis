@@ -8,9 +8,20 @@ CREATE TABLE instance_stats (
 
 INSERT INTO instance_stats (users, articles)
 SELECT
-    (SELECT count(*) FROM local_user) AS users,
-    (SELECT count(*) FROM article WHERE local = TRUE) AS article
-FROM instance;
+    (
+        SELECT
+            count(*)
+        FROM
+            local_user) AS users,
+    (
+        SELECT
+            count(*)
+        FROM
+            article
+        WHERE
+            local = TRUE) AS article
+FROM
+    instance;
 
 CREATE FUNCTION instance_stats_local_user_insert ()
     RETURNS TRIGGER
@@ -103,15 +114,14 @@ DECLARE
 BEGIN
     SELECT
         count(users) INTO count_
-    FROM (
-        SELECT DISTINCT
+    FROM ( SELECT DISTINCT
             e.creator_id
         FROM
             edit e
             INNER JOIN person p ON e.creator_id = p.id
         WHERE
             e.published > ('now'::timestamp - i::interval)
-            AND p.local = TRUE) as users;
+            AND p.local = TRUE) AS users;
     RETURN count_;
 END;
 $$;
@@ -133,3 +143,4 @@ SET
             *
         FROM
             instance_stats_activity ('6 months'));
+

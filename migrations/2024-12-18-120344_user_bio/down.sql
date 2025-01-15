@@ -1,2 +1,6 @@
-alter table person drop display_name;
-alter table person drop bio;
+ALTER TABLE person
+    DROP display_name;
+
+ALTER TABLE person
+    DROP bio;
+

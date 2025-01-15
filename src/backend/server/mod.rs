@@ -13,15 +13,16 @@ use axum::{
     middleware::from_fn_with_state,
     response::{IntoResponse, Response},
     routing::get,
-    Extension, Router, ServiceExt,
+    Extension,
+    Router,
+    ServiceExt,
 };
 use leptos::prelude::*;
 use leptos_axum::{generate_route_list, LeptosRoutes};
 use log::info;
 use middleware::{auth_middleware, federation_routes_middleware, FEDERATION_ROUTES_PREFIX};
 use std::{net::SocketAddr, ops::Deref, sync::Arc};
-use tokio::net::TcpListener;
-use tokio::sync::oneshot;
+use tokio::{net::TcpListener, sync::oneshot};
 use tower_http::{compression::CompressionLayer, cors::CorsLayer};
 use tower_layer::Layer;
 

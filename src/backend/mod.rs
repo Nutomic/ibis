@@ -31,10 +31,10 @@ use federation::objects::{
     articles_collection::local_articles_url,
     instance_collection::linked_instances_url,
 };
-use tokio::sync::oneshot;
 use log::info;
 use server::start_server;
 use std::{net::SocketAddr, thread};
+use tokio::sync::oneshot;
 use utils::{generate_keypair, scheduled_tasks};
 
 pub mod api;

@@ -833,3 +833,12 @@ async fn test_article_approval_required() -> Result<()> {
 
     TestData::stop(alpha, beta, gamma)
 }
+
+#[tokio::test]
+async fn test_comment_create_edit_delete() -> Result<()> {
+    let TestData(alpha, beta, gamma) = TestData::start(true).await;
+
+    todo!();
+
+    // TODO: create, edit and delete comment
+}
