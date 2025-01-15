@@ -21,7 +21,7 @@ use crate::{
         },
         utils::error::{Error, MyResult},
     },
-    common::{DbArticle, DbInstance, DbPerson},
+    common::{article::DbArticle, instance::DbInstance, user::DbPerson},
 };
 use activitypub_federation::{
     axum::{

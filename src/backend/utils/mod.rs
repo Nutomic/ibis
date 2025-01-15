@@ -1,6 +1,9 @@
 use crate::{
     backend::{database::IbisData, utils::error::MyResult},
-    common::{utils, DbEdit, EditVersion},
+    common::{
+        article::{DbEdit, EditVersion},
+        utils,
+    },
 };
 use activitypub_federation::{
     config::Data,
@@ -57,8 +60,8 @@ pub(super) fn generate_article_version(
 mod test {
     use super::*;
     use crate::common::{
+        article::DbEdit,
         newtypes::{ArticleId, EditId, PersonId},
-        DbEdit,
     };
     use activitypub_federation::fetch::object_id::ObjectId;
     use chrono::Utc;

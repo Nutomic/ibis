@@ -10,7 +10,11 @@ use crate::{
         },
         utils::error::MyResult,
     },
-    common::{newtypes::InstanceId, DbInstance, DbPerson, InstanceView},
+    common::{
+        instance::{DbInstance, InstanceView},
+        newtypes::InstanceId,
+        user::DbPerson,
+    },
 };
 use activitypub_federation::{
     config::Data,

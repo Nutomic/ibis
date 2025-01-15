@@ -5,11 +5,8 @@ use crate::{
         IbisData,
     },
     common::{
+        article::{DbArticle, DbEdit, EditVersion, EditView},
         newtypes::{ArticleId, PersonId},
-        DbArticle,
-        DbEdit,
-        EditVersion,
-        EditView,
     },
 };
 use activitypub_federation::fetch::object_id::ObjectId;

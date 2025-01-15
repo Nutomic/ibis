@@ -4,7 +4,7 @@ use crate::{
         database::IbisData,
         utils::error::{Error, MyResult},
     },
-    common::{DbArticle, DbComment},
+    common::{article::DbArticle, comment::DbComment},
 };
 use activitypub_federation::{config::Data, traits::Object};
 use chrono::{DateTime, Utc};

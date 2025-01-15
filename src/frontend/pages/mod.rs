@@ -1,5 +1,8 @@
 use crate::{
-    common::{ArticleView, EditView, GetArticleForm, MAIN_PAGE_NAME},
+    common::{
+        article::{ArticleView, EditView, GetArticleForm},
+        MAIN_PAGE_NAME,
+    },
     frontend::api::CLIENT,
 };
 use leptos::prelude::*;

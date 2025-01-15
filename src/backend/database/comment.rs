@@ -2,8 +2,8 @@ use super::{schema::comment, IbisData};
 use crate::{
     backend::utils::error::MyResult,
     common::{
+        comment::DbComment,
         newtypes::{ArticleId, CommentId, PersonId},
-        DbComment,
     },
 };
 use activitypub_federation::fetch::object_id::ObjectId;

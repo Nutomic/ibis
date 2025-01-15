@@ -11,7 +11,11 @@ use crate::{
             generate_activity_id,
         },
     },
-    common::{validation::can_edit_article, DbArticle, DbEdit, DbInstance},
+    common::{
+        article::{DbArticle, DbEdit},
+        instance::DbInstance,
+        validation::can_edit_article,
+    },
 };
 use activitypub_federation::{
     config::Data,

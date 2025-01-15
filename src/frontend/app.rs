@@ -1,5 +1,5 @@
 use crate::{
-    common::SiteView,
+    common::instance::SiteView,
     frontend::{
         api::CLIENT,
         components::{nav::Nav, protected_route::IbisProtectedRoute},

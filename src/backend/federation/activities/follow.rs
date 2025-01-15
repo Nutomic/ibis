@@ -5,7 +5,7 @@ use crate::{
         generate_activity_id,
         utils::error::{Error, MyResult},
     },
-    common::{DbInstance, DbPerson},
+    common::{instance::DbInstance, user::DbPerson},
 };
 use activitypub_federation::{
     config::Data,

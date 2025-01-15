@@ -7,7 +7,7 @@ use crate::{
             generate_activity_id,
         },
     },
-    common::{DbArticle, DbInstance},
+    common::{article::DbArticle, instance::DbInstance},
 };
 use activitypub_federation::{
     config::Data,

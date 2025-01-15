@@ -1,5 +1,5 @@
 use crate::{
-    common::ListArticlesForm,
+    common::article::ListArticlesForm,
     frontend::{
         api::CLIENT,
         app::DefaultResource,

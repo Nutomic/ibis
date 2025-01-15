@@ -1,5 +1,5 @@
 use crate::{
-    common::UpdateUserForm,
+    common::user::UpdateUserForm,
     frontend::{
         api::CLIENT,
         app::{site, DefaultResource},

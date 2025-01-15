@@ -5,12 +5,9 @@ use crate::{
         utils::{error::MyResult, generate_article_version},
     },
     common::{
+        article::{ApiConflict, DbArticle, DbEdit, EditVersion},
         newtypes::{ArticleId, ConflictId, PersonId},
-        ApiConflict,
-        DbArticle,
-        DbEdit,
-        DbPerson,
-        EditVersion,
+        user::DbPerson,
     },
 };
 use activitypub_federation::config::Data;

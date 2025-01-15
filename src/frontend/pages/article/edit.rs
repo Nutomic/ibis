@@ -1,9 +1,7 @@
 use crate::{
     common::{
+        article::{ApiConflict, ArticleView, EditArticleForm},
         newtypes::ConflictId,
-        ApiConflict,
-        ArticleView,
-        EditArticleForm,
         Notification,
         MAIN_PAGE_NAME,
     },

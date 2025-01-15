@@ -3,16 +3,27 @@ use crate::{
     backend::{
         api::{
             article::{
-                create_article, edit_article, fork_article, get_article, list_articles,
-                protect_article, resolve_article, search_article,
+                create_article,
+                edit_article,
+                fork_article,
+                get_article,
+                list_articles,
+                protect_article,
+                resolve_article,
+                search_article,
             },
+            comment::{create_comment, edit_comment},
             instance::{follow_instance, get_instance, resolve_instance},
             user::{get_user, login_user, logout_user, register_user},
         },
         database::IbisData,
         utils::error::MyResult,
     },
-    common::{DbEdit, EditView, GetEditList, LocalUserView, SiteView},
+    common::{
+        article::{DbEdit, EditView, GetEditList},
+        instance::SiteView,
+        user::LocalUserView,
+    },
 };
 use activitypub_federation::config::Data;
 use anyhow::anyhow;
@@ -20,17 +31,18 @@ use article::{approve_article, delete_conflict};
 use axum::{
     extract::Query,
     routing::{delete, get, post, put},
-    Extension, Json, Router,
+    Extension,
+    Json,
+    Router,
 };
 use axum_macros::debug_handler;
-use comment::{create_comment, edit_comment};
 use instance::list_remote_instances;
 use user::{count_notifications, list_notifications, update_user_profile};
 
 mod article;
 mod comment;
 mod instance;
-mod user;
+pub(super) mod user;
 
 pub fn api_routes() -> Router<()> {
     Router::new()

@@ -4,7 +4,7 @@ use crate::{
         database::{comment::DbCommentForm, IbisData},
         utils::error::Error,
     },
-    common::{DbArticle, DbComment, DbPerson},
+    common::{article::DbArticle, comment::DbComment, user::DbPerson},
 };
 use activitypub_federation::{
     config::Data,

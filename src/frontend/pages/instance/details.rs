@@ -1,5 +1,5 @@
 use crate::{
-    common::{utils::http_protocol_str, DbInstance, ListArticlesForm},
+    common::{article::ListArticlesForm, instance::DbInstance, utils::http_protocol_str},
     frontend::{
         api::CLIENT,
         article_path,

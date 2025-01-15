@@ -7,13 +7,10 @@ use crate::{
         utils::{error::MyResult, generate_keypair},
     },
     common::{
+        instance::DbInstance,
         newtypes::PersonId,
+        user::{DbLocalUser, DbPerson, LocalUserView, UpdateUserForm},
         utils::http_protocol_str,
-        DbInstance,
-        DbLocalUser,
-        DbPerson,
-        LocalUserView,
-        UpdateUserForm,
     },
 };
 use activitypub_federation::{config::Data, fetch::object_id::ObjectId};

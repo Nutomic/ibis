@@ -1,11 +1,8 @@
 use crate::{
     backend::{database::IbisData, federation::activities::follow::Follow, utils::error::MyResult},
     common::{
-        DbInstance,
-        FollowInstance,
-        GetInstance,
-        InstanceView,
-        LocalUserView,
+        instance::{DbInstance, FollowInstance, GetInstance, InstanceView},
+        user::LocalUserView,
         ResolveObject,
         SuccessResponse,
     },

@@ -9,11 +9,10 @@ use crate::{
         },
     },
     common::{
+        article::{DbArticle, EditVersion},
+        instance::DbInstance,
+        user::DbPerson,
         utils::http_protocol_str,
-        DbArticle,
-        DbInstance,
-        DbPerson,
-        EditVersion,
         MAIN_PAGE_NAME,
     },
 };

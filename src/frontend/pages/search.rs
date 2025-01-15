@@ -1,5 +1,8 @@
 use crate::{
-    common::{DbArticle, DbInstance, SearchArticleForm},
+    common::{
+        article::{DbArticle, SearchArticleForm},
+        instance::DbInstance,
+    },
     frontend::{api::CLIENT, article_path, article_title},
 };
 use leptos::prelude::*;

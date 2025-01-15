@@ -6,7 +6,7 @@ use ibis::{
         config::{IbisConfig, IbisConfigDatabase, IbisConfigFederation},
         start,
     },
-    common::{Options, RegisterUserForm},
+    common::{instance::Options, user::RegisterUserForm},
     frontend::api::ApiClient,
 };
 use reqwest::ClientBuilder;
