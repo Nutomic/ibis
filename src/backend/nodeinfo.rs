@@ -45,6 +45,7 @@ async fn node_info(data: Data<IbisData>) -> MyResult<Json<NodeInfo>> {
                 active_halfyear: stats.users_active_half_year,
             },
             local_posts: stats.articles,
+            local_comments: 0,
         },
         open_registrations: data.config.options.registration_open,
         services: Default::default(),
@@ -89,6 +90,7 @@ pub struct NodeInfoSoftware {
 pub struct NodeInfoUsage {
     pub users: NodeInfoUsers,
     pub local_posts: i32,
+    pub local_comments: i32,
 }
 
 #[derive(Serialize)]
