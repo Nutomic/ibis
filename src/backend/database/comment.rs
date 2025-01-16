@@ -45,7 +45,6 @@ pub struct DbCommentUpdateForm {
 impl DbComment {
     pub fn create(form: DbCommentInsertForm, data: &IbisData) -> MyResult<Self> {
         let mut conn = data.db_pool.get()?;
-        dbg!(&form);
         Ok(insert_into(comment::table)
             .values(form)
             .get_result(conn.deref_mut())?)
@@ -83,8 +82,21 @@ impl DbComment {
     }
     pub fn read_for_article(article_id: ArticleId, data: &IbisData) -> MyResult<Vec<Self>> {
         let mut conn = data.db_pool.get()?;
-        Ok(comment::table
+        let comments = comment::table
             .filter(comment::article_id.eq(article_id))
-            .get_results::<Self>(conn.deref_mut())?)
+            .order_by(comment::id)
+            .get_results::<Self>(conn.deref_mut())?;
+
+        // Clear content of deleted comments. comments themselves are returned
+        // so that tree can be rendered.
+        Ok(comments
+            .into_iter()
+            .map(|mut c| {
+                if c.deleted {
+                    c.content = String::new()
+                };
+                c
+            })
+            .collect())
     }
 }

@@ -7,7 +7,9 @@ use crate::{
         utils::error::MyResult,
     },
     common::{
-        article::DbArticle, comment::{CreateCommentForm, DbComment, EditCommentForm}, user::LocalUserView, utils::http_protocol_str
+        comment::{CreateCommentForm, DbComment, EditCommentForm},
+        user::LocalUserView,
+        utils::http_protocol_str,
     },
 };
 use activitypub_federation::config::Data;
@@ -28,7 +30,6 @@ pub(in crate::backend::api) async fn create_comment(
             return Err(anyhow!("Invalid article_id/parent_id combination").into());
         }
     }
-    dbg!(create_comment.article_id);
     let form = DbCommentInsertForm {
         creator_id: user.person.id,
         article_id: create_comment.article_id,
@@ -58,18 +59,22 @@ pub(in crate::backend::api) async fn create_comment(
 pub(in crate::backend::api) async fn edit_comment(
     user: Extension<LocalUserView>,
     data: Data<IbisData>,
-    Form(edit_comment): Form<EditCommentForm>,
+    Form(params): Form<EditCommentForm>,
 ) -> MyResult<Json<DbComment>> {
-    let orig_comment = DbComment::read(edit_comment.id, &data)?;
+    dbg!("edit");
+    if params.content.is_none() && params.deleted.is_none() {
+        return Err(anyhow!("Edit has no parameters").into());
+    }
+    let orig_comment = DbComment::read(params.id, &data)?;
     if orig_comment.creator_id != user.person.id {
         return Err(anyhow!("Cannot edit comment created by another user").into());
     }
     let form = DbCommentUpdateForm {
-        content: Some(edit_comment.content),
-        deleted: edit_comment.deleted,
+        content: params.content,
+        deleted: params.deleted,
         updated: Some(Utc::now()),
         ..Default::default()
     };
-    let comment = DbComment::update(form, edit_comment.id, &data)?;
+    let comment = DbComment::update(form, params.id, &data)?;
     Ok(Json(comment))
 }

@@ -110,19 +110,14 @@ impl ApiClient {
         .await
     }
 
-
     pub async fn create_comment(
         &self,
         data: &CreateCommentForm,
     ) -> Result<DbComment, ServerFnError> {
-        self.send(Method::POST, "/api/v1/comment", Some(&data))
-            .await
+        self.post("/api/v1/comment", Some(&data)).await
     }
 
-    pub async fn edit_comment(
-        &self,
-        data: &EditCommentForm,
-    ) -> Result<DbComment, ServerFnError> {
+    pub async fn edit_comment(&self, data: &EditCommentForm) -> Result<DbComment, ServerFnError> {
         self.send(Method::PATCH, "/api/v1/comment", Some(&data))
             .await
     }

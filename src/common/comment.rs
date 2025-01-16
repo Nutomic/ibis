@@ -37,7 +37,7 @@ pub struct CreateCommentForm {
 #[derive(Deserialize, Serialize, Debug)]
 pub struct EditCommentForm {
     pub id: CommentId,
-    pub content: String,
+    pub content: Option<String>,
     pub deleted: Option<bool>,
 }
 

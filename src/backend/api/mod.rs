@@ -30,7 +30,7 @@ use anyhow::anyhow;
 use article::{approve_article, delete_conflict};
 use axum::{
     extract::Query,
-    routing::{delete, get, post, put},
+    routing::{delete, get, patch, post, put},
     Extension,
     Json,
     Router,
@@ -58,7 +58,7 @@ pub fn api_routes() -> Router<()> {
         .route("/edit/list", get(edit_list))
         .route("/conflict", delete(delete_conflict))
         .route("/comment", post(create_comment))
-        .route("/comment", put(edit_comment))
+        .route("/comment", patch(edit_comment))
         .route("/instance", get(get_instance))
         .route("/instance/follow", post(follow_instance))
         .route("/instance/resolve", get(resolve_instance))

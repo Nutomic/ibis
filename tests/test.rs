@@ -6,10 +6,16 @@ use crate::common::{TestData, TEST_ARTICLE_DEFAULT_TEXT};
 use anyhow::Result;
 use ibis::common::{
     article::{
-        ArticleView, CreateArticleForm, EditArticleForm, ForkArticleForm, GetArticleForm,
-        ListArticlesForm, ProtectArticleForm, SearchArticleForm,
+        ArticleView,
+        CreateArticleForm,
+        EditArticleForm,
+        ForkArticleForm,
+        GetArticleForm,
+        ListArticlesForm,
+        ProtectArticleForm,
+        SearchArticleForm,
     },
-    comment::CreateCommentForm,
+    comment::{CreateCommentForm, EditCommentForm},
     user::{GetUserForm, LoginUserForm, RegisterUserForm},
     utils::extract_domain,
     Notification,
@@ -834,38 +840,68 @@ async fn test_article_approval_required() -> Result<()> {
 async fn test_comment_create_edit_delete() -> Result<()> {
     let TestData(alpha, beta, gamma) = TestData::start(true).await;
 
-    let article_form = CreateArticleForm {
+    // create article
+    let form = CreateArticleForm {
         title: "Manu_Chao".to_string(),
         text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
         summary: "create article".to_string(),
     };
-    let article = alpha.create_article(&article_form).await.unwrap();
-    // TODO: somehow the article gets deleted at this point?
-    //       then comment creation fails because of invalid foreign key
-    dbg!(article.article.id);
+    let article = alpha.create_article(&form).await.unwrap();
 
-    let comment_form = CreateCommentForm {
+    // create comments
+    // TODO: across instances
+    let form = CreateCommentForm {
         content: "top comment".to_string(),
         article_id: article.article.id,
         parent_id: None,
     };
-    let top_comment = beta.create_comment(&comment_form).await.unwrap();
-    assert_eq!(top_comment.content, comment_form.content);
+    let top_comment = alpha.create_comment(&form).await.unwrap();
+    assert_eq!(top_comment.content, form.content);
     assert_eq!(top_comment.article_id, article.article.id);
     assert!(top_comment.parent_id.is_none());
     assert!(top_comment.local);
     assert!(!top_comment.deleted);
     assert!(top_comment.updated.is_none());
 
-    let comment_form = CreateCommentForm {
+    let form = CreateCommentForm {
         content: "child comment".to_string(),
         article_id: article.article.id,
         parent_id: Some(top_comment.id),
     };
-    let child_comment = beta.create_comment(&comment_form).await.unwrap();
+    let child_comment = alpha.create_comment(&form).await.unwrap();
     assert_eq!(child_comment.parent_id, Some(top_comment.id));
 
-    // TODO: create, edit and delete comment
+    // edit comment text
+    let form = EditCommentForm {
+        id: child_comment.id,
+        content: Some("edited comment".to_string()),
+        deleted: None,
+    };
+    let edited_comment = alpha.edit_comment(&form).await.unwrap();
+    assert_eq!(edited_comment.parent_id, Some(top_comment.id));
+    assert_eq!(edited_comment.article_id, article.article.id);
+    assert_eq!(Some(edited_comment.content), form.content);
+
+    let get_form = GetArticleForm {
+        id: Some(article.article.id),
+        ..Default::default()
+    };
+    let article = alpha.get_article(get_form.clone()).await.unwrap();
+    assert_eq!(2, article.comments.len());
+    assert_eq!(article.comments[0].id, top_comment.id);
+    assert_eq!(article.comments[0].content, top_comment.content);
+    assert_eq!(article.comments[1].id, edited_comment.id);
+
+    // delete comment
+    let form = EditCommentForm {
+        id: child_comment.id,
+        deleted: Some(true),
+        content: None,
+    };
+    alpha.edit_comment(&form).await.unwrap();
+    let article = alpha.get_article(get_form).await.unwrap();
+    assert!(article.comments[1].deleted);
+    assert!(article.comments[1].content.is_empty());
 
     TestData::stop(alpha, beta, gamma)
 }
