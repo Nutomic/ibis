@@ -6,6 +6,7 @@ use crate::common::{
     utils::http_protocol_str,
     *,
 };
+use comment::{CreateCommentForm, DbComment, EditCommentForm};
 use http::{Method, StatusCode};
 use leptos::{prelude::ServerFnError, server_fn::error::NoCustomError};
 use log::error;
@@ -107,6 +108,23 @@ impl ApiClient {
             id: Some(edit_form.article_id),
         })
         .await
+    }
+
+
+    pub async fn create_comment(
+        &self,
+        data: &CreateCommentForm,
+    ) -> Result<DbComment, ServerFnError> {
+        self.send(Method::POST, "/api/v1/comment", Some(&data))
+            .await
+    }
+
+    pub async fn edit_comment(
+        &self,
+        data: &EditCommentForm,
+    ) -> Result<DbComment, ServerFnError> {
+        self.send(Method::PATCH, "/api/v1/comment", Some(&data))
+            .await
     }
 
     pub async fn notifications_list(&self) -> Option<Vec<Notification>> {

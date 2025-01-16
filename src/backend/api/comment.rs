@@ -7,9 +7,7 @@ use crate::{
         utils::error::MyResult,
     },
     common::{
-        comment::{CreateCommentForm, DbComment, EditCommentForm},
-        user::LocalUserView,
-        utils::http_protocol_str,
+        article::DbArticle, comment::{CreateCommentForm, DbComment, EditCommentForm}, user::LocalUserView, utils::http_protocol_str
     },
 };
 use activitypub_federation::config::Data;
@@ -30,6 +28,7 @@ pub(in crate::backend::api) async fn create_comment(
             return Err(anyhow!("Invalid article_id/parent_id combination").into());
         }
     }
+    dbg!(create_comment.article_id);
     let form = DbCommentInsertForm {
         creator_id: user.person.id,
         article_id: create_comment.article_id,

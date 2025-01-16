@@ -6,15 +6,10 @@ use crate::common::{TestData, TEST_ARTICLE_DEFAULT_TEXT};
 use anyhow::Result;
 use ibis::common::{
     article::{
-        ArticleView,
-        CreateArticleForm,
-        EditArticleForm,
-        ForkArticleForm,
-        GetArticleForm,
-        ListArticlesForm,
-        ProtectArticleForm,
-        SearchArticleForm,
+        ArticleView, CreateArticleForm, EditArticleForm, ForkArticleForm, GetArticleForm,
+        ListArticlesForm, ProtectArticleForm, SearchArticleForm,
     },
+    comment::CreateCommentForm,
     user::{GetUserForm, LoginUserForm, RegisterUserForm},
     utils::extract_domain,
     Notification,
@@ -838,7 +833,38 @@ async fn test_article_approval_required() -> Result<()> {
 async fn test_comment_create_edit_delete() -> Result<()> {
     let TestData(alpha, beta, gamma) = TestData::start(true).await;
 
-    todo!();
+    let article_form = CreateArticleForm {
+        title: "Manu_Chao".to_string(),
+        text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
+        summary: "create article".to_string(),
+    };
+    let article = alpha.create_article(&article_form).await.unwrap();
+    // TODO: somehow the article gets deleted at this point?
+    //       then comment creation fails because of invalid foreign key
+    dbg!(article.article.id);
+
+    let comment_form = CreateCommentForm {
+        content: "top comment".to_string(),
+        article_id: article.article.id,
+        parent_id: None,
+    };
+    let top_comment = beta.create_comment(&comment_form).await.unwrap();
+    assert_eq!(top_comment.content, comment_form.content);
+    assert_eq!(top_comment.article_id, article.article.id);
+    assert!(top_comment.parent_id.is_none());
+    assert!(top_comment.local);
+    assert!(!top_comment.deleted);
+    assert!(top_comment.updated.is_none());
+
+    let comment_form = CreateCommentForm {
+        content: "child comment".to_string(),
+        article_id: article.article.id,
+        parent_id: Some(top_comment.id),
+    };
+    let child_comment = beta.create_comment(&comment_form).await.unwrap();
+    assert_eq!(child_comment.parent_id, Some(top_comment.id));
 
     // TODO: create, edit and delete comment
+
+    TestData::stop(alpha, beta, gamma)
 }

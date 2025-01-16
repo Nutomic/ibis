@@ -19,7 +19,7 @@ use diesel::{
 };
 use std::ops::DerefMut;
 
-#[derive(Insertable, AsChangeset)]
+#[derive(Insertable, AsChangeset, Debug)]
 #[diesel(table_name = comment, check_for_backend(diesel::pg::Pg))]
 pub struct DbCommentInsertForm {
     pub creator_id: PersonId,
@@ -45,6 +45,7 @@ pub struct DbCommentUpdateForm {
 impl DbComment {
     pub fn create(form: DbCommentInsertForm, data: &IbisData) -> MyResult<Self> {
         let mut conn = data.db_pool.get()?;
+        dbg!(&form);
         Ok(insert_into(comment::table)
             .values(form)
             .get_result(conn.deref_mut())?)
