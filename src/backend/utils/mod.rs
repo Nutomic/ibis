@@ -17,6 +17,7 @@ use url::{ParseError, Url};
 
 pub mod error;
 pub(super) mod scheduled_tasks;
+pub(super) mod validate;
 
 pub(super) fn generate_activity_id(data: &Data<IbisData>) -> Result<Url, ParseError> {
     let domain = &data.config.federation.domain;

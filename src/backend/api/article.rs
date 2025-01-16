@@ -8,7 +8,7 @@ use crate::{
             IbisData,
         },
         federation::activities::{create_article::CreateArticle, submit_article_update},
-        utils::{error::MyResult, generate_article_version},
+        utils::{error::MyResult, generate_article_version, validate::validate_article_title},
     },
     common::{
         article::{
@@ -47,25 +47,19 @@ use diffy::create_patch;
 pub(in crate::backend::api) async fn create_article(
     user: Extension<LocalUserView>,
     data: Data<IbisData>,
-    Form(create_article): Form<CreateArticleForm>,
+    Form(mut params): Form<CreateArticleForm>,
 ) -> MyResult<Json<ArticleView>> {
-    if create_article.title.is_empty() {
-        return Err(anyhow!("Title must not be empty").into());
-    }
-    if create_article.title.contains('/') {
-        return Err(anyhow!("Invalid character `/`").into());
-    }
+    params.title = validate_article_title(&params.title)?;
 
     let local_instance = DbInstance::read_local_instance(&data)?;
-    let escaped_title = create_article.title.replace(' ', "_");
     let ap_id = ObjectId::parse(&format!(
         "{}://{}/article/{}",
         http_protocol_str(),
         extract_domain(&local_instance.ap_id),
-        escaped_title
+        params.title
     ))?;
     let form = DbArticleForm {
-        title: create_article.title,
+        title: params.title,
         text: String::new(),
         ap_id,
         instance_id: local_instance.id,
@@ -77,8 +71,8 @@ pub(in crate::backend::api) async fn create_article(
 
     let edit_data = EditArticleForm {
         article_id: article.id,
-        new_text: create_article.text,
-        summary: create_article.summary,
+        new_text: params.text,
+        summary: params.summary,
         previous_version_id: article.latest_edit_version(&data)?,
         resolve_conflict_id: None,
     };
@@ -205,20 +199,21 @@ pub(in crate::backend::api) async fn list_articles(
 pub(in crate::backend::api) async fn fork_article(
     Extension(_user): Extension<LocalUserView>,
     data: Data<IbisData>,
-    Form(fork_form): Form<ForkArticleForm>,
+    Form(mut params): Form<ForkArticleForm>,
 ) -> MyResult<Json<ArticleView>> {
     // TODO: lots of code duplicated from create_article(), can move it into helper
-    let original_article = DbArticle::read_view(fork_form.article_id, &data)?;
+    let original_article = DbArticle::read_view(params.article_id, &data)?;
+    params.new_title = validate_article_title(&params.new_title)?;
 
     let local_instance = DbInstance::read_local_instance(&data)?;
     let ap_id = ObjectId::parse(&format!(
         "{}://{}/article/{}",
         http_protocol_str(),
         extract_domain(&local_instance.ap_id),
-        &fork_form.new_title
+        &params.new_title
     ))?;
     let form = DbArticleForm {
-        title: fork_form.new_title,
+        title: params.new_title,
         text: original_article.article.text.clone(),
         ap_id,
         instance_id: local_instance.id,

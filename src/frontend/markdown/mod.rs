@@ -6,14 +6,14 @@ use markdown_it::{
     MarkdownIt,
 };
 use math_equation::MathEquationScanner;
-use once_cell::sync::OnceCell;
+use std::sync::OnceLock;
 
 pub mod article_link;
 pub mod math_equation;
 pub mod toc;
 
 pub fn render_markdown(text: &str) -> String {
-    static INSTANCE: OnceCell<MarkdownIt> = OnceCell::new();
+    static INSTANCE: OnceLock<MarkdownIt> = OnceLock::new();
     let mut parsed = INSTANCE.get_or_init(markdown_parser).parse(text);
 
     // Make markdown headings one level smaller, so that h1 becomes h2 etc, and markdown titles
@@ -41,7 +41,6 @@ fn markdown_parser() -> MarkdownIt {
         backticks::add(p);
         emphasis::add(p);
         link::add(p);
-        image::add(p);
         autolink::add(p);
         entity::add(p);
     }

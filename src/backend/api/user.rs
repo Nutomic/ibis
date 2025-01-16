@@ -2,7 +2,10 @@ use super::{check_is_admin, empty_to_none};
 use crate::{
     backend::{
         database::{conflict::DbConflict, read_jwt_secret, IbisData},
-        utils::error::MyResult,
+        utils::{
+            error::MyResult,
+            validate::{validate_display_name, validate_user_name},
+        },
     },
     common::{
         article::DbArticle,
@@ -83,6 +86,7 @@ pub(in crate::backend::api) async fn register_user(
     if !data.config.options.registration_open {
         return Err(anyhow!("Registration is closed").into());
     }
+    validate_user_name(&form.username)?;
     let user = DbPerson::create_local(form.username, form.password, false, &data)?;
     let token = generate_login_token(&user.person, &data)?;
     let jar = jar.add(create_cookie(token, &data));
@@ -153,6 +157,7 @@ pub(in crate::backend::api) async fn update_user_profile(
 ) -> MyResult<Json<SuccessResponse>> {
     empty_to_none(&mut params.display_name);
     empty_to_none(&mut params.bio);
+    validate_display_name(&params.display_name)?;
     DbPerson::update_profile(&params, &data)?;
     Ok(Json(SuccessResponse::default()))
 }

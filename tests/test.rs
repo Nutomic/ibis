@@ -23,13 +23,14 @@ async fn test_create_read_and_edit_local_article() -> Result<()> {
     let TestData(alpha, beta, gamma) = TestData::start(false).await;
 
     // create article
+    const TITLE: &'static str = "Manu_Chao";
     let create_form = CreateArticleForm {
-        title: "Manu_Chao".to_string(),
+        title: "Manu Chao".to_string(),
         text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
         summary: "create article".to_string(),
     };
     let create_res = alpha.create_article(&create_form).await.unwrap();
-    assert_eq!(create_form.title, create_res.article.title);
+    assert_eq!(TITLE, create_res.article.title);
     assert!(create_res.article.local);
 
     // now article can be read
@@ -39,7 +40,7 @@ async fn test_create_read_and_edit_local_article() -> Result<()> {
         id: None,
     };
     let get_res = alpha.get_article(get_article_data.clone()).await.unwrap();
-    assert_eq!(create_form.title, get_res.article.title);
+    assert_eq!(TITLE, get_res.article.title);
     assert_eq!(TEST_ARTICLE_DEFAULT_TEXT, get_res.article.text);
     assert!(get_res.article.local);
 
