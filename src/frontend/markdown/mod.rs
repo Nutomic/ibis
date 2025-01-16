@@ -41,7 +41,6 @@ fn markdown_parser() -> MarkdownIt {
         backticks::add(p);
         emphasis::add(p);
         link::add(p);
-        image::add(p);
         autolink::add(p);
         entity::add(p);
     }
