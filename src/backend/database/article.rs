@@ -45,16 +45,14 @@ impl DbArticle {
         Ok(CollectionId::parse(&format!("{}/edits", self.ap_id))?)
     }
 
-    pub fn create(mut form: DbArticleForm, data: &IbisData) -> MyResult<Self> {
-        form.title = form.title.replace(' ', "_");
+    pub fn create(form: DbArticleForm, data: &IbisData) -> MyResult<Self> {
         let mut conn = data.db_pool.get()?;
         Ok(insert_into(article::table)
             .values(form)
             .get_result(conn.deref_mut())?)
     }
 
-    pub fn create_or_update(mut form: DbArticleForm, data: &IbisData) -> MyResult<Self> {
-        form.title = form.title.replace(' ', "_");
+    pub fn create_or_update(form: DbArticleForm, data: &IbisData) -> MyResult<Self> {
         let mut conn = data.db_pool.get()?;
         Ok(insert_into(article::table)
             .values(&form)

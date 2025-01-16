@@ -2,7 +2,7 @@ use crate::{
     backend::{
         database::{article::DbArticleForm, IbisData},
         federation::objects::edits_collection::DbEditCollection,
-        utils::error::Error,
+        utils::{error::Error, validate::validate_article_title},
     },
     common::{
         article::{DbArticle, EditVersion},
@@ -75,7 +75,7 @@ impl Object for DbArticle {
 
     async fn from_json(json: Self::Kind, data: &Data<Self::DataType>) -> Result<Self, Self::Error> {
         let instance = json.attributed_to.dereference(data).await?;
-        let form = DbArticleForm {
+        let mut form = DbArticleForm {
             title: json.name,
             text: json.content,
             ap_id: json.id,
@@ -84,6 +84,7 @@ impl Object for DbArticle {
             protected: json.protected,
             approved: true,
         };
+        form.title = validate_article_title(&form.title)?;
         let article = DbArticle::create_or_update(form, data)?;
 
         json.edits.dereference(&article, data).await?;
