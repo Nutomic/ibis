@@ -1,21 +1,20 @@
-use super::announce::AnnounceActivity;
+use super::generate_comment_activity_to;
 use crate::{
     backend::{
         database::IbisData,
-        federation::{objects::comment::ApubComment, routes::AnnouncableActivities, send_activity},
+        federation::{
+            objects::comment::ApubComment,
+            routes::AnnouncableActivities,
+            send_activity_to_instance,
+        },
         generate_activity_id,
         utils::error::{Error, MyResult},
     },
-    common::{
-        comment::{CommentView, DbComment},
-        instance::DbInstance,
-        user::DbPerson,
-    },
+    common::{comment::DbComment, instance::DbInstance, user::DbPerson},
 };
 use activitypub_federation::{
     config::Data,
     fetch::object_id::ObjectId,
-    kinds::public,
     protocol::{helpers::deserialize_one_or_many, verification::verify_domains_match},
     traits::{ActivityHandler, Object},
 };
@@ -41,11 +40,9 @@ pub struct CreateOrUpdateComment {
 }
 
 impl CreateOrUpdateComment {
-    async fn new(
-        comment: &DbComment,
-        recipient: &DbInstance,
-        data: &Data<IbisData>,
-    ) -> MyResult<Self> {
+    pub async fn send(comment: &DbComment, data: &Data<IbisData>) -> MyResult<()> {
+        let instance = DbInstance::read_for_comment(comment.id, data)?;
+
         let kind = if comment.updated.is_none() {
             CreateOrUpdateType::Create
         } else {
@@ -53,28 +50,16 @@ impl CreateOrUpdateComment {
         };
         let object = comment.clone().into_json(data).await?;
         let id = generate_activity_id(data)?;
-        let followers_url = format!("{}/followers", &recipient.ap_id);
-        Ok(Self {
+        let activity = Self {
             actor: object.attributed_to.clone(),
             object,
-            to: vec![public(), followers_url.parse()?],
+            to: generate_comment_activity_to(&instance)?,
             kind,
             id,
-        })
-    }
-    pub async fn send(comment: CommentView, data: &Data<IbisData>) -> MyResult<()> {
-        let recipient = DbInstance::read_for_comment(comment.comment.id, data)?;
-        let activity = Self::new(&comment.comment, &recipient, data).await?;
-        if recipient.local {
-            AnnounceActivity::send(
-                AnnouncableActivities::CreateOrUpdateComment(activity),
-                &data,
-            )
-            .await?;
-        } else {
-            let inbox_url = recipient.inbox_url.parse()?;
-            send_activity(&comment.creator, activity, vec![inbox_url], data).await?;
-        }
+        };
+        let activity = AnnouncableActivities::CreateOrUpdateComment(activity);
+        let creator = DbPerson::read(comment.creator_id, data)?;
+        send_activity_to_instance(&creator, activity, &instance, data).await?;
         Ok(())
     }
 }
@@ -103,12 +88,7 @@ impl ActivityHandler for CreateOrUpdateComment {
 
         let instance = DbInstance::read_for_comment(comment.id, data)?;
         if instance.local {
-            let activity = Self::new(&comment, &instance, data).await?;
-            AnnounceActivity::send(
-                AnnouncableActivities::CreateOrUpdateComment(activity),
-                &data,
-            )
-            .await?;
+            Self::send(&comment, data).await?;
         }
         Ok(())
     }

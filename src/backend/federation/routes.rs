@@ -1,5 +1,9 @@
 use super::{
-    activities::create_or_update_comment::CreateOrUpdateComment,
+    activities::comment::{
+        create_or_update_comment::CreateOrUpdateComment,
+        delete_comment::DeleteComment,
+        undo_delete_comment::UndoDeleteComment,
+    },
     objects::{
         comment::ApubComment,
         instance_collection::{DbInstanceCollection, InstanceCollection},
@@ -144,8 +148,8 @@ pub enum InboxActivities {
     UpdateLocalArticle(UpdateLocalArticle),
     UpdateRemoteArticle(UpdateRemoteArticle),
     RejectEdit(RejectEdit),
-    CreateOrUpdateComment(CreateOrUpdateComment),
     AnnounceActivity(AnnounceActivity),
+    AnnouncableActivities(AnnouncableActivities),
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -153,6 +157,8 @@ pub enum InboxActivities {
 #[enum_delegate::implement(ActivityHandler)]
 pub enum AnnouncableActivities {
     CreateOrUpdateComment(CreateOrUpdateComment),
+    DeleteComment(DeleteComment),
+    UndoDeleteComment(UndoDeleteComment),
 }
 
 #[debug_handler]

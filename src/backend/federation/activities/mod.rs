@@ -17,8 +17,8 @@ use activitypub_federation::config::Data;
 
 pub mod accept;
 pub mod announce;
+pub mod comment;
 pub mod create_article;
-pub mod create_or_update_comment;
 pub mod follow;
 pub mod reject;
 pub mod update_local_article;

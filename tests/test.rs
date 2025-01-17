@@ -22,6 +22,7 @@ use ibis::common::{
 };
 use pretty_assertions::{assert_eq, assert_ne};
 use retry_future::{LinearRetryStrategy, RetryFuture, RetryPolicy};
+use std::time::Duration;
 use tokio::time::sleep;
 use url::Url;
 
@@ -876,7 +877,7 @@ async fn test_comment_create_edit() -> Result<()> {
     assert!(top_comment.local);
     assert!(!top_comment.deleted);
     assert!(top_comment.updated.is_none());
-    sleep(std::time::Duration::from_secs(1)).await;
+    sleep(Duration::from_secs(1)).await;
 
     // now create child comment on alpha
     let get_form = GetArticleForm {
@@ -922,23 +923,27 @@ async fn test_comment_create_edit() -> Result<()> {
 async fn test_comment_delete_restore() -> Result<()> {
     let TestData(alpha, beta, gamma) = TestData::start(true).await;
 
-    // create article and fetch it
+    beta.follow_instance_with_resolve(&alpha.hostname)
+        .await
+        .unwrap();
+
+    // create article and comment
     let form = CreateArticleForm {
         title: "Manu_Chao".to_string(),
         text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
         summary: "create article".to_string(),
     };
-    let article = alpha.create_article(&form).await.unwrap();
+    let alpha_article = alpha.create_article(&form).await.unwrap();
 
-    // create comment
     let form = CreateCommentForm {
         content: "my comment".to_string(),
-        article_id: article.article.id,
+        article_id: alpha_article.article.id,
         parent_id: None,
     };
     let comment = alpha.create_comment(&form).await.unwrap();
     let get_form = GetArticleForm {
-        title: Some(article.article.title),
+        title: Some(alpha_article.article.title),
+        domain: Some(alpha.hostname.clone()),
         ..Default::default()
     };
 
@@ -948,20 +953,30 @@ async fn test_comment_delete_restore() -> Result<()> {
         deleted: Some(true),
         content: None,
     };
-    alpha.edit_comment(&form).await.unwrap().comment;
+    alpha.edit_comment(&form).await.unwrap();
     let article = alpha.get_article(get_form.clone()).await.unwrap();
     assert!(article.comments[0].deleted);
+    assert!(article.comments[0].content.is_empty());
+    sleep(Duration::from_secs(1)).await;
+
+    // check that comment is deleted on beta
+    let beta_article = beta.get_article(get_form.clone()).await.unwrap();
+    assert_eq!(comment.comment.ap_id, beta_article.comments[0].ap_id);
+    assert!(beta_article.comments[0].deleted);
     assert!(article.comments[0].content.is_empty());
 
     // restore comment
     form.deleted = Some(false);
     alpha.edit_comment(&form).await.unwrap();
-    let article = alpha.get_article(get_form).await.unwrap();
+    let article = alpha.get_article(get_form.clone()).await.unwrap();
     assert!(!article.comments[0].deleted);
     assert!(!article.comments[0].content.is_empty());
+    sleep(Duration::from_secs(1)).await;
 
-    // TODO: check over federation
-    todo!();
+    // check that comment is restored on beta
+    let beta_article = beta.get_article(get_form).await.unwrap();
+    assert!(!beta_article.comments[0].deleted);
+    assert!(!beta_article.comments[0].content.is_empty());
 
     TestData::stop(alpha, beta, gamma)
 }

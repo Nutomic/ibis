@@ -4,7 +4,11 @@ use crate::{
             comment::{DbCommentInsertForm, DbCommentUpdateForm},
             IbisData,
         },
-        federation::activities::create_or_update_comment::CreateOrUpdateComment,
+        federation::activities::comment::{
+            create_or_update_comment::CreateOrUpdateComment,
+            delete_comment::DeleteComment,
+            undo_delete_comment::UndoDeleteComment,
+        },
         utils::error::MyResult,
     },
     common::{
@@ -53,7 +57,7 @@ pub(in crate::backend::api) async fn create_comment(
     };
     let comment = DbComment::update(form, comment.id, &data)?;
 
-    CreateOrUpdateComment::send(comment.clone(), &data).await?;
+    CreateOrUpdateComment::send(&comment.comment, &data).await?;
 
     Ok(Json(comment))
 }
@@ -79,7 +83,16 @@ pub(in crate::backend::api) async fn edit_comment(
     };
     let comment = DbComment::update(form, params.id, &data)?;
 
-    CreateOrUpdateComment::send(comment.clone(), &data).await?;
+    // federate
+    if orig_comment.content != comment.comment.content {
+        CreateOrUpdateComment::send(&comment.comment, &data).await?;
+    }
+    if !orig_comment.deleted && comment.comment.deleted {
+        DeleteComment::send(&comment.comment, &data).await?;
+    }
+    if orig_comment.deleted && !comment.comment.deleted {
+        UndoDeleteComment::send(&comment.comment, &data).await?;
+    }
 
     Ok(Json(comment))
 }

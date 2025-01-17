@@ -50,7 +50,6 @@ impl AnnounceActivity {
             .collect();
         send_activity(&instance, announce, follower_inboxes, context).await?;
 
-        dbg!("send announce");
         Ok(())
     }
 }
@@ -75,8 +74,6 @@ impl ActivityHandler for AnnounceActivity {
 
     #[tracing::instrument(skip_all)]
     async fn receive(self, context: &Data<Self::DataType>) -> MyResult<()> {
-        dbg!("receive announce");
-        // verify here in order to avoid fetching the object twice over http
         self.object.verify(context).await?;
         self.object.receive(context).await
     }

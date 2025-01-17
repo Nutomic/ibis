@@ -134,6 +134,8 @@ impl DbInstance {
             .get_results(conn.deref_mut())?)
     }
 
+    /// Read the instance where an article is hosted, based on a comment id.
+    /// Note this may be different from the instance where the comment is hosted.
     pub fn read_for_comment(comment_id: CommentId, data: &Data<IbisData>) -> MyResult<DbInstance> {
         let mut conn = data.db_pool.get()?;
         Ok(instance::table
