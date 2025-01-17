@@ -30,16 +30,16 @@ unwrap_used = "deny"
 
 # frontend and shared deps
 [dependencies]
-leptos = "0.7.3"
-leptos_meta = "0.7.3"
-leptos_router = "0.7.3"
+leptos = "0.7.4"
+leptos_meta = "0.7.4"
+leptos_router = "0.7.4"
 chrono = { version = "0.4.39", features = ["serde"] }
 hex = "0.4.3"
 rand = "0.8.5"
 getrandom = { version = "0.2", features = ["js"] }
 serde_json = "1.0.135"
 sha2 = "0.10.8"
-uuid = { version = "1.11.0", features = ["serde"] }
+uuid = { version = "1.12.0", features = ["serde"] }
 serde = { version = "1.0.217", features = ["derive"] }
 url = { version = "2.5.4", features = ["serde"] }
 log = "0.4"
@@ -54,13 +54,13 @@ markdown-it-heading-anchors = "0.3.0"
 markdown-it-footnote = "0.2.0"
 markdown-it-sub = "1.0.1"
 markdown-it-sup = "1.0.1"
-leptos-use = "0.15.3"
+leptos-use = "0.15.5"
 codee = "0.2.0"
-wasm-bindgen = "=0.2.99"
+wasm-bindgen = "=0.2.100"
 gloo-net = "0.6.0"
 console_log = "1.0.0"
 send_wrapper = "0.6.0"
-web-sys = "0.3.76"
+web-sys = "0.3.77"
 http = "1.2.0"
 serde_urlencoded = "0.7.1"
 github-slugger = "0.1.0"
@@ -70,7 +70,7 @@ github-slugger = "0.1.0"
 axum = "0.7.9"
 axum-macros = "0.4.2"
 axum-extra = { version = "0.9.6", features = ["cookie"] }
-tokio = { version = "1.42.0", features = ["full"] }
+tokio = { version = "1.43.0", features = ["full"] }
 tower-http = { version = "0.6.2", features = [
   "cors",
   "fs",
@@ -90,12 +90,12 @@ diesel-derive-newtype = "2.1.2"
 diesel_migrations = "2.2.0"
 doku = "0.21.1"
 jsonwebtoken = "9.3.0"
-leptos_axum = "0.7.3"
+leptos_axum = "0.7.4"
 bcrypt = "0.16.0"
 diffy = "0.4.0"
 enum_delegate = "0.2.0"
 async-trait = "0.1.85"
-config = { version = "0.15.4", features = ["toml"] }
+config = { version = "0.15.6", features = ["toml"] }
 tower = "0.5.2"
 tower-layer = "0.3.3"
 reqwest = { version = "0.12.12", features = ["json", "cookies"] }
