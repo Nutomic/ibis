@@ -46,19 +46,18 @@ impl CreateOrUpdateComment {
         } else {
             CreateOrUpdateType::Update
         };
-        let recipient = DbInstance::read_for_comment(comment.comment.id, data)?
-            .ap_id
-            .into_inner();
+        let recipient = DbInstance::read_for_comment(comment.comment.id, data)?;
         let object = comment.comment.into_json(data).await?;
         let id = generate_activity_id(data)?;
         let activity = Self {
             actor: object.attributed_to.clone(),
             object,
-            to: vec![public(), recipient.clone()],
+            to: vec![public(), recipient.ap_id.clone().into()],
             kind,
             id,
         };
-        send_activity(&comment.creator, activity, vec![recipient], data).await?;
+        let inbox_url = recipient.inbox_url.parse()?;
+        send_activity(&comment.creator, activity, vec![inbox_url], data).await?;
         Ok(())
     }
 }

@@ -1,1 +1,3 @@
-alter table edit add column pending bool not null default false;
+ALTER TABLE edit
+    ADD COLUMN pending bool NOT NULL DEFAULT FALSE;
+

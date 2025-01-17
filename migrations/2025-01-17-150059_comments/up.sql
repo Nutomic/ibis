@@ -1,12 +1,22 @@
+CREATE OR REPLACE FUNCTION generate_unique_comment_id ()
+    RETURNS text
+    LANGUAGE sql
+    AS $$
+    SELECT
+        'http://example.com/' || string_agg(substr('abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz0123456789', ceil(random() * 62)::integer, 1), '')
+    FROM
+        generate_series(1, 20)
+$$;
+
 CREATE TABLE comment (
     id serial PRIMARY KEY,
     creator_id int REFERENCES person ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
     article_id int REFERENCES article ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
-    parent_id int REFERENCES comment ON UPDATE CASCADE ON DELETE CASCADE,
+    parent_id int REFERENCES COMMENT ON UPDATE CASCADE ON DELETE CASCADE,
     content text NOT NULL,
-    ap_id varchar(255) not null default 'http://example.com',
+    ap_id varchar(255) NOT NULL UNIQUE DEFAULT generate_unique_comment_id(),
     local boolean NOT NULL,
-    deleted boolean not null,
+    deleted boolean NOT NULL,
     published timestamptz NOT NULL DEFAULT now(),
     updated timestamptz
 );

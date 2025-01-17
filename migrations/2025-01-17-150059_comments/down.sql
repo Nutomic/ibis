@@ -11,6 +11,8 @@ ALTER TABLE instance_stats
 
 DROP TABLE comment;
 
+DROP FUNCTION generate_unique_comment_id;
+
 CREATE OR REPLACE FUNCTION instance_stats_activity (i text)
     RETURNS int
     LANGUAGE plpgsql

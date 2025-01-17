@@ -1,16 +1,16 @@
-use super::objects::{
-    comment::ApubComment,
-    instance_collection::{DbInstanceCollection, InstanceCollection},
+use super::{
+    activities::create_or_update_comment::CreateOrUpdateComment,
+    objects::{
+        comment::ApubComment,
+        instance_collection::{DbInstanceCollection, InstanceCollection},
+    },
 };
 use crate::{
     backend::{
         database::IbisData,
         federation::{
             activities::{
-                accept::Accept,
-                create_article::CreateArticle,
-                follow::Follow,
-                reject::RejectEdit,
+                accept::Accept, create_article::CreateArticle, follow::Follow, reject::RejectEdit,
                 update_local_article::UpdateLocalArticle,
                 update_remote_article::UpdateRemoteArticle,
             },
@@ -25,10 +25,7 @@ use crate::{
         utils::error::{Error, MyResult},
     },
     common::{
-        article::DbArticle,
-        comment::DbComment,
-        instance::DbInstance,
-        newtypes::CommentId,
+        article::DbArticle, comment::DbComment, instance::DbInstance, newtypes::CommentId,
         user::DbPerson,
     },
 };
@@ -140,6 +137,7 @@ pub enum InboxActivities {
     UpdateLocalArticle(UpdateLocalArticle),
     UpdateRemoteArticle(UpdateRemoteArticle),
     RejectEdit(RejectEdit),
+    CreateOrUpdateComment(CreateOrUpdateComment),
 }
 
 #[debug_handler]
@@ -147,6 +145,7 @@ pub async fn http_post_inbox(
     data: Data<IbisData>,
     activity_data: ActivityData,
 ) -> impl IntoResponse {
+    dbg!("receive activity");
     receive_activity::<WithContext<InboxActivities>, UserOrInstance, IbisData>(activity_data, &data)
         .await
 }
@@ -167,7 +166,7 @@ pub enum PersonOrInstance {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub enum PersonOrInstanceType {
     Person,
-    Group,
+    Service,
 }
 
 #[async_trait::async_trait]
