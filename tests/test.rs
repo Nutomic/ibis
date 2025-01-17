@@ -836,6 +836,11 @@ async fn test_article_approval_required() -> Result<()> {
 async fn test_comment_create_edit() -> Result<()> {
     let TestData(alpha, beta, gamma) = TestData::start(true).await;
 
+    gamma
+        .follow_instance_with_resolve(&alpha.hostname)
+        .await
+        .unwrap();
+
     // create article
     let form = CreateArticleForm {
         title: "Manu_Chao".to_string(),
@@ -887,7 +892,7 @@ async fn test_comment_create_edit() -> Result<()> {
     let edited_comment = alpha.edit_comment(&edit_form).await.unwrap().comment;
     assert_eq!(edited_comment.parent_id, Some(top_comment.id));
     assert_eq!(edited_comment.article_id, article.article.id);
-    assert_eq!(Some(edited_comment.content), edit_form.content);
+    assert_eq!(Some(&edited_comment.content), edit_form.content.as_ref());
 
     let article = beta.get_article(get_form.clone()).await.unwrap();
     assert_eq!(2, article.comments.len());
@@ -898,7 +903,9 @@ async fn test_comment_create_edit() -> Result<()> {
     assert_eq!(Some(article.comments[1].content.clone()), edit_form.content);
 
     // TODO: will also have to implement announce activity so that comments federate to all instances
-    todo!();
+    let gamma_article = gamma.get_article(get_form).await.unwrap();
+    assert_eq!(2, gamma_article.comments.len());
+    assert_eq!(edited_comment.content, gamma_article.comments[1].content);
 
     TestData::stop(alpha, beta, gamma)
 }
@@ -921,7 +928,7 @@ async fn test_comment_delete_restore() -> Result<()> {
 
     // create comment
     let form = CreateCommentForm {
-        content: "top comment".to_string(),
+        content: "my comment".to_string(),
         article_id: beta_article.article.id,
         parent_id: None,
     };
