@@ -27,6 +27,7 @@ pub struct DbCommentInsertForm {
     pub article_id: ArticleId,
     pub parent_id: Option<CommentId>,
     pub content: String,
+    pub depth: i32,
     pub ap_id: Option<ObjectId<DbComment>>,
     pub local: bool,
     pub deleted: bool,

@@ -22,6 +22,7 @@ diesel::table! {
         article_id -> Int4,
         parent_id -> Nullable<Int4>,
         content -> Text,
+        depth -> Int4,
         #[max_length = 255]
         ap_id -> Varchar,
         local -> Bool,

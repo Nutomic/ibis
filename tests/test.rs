@@ -873,6 +873,7 @@ async fn test_comment_create_edit() -> Result<()> {
     let top_comment = beta.create_comment(&form).await.unwrap().comment;
     assert_eq!(top_comment.content, form.content);
     assert_eq!(top_comment.article_id, beta_article.article.id);
+    assert_eq!(top_comment.depth, 0);
     assert!(top_comment.parent_id.is_none());
     assert!(top_comment.local);
     assert!(!top_comment.deleted);
@@ -894,6 +895,7 @@ async fn test_comment_create_edit() -> Result<()> {
     };
     let child_comment = alpha.create_comment(&form).await.unwrap().comment;
     assert_eq!(child_comment.parent_id, Some(top_comment.id));
+    assert_eq!(child_comment.depth, 1);
 
     // edit comment text
     let edit_form = EditCommentForm {

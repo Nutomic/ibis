@@ -14,6 +14,7 @@ CREATE TABLE comment (
     article_id int REFERENCES article ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
     parent_id int REFERENCES COMMENT ON UPDATE CASCADE ON DELETE CASCADE,
     content text NOT NULL,
+    depth int not null,
     ap_id varchar(255) NOT NULL UNIQUE DEFAULT generate_unique_comment_id(),
     local boolean NOT NULL,
     deleted boolean NOT NULL,

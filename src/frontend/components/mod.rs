@@ -1,4 +1,6 @@
 pub mod article_nav;
+pub mod comment;
+pub mod comment_editor;
 pub mod connect;
 pub mod credentials;
 pub mod edit_list;

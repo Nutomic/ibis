@@ -2,7 +2,7 @@ use super::article_or_comment::DbArticleOrComment;
 use crate::{
     backend::{
         database::{comment::DbCommentInsertForm, IbisData},
-        utils::error::Error,
+        utils::{error::Error, validate::validate_comment_max_depth},
     },
     common::{article::DbArticle, comment::DbComment, user::DbPerson},
 };
@@ -81,11 +81,16 @@ impl Object for DbComment {
 
     async fn from_json(json: Self::Kind, data: &Data<Self::DataType>) -> Result<Self, Self::Error> {
         let parent = json.in_reply_to.dereference(data).await?;
-        let (article_id, parent_id) = match parent {
-            DbArticleOrComment::Article(db_article) => (db_article.id, None),
-            DbArticleOrComment::Comment(db_comment) => (db_comment.article_id, Some(db_comment.id)),
+        let (article_id, parent_id, depth) = match parent {
+            DbArticleOrComment::Article(db_article) => (db_article.id, None, 0),
+            DbArticleOrComment::Comment(db_comment) => (
+                db_comment.article_id,
+                Some(db_comment.id),
+                db_comment.depth + 1,
+            ),
         };
         let creator = json.attributed_to.dereference(data).await?;
+        validate_comment_max_depth(depth)?;
 
         let form = DbCommentInsertForm {
             article_id,
@@ -97,6 +102,7 @@ impl Object for DbComment {
             published: json.published.unwrap_or_else(Utc::now),
             updated: json.updated,
             content: json.content,
+            depth,
         };
 
         Ok(DbComment::create_or_update(form, data)?)

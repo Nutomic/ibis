@@ -20,6 +20,7 @@ pub struct DbComment {
     pub article_id: ArticleId,
     pub parent_id: Option<CommentId>,
     pub content: String,
+    pub depth: i32,
     #[cfg(feature = "ssr")]
     pub ap_id: ObjectId<DbComment>,
     #[cfg(not(feature = "ssr"))]

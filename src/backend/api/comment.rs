@@ -9,7 +9,7 @@ use crate::{
             delete_comment::DeleteComment,
             undo_delete_comment::UndoDeleteComment,
         },
-        utils::error::MyResult,
+        utils::{error::MyResult, validate::validate_comment_max_depth},
     },
     common::{
         comment::{CommentView, CreateCommentForm, DbComment, EditCommentForm},
@@ -29,17 +29,21 @@ pub(in crate::backend::api) async fn create_comment(
     data: Data<IbisData>,
     Form(create_comment): Form<CreateCommentForm>,
 ) -> MyResult<Json<CommentView>> {
+    let mut depth = 0;
     if let Some(parent_id) = create_comment.parent_id {
         let parent = DbComment::read(parent_id, &data)?;
         if parent.article_id != create_comment.article_id {
             return Err(anyhow!("Invalid article_id/parent_id combination").into());
         }
+        depth = parent.depth + 1;
+        validate_comment_max_depth(depth)?;
     }
     let form = DbCommentInsertForm {
         creator_id: user.person.id,
         article_id: create_comment.article_id,
         parent_id: create_comment.parent_id,
         content: create_comment.content,
+        depth,
         ap_id: None,
         local: true,
         deleted: false,
