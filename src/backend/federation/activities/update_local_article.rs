@@ -39,7 +39,7 @@ impl UpdateLocalArticle {
         data: &Data<IbisData>,
     ) -> MyResult<()> {
         debug_assert!(article.local);
-        let local_instance = DbInstance::read_local_instance(data)?;
+        let local_instance = DbInstance::read_local(data)?;
         let id = generate_activity_id(data)?;
         let mut to = local_instance.follower_ids(data)?;
         to.extend(extra_recipients.iter().map(|i| i.ap_id.inner().clone()));

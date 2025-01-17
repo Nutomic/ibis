@@ -10,7 +10,11 @@ use crate::{
         database::IbisData,
         federation::{
             activities::{
-                accept::Accept, create_article::CreateArticle, follow::Follow, reject::RejectEdit,
+                accept::Accept,
+                announce::AnnounceActivity,
+                create_article::CreateArticle,
+                follow::Follow,
+                reject::RejectEdit,
                 update_local_article::UpdateLocalArticle,
                 update_remote_article::UpdateRemoteArticle,
             },
@@ -25,7 +29,10 @@ use crate::{
         utils::error::{Error, MyResult},
     },
     common::{
-        article::DbArticle, comment::DbComment, instance::DbInstance, newtypes::CommentId,
+        article::DbArticle,
+        comment::DbComment,
+        instance::DbInstance,
+        newtypes::CommentId,
         user::DbPerson,
     },
 };
@@ -65,7 +72,7 @@ pub fn federation_routes() -> Router<()> {
 async fn http_get_instance(
     data: Data<IbisData>,
 ) -> MyResult<FederationJson<WithContext<ApubInstance>>> {
-    let local_instance = DbInstance::read_local_instance(&data)?;
+    let local_instance = DbInstance::read_local(&data)?;
     let json_instance = local_instance.into_json(&data).await?;
     Ok(FederationJson(WithContext::new_default(json_instance)))
 }
@@ -138,6 +145,14 @@ pub enum InboxActivities {
     UpdateRemoteArticle(UpdateRemoteArticle),
     RejectEdit(RejectEdit),
     CreateOrUpdateComment(CreateOrUpdateComment),
+    AnnounceActivity(AnnounceActivity),
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(untagged)]
+#[enum_delegate::implement(ActivityHandler)]
+pub enum AnnouncableActivities {
+    CreateOrUpdateComment(CreateOrUpdateComment),
 }
 
 #[debug_handler]
@@ -145,7 +160,6 @@ pub async fn http_post_inbox(
     data: Data<IbisData>,
     activity_data: ActivityData,
 ) -> impl IntoResponse {
-    dbg!("receive activity");
     receive_activity::<WithContext<InboxActivities>, UserOrInstance, IbisData>(activity_data, &data)
         .await
 }

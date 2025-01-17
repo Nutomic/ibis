@@ -51,7 +51,7 @@ pub(in crate::backend::api) async fn create_article(
 ) -> MyResult<Json<ArticleView>> {
     params.title = validate_article_title(&params.title)?;
 
-    let local_instance = DbInstance::read_local_instance(&data)?;
+    let local_instance = DbInstance::read_local(&data)?;
     let ap_id = ObjectId::parse(&format!(
         "{}://{}/article/{}",
         http_protocol_str(),
@@ -205,7 +205,7 @@ pub(in crate::backend::api) async fn fork_article(
     let original_article = DbArticle::read_view(params.article_id, &data)?;
     params.new_title = validate_article_title(&params.new_title)?;
 
-    let local_instance = DbInstance::read_local_instance(&data)?;
+    let local_instance = DbInstance::read_local(&data)?;
     let ap_id = ObjectId::parse(&format!(
         "{}://{}/article/{}",
         http_protocol_str(),

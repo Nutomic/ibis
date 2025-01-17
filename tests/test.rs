@@ -6,8 +6,14 @@ use crate::common::{TestData, TEST_ARTICLE_DEFAULT_TEXT};
 use anyhow::Result;
 use ibis::common::{
     article::{
-        ArticleView, CreateArticleForm, EditArticleForm, ForkArticleForm, GetArticleForm,
-        ListArticlesForm, ProtectArticleForm, SearchArticleForm,
+        ArticleView,
+        CreateArticleForm,
+        EditArticleForm,
+        ForkArticleForm,
+        GetArticleForm,
+        ListArticlesForm,
+        ProtectArticleForm,
+        SearchArticleForm,
     },
     comment::{CreateCommentForm, EditCommentForm},
     user::{GetUserForm, LoginUserForm, RegisterUserForm},
@@ -899,15 +905,12 @@ async fn test_comment_create_edit() -> Result<()> {
     assert_eq!(edited_comment.article_id, article.article.id);
     assert_eq!(Some(&edited_comment.content), edit_form.content.as_ref());
 
-    // TODO: alpha comment is not announced to beta yet
     let article = beta.get_article(get_form.clone()).await.unwrap();
     assert_eq!(2, article.comments.len());
     assert_eq!(article.comments[0].id, top_comment.id);
     assert_eq!(article.comments[0].content, top_comment.content);
-    assert_eq!(article.comments[1].id, edited_comment.id);
     assert_eq!(Some(article.comments[1].content.clone()), edit_form.content);
 
-    // TODO: will also have to implement announce activity so that comments federate to all instances
     let gamma_article = gamma.get_article(get_form).await.unwrap();
     assert_eq!(2, gamma_article.comments.len());
     assert_eq!(edited_comment.content, gamma_article.comments[1].content);

@@ -5,7 +5,8 @@ use crate::{
             IbisData,
         },
         federation::objects::{
-            articles_collection::DbArticleCollection, instance_collection::DbInstanceCollection,
+            articles_collection::DbArticleCollection,
+            instance_collection::DbInstanceCollection,
         },
         utils::error::MyResult,
     },
@@ -21,7 +22,13 @@ use activitypub_federation::{
 };
 use chrono::{DateTime, Utc};
 use diesel::{
-    insert_into, AsChangeset, ExpressionMethods, Insertable, JoinOnDsl, QueryDsl, RunQueryDsl,
+    insert_into,
+    AsChangeset,
+    ExpressionMethods,
+    Insertable,
+    JoinOnDsl,
+    QueryDsl,
+    RunQueryDsl,
 };
 use std::{fmt::Debug, ops::DerefMut};
 
@@ -66,7 +73,7 @@ impl DbInstance {
             .get_result(conn.deref_mut())?)
     }
 
-    pub fn read_local_instance(data: &IbisData) -> MyResult<Self> {
+    pub fn read_local(data: &IbisData) -> MyResult<Self> {
         let mut conn = data.db_pool.get()?;
         Ok(instance::table
             .filter(instance::local.eq(true))
@@ -76,7 +83,7 @@ impl DbInstance {
     pub fn read_view(id: Option<InstanceId>, data: &Data<IbisData>) -> MyResult<InstanceView> {
         let instance = match id {
             Some(id) => DbInstance::read(id, data),
-            None => DbInstance::read_local_instance(data),
+            None => DbInstance::read_local(data),
         }?;
         let followers = DbInstance::read_followers(instance.id, data)?;
 

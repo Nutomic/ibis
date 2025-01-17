@@ -53,7 +53,7 @@ impl Object for DbArticle {
     }
 
     async fn into_json(self, data: &Data<Self::DataType>) -> Result<Self::Kind, Self::Error> {
-        let local_instance = DbInstance::read_local_instance(data)?;
+        let local_instance = DbInstance::read_local(data)?;
         Ok(ApubArticle {
             kind: Default::default(),
             id: self.ap_id.clone(),

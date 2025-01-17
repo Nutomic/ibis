@@ -10,7 +10,13 @@ use crate::{
 use activitypub_federation::fetch::object_id::ObjectId;
 use chrono::{DateTime, Utc};
 use diesel::{
-    dsl::insert_into, update, AsChangeset, ExpressionMethods, Insertable, QueryDsl, RunQueryDsl,
+    dsl::insert_into,
+    update,
+    AsChangeset,
+    ExpressionMethods,
+    Insertable,
+    QueryDsl,
+    RunQueryDsl,
 };
 use std::ops::DerefMut;
 

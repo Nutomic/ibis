@@ -1,7 +1,8 @@
+use super::announce::AnnounceActivity;
 use crate::{
     backend::{
         database::IbisData,
-        federation::{objects::comment::ApubComment, send_activity},
+        federation::{objects::comment::ApubComment, routes::AnnouncableActivities, send_activity},
         generate_activity_id,
         utils::error::{Error, MyResult},
     },
@@ -14,10 +15,10 @@ use crate::{
 use activitypub_federation::{
     config::Data,
     fetch::object_id::ObjectId,
+    kinds::public,
     protocol::{helpers::deserialize_one_or_many, verification::verify_domains_match},
-    traits::Object,
+    traits::{ActivityHandler, Object},
 };
-use activitypub_federation::{kinds::public, traits::ActivityHandler};
 use serde::{Deserialize, Serialize};
 use url::Url;
 
@@ -40,24 +41,40 @@ pub struct CreateOrUpdateComment {
 }
 
 impl CreateOrUpdateComment {
-    pub async fn send(comment: CommentView, data: &Data<IbisData>) -> MyResult<()> {
-        let kind = if comment.comment.updated.is_none() {
+    async fn new(
+        comment: &DbComment,
+        recipient: &DbInstance,
+        data: &Data<IbisData>,
+    ) -> MyResult<Self> {
+        let kind = if comment.updated.is_none() {
             CreateOrUpdateType::Create
         } else {
             CreateOrUpdateType::Update
         };
-        let recipient = DbInstance::read_for_comment(comment.comment.id, data)?;
-        let object = comment.comment.into_json(data).await?;
+        let object = comment.clone().into_json(data).await?;
         let id = generate_activity_id(data)?;
-        let activity = Self {
+        let followers_url = format!("{}/followers", &recipient.ap_id);
+        Ok(Self {
             actor: object.attributed_to.clone(),
             object,
-            to: vec![public(), recipient.ap_id.clone().into()],
+            to: vec![public(), followers_url.parse()?],
             kind,
             id,
-        };
-        let inbox_url = recipient.inbox_url.parse()?;
-        send_activity(&comment.creator, activity, vec![inbox_url], data).await?;
+        })
+    }
+    pub async fn send(comment: CommentView, data: &Data<IbisData>) -> MyResult<()> {
+        let recipient = DbInstance::read_for_comment(comment.comment.id, data)?;
+        let activity = Self::new(&comment.comment, &recipient, data).await?;
+        if recipient.local {
+            AnnounceActivity::send(
+                AnnouncableActivities::CreateOrUpdateComment(activity),
+                &data,
+            )
+            .await?;
+        } else {
+            let inbox_url = recipient.inbox_url.parse()?;
+            send_activity(&comment.creator, activity, vec![inbox_url], data).await?;
+        }
         Ok(())
     }
 }
@@ -82,8 +99,17 @@ impl ActivityHandler for CreateOrUpdateComment {
     }
 
     async fn receive(self, data: &Data<Self::DataType>) -> Result<(), Self::Error> {
-        DbComment::from_json(self.object, data).await?;
+        let comment = DbComment::from_json(self.object, data).await?;
 
+        let instance = DbInstance::read_for_comment(comment.id, data)?;
+        if instance.local {
+            let activity = Self::new(&comment, &instance, data).await?;
+            AnnounceActivity::send(
+                AnnouncableActivities::CreateOrUpdateComment(activity),
+                &data,
+            )
+            .await?;
+        }
         Ok(())
     }
 }

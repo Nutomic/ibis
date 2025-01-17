@@ -2,7 +2,8 @@ use crate::{
     backend::{
         database::{edit::DbEditForm, IbisData},
         federation::activities::{
-            update_local_article::UpdateLocalArticle, update_remote_article::UpdateRemoteArticle,
+            update_local_article::UpdateLocalArticle,
+            update_remote_article::UpdateRemoteArticle,
         },
         utils::error::Error,
     },
@@ -15,6 +16,7 @@ use crate::{
 use activitypub_federation::config::Data;
 
 pub mod accept;
+pub mod announce;
 pub mod create_article;
 pub mod create_or_update_comment;
 pub mod follow;

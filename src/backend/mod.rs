@@ -69,7 +69,7 @@ pub async fn start(
         .build()
         .await?;
 
-    if DbInstance::read_local_instance(&data).is_err() {
+    if DbInstance::read_local(&data).is_err() {
         info!("Running setup for new instance");
         setup(&data.to_request_data()).await?;
     }
