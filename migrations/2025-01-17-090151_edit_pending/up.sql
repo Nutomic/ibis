@@ -1,0 +1,1 @@
+alter table edit add column pending bool not null default false;

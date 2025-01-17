@@ -32,8 +32,8 @@ impl TestData {
         INIT.call_once(|| {
             env_logger::builder()
                 .filter_level(LevelFilter::Warn)
-                .filter_module("activitypub_federation", LevelFilter::Info)
-                .filter_module("ibis", LevelFilter::Info)
+                //.filter_module("activitypub_federation", LevelFilter::Info)
+                //.filter_module("ibis", LevelFilter::Info)
                 .init();
         });
 

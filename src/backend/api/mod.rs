@@ -92,6 +92,7 @@ pub(in crate::backend::api) async fn site_view(
 #[debug_handler]
 pub async fn edit_list(
     Query(query): Query<GetEditList>,
+    user: Option<Extension<LocalUserView>>,
     data: Data<IbisData>,
 ) -> MyResult<Json<Vec<EditView>>> {
     let params = if let Some(article_id) = query.article_id {
@@ -101,7 +102,7 @@ pub async fn edit_list(
     } else {
         return Err(anyhow!("Must provide article_id or person_id").into());
     };
-    Ok(Json(DbEdit::view(params, &data)?))
+    Ok(Json(DbEdit::view(params, &user.map(|u| u.0), &data)?))
 }
 
 /// Trims the string param, and converts to None if it is empty

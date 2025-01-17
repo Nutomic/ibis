@@ -57,6 +57,18 @@ pub(super) fn generate_article_version(
     Err(anyhow!("failed to generate article version").into())
 }
 
+/// Use a single static keypair during testing which is signficantly faster than
+/// generating dozens of keys from scratch.
+pub fn generate_keypair() -> MyResult<Keypair> {
+    if cfg!(debug_assertions) {
+        static KEYPAIR: LazyLock<Keypair> =
+            LazyLock::new(|| generate_actor_keypair().expect("generate keypair"));
+        Ok(KEYPAIR.clone())
+    } else {
+        Ok(generate_actor_keypair()?)
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -81,6 +93,7 @@ mod test {
                 article_id: ArticleId(0),
                 previous_version_id: Default::default(),
                 published: Utc::now(),
+                pending: false,
             })
         };
         Ok([
@@ -113,17 +126,5 @@ mod test {
         let generated = generate_article_version(&edits, &EditVersion::default())?;
         assert_eq!("", generated);
         Ok(())
-    }
-}
-
-/// Use a single static keypair during testing which is signficantly faster than
-/// generating dozens of keys from scratch.
-pub fn generate_keypair() -> MyResult<Keypair> {
-    if cfg!(debug_assertions) {
-        static KEYPAIR: LazyLock<Keypair> =
-            LazyLock::new(|| generate_actor_keypair().expect("generate keypair"));
-        Ok(KEYPAIR.clone())
-    } else {
-        Ok(generate_actor_keypair()?)
     }
 }

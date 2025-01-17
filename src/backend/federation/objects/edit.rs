@@ -98,6 +98,7 @@ impl Object for DbEdit {
             hash: json.version,
             previous_version_id: json.previous_version,
             published: json.published,
+            pending: false,
         };
         let edit = DbEdit::create(&form, data)?;
         Ok(edit)

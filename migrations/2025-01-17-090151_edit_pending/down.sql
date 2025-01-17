@@ -1,0 +1,1 @@
+alter table edit drop column pending;

@@ -27,8 +27,16 @@ pub fn EditDiff() -> impl IntoView {
                     edit.edit.summary,
                     render_date_time(edit.edit.published),
                 );
+                let pending = edit.edit.pending;
                 view! {
-                    <h2 class="my-2 font-serif text-xl font-bold">{label}</h2>
+                    <div class="flex w-full">
+                        <h2 class="my-2 font-serif text-xl font-bold grow">{label}</h2>
+                        <Show when=move || pending>
+                            <span class="p-1 w-min rounded border-2 border-rose-300 h-min">
+                                Pending
+                            </span>
+                        </Show>
+                    </div>
                     <p>"by " {user_link(&edit.creator)}</p>
                     <div class="p-2 my-2 bg-gray-200 rounded">
                         <pre class="text-wrap">
