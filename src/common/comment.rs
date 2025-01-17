@@ -1,4 +1,7 @@
-use super::newtypes::{ArticleId, CommentId, PersonId};
+use super::{
+    newtypes::{ArticleId, CommentId, PersonId},
+    user::DbPerson,
+};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "ssr")]
@@ -25,6 +28,12 @@ pub struct DbComment {
     pub deleted: bool,
     pub published: DateTime<Utc>,
     pub updated: Option<DateTime<Utc>>,
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug)]
+pub struct CommentView {
+    pub comment: DbComment,
+    pub creator: DbPerson,
 }
 
 #[derive(Deserialize, Serialize, Debug)]

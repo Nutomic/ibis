@@ -1,18 +1,17 @@
 use crate::{
     backend::{
         database::{
-            schema::{instance, instance_follow},
+            schema::{article, comment, instance, instance_follow},
             IbisData,
         },
         federation::objects::{
-            articles_collection::DbArticleCollection,
-            instance_collection::DbInstanceCollection,
+            articles_collection::DbArticleCollection, instance_collection::DbInstanceCollection,
         },
         utils::error::MyResult,
     },
     common::{
         instance::{DbInstance, InstanceView},
-        newtypes::InstanceId,
+        newtypes::{CommentId, InstanceId},
         user::DbPerson,
     },
 };
@@ -22,13 +21,7 @@ use activitypub_federation::{
 };
 use chrono::{DateTime, Utc};
 use diesel::{
-    insert_into,
-    AsChangeset,
-    ExpressionMethods,
-    Insertable,
-    JoinOnDsl,
-    QueryDsl,
-    RunQueryDsl,
+    insert_into, AsChangeset, ExpressionMethods, Insertable, JoinOnDsl, QueryDsl, RunQueryDsl,
 };
 use std::{fmt::Debug, ops::DerefMut};
 
@@ -132,5 +125,15 @@ impl DbInstance {
         Ok(instance::table
             .filter(instance::local.eq(false))
             .get_results(conn.deref_mut())?)
+    }
+
+    pub fn read_for_comment(comment_id: CommentId, data: &Data<IbisData>) -> MyResult<DbInstance> {
+        let mut conn = data.db_pool.get()?;
+        Ok(instance::table
+            .inner_join(article::table)
+            .inner_join(comment::table.on(comment::article_id.eq(article::id)))
+            .filter(comment::id.eq(comment_id))
+            .select(instance::all_columns)
+            .get_result(conn.deref_mut())?)
     }
 }

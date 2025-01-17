@@ -2,20 +2,15 @@ use super::{schema::comment, IbisData};
 use crate::{
     backend::utils::error::MyResult,
     common::{
-        comment::DbComment,
+        comment::{CommentView, DbComment},
         newtypes::{ArticleId, CommentId, PersonId},
+        user::DbPerson,
     },
 };
 use activitypub_federation::fetch::object_id::ObjectId;
 use chrono::{DateTime, Utc};
 use diesel::{
-    dsl::insert_into,
-    update,
-    AsChangeset,
-    ExpressionMethods,
-    Insertable,
-    QueryDsl,
-    RunQueryDsl,
+    dsl::insert_into, update, AsChangeset, ExpressionMethods, Insertable, QueryDsl, RunQueryDsl,
 };
 use std::ops::DerefMut;
 
@@ -50,11 +45,17 @@ impl DbComment {
             .get_result(conn.deref_mut())?)
     }
 
-    pub fn update(form: DbCommentUpdateForm, id: CommentId, data: &IbisData) -> MyResult<Self> {
+    pub fn update(
+        form: DbCommentUpdateForm,
+        id: CommentId,
+        data: &IbisData,
+    ) -> MyResult<CommentView> {
         let mut conn = data.db_pool.get()?;
-        Ok(update(comment::table.find(id))
+        let comment: DbComment = update(comment::table.find(id))
             .set(form)
-            .get_result(conn.deref_mut())?)
+            .get_result(conn.deref_mut())?;
+        let creator = DbPerson::read(comment.creator_id, data)?;
+        Ok(CommentView { comment, creator })
     }
 
     pub fn create_or_update(form: DbCommentInsertForm, data: &IbisData) -> MyResult<Self> {
@@ -74,12 +75,22 @@ impl DbComment {
             .get_result::<Self>(conn.deref_mut())?)
     }
 
+    pub fn read_view(id: CommentId, data: &IbisData) -> MyResult<CommentView> {
+        let mut conn = data.db_pool.get()?;
+        let comment = comment::table
+            .find(id)
+            .get_result::<Self>(conn.deref_mut())?;
+        let creator = DbPerson::read(comment.creator_id, data)?;
+        Ok(CommentView { comment, creator })
+    }
+
     pub fn read_from_ap_id(ap_id: &ObjectId<DbComment>, data: &IbisData) -> MyResult<Self> {
         let mut conn = data.db_pool.get()?;
         Ok(comment::table
             .filter(comment::dsl::ap_id.eq(ap_id))
             .get_result(conn.deref_mut())?)
     }
+
     pub fn read_for_article(article_id: ArticleId, data: &IbisData) -> MyResult<Vec<Self>> {
         let mut conn = data.db_pool.get()?;
         let comments = comment::table

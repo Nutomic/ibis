@@ -6,14 +6,8 @@ use crate::common::{TestData, TEST_ARTICLE_DEFAULT_TEXT};
 use anyhow::Result;
 use ibis::common::{
     article::{
-        ArticleView,
-        CreateArticleForm,
-        EditArticleForm,
-        ForkArticleForm,
-        GetArticleForm,
-        ListArticlesForm,
-        ProtectArticleForm,
-        SearchArticleForm,
+        ArticleView, CreateArticleForm, EditArticleForm, ForkArticleForm, GetArticleForm,
+        ListArticlesForm, ProtectArticleForm, SearchArticleForm,
     },
     comment::{CreateCommentForm, EditCommentForm},
     user::{GetUserForm, LoginUserForm, RegisterUserForm},
@@ -837,7 +831,7 @@ async fn test_article_approval_required() -> Result<()> {
 }
 
 #[tokio::test]
-async fn test_comment_create_edit_delete() -> Result<()> {
+async fn test_comment_create_edit() -> Result<()> {
     let TestData(alpha, beta, gamma) = TestData::start(true).await;
 
     // create article
@@ -846,62 +840,111 @@ async fn test_comment_create_edit_delete() -> Result<()> {
         text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
         summary: "create article".to_string(),
     };
-    let article = alpha.create_article(&form).await.unwrap();
+    let alpha_article = alpha.create_article(&form).await.unwrap();
 
-    // create comments
-    // TODO: across instances
+    // fetch article on beta and create comment
+    let beta_article = gamma
+        .resolve_article(alpha_article.article.ap_id.inner().clone())
+        .await
+        .unwrap();
     let form = CreateCommentForm {
         content: "top comment".to_string(),
-        article_id: article.article.id,
+        article_id: beta_article.article.id,
         parent_id: None,
     };
-    let top_comment = alpha.create_comment(&form).await.unwrap();
+    let top_comment = beta.create_comment(&form).await.unwrap().comment;
     assert_eq!(top_comment.content, form.content);
-    assert_eq!(top_comment.article_id, article.article.id);
+    assert_eq!(top_comment.article_id, alpha_article.article.id);
     assert!(top_comment.parent_id.is_none());
     assert!(top_comment.local);
     assert!(!top_comment.deleted);
     assert!(top_comment.updated.is_none());
 
+    // now create child comment on alpha
+    let get_form = GetArticleForm {
+        title: Some(alpha_article.article.title),
+        ..Default::default()
+    };
+    let article = beta.get_article(get_form.clone()).await.unwrap();
+    assert_eq!(1, article.comments.len());
     let form = CreateCommentForm {
         content: "child comment".to_string(),
         article_id: article.article.id,
-        parent_id: Some(top_comment.id),
+        parent_id: Some(article.comments[0].id),
     };
-    let child_comment = alpha.create_comment(&form).await.unwrap();
+    // TODO: this should federate as inbox delivery is not implemented
+    let child_comment = alpha.create_comment(&form).await.unwrap().comment;
     assert_eq!(child_comment.parent_id, Some(top_comment.id));
 
     // edit comment text
-    let form = EditCommentForm {
+    let edit_form = EditCommentForm {
         id: child_comment.id,
         content: Some("edited comment".to_string()),
         deleted: None,
     };
-    let edited_comment = alpha.edit_comment(&form).await.unwrap();
+    let edited_comment = alpha.edit_comment(&edit_form).await.unwrap().comment;
     assert_eq!(edited_comment.parent_id, Some(top_comment.id));
     assert_eq!(edited_comment.article_id, article.article.id);
-    assert_eq!(Some(edited_comment.content), form.content);
+    assert_eq!(Some(edited_comment.content), edit_form.content);
 
-    let get_form = GetArticleForm {
-        id: Some(article.article.id),
-        ..Default::default()
-    };
-    let article = alpha.get_article(get_form.clone()).await.unwrap();
+    let article = beta.get_article(get_form.clone()).await.unwrap();
     assert_eq!(2, article.comments.len());
     assert_eq!(article.comments[0].id, top_comment.id);
     assert_eq!(article.comments[0].content, top_comment.content);
     assert_eq!(article.comments[1].id, edited_comment.id);
+    // TODO: inbox handler is missing so this should also fail
+    assert_eq!(Some(article.comments[1].content.clone()), edit_form.content);
+
+    // TODO: will also have to implement announce activity so that comments federate to all instances
+    todo!();
+
+    TestData::stop(alpha, beta, gamma)
+}
+
+#[tokio::test]
+async fn test_comment_delete_restore() -> Result<()> {
+    let TestData(alpha, beta, gamma) = TestData::start(true).await;
+
+    // create article and fetch it
+    let form = CreateArticleForm {
+        title: "Manu_Chao".to_string(),
+        text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
+        summary: "create article".to_string(),
+    };
+    let article = alpha.create_article(&form).await.unwrap();
+    let beta_article = gamma
+        .resolve_article(article.article.ap_id.inner().clone())
+        .await
+        .unwrap();
+
+    // create comment
+    let form = CreateCommentForm {
+        content: "top comment".to_string(),
+        article_id: beta_article.article.id,
+        parent_id: None,
+    };
+    let comment = beta.create_comment(&form).await.unwrap();
+    let get_form = GetArticleForm {
+        title: Some(article.article.title),
+        ..Default::default()
+    };
 
     // delete comment
-    let form = EditCommentForm {
-        id: child_comment.id,
+    let mut form = EditCommentForm {
+        id: comment.comment.id,
         deleted: Some(true),
         content: None,
     };
-    alpha.edit_comment(&form).await.unwrap();
-    let article = alpha.get_article(get_form).await.unwrap();
+    alpha.edit_comment(&form).await.unwrap().comment;
+    let article = beta.get_article(get_form.clone()).await.unwrap();
     assert!(article.comments[1].deleted);
     assert!(article.comments[1].content.is_empty());
+
+    form.deleted = Some(false);
+    alpha.edit_comment(&form).await.unwrap();
+    let article = beta.get_article(get_form).await.unwrap();
+    assert!(!article.comments[1].deleted);
+    assert!(!article.comments[1].content.is_empty());
 
     TestData::stop(alpha, beta, gamma)
 }

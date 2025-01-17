@@ -17,14 +17,8 @@ use activitypub_federation::{config::Data, fetch::object_id::ObjectId};
 use bcrypt::{hash, DEFAULT_COST};
 use chrono::{DateTime, Utc};
 use diesel::{
-    insert_into,
-    AsChangeset,
-    ExpressionMethods,
-    Insertable,
-    JoinOnDsl,
-    PgTextExpressionMethods,
-    QueryDsl,
-    RunQueryDsl,
+    insert_into, AsChangeset, ExpressionMethods, Insertable, JoinOnDsl, PgTextExpressionMethods,
+    QueryDsl, RunQueryDsl,
 };
 use std::ops::DerefMut;
 
@@ -61,7 +55,7 @@ impl DbPerson {
             .get_result::<DbPerson>(conn.deref_mut())?)
     }
 
-    pub fn read(id: PersonId, data: &Data<IbisData>) -> MyResult<DbPerson> {
+    pub fn read(id: PersonId, data: &IbisData) -> MyResult<DbPerson> {
         let mut conn = data.db_pool.get()?;
         Ok(person::table.find(id).get_result(conn.deref_mut())?)
     }

@@ -94,7 +94,7 @@ impl Object for DbComment {
             ap_id: Some(json.id),
             local: false,
             deleted: false,
-            published: json.published.unwrap_or_else(|| Utc::now()),
+            published: json.published.unwrap_or_else(Utc::now),
             updated: json.updated,
             content: json.content,
         };
