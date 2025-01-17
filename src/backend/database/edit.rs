@@ -7,11 +7,21 @@ use crate::{
     common::{
         article::{DbArticle, DbEdit, EditVersion, EditView},
         newtypes::{ArticleId, PersonId},
+        user::LocalUserView,
     },
 };
 use activitypub_federation::fetch::object_id::ObjectId;
 use chrono::{DateTime, Utc};
-use diesel::{insert_into, AsChangeset, ExpressionMethods, Insertable, QueryDsl, RunQueryDsl};
+use diesel::{
+    dsl::not,
+    insert_into,
+    AsChangeset,
+    BoolExpressionMethods,
+    ExpressionMethods,
+    Insertable,
+    QueryDsl,
+    RunQueryDsl,
+};
 use diffy::create_patch;
 use std::ops::DerefMut;
 
@@ -26,6 +36,7 @@ pub struct DbEditForm {
     pub article_id: ArticleId,
     pub previous_version_id: EditVersion,
     pub published: DateTime<Utc>,
+    pub pending: bool,
 }
 
 impl DbEditForm {
@@ -35,6 +46,7 @@ impl DbEditForm {
         updated_text: &str,
         summary: String,
         previous_version_id: EditVersion,
+        pending: bool,
     ) -> MyResult<Self> {
         let diff = create_patch(&original_article.text, updated_text);
         let version = EditVersion::new(&diff.to_string());
@@ -48,6 +60,7 @@ impl DbEditForm {
             previous_version_id,
             summary,
             published: Utc::now(),
+            pending,
         })
     }
 
@@ -96,11 +109,18 @@ impl DbEdit {
             .get_results(conn.deref_mut())?)
     }
 
-    pub fn view(params: ViewEditParams, data: &IbisData) -> MyResult<Vec<EditView>> {
+    pub fn view(
+        params: ViewEditParams,
+        user: &Option<LocalUserView>,
+        data: &IbisData,
+    ) -> MyResult<Vec<EditView>> {
         let mut conn = data.db_pool.get()?;
+        let person_id = user.as_ref().map(|u| u.person.id).unwrap_or(PersonId(-1));
         let query = edit::table
             .inner_join(article::table)
             .inner_join(person::table)
+            // only the creator can view pending edits
+            .filter(not(edit::pending).or(edit::creator_id.eq(person_id)))
             .into_boxed();
 
         let query = match params {

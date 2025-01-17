@@ -9,11 +9,10 @@ use crate::{
     common::{
         article::{DbArticle, DbEdit, EditVersion},
         instance::DbInstance,
-        newtypes::{EditId, PersonId},
+        newtypes::PersonId,
     },
 };
 use activitypub_federation::config::Data;
-use chrono::Utc;
 
 pub mod accept;
 pub mod create_article;
@@ -31,12 +30,13 @@ pub async fn submit_article_update(
     creator_id: PersonId,
     data: &Data<IbisData>,
 ) -> Result<(), Error> {
-    let form = DbEditForm::new(
+    let mut form = DbEditForm::new(
         original_article,
         creator_id,
         &new_text,
         summary,
         previous_version,
+        false,
     )?;
     if original_article.local {
         let edit = DbEdit::create(&form, data)?;
@@ -44,18 +44,9 @@ pub async fn submit_article_update(
 
         UpdateLocalArticle::send(updated_article, vec![], data).await?;
     } else {
-        // dont insert edit into db, might be invalid in case of conflict
-        let edit = DbEdit {
-            id: EditId(-1),
-            creator_id,
-            hash: form.hash,
-            ap_id: form.ap_id,
-            diff: form.diff,
-            summary: form.summary,
-            article_id: form.article_id,
-            previous_version_id: form.previous_version_id,
-            published: Utc::now(),
-        };
+        // insert edit as pending, so only the creator can see it
+        form.pending = true;
+        let edit = DbEdit::create(&form, data)?;
         let instance = DbInstance::read(original_article.instance_id, data)?;
         UpdateRemoteArticle::send(edit, instance, data).await?;
     }

@@ -125,6 +125,7 @@ pub struct DbEdit {
     /// First edit of an article always has `EditVersion::default()` here
     pub previous_version_id: EditVersion,
     pub published: DateTime<Utc>,
+    pub pending: bool,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug, Default)]

@@ -23,7 +23,7 @@ async fn test_create_read_and_edit_local_article() -> Result<()> {
     let TestData(alpha, beta, gamma) = TestData::start(false).await;
 
     // create article
-    const TITLE: &'static str = "Manu_Chao";
+    const TITLE: &str = "Manu_Chao";
     let create_form = CreateArticleForm {
         title: "Manu Chao".to_string(),
         text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
@@ -332,8 +332,8 @@ async fn test_edit_remote_article() -> Result<()> {
         .starts_with(&edit_res.article.ap_id.to_string()));
 
     // edit should be federated to beta and gamma
-    let get_res = alpha.get_article(get_article_data_alpha).await.unwrap();
-    let edits = alpha.get_article_edits(get_res.article.id).await.unwrap();
+    let get_res = beta.get_article(get_article_data_alpha).await.unwrap();
+    let edits = beta.get_article_edits(get_res.article.id).await.unwrap();
     assert_eq!(edit_res.article.title, get_res.article.title);
     assert_eq!(edits.len(), 2);
     assert_eq!(edit_res.article.text, get_res.article.text);
@@ -451,7 +451,7 @@ async fn test_federated_edit_conflict() -> Result<()> {
     let edit_form = EditArticleForm {
         article_id: get_res.article.id,
         new_text: "Lorem Ipsum\n".to_string(),
-        summary: "summary".to_string(),
+        summary: "first edit".to_string(),
         previous_version_id: create_res.latest_version.clone(),
         resolve_conflict_id: None,
     };
@@ -471,14 +471,15 @@ async fn test_federated_edit_conflict() -> Result<()> {
     let edit_form = EditArticleForm {
         article_id: resolve_res.article.id,
         new_text: "aaaa\n".to_string(),
-        summary: "summary".to_string(),
+        summary: "second edit".to_string(),
         previous_version_id: create_res.latest_version,
         resolve_conflict_id: None,
     };
     let edit_res = gamma.edit_article(&edit_form).await.unwrap();
     let gamma_edits = gamma.get_article_edits(edit_res.article.id).await.unwrap();
     assert_ne!(edit_form.new_text, edit_res.article.text);
-    assert_eq!(1, gamma_edits.len());
+    assert_eq!(2, gamma_edits.len());
+    assert!(gamma_edits[1].edit.pending);
     assert!(!edit_res.article.local);
 
     assert_eq!(1, gamma.notifications_count().await.unwrap());
@@ -492,7 +493,7 @@ async fn test_federated_edit_conflict() -> Result<()> {
     let edit_form = EditArticleForm {
         article_id: resolve_res.article.id,
         new_text: "aaaa\n".to_string(),
-        summary: "summary".to_string(),
+        summary: "resolve conflict".to_string(),
         previous_version_id: conflict.previous_version_id.clone(),
         resolve_conflict_id: Some(conflict.id),
     };
@@ -500,6 +501,7 @@ async fn test_federated_edit_conflict() -> Result<()> {
     let gamma_edits = gamma.get_article_edits(edit_res.article.id).await.unwrap();
     assert_eq!(edit_form.new_text, edit_res.article.text);
     assert_eq!(3, gamma_edits.len());
+    assert!(gamma_edits.iter().all(|e| !e.edit.pending));
 
     assert_eq!(0, gamma.notifications_count().await.unwrap());
     let notifications = gamma.notifications_list().await.unwrap();

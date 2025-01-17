@@ -1,6 +1,9 @@
 use crate::{
     backend::{
-        database::{schema::conflict, IbisData},
+        database::{
+            schema::{conflict, edit},
+            IbisData,
+        },
         federation::activities::submit_article_update,
         utils::{error::MyResult, generate_article_version},
     },
@@ -69,14 +72,21 @@ impl DbConflict {
     }
 
     /// Delete merge conflict which was created by specific user
-    pub fn delete(id: ConflictId, creator_id: PersonId, data: &IbisData) -> MyResult<Self> {
+    pub fn delete(id: ConflictId, creator_id: PersonId, data: &IbisData) -> MyResult<()> {
         let mut conn = data.db_pool.get()?;
-        Ok(delete(
+        let conflict: Self = delete(
             conflict::table
                 .filter(conflict::dsl::creator_id.eq(creator_id))
                 .find(id),
         )
-        .get_result(conn.deref_mut())?)
+        .get_result(conn.deref_mut())?;
+        delete(
+            edit::table
+                .filter(edit::dsl::creator_id.eq(creator_id))
+                .filter(edit::dsl::hash.eq(conflict.hash)),
+        )
+        .execute(conn.deref_mut())?;
+        Ok(())
     }
 
     pub async fn to_api_conflict(&self, data: &Data<IbisData>) -> MyResult<Option<ApiConflict>> {

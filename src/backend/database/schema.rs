@@ -56,6 +56,7 @@ diesel::table! {
         article_id -> Int4,
         previous_version_id -> Uuid,
         published -> Timestamptz,
+        pending -> Bool,
     }
 }
 
