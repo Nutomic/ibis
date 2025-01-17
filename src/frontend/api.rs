@@ -8,8 +8,7 @@ use crate::common::{
 };
 use http::{Method, StatusCode};
 use leptos::{prelude::ServerFnError, server_fn::error::NoCustomError};
-use log::error;
-use log::info;
+use log::{error, info};
 use serde::{Deserialize, Serialize};
 use std::{fmt::Debug, sync::LazyLock};
 use url::Url;

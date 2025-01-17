@@ -7,10 +7,11 @@ use markdown_it::{
 };
 use math_equation::MathEquationScanner;
 use std::sync::OnceLock;
+use table_of_contents::{TocMarkerScanner, TocScanner};
 
 pub mod article_link;
 pub mod math_equation;
-pub mod toc;
+pub mod table_of_contents;
 
 pub fn render_markdown(text: &str) -> String {
     static INSTANCE: OnceLock<MarkdownIt> = OnceLock::new();
@@ -77,8 +78,8 @@ fn markdown_parser() -> MarkdownIt {
     // Ibis custom extensions
     parser.inline.add_rule::<ArticleLinkScanner>();
     parser.inline.add_rule::<MathEquationScanner>();
-    parser.inline.add_rule::<toc::TocMarkerScanner>();
-    parser.add_rule::<toc::TocScanner>();
+    parser.inline.add_rule::<TocMarkerScanner>();
+    parser.add_rule::<TocScanner>();
 
     parser
 }
