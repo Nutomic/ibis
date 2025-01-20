@@ -109,7 +109,7 @@ impl DbComment {
         let comments = comment::table
             .inner_join(person::table)
             .filter(comment::article_id.eq(article_id))
-            .order_by(comment::id)
+            .order_by(comment::published.desc())
             .get_results::<(DbComment, DbPerson)>(conn.deref_mut())?;
 
         // Clear content of deleted comments. comments themselves are returned

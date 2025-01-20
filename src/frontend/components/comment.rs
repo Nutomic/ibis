@@ -18,6 +18,15 @@ pub fn CommentView(article: Resource<DbArticleView>, comment: DbCommentView) -> 
     let margin = comment.comment.depth * 2;
     let style_ = format!("margin-left: {margin}rem;");
 
+    let comment_id = format!("comment-{}", comment.comment.id.0);
+    let comment_link = format!(
+        "/article/{}/discussion#{comment_id}",
+        article
+            .get()
+            .map(|a| a.article.title.clone())
+            .unwrap_or_default(),
+    );
+
     let (show_editor, set_show_editor) = signal(false);
 
     let delete_restore_comment_action = Action::new(move |_: &()| async move {
@@ -46,16 +55,21 @@ pub fn CommentView(article: Resource<DbArticleView>, comment: DbCommentView) -> 
     };
 
     view! {
-        <div style=style_>
+        <div style=style_ id=comment_id>
             <div class="py-2">
                 <div class="text-xs">{user_link(&comment.creator)}</div>
                 <div class="my-2">{content}</div>
+                <div>{comment.comment.depth}</div>
                 <div class="text-xs">
                     <Show when=move || !comment.comment.deleted>
                         <a class="link" on:click=move |_| set_show_editor.update(|s| *s = !*s)>
                             Reply
                         </a>
                     </Show>
+                    " | "
+                    <a class="link" href=comment_link>
+                        Link
+                    </a>
                     " | "
                     <Show when=move || allow_delete>
                         <a
