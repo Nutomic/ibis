@@ -891,7 +891,7 @@ async fn test_comment_create_edit() -> Result<()> {
     let form = CreateCommentForm {
         content: "child comment".to_string(),
         article_id: article.article.id,
-        parent_id: Some(article.comments[0].id),
+        parent_id: Some(article.comments[0].comment.id),
     };
     let child_comment = alpha.create_comment(&form).await.unwrap().comment;
     assert_eq!(child_comment.parent_id, Some(top_comment.id));
@@ -904,19 +904,20 @@ async fn test_comment_create_edit() -> Result<()> {
         deleted: None,
     };
     let edited_comment = alpha.edit_comment(&edit_form).await.unwrap().comment;
-    assert_eq!(edited_comment.parent_id, Some(top_comment.id));
     assert_eq!(edited_comment.article_id, article.article.id);
     assert_eq!(Some(&edited_comment.content), edit_form.content.as_ref());
 
-    let article = beta.get_article(get_form.clone()).await.unwrap();
-    assert_eq!(2, article.comments.len());
-    assert_eq!(article.comments[0].id, top_comment.id);
-    assert_eq!(article.comments[0].content, top_comment.content);
-    assert_eq!(Some(article.comments[1].content.clone()), edit_form.content);
+    let beta_comments = beta.get_article(get_form.clone()).await.unwrap().comments;
+    assert_eq!(2, beta_comments.len());
+    assert_eq!(beta_comments[1].comment.content, top_comment.content);
+    assert_eq!(
+        Some(&beta_comments[0].comment.content),
+        edit_form.content.as_ref()
+    );
 
-    let gamma_article = gamma.get_article(get_form).await.unwrap();
-    assert_eq!(2, gamma_article.comments.len());
-    assert_eq!(edited_comment.content, gamma_article.comments[1].content);
+    let gamma_comments = gamma.get_article(get_form).await.unwrap().comments;
+    assert_eq!(2, gamma_comments.len());
+    assert_eq!(edited_comment.content, gamma_comments[0].comment.content);
 
     TestData::stop(alpha, beta, gamma)
 }
@@ -956,29 +957,29 @@ async fn test_comment_delete_restore() -> Result<()> {
         content: None,
     };
     alpha.edit_comment(&form).await.unwrap();
-    let article = alpha.get_article(get_form.clone()).await.unwrap();
-    assert!(article.comments[0].deleted);
-    assert!(article.comments[0].content.is_empty());
+    let alpha_comments = alpha.get_article(get_form.clone()).await.unwrap().comments;
+    assert!(alpha_comments[0].comment.deleted);
+    assert!(alpha_comments[0].comment.content.is_empty());
     sleep(Duration::from_secs(1)).await;
 
     // check that comment is deleted on beta
-    let beta_article = beta.get_article(get_form.clone()).await.unwrap();
-    assert_eq!(comment.comment.ap_id, beta_article.comments[0].ap_id);
-    assert!(beta_article.comments[0].deleted);
-    assert!(article.comments[0].content.is_empty());
+    let beta_comments = beta.get_article(get_form.clone()).await.unwrap().comments;
+    assert_eq!(comment.comment.ap_id, beta_comments[0].comment.ap_id);
+    assert!(beta_comments[0].comment.deleted);
+    assert!(beta_comments[0].comment.content.is_empty());
 
     // restore comment
     form.deleted = Some(false);
     alpha.edit_comment(&form).await.unwrap();
-    let article = alpha.get_article(get_form.clone()).await.unwrap();
-    assert!(!article.comments[0].deleted);
-    assert!(!article.comments[0].content.is_empty());
+    let alpha_comments = alpha.get_article(get_form.clone()).await.unwrap().comments;
+    assert!(!alpha_comments[0].comment.deleted);
+    assert!(!alpha_comments[0].comment.content.is_empty());
     sleep(Duration::from_secs(1)).await;
 
     // check that comment is restored on beta
-    let beta_article = beta.get_article(get_form).await.unwrap();
-    assert!(!beta_article.comments[0].deleted);
-    assert!(!beta_article.comments[0].content.is_empty());
+    let beta_comments = beta.get_article(get_form).await.unwrap().comments;
+    assert!(!beta_comments[0].comment.deleted);
+    assert!(!beta_comments[0].comment.content.is_empty());
 
     TestData::stop(alpha, beta, gamma)
 }

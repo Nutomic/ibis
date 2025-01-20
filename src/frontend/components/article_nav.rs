@@ -108,7 +108,7 @@ fn tab_classes(active_tab: &ActiveTab) -> ActiveTabClasses {
     const TAB_ACTIVE: &str = "tab tab-active";
     let mut classes = ActiveTabClasses {
         read: TAB_INACTIVE,
-        discussion: &TAB_INACTIVE,
+        discussion: TAB_INACTIVE,
         history: TAB_INACTIVE,
         edit: TAB_INACTIVE,
         actions: TAB_INACTIVE,
