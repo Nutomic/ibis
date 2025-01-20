@@ -12,7 +12,7 @@ use crate::{
         utils::{error::MyResult, validate::validate_comment_max_depth},
     },
     common::{
-        comment::{CommentView, CreateCommentForm, DbComment, EditCommentForm},
+        comment::{CreateCommentForm, DbComment, DbCommentView, EditCommentForm},
         user::LocalUserView,
         utils::http_protocol_str,
     },
@@ -28,7 +28,7 @@ pub(in crate::backend::api) async fn create_comment(
     user: Extension<LocalUserView>,
     data: Data<IbisData>,
     Form(create_comment): Form<CreateCommentForm>,
-) -> MyResult<Json<CommentView>> {
+) -> MyResult<Json<DbCommentView>> {
     let mut depth = 0;
     if let Some(parent_id) = create_comment.parent_id {
         let parent = DbComment::read(parent_id, &data)?;
@@ -71,7 +71,7 @@ pub(in crate::backend::api) async fn edit_comment(
     user: Extension<LocalUserView>,
     data: Data<IbisData>,
     Form(params): Form<EditCommentForm>,
-) -> MyResult<Json<CommentView>> {
+) -> MyResult<Json<DbCommentView>> {
     if params.content.is_none() && params.deleted.is_none() {
         return Err(anyhow!("Edit has no parameters").into());
     }

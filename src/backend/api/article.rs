@@ -14,9 +14,9 @@ use crate::{
         article::{
             ApiConflict,
             ApproveArticleForm,
-            ArticleView,
             CreateArticleForm,
             DbArticle,
+            DbArticleView,
             DbEdit,
             DeleteConflictForm,
             EditArticleForm,
@@ -48,7 +48,7 @@ pub(in crate::backend::api) async fn create_article(
     user: Extension<LocalUserView>,
     data: Data<IbisData>,
     Form(mut params): Form<CreateArticleForm>,
-) -> MyResult<Json<ArticleView>> {
+) -> MyResult<Json<DbArticleView>> {
     params.title = validate_article_title(&params.title)?;
 
     let local_instance = DbInstance::read_local(&data)?;
@@ -163,7 +163,7 @@ pub(in crate::backend::api) async fn edit_article(
 pub(in crate::backend::api) async fn get_article(
     Query(query): Query<GetArticleForm>,
     data: Data<IbisData>,
-) -> MyResult<Json<ArticleView>> {
+) -> MyResult<Json<DbArticleView>> {
     match (query.title, query.id) {
         (Some(title), None) => Ok(Json(DbArticle::read_view_title(
             &title,
@@ -200,7 +200,7 @@ pub(in crate::backend::api) async fn fork_article(
     Extension(_user): Extension<LocalUserView>,
     data: Data<IbisData>,
     Form(mut params): Form<ForkArticleForm>,
-) -> MyResult<Json<ArticleView>> {
+) -> MyResult<Json<DbArticleView>> {
     // TODO: lots of code duplicated from create_article(), can move it into helper
     let original_article = DbArticle::read_view(params.article_id, &data)?;
     params.new_title = validate_article_title(&params.new_title)?;
@@ -254,12 +254,12 @@ pub(in crate::backend::api) async fn fork_article(
 pub(super) async fn resolve_article(
     Query(query): Query<ResolveObject>,
     data: Data<IbisData>,
-) -> MyResult<Json<ArticleView>> {
+) -> MyResult<Json<DbArticleView>> {
     let article: DbArticle = ObjectId::from(query.id).dereference(&data).await?;
     let instance = DbInstance::read(article.instance_id, &data)?;
     let comments = DbComment::read_for_article(article.id, &data)?;
     let latest_version = article.latest_edit_version(&data)?;
-    Ok(Json(ArticleView {
+    Ok(Json(DbArticleView {
         article,
         instance,
         comments,

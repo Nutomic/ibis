@@ -1,6 +1,6 @@
 use crate::{
     common::{
-        article::{ApiConflict, ArticleView, EditArticleForm},
+        article::{ApiConflict, DbArticleView, EditArticleForm},
         newtypes::ConflictId,
         Notification,
         MAIN_PAGE_NAME,
@@ -71,7 +71,7 @@ pub fn EditArticle() -> impl IntoView {
         move |(new_text, summary, article, edit_response): &(
             String,
             String,
-            ArticleView,
+            DbArticleView,
             EditResponse,
         )| {
             let new_text = new_text.clone();

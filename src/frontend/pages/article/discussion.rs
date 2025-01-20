@@ -1,5 +1,5 @@
 use crate::{
-    common::comment::DbComment,
+    common::comment::DbCommentView,
     frontend::{
         components::{
             article_nav::{ActiveTab, ArticleNav},
@@ -15,17 +15,16 @@ use leptos::prelude::*;
 pub fn ArticleDiscussion() -> impl IntoView {
     let article = article_resource();
 
-    // TODO: ArticleView should contain Person for each comment
-    // TODO: allow creating nested reply
+    // TODO: need to use correct order
     view! {
         <ArticleNav article=article active_tab=ActiveTab::Discussion />
         <Suspense fallback=|| view! { "Loading..." }>
-            <CommentEditorView article=article />
+            <CommentEditorView article=article parent_id=None />
             <div>
                 <For
                     each=move || article.get().map(|a| a.comments).unwrap_or_default()
-                    key=|comment| comment.id
-                    children=move |comment: DbComment| view! { <CommentView comment /> }
+                    key=|comment| comment.comment.id
+                    children=move |comment: DbCommentView| view! { <CommentView article comment /> }
                 />
             </div>
         </Suspense>

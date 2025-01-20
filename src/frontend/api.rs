@@ -6,7 +6,7 @@ use crate::common::{
     utils::http_protocol_str,
     *,
 };
-use comment::{CommentView, CreateCommentForm, EditCommentForm};
+use comment::{CreateCommentForm, DbCommentView, EditCommentForm};
 use http::{Method, StatusCode};
 use leptos::{prelude::ServerFnError, server_fn::error::NoCustomError};
 use log::error;
@@ -57,7 +57,7 @@ impl ApiClient {
         Self { hostname, ssl }
     }
 
-    pub async fn get_article(&self, data: GetArticleForm) -> Option<ArticleView> {
+    pub async fn get_article(&self, data: GetArticleForm) -> Option<DbArticleView> {
         self.get("/api/v1/article", Some(data)).await
     }
 
@@ -80,7 +80,7 @@ impl ApiClient {
     pub async fn create_article(
         &self,
         data: &CreateArticleForm,
-    ) -> Result<ArticleView, ServerFnError> {
+    ) -> Result<DbArticleView, ServerFnError> {
         self.send(Method::POST, "/api/v1/article", Some(&data))
             .await
     }
@@ -94,7 +94,7 @@ impl ApiClient {
     }
 
     #[cfg(debug_assertions)]
-    pub async fn edit_article(&self, edit_form: &EditArticleForm) -> Option<ArticleView> {
+    pub async fn edit_article(&self, edit_form: &EditArticleForm) -> Option<DbArticleView> {
         let edit_res = self
             .edit_article_with_conflict(edit_form)
             .await
@@ -113,11 +113,14 @@ impl ApiClient {
     pub async fn create_comment(
         &self,
         data: &CreateCommentForm,
-    ) -> Result<CommentView, ServerFnError> {
+    ) -> Result<DbCommentView, ServerFnError> {
         self.post("/api/v1/comment", Some(&data)).await
     }
 
-    pub async fn edit_comment(&self, data: &EditCommentForm) -> Result<CommentView, ServerFnError> {
+    pub async fn edit_comment(
+        &self,
+        data: &EditCommentForm,
+    ) -> Result<DbCommentView, ServerFnError> {
         self.send(Method::PATCH, "/api/v1/comment", Some(&data))
             .await
     }
@@ -202,7 +205,10 @@ impl ApiClient {
         result_to_option(self.post("/api/v1/account/logout", None::<()>).await)
     }
 
-    pub async fn fork_article(&self, form: &ForkArticleForm) -> Result<ArticleView, ServerFnError> {
+    pub async fn fork_article(
+        &self,
+        form: &ForkArticleForm,
+    ) -> Result<DbArticleView, ServerFnError> {
         self.post("/api/v1/article/fork", Some(form)).await
     }
 
@@ -213,7 +219,7 @@ impl ApiClient {
         self.post("/api/v1/article/protect", Some(params)).await
     }
 
-    pub async fn resolve_article(&self, id: Url) -> Result<ArticleView, ServerFnError> {
+    pub async fn resolve_article(&self, id: Url) -> Result<DbArticleView, ServerFnError> {
         let resolve_object = ResolveObject { id };
         self.send(Method::GET, "/api/v1/article/resolve", Some(resolve_object))
             .await

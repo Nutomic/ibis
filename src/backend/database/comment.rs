@@ -1,8 +1,11 @@
-use super::{schema::comment, IbisData};
+use super::{
+    schema::{comment, person},
+    IbisData,
+};
 use crate::{
     backend::utils::error::MyResult,
     common::{
-        comment::{CommentView, DbComment},
+        comment::{DbComment, DbCommentView},
         newtypes::{ArticleId, CommentId, PersonId},
         user::DbPerson,
     },
@@ -56,13 +59,13 @@ impl DbComment {
         form: DbCommentUpdateForm,
         id: CommentId,
         data: &IbisData,
-    ) -> MyResult<CommentView> {
+    ) -> MyResult<DbCommentView> {
         let mut conn = data.db_pool.get()?;
         let comment: DbComment = update(comment::table.find(id))
             .set(form)
             .get_result(conn.deref_mut())?;
         let creator = DbPerson::read(comment.creator_id, data)?;
-        Ok(CommentView { comment, creator })
+        Ok(DbCommentView { comment, creator })
     }
 
     pub fn create_or_update(form: DbCommentInsertForm, data: &IbisData) -> MyResult<Self> {
@@ -82,13 +85,13 @@ impl DbComment {
             .get_result::<Self>(conn.deref_mut())?)
     }
 
-    pub fn read_view(id: CommentId, data: &IbisData) -> MyResult<CommentView> {
+    pub fn read_view(id: CommentId, data: &IbisData) -> MyResult<DbCommentView> {
         let mut conn = data.db_pool.get()?;
         let comment = comment::table
             .find(id)
             .get_result::<Self>(conn.deref_mut())?;
         let creator = DbPerson::read(comment.creator_id, data)?;
-        Ok(CommentView { comment, creator })
+        Ok(DbCommentView { comment, creator })
     }
 
     pub fn read_from_ap_id(ap_id: &ObjectId<DbComment>, data: &IbisData) -> MyResult<Self> {
@@ -98,22 +101,26 @@ impl DbComment {
             .get_result(conn.deref_mut())?)
     }
 
-    pub fn read_for_article(article_id: ArticleId, data: &IbisData) -> MyResult<Vec<Self>> {
+    pub fn read_for_article(
+        article_id: ArticleId,
+        data: &IbisData,
+    ) -> MyResult<Vec<DbCommentView>> {
         let mut conn = data.db_pool.get()?;
         let comments = comment::table
+            .inner_join(person::table)
             .filter(comment::article_id.eq(article_id))
             .order_by(comment::id)
-            .get_results::<Self>(conn.deref_mut())?;
+            .get_results::<(DbComment, DbPerson)>(conn.deref_mut())?;
 
         // Clear content of deleted comments. comments themselves are returned
         // so that tree can be rendered.
         Ok(comments
             .into_iter()
-            .map(|mut c| {
-                if c.deleted {
-                    c.content = String::new()
+            .map(|(mut comment, creator)| {
+                if comment.deleted {
+                    comment.content = String::new()
                 };
-                c
+                DbCommentView { comment, creator }
             })
             .collect())
     }

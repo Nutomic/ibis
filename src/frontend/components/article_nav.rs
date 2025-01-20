@@ -1,5 +1,5 @@
 use crate::{
-    common::{article::ArticleView, validation::can_edit_article},
+    common::{article::DbArticleView, validation::can_edit_article},
     frontend::{
         app::{is_admin, is_logged_in},
         article_path,
@@ -18,7 +18,7 @@ pub enum ActiveTab {
 }
 
 #[component]
-pub fn ArticleNav(article: Resource<ArticleView>, active_tab: ActiveTab) -> impl IntoView {
+pub fn ArticleNav(article: Resource<DbArticleView>, active_tab: ActiveTab) -> impl IntoView {
     let tab_classes = tab_classes(&active_tab);
 
     view! {

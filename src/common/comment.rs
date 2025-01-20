@@ -31,8 +31,8 @@ pub struct DbComment {
     pub updated: Option<DateTime<Utc>>,
 }
 
-#[derive(Deserialize, Serialize, Clone, Debug)]
-pub struct CommentView {
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
+pub struct DbCommentView {
     pub comment: DbComment,
     pub creator: DbPerson,
 }

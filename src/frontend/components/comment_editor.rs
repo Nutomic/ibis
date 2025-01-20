@@ -1,12 +1,15 @@
 use crate::{
-    common::{article::ArticleView, comment::CreateCommentForm},
+    common::{article::DbArticleView, comment::CreateCommentForm, newtypes::CommentId},
     frontend::api::CLIENT,
 };
 use leptos::{html::Textarea, prelude::*};
 use leptos_use::{use_textarea_autosize, UseTextareaAutosizeReturn};
 
 #[component]
-pub fn CommentEditorView(article: Resource<ArticleView>) -> impl IntoView {
+pub fn CommentEditorView(
+    article: Resource<DbArticleView>,
+    parent_id: Option<CommentId>,
+) -> impl IntoView {
     let textarea_ref = NodeRef::<Textarea>::new();
     let UseTextareaAutosizeReturn {
         content,
@@ -14,11 +17,11 @@ pub fn CommentEditorView(article: Resource<ArticleView>) -> impl IntoView {
         trigger_resize: _,
     } = use_textarea_autosize(textarea_ref);
 
-    let submit_comment = Action::new(move |_: &()| async move {
+    let submit_comment_action = Action::new(move |_: &()| async move {
         let form = CreateCommentForm {
             content: content.get_untracked(),
             article_id: article.await.article.id,
-            parent_id: None,
+            parent_id,
         };
         CLIENT.create_comment(&form).await.unwrap();
         article.refetch();
@@ -40,7 +43,7 @@ pub fn CommentEditorView(article: Resource<ArticleView>) -> impl IntoView {
                 <button
                     class="btn btn-secondary btn-sm"
                     on:click=move |_| {
-                        submit_comment.dispatch(());
+                        submit_comment_action.dispatch(());
                     }
                 >
                     Submit

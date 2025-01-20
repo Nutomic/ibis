@@ -8,7 +8,7 @@ use crate::{
         utils::error::MyResult,
     },
     common::{
-        article::{ArticleView, DbArticle, EditVersion},
+        article::{DbArticle, DbArticleView, EditVersion},
         comment::DbComment,
         instance::DbInstance,
         newtypes::{ArticleId, InstanceId},
@@ -96,7 +96,7 @@ impl DbArticle {
             .get_result::<Self>(conn.deref_mut())?)
     }
 
-    pub fn read_view(id: ArticleId, data: &IbisData) -> MyResult<ArticleView> {
+    pub fn read_view(id: ArticleId, data: &IbisData) -> MyResult<DbArticleView> {
         let mut conn = data.db_pool.get()?;
         let query = article::table
             .find(id)
@@ -105,7 +105,7 @@ impl DbArticle {
         let (article, instance): (DbArticle, DbInstance) = query.get_result(conn.deref_mut())?;
         let comments = DbComment::read_for_article(article.id, data)?;
         let latest_version = article.latest_edit_version(data)?;
-        Ok(ArticleView {
+        Ok(DbArticleView {
             article,
             instance,
             comments,
@@ -117,7 +117,7 @@ impl DbArticle {
         title: &str,
         domain: Option<String>,
         data: &IbisData,
-    ) -> MyResult<ArticleView> {
+    ) -> MyResult<DbArticleView> {
         let mut conn = data.db_pool.get()?;
         let (article, instance): (DbArticle, DbInstance) = {
             let query = article::table
@@ -133,7 +133,7 @@ impl DbArticle {
         };
         let comments = DbComment::read_for_article(article.id, data)?;
         let latest_version = article.latest_edit_version(data)?;
-        Ok(ArticleView {
+        Ok(DbArticleView {
             article,
             instance,
             comments,
