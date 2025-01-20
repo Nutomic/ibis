@@ -3,7 +3,12 @@ use crate::{
         article::DbArticleView,
         comment::{DbCommentView, EditCommentForm},
     },
-    frontend::{api::CLIENT, components::comment_editor::CommentEditorView, user_link},
+    frontend::{
+        api::CLIENT,
+        app::{site, DefaultResource},
+        components::comment_editor::CommentEditorView,
+        user_link,
+    },
 };
 use leptos::prelude::*;
 
@@ -27,6 +32,8 @@ pub fn CommentView(article: Resource<DbArticleView>, comment: DbCommentView) -> 
         article.refetch();
     });
 
+    let allow_delete = site().with_default(|site| site.my_profile.as_ref().map(|p| p.person.id))
+        == Some(comment.comment.creator_id);
     let content = if comment.comment.deleted {
         "**deleted**".to_string()
     } else {
@@ -39,28 +46,37 @@ pub fn CommentView(article: Resource<DbArticleView>, comment: DbCommentView) -> 
     };
 
     view! {
-        <div class="py-2 pl-4" style=style_>
-            <div class="text-sm">{user_link(&comment.creator)}</div>
-            <div>{content}</div>
-            <div class="text-sm">
-                <a class="link" on:click=move |_| set_show_editor.update(|s| *s = !*s)>
-                    Reply
-                </a>
-                " | "
-                <a
-                    class="link"
-                    on:click=move |_| {
-                        delete_restore_comment_action.dispatch(());
-                    }
-                >
-                    {delete_restore_label}
-                </a>
-                <Show when=move || show_editor.get()>
-                    <CommentEditorView article=article parent_id=Some(comment.comment.id) />
-                </Show>
+        <div style=style_>
+            <div class="py-2">
+                <div class="text-xs">{user_link(&comment.creator)}</div>
+                <div class="my-2">{content}</div>
+                <div class="text-xs">
+                    <Show when=move || !comment.comment.deleted>
+                        <a class="link" on:click=move |_| set_show_editor.update(|s| *s = !*s)>
+                            Reply
+                        </a>
+                    </Show>
+                    " | "
+                    <Show when=move || allow_delete>
+                        <a
+                            class="link"
+                            on:click=move |_| {
+                                delete_restore_comment_action.dispatch(());
+                            }
+                        >
+                            {delete_restore_label}
+                        </a>
+                    </Show>
+                    <Show when=move || show_editor.get()>
+                        <CommentEditorView
+                            article=article
+                            parent_id=Some(comment.comment.id)
+                            set_show_editor=Some(set_show_editor)
+                        />
+                    </Show>
+                </div>
             </div>
             <div class="m-0 divider"></div>
         </div>
     }
-    // TODO: actions for reply, delete, undelete
 }

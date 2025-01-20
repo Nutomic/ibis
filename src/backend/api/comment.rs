@@ -9,7 +9,10 @@ use crate::{
             delete_comment::DeleteComment,
             undo_delete_comment::UndoDeleteComment,
         },
-        utils::{error::MyResult, validate::validate_comment_max_depth},
+        utils::{
+            error::MyResult,
+            validate::{validate_comment_max_depth, validate_not_empty},
+        },
     },
     common::{
         comment::{CreateCommentForm, DbComment, DbCommentView, EditCommentForm},
@@ -27,12 +30,16 @@ use chrono::Utc;
 pub(in crate::backend::api) async fn create_comment(
     user: Extension<LocalUserView>,
     data: Data<IbisData>,
-    Form(create_comment): Form<CreateCommentForm>,
+    Form(params): Form<CreateCommentForm>,
 ) -> MyResult<Json<DbCommentView>> {
+    validate_not_empty(&params.content)?;
     let mut depth = 0;
-    if let Some(parent_id) = create_comment.parent_id {
+    if let Some(parent_id) = params.parent_id {
         let parent = DbComment::read(parent_id, &data)?;
-        if parent.article_id != create_comment.article_id {
+        if parent.deleted {
+            return Err(anyhow!("Cant reply to deleted comment").into());
+        }
+        if parent.article_id != params.article_id {
             return Err(anyhow!("Invalid article_id/parent_id combination").into());
         }
         depth = parent.depth + 1;
@@ -40,9 +47,9 @@ pub(in crate::backend::api) async fn create_comment(
     }
     let form = DbCommentInsertForm {
         creator_id: user.person.id,
-        article_id: create_comment.article_id,
-        parent_id: create_comment.parent_id,
-        content: create_comment.content,
+        article_id: params.article_id,
+        parent_id: params.parent_id,
+        content: params.content,
         depth,
         ap_id: None,
         local: true,
@@ -72,6 +79,9 @@ pub(in crate::backend::api) async fn edit_comment(
     data: Data<IbisData>,
     Form(params): Form<EditCommentForm>,
 ) -> MyResult<Json<DbCommentView>> {
+    if let Some(content) = &params.content {
+        validate_not_empty(content)?;
+    }
     if params.content.is_none() && params.deleted.is_none() {
         return Err(anyhow!("Edit has no parameters").into());
     }

@@ -56,9 +56,9 @@ fn user_title(person: &DbPerson) -> String {
         .clone()
         .unwrap_or(person.username.clone());
     if person.local {
-        name.clone()
+        format!("@{name}")
     } else {
-        format!("{}@{}", name, extract_domain(&person.ap_id))
+        format!("@{}@{}", name, extract_domain(&person.ap_id))
     }
 }
 

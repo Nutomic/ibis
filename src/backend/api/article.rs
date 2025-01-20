@@ -8,7 +8,11 @@ use crate::{
             IbisData,
         },
         federation::activities::{create_article::CreateArticle, submit_article_update},
-        utils::{error::MyResult, generate_article_version, validate::validate_article_title},
+        utils::{
+            error::MyResult,
+            generate_article_version,
+            validate::{validate_article_title, validate_not_empty},
+        },
     },
     common::{
         article::{
@@ -50,6 +54,7 @@ pub(in crate::backend::api) async fn create_article(
     Form(mut params): Form<CreateArticleForm>,
 ) -> MyResult<Json<DbArticleView>> {
     params.title = validate_article_title(&params.title)?;
+    validate_not_empty(&params.text)?;
 
     let local_instance = DbInstance::read_local(&data)?;
     let ap_id = ObjectId::parse(&format!(
@@ -99,38 +104,39 @@ pub(in crate::backend::api) async fn create_article(
 pub(in crate::backend::api) async fn edit_article(
     Extension(user): Extension<LocalUserView>,
     data: Data<IbisData>,
-    Form(mut edit_form): Form<EditArticleForm>,
+    Form(mut params): Form<EditArticleForm>,
 ) -> MyResult<Json<Option<ApiConflict>>> {
+    validate_not_empty(&params.new_text)?;
     // resolve conflict if any
-    if let Some(resolve_conflict_id) = edit_form.resolve_conflict_id {
+    if let Some(resolve_conflict_id) = params.resolve_conflict_id {
         DbConflict::delete(resolve_conflict_id, user.person.id, &data)?;
     }
-    let original_article = DbArticle::read_view(edit_form.article_id, &data)?;
-    if edit_form.new_text == original_article.article.text {
+    let original_article = DbArticle::read_view(params.article_id, &data)?;
+    if params.new_text == original_article.article.text {
         return Err(anyhow!("Edit contains no changes").into());
     }
-    if edit_form.summary.is_empty() {
+    if params.summary.is_empty() {
         return Err(anyhow!("No summary given").into());
     }
     can_edit_article(&original_article.article, user.local_user.admin)?;
     // ensure trailing newline for clean diffs
-    if !edit_form.new_text.ends_with('\n') {
-        edit_form.new_text.push('\n');
+    if !params.new_text.ends_with('\n') {
+        params.new_text.push('\n');
     }
     let local_link = format!("](https://{}", data.config.federation.domain);
-    if edit_form.new_text.contains(&local_link) {
+    if params.new_text.contains(&local_link) {
         return Err(anyhow!("Links to local instance don't work over federation").into());
     }
 
     // Markdown formatting
-    let new_text = fmtm::format(&edit_form.new_text, Some(80))?;
+    let new_text = fmtm::format(&params.new_text, Some(80))?;
 
-    if edit_form.previous_version_id == original_article.latest_version {
+    if params.previous_version_id == original_article.latest_version {
         // No intermediate changes, simply submit new version
         submit_article_update(
             new_text.clone(),
-            edit_form.summary.clone(),
-            edit_form.previous_version_id,
+            params.summary.clone(),
+            params.previous_version_id,
             &original_article.article,
             user.person.id,
             &data,
@@ -141,14 +147,14 @@ pub(in crate::backend::api) async fn edit_article(
         // There have been other changes since this edit was initiated. Get the common ancestor
         // version and generate a diff to find out what exactly has changed.
         let edits = DbEdit::list_for_article(original_article.article.id, &data)?;
-        let ancestor = generate_article_version(&edits, &edit_form.previous_version_id)?;
+        let ancestor = generate_article_version(&edits, &params.previous_version_id)?;
         let patch = create_patch(&ancestor, &new_text);
 
-        let previous_version = DbEdit::read(&edit_form.previous_version_id, &data)?;
+        let previous_version = DbEdit::read(&params.previous_version_id, &data)?;
         let form = DbConflictForm {
             hash: EditVersion::new(&patch.to_string()),
             diff: patch.to_string(),
-            summary: edit_form.summary.clone(),
+            summary: params.summary.clone(),
             creator_id: user.person.id,
             article_id: original_article.article.id,
             previous_version_id: previous_version.hash,

@@ -42,6 +42,13 @@ pub fn validate_comment_max_depth(depth: i32) -> MyResult<()> {
     Ok(())
 }
 
+pub fn validate_not_empty(text: &str) -> MyResult<()> {
+    if text.len() < 2 {
+        return Err(anyhow!("Empty text submitted").into());
+    }
+    Ok(())
+}
+
 #[test]
 #[expect(clippy::unwrap_used)]
 fn test_validate_article_title() {
