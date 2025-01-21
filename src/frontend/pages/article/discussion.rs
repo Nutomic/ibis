@@ -21,7 +21,12 @@ pub fn ArticleDiscussion() -> impl IntoView {
     view! {
         <ArticleNav article=article active_tab=ActiveTab::Discussion />
         <Suspense fallback=|| view! { "Loading..." }>
-            <CommentEditorView article=article parent_id=None set_show_editor=None />
+            <CommentEditorView
+                article=article
+                parent_id=None
+                set_show_editor=None
+                edit_params=None
+            />
             <div>
                 <For
                     each=move || {

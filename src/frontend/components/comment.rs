@@ -7,9 +7,10 @@ use crate::{
     frontend::{
         api::CLIENT,
         app::{site, DefaultResource},
-        components::comment_editor::CommentEditorView,
+        components::comment_editor::{CommentEditorView, EditParams},
         markdown::render_comment_markdown,
-        time_ago, user_link,
+        time_ago,
+        user_link,
     },
 };
 use leptos::prelude::*;
@@ -20,9 +21,10 @@ pub fn CommentView(
     comment: DbCommentView,
     show_editor: (ReadSignal<CommentId>, WriteSignal<CommentId>),
 ) -> impl IntoView {
-    let (comment_signal, set_comment_signal) = signal(comment.comment.clone());
-    let render_comment = move || render_content(comment_signal.get());
-    let delete_restore_label = move || delete_restore_label(comment_signal.get());
+    let is_editing = signal(false);
+    let comment_change_signal = signal(comment.comment.clone());
+    let render_comment = move || render_content(comment_change_signal.0.get());
+    let delete_restore_label = move || delete_restore_label(comment_change_signal.0.get());
 
     // css class is not included because its dynamically generated, need to use raw css instead of class
     let margin = comment.comment.depth * 2;
@@ -40,55 +42,86 @@ pub fn CommentView(
     let delete_restore_comment_action = Action::new(move |_: &()| async move {
         let form = EditCommentForm {
             id: comment.comment.id,
-            deleted: Some(!comment_signal.get_untracked().deleted),
+            deleted: Some(!comment_change_signal.0.get_untracked().deleted),
             content: None,
         };
         let comment = CLIENT.edit_comment(&form).await.unwrap();
-        set_comment_signal.set(comment.comment);
+        comment_change_signal.1.set(comment.comment);
     });
 
-    let allow_delete = site().with_default(|site| site.my_profile.as_ref().map(|p| p.person.id))
+    let is_creator = site().with_default(|site| site.my_profile.as_ref().map(|p| p.person.id))
         == Some(comment.comment.creator_id);
 
+    let edit_params = EditParams {
+        comment: comment.comment.clone(),
+        set_comment: comment_change_signal.1,
+        set_is_editing: is_editing.1,
+    };
     view! {
         <div style=style_ id=comment_id>
             <div class="py-2">
-                <div class="text-xs flex">
+                <div class="flex text-xs">
                     <span class="grow">{user_link(&comment.creator)}</span>
                     <a href=comment_link class="link">
                         {time_ago(comment.comment.published)}
                     </a>
                 </div>
-                <div class="my-2 prose prose-slate" inner_html=render_comment></div>
-                <div class="text-xs">
-                    <Show when=move || !comment.comment.deleted>
-                        <a class="link" on:click=move |_| show_editor.1.set(comment.comment.id)>
-                            Reply
+                <Show
+                    when=move || !is_editing.0.get()
+                    fallback=move || {
+                        view! {
+                            <CommentEditorView
+                                article=article
+                                parent_id=Some(comment.comment.id)
+                                set_show_editor=Some(show_editor.1)
+                                edit_params=Some(edit_params.clone())
+                            />
+                        }
+                    }
+                >
+                    <div class="my-2 prose prose-slate" inner_html=render_comment></div>
+                    <div class="text-xs">
+                        <Show when=move || !comment.comment.deleted>
+                            <a class="link" on:click=move |_| show_editor.1.set(comment.comment.id)>
+                                Reply
+                            </a>
+                            " | "
+                        </Show>
+                        <a class="link" href=comment.comment.ap_id.to_string()>
+                            Fedilink
                         </a>
-                    </Show>
-                    " | "
-                    <a class="link" href=comment.comment.ap_id.to_string()>
-                        Fedilink
-                    </a>
-                    " | "
-                    <Show when=move || allow_delete>
-                        <a
-                            class="link"
-                            on:click=move |_| {
-                                delete_restore_comment_action.dispatch(());
-                            }
-                        >
-                            {delete_restore_label}
-                        </a>
-                    </Show>
-                    <Show when=move || show_editor.0.get() == comment.comment.id>
-                        <CommentEditorView
-                            article=article
-                            parent_id=Some(comment.comment.id)
-                            set_show_editor=Some(show_editor.1)
-                        />
-                    </Show>
-                </div>
+                        " | "
+                        <Show when=move || is_creator && !comment_change_signal.0.get().deleted>
+                            <a
+                                class="link"
+                                on:click=move |_| {
+                                    is_editing.1.set(true);
+                                }
+                            >
+                                Edit
+                            </a>
+                            " | "
+                        </Show>
+                        <Show when=move || is_creator>
+                            <a
+                                class="link"
+                                on:click=move |_| {
+                                    delete_restore_comment_action.dispatch(());
+                                }
+                            >
+                                {delete_restore_label}
+                            </a>
+                        </Show>
+                        <Show when=move || show_editor.0.get() == comment.comment.id>
+                            <CommentEditorView
+                                article=article
+                                parent_id=Some(comment.comment.id)
+                                set_show_editor=Some(show_editor.1)
+                                edit_params=None
+                            />
+                        </Show>
+                    </div>
+                </Show>
             </div>
             <div class="m-0 divider"></div>
         </div>

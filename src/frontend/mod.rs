@@ -1,10 +1,9 @@
-use std::sync::OnceLock;
-
 use crate::common::{article::DbArticle, user::DbPerson, utils::extract_domain};
 use chrono::{DateTime, Duration, Local, Utc};
 use codee::string::FromToStringCodec;
 use leptos::prelude::*;
 use leptos_use::{use_cookie_with_options, SameSite, UseCookieOptions};
+use std::sync::OnceLock;
 use timeago::Formatter;
 
 pub mod api;
@@ -102,5 +101,5 @@ fn time_ago(time: DateTime<Utc>) -> String {
     static INSTANCE: OnceLock<Formatter> = OnceLock::new();
     let secs = Utc::now().signed_duration_since(time).num_seconds();
     let duration = std::time::Duration::from_secs(secs.try_into().unwrap_or_default());
-    INSTANCE.get_or_init(|| Formatter::new()).convert(duration)
+    INSTANCE.get_or_init(Formatter::new).convert(duration)
 }

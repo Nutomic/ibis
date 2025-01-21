@@ -1,15 +1,29 @@
 use crate::{
-    common::{article::DbArticleView, comment::CreateCommentForm, newtypes::CommentId},
+    common::{
+        article::DbArticleView,
+        comment::{CreateCommentForm, DbComment, EditCommentForm},
+        newtypes::CommentId,
+    },
     frontend::api::CLIENT,
 };
 use leptos::{html::Textarea, prelude::*};
 use leptos_use::{use_textarea_autosize, UseTextareaAutosizeReturn};
 
+#[derive(Clone)]
+pub struct EditParams {
+    pub comment: DbComment,
+    pub set_comment: WriteSignal<DbComment>,
+    pub set_is_editing: WriteSignal<bool>,
+}
+
 #[component]
 pub fn CommentEditorView(
     article: Resource<DbArticleView>,
     parent_id: Option<CommentId>,
+    /// Set this to CommentId(-1) to hide all editors
     set_show_editor: Option<WriteSignal<CommentId>>,
+    /// If this is present we are editing an existing comment
+    edit_params: Option<EditParams>,
 ) -> impl IntoView {
     let textarea_ref = NodeRef::<Textarea>::new();
     let UseTextareaAutosizeReturn {
@@ -17,18 +31,36 @@ pub fn CommentEditorView(
         set_content,
         trigger_resize: _,
     } = use_textarea_autosize(textarea_ref);
+    let set_is_editing = edit_params.as_ref().map(|e| e.set_is_editing);
+    if let Some(edit_params) = &edit_params {
+        set_content.set(edit_params.comment.content.clone())
+    };
 
-    let submit_comment_action = Action::new(move |_: &()| async move {
-        let form = CreateCommentForm {
-            content: content.get_untracked(),
-            article_id: article.await.article.id,
-            parent_id,
-        };
-        CLIENT.create_comment(&form).await.unwrap();
-        if let Some(set_show_editor) = set_show_editor {
-            set_show_editor.set(CommentId(-1));
+    let submit_comment_action = Action::new(move |_: &()| {
+        let edit_params = edit_params.clone();
+        async move {
+            if let Some(edit_params) = edit_params {
+                let form = EditCommentForm {
+                    id: edit_params.comment.id,
+                    content: Some(content.get_untracked()),
+                    deleted: None,
+                };
+                let comment = CLIENT.edit_comment(&form).await.unwrap();
+                edit_params.set_comment.set(comment.comment);
+                edit_params.set_is_editing.set(false);
+            } else {
+                let form = CreateCommentForm {
+                    content: content.get_untracked(),
+                    article_id: article.await.article.id,
+                    parent_id,
+                };
+                CLIENT.create_comment(&form).await.unwrap();
+                article.refetch();
+                if let Some(set_show_editor) = set_show_editor {
+                    set_show_editor.set(CommentId(-1));
+                }
+            }
         }
-        article.refetch();
     });
 
     view! {
@@ -58,6 +90,9 @@ pub fn CommentEditorView(
                         on:click=move |_| {
                             if let Some(set_show_editor) = set_show_editor {
                                 set_show_editor.set(CommentId(-1));
+                            }
+                            if let Some(set_is_editing) = set_is_editing {
+                                set_is_editing.set(false);
                             }
                         }
                     >
