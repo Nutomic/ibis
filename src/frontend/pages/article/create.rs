@@ -7,6 +7,7 @@ use crate::{
     },
 };
 use leptos::{html::Textarea, prelude::*};
+use leptos_meta::Title;
 use leptos_router::components::Redirect;
 use leptos_use::{use_textarea_autosize, UseTextareaAutosizeReturn};
 
@@ -56,6 +57,7 @@ pub fn CreateArticle() -> impl IntoView {
     });
 
     view! {
+        <Title text="Create new Article" />
         <h1 class="my-4 font-serif text-4xl font-bold">Create new Article</h1>
         <Suspense>
             <Show when=move || show_approval_message.get()>

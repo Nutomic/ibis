@@ -7,6 +7,7 @@ use crate::{
     },
 };
 use leptos::prelude::*;
+use leptos_meta::Title;
 use leptos_router::components::A;
 
 pub enum ActiveTab {
@@ -32,6 +33,7 @@ pub fn ArticleNav(article: Resource<DbArticleView>, active_tab: ActiveTab) -> im
                         let article_link_ = article_link.clone();
                         let protected = article_.article.protected;
                         view! {
+                            <Title text=page_title(&active_tab, &title) />
                             <div role="tablist" class="tabs tabs-lifted">
                                 <A href=article_link.clone() {..} class=tab_classes.read>
                                     "Read"
@@ -121,4 +123,15 @@ fn tab_classes(active_tab: &ActiveTab) -> ActiveTabClasses {
         ActiveTab::Actions => classes.actions = TAB_ACTIVE,
     }
     classes
+}
+
+fn page_title(active_tab: &ActiveTab, article_title: &str) -> String {
+    let active = match active_tab {
+        ActiveTab::Read => return article_title.to_string(),
+        ActiveTab::Discussion => "Discuss",
+        ActiveTab::History => "History",
+        ActiveTab::Edit => "Edit",
+        ActiveTab::Actions => "Actions",
+    };
+    format!("{active} — {article_title}")
 }

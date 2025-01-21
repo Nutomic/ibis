@@ -8,6 +8,7 @@ use crate::{
     },
 };
 use leptos::prelude::*;
+use leptos_meta::Title;
 use leptos_router::hooks::use_params_map;
 
 #[component]
@@ -52,6 +53,7 @@ pub fn UserProfile() -> impl IntoView {
                 let edits = edits.await;
                 let person = user_profile.await;
                 view! {
+                    <Title text=user_title(&person) />
                     <h1 class="flex-auto my-6 font-serif text-4xl font-bold grow">
                         {user_title(&person)}
                     </h1>

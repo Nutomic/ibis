@@ -3,6 +3,7 @@ use crate::{
     frontend::{api::CLIENT, app::site, components::credentials::*},
 };
 use leptos::prelude::*;
+use leptos_meta::Title;
 use log::info;
 
 #[component]
@@ -38,6 +39,7 @@ pub fn Register() -> impl IntoView {
     let disabled = Signal::derive(move || wait_for_response.get());
 
     view! {
+        <Title text="Register" />
         <Show
             when=move || register_response.get()
             fallback=move || {

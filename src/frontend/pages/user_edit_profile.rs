@@ -6,6 +6,7 @@ use crate::{
     },
 };
 use leptos::prelude::*;
+use leptos_meta::Title;
 
 #[component]
 pub fn UserEditProfile() -> impl IntoView {
@@ -34,6 +35,7 @@ pub fn UserEditProfile() -> impl IntoView {
     // TODO: It would make sense to use a table for the labels and inputs, but for some reason
     //       that completely breaks reactivity.
     view! {
+        <Title text="Edit Profile" />
         <Suspense fallback=|| {
             view! { "Loading..." }
         }>

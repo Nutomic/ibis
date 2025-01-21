@@ -6,6 +6,7 @@ use crate::{
     frontend::{api::CLIENT, article_path, article_title},
 };
 use leptos::prelude::*;
+use leptos_meta::Title;
 use leptos_router::hooks::use_query_map;
 use serde::{Deserialize, Serialize};
 use url::Url;
@@ -54,6 +55,7 @@ pub fn Search() -> impl IntoView {
     });
 
     view! {
+        <Title text=format!("Search - {}", query()) />
         <h1 class="flex-auto my-6 font-serif text-4xl font-bold grow">
             "Search results for " {query}
         </h1>

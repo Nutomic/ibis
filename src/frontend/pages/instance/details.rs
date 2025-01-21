@@ -8,6 +8,7 @@ use crate::{
     },
 };
 use leptos::prelude::*;
+use leptos_meta::Title;
 use leptos_router::hooks::use_params_map;
 use url::Url;
 
@@ -40,8 +41,10 @@ pub fn InstanceDetails() -> impl IntoView {
                                     .unwrap()
                             },
                         );
+                        let title = instance.clone().description.unwrap_or(instance.clone().domain);
                         let instance_ = instance.clone();
                         view! {
+                            <Title text=title />
                             <div class="grid gap-3 mt-4">
                                 <div class="flex flex-row items-center">
                                     <h1 class="w-full font-serif text-4xl font-bold">

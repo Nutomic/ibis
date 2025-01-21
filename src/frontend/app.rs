@@ -94,8 +94,10 @@ pub fn App() -> impl IntoView {
     let darkmode = DarkMode::init();
     provide_context(darkmode.clone());
 
+    // TODO: use instance name/description for title
     view! {
         <Html attr:data-theme=darkmode.theme {..} class="h-full" />
+        <Title formatter=|text| format!("{text} — Ibis") />
         <Body {..} class="h-full max-sm:flex max-sm:flex-col" />
         <>
             <Stylesheet id="ibis" href="/pkg/ibis.css" />

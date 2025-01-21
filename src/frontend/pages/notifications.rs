@@ -3,6 +3,7 @@ use crate::{
     frontend::{api::CLIENT, article_path, article_title},
 };
 use leptos::prelude::*;
+use leptos_meta::Title;
 
 #[component]
 pub fn Notifications() -> impl IntoView {
@@ -12,6 +13,7 @@ pub fn Notifications() -> impl IntoView {
     );
 
     view! {
+        <Title text="Notifications" />
         <h1 class="flex-auto my-6 font-serif text-4xl font-bold grow">Notifications</h1>
         <Suspense fallback=|| view! { "Loading..." }>
             <ul class="divide-y divide-solid">

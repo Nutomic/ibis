@@ -3,6 +3,7 @@ use crate::{
     frontend::{api::CLIENT, app::site, components::credentials::*},
 };
 use leptos::prelude::*;
+use leptos_meta::Title;
 use leptos_router::components::Redirect;
 
 #[component]
@@ -37,6 +38,7 @@ pub fn Login() -> impl IntoView {
     let disabled = Signal::derive(move || wait_for_response.get());
 
     view! {
+        <Title text="Login" />
         <Show
             when=move || login_response.get()
             fallback=move || {

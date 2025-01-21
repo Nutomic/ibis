@@ -1,5 +1,6 @@
 use crate::frontend::{api::CLIENT, components::connect::ConnectView};
 use leptos::prelude::*;
+use leptos_meta::Title;
 
 #[component]
 pub fn ListInstances() -> impl IntoView {
@@ -9,6 +10,7 @@ pub fn ListInstances() -> impl IntoView {
     );
 
     view! {
+        <Title text="Instances" />
         <h1 class="my-4 font-serif text-4xl font-bold">Instances</h1>
         <Suspense fallback=|| view! { "Loading..." }>
             <Show

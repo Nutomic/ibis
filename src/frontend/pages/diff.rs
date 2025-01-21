@@ -1,10 +1,12 @@
 use crate::frontend::{
+    article_title,
     components::article_nav::{ActiveTab, ArticleNav},
     pages::{article_edits_resource, article_resource},
     render_date_time,
     user_link,
 };
 use leptos::prelude::*;
+use leptos_meta::Title;
 use leptos_router::hooks::use_params_map;
 
 #[component]
@@ -14,7 +16,7 @@ pub fn EditDiff() -> impl IntoView {
     let edits = article_edits_resource(article);
 
     view! {
-        <ArticleNav article=article active_tab=ActiveTab::Edit />
+        <ArticleNav article=article active_tab=ActiveTab::History />
         <Suspense fallback=|| {
             view! { "Loading..." }
         }>
@@ -28,7 +30,13 @@ pub fn EditDiff() -> impl IntoView {
                     render_date_time(edit.edit.published),
                 );
                 let pending = edit.edit.pending;
+                let title = format!(
+                    "Diff {} — {}",
+                    edit.edit.summary,
+                    article_title(&article.await.article),
+                );
                 view! {
+                    <Title text=title />
                     <div class="flex w-full">
                         <h2 class="my-2 font-serif text-xl font-bold grow">{label}</h2>
                         <Show when=move || pending>

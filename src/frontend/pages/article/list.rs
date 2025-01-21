@@ -9,6 +9,7 @@ use crate::{
     },
 };
 use leptos::prelude::*;
+use leptos_meta::Title;
 
 #[component]
 pub fn ListArticles() -> impl IntoView {
@@ -48,7 +49,8 @@ pub fn ListArticles() -> impl IntoView {
     );
 
     view! {
-        <h1 class="my-4 font-serif text-4xl font-bold">Most recently edited Articles</h1>
+        <Title text="Recently edited Articles" />
+        <h1 class="my-4 font-serif text-4xl font-bold">"Recently edited Articles"</h1>
         <Suspense fallback=|| view! { "Loading..." }>
             <div class="divide-x">
                 <input
