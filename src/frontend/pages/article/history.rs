@@ -10,7 +10,6 @@ use leptos::prelude::*;
 #[component]
 pub fn ArticleHistory() -> impl IntoView {
     let article = article_resource();
-    let edits = article_edits_resource(article);
 
     view! {
         <ArticleNav article=article active_tab=ActiveTab::History />
@@ -18,7 +17,7 @@ pub fn ArticleHistory() -> impl IntoView {
             view! { "Loading..." }
         }>
             {move || {
-                edits
+                article_edits_resource(article)
                     .get()
                     .map(|edits| {
                         view! { <EditList edits=edits for_article=true /> }
