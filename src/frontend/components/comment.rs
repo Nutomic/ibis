@@ -48,7 +48,7 @@ pub fn CommentView(
     let allow_delete = site().with_default(|site| site.my_profile.as_ref().map(|p| p.person.id))
         == Some(comment.comment.creator_id);
     let content = if comment.comment.deleted {
-        "**deleted**".to_string()
+        "*deleted*".to_string()
     } else {
         comment.comment.content.clone()
     };
@@ -63,7 +63,9 @@ pub fn CommentView(
             <div class="py-2">
                 <div class="text-xs flex">
                     <span class="grow">{user_link(&comment.creator)}</span>
-                    {time_ago(comment.comment.published)}
+                    <a href=comment_link class="link">
+                        {time_ago(comment.comment.published)}
+                    </a>
                 </div>
                 <div
                     class="my-2 prose prose-slate"
@@ -76,8 +78,8 @@ pub fn CommentView(
                         </a>
                     </Show>
                     " | "
-                    <a class="link" href=comment_link>
-                        Link
+                    <a class="link" href=comment.comment.ap_id.to_string()>
+                        Fedilink
                     </a>
                     " | "
                     <Show when=move || allow_delete>
