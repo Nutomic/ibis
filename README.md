@@ -8,11 +8,12 @@ About Ibis
 
 ![](assets/logo.png)
 
-Ibis is a federated online encyclopedia similar to Wikipedia.  Users can read, create and edit articles seamlessly across instances. It uses the Activitypub protocol to connect users across different websites, similar to Mastodon or Lemmy. This ensures that there is no single point of control which may be used for global censorship. Instead each Ibis instance is independent and controlled by its admin. Admins can decide which rules to enforce, which content to allow and which instances to connect with. Users who are unhappy with the rules can easily setup their own Ibis instance with their own rules. 
+Ibis is a federated encyclopedia which uses the ActivityPub protocol, just like Mastodon or Lemmy. Users can read and edit articles seamlessly across different instances. Federation ensures that articles get mirrored across many servers, and
+can be read even if the original instance goes down. The software is written in Rust and uses the cutting-edge [Leptos](https://leptos.dev/) framework based on Webassembly. Ibis is fully open source under the AGPL license, to make future enshittification impossible.
 
-The project uses the same technology as [Lemmy](https://join-lemmy.org/) and benefits from lessons learned during its development. It is currently in a proof of concept stage. Core features are already working, including creation and editing of articles, full federation and a basic frontend. You can see it in action on [ibis.wiki](https://ibis.wiki). However more work is needed to get the project ready for production use, to add features like moderation tools, user account management, media support, article discussions and better web design. Contributions are welcome!
+Do you want to start a wiki for a TV series, a videogame, about politics, religion or scientific research? Then Ibis is for you! [Setup an instance](https://ibis.wiki/article/Setup_Instructions@ibis.wiki) on your server, it only requires a single binary with PostgreSQL and Nginx. Then you can start editing on the topic of your choice, and connect to other Ibis instances for different topics. Within your own instance you are king, and can decide which articles, which edits and which federation connections are allowed. For more details read the [Usage Instructions](https://ibis.wiki/article/Usage_Instructions@ibis.wiki).
 
-Read the [Project Announcement](https://ibis.wiki/article/Announcing_Ibis,_the_federated_Wikipedia_Alternative) for more information.
+Contributions are more than welcome, especially for the frontend.
 
 ## Community
 
@@ -38,7 +39,7 @@ psql -c "CREATE USER ibis WITH PASSWORD 'ibis' SUPERUSER;" -U postgres
 psql -c "CREATE DATABASE ibis WITH OWNER ibis;" -U postgres
 ```
 
-You need to install [cargo](https://rustup.rs/), [pnpm](https://pnpm.io/) and [cargo-leptos](https://github.com/leptos-rs/cargo-leptos). Use `pnpm install` to get Javascript dependencies. Then run `cargo leptos watch` which automatically rebuilds the project after changes. Open the site at [localhost:3000](http://localhost:3000/). You can login with user `ibis` and password `ibis`.
+You need to install [cargo](https://rustup.rs/), [pnpm](https://pnpm.io/) and [cargo-leptos](https://github.com/leptos-rs/cargo-leptos). Use `pnpm install` to get Javascript dependencies. You need to enable the wasm target for Rust using `rustup target add wasm32-unknown-unknown`. Then run `cargo leptos watch` which automatically rebuilds the project after changes. Open the site at [localhost:3000](http://localhost:3000/). You can login with user `ibis` and password `ibis`.
 
 By default the frontend runs on port 3000, which can be changed with env var `TRUNK_SERVE_PORT`. The backend port is 8081 and can be changed with `IBIS_BACKEND_PORT`.
 

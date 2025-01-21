@@ -9,7 +9,7 @@ use crate::common::{
 use comment::{CreateCommentForm, DbCommentView, EditCommentForm};
 use http::{Method, StatusCode};
 use leptos::{prelude::ServerFnError, server_fn::error::NoCustomError};
-use log::error;
+use log::{error, info};
 use serde::{Deserialize, Serialize};
 use std::{fmt::Debug, sync::LazyLock};
 use url::Url;
@@ -372,16 +372,14 @@ impl ApiClient {
         T: for<'de> Deserialize<'de>,
     {
         let json = serde_json::from_str(&text).map_err(|e| {
-            ServerFnError::<NoCustomError>::Deserialization(format!(
-                "Serde error: {e} from {text} on {url}"
-            ))
+            info!("Failed to deserialize api response: {e} from {text} on {url}");
+            ServerFnError::<NoCustomError>::Deserialization(text.clone())
         })?;
         if status == StatusCode::OK {
             Ok(json)
         } else {
-            Err(ServerFnError::Response(format!(
-                "API error: {text} on {url} status {status}"
-            )))
+            info!("API error: {text} on {url} status {status}");
+            Err(ServerFnError::Response(text))
         }
     }
 
