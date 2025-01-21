@@ -1,6 +1,6 @@
 use crate::frontend::{
     components::article_nav::{ActiveTab, ArticleNav},
-    markdown::render_markdown,
+    markdown::render_article_markdown,
     pages::article_resource,
 };
 use leptos::prelude::*;
@@ -25,7 +25,7 @@ pub fn ReadArticle() -> impl IntoView {
                         view! {
                             <div
                                 class="max-w-full prose prose-slate"
-                                inner_html=render_markdown(&article.article.text)
+                                inner_html=render_article_markdown(&article.article.text)
                             ></div>
                         }
                     })

@@ -40,7 +40,7 @@ impl RejectEdit {
         user_instance: DbInstance,
         data: &Data<IbisData>,
     ) -> MyResult<()> {
-        let local_instance = DbInstance::read_local_instance(data)?;
+        let local_instance = DbInstance::read_local(data)?;
         let id = generate_activity_id(data)?;
         let reject = RejectEdit {
             actor: local_instance.ap_id.clone(),

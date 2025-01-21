@@ -1,3 +1,6 @@
-alter table instance add column instances_url varchar(255) unique;
+ALTER TABLE instance
+    ADD COLUMN instances_url varchar(255) UNIQUE;
 
-alter table instance alter column articles_url drop not null;
+ALTER TABLE instance
+    ALTER COLUMN articles_url DROP NOT NULL;
+

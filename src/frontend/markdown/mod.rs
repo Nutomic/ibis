@@ -13,9 +13,9 @@ pub mod article_link;
 pub mod math_equation;
 pub mod table_of_contents;
 
-pub fn render_markdown(text: &str) -> String {
+pub fn render_article_markdown(text: &str) -> String {
     static INSTANCE: OnceLock<MarkdownIt> = OnceLock::new();
-    let mut parsed = INSTANCE.get_or_init(markdown_parser).parse(text);
+    let mut parsed = INSTANCE.get_or_init(article_markdown).parse(text);
 
     // Make markdown headings one level smaller, so that h1 becomes h2 etc, and markdown titles
     // are smaller than page title.
@@ -30,7 +30,32 @@ pub fn render_markdown(text: &str) -> String {
     parsed.render()
 }
 
-fn markdown_parser() -> MarkdownIt {
+pub fn render_comment_markdown(text: &str) -> String {
+    static INSTANCE: OnceLock<MarkdownIt> = OnceLock::new();
+    INSTANCE.get_or_init(common_markdown).parse(text).render()
+}
+
+fn article_markdown() -> MarkdownIt {
+    let mut parser = common_markdown();
+    let p = &mut parser;
+
+    // Extensions from various authors
+    markdown_it_heading_anchors::add(p);
+    markdown_it_block_spoiler::add(p);
+    markdown_it_footnote::add(p);
+    markdown_it_sub::add(p);
+    markdown_it_sup::add(p);
+
+    // Ibis custom extensions
+    parser.inline.add_rule::<ArticleLinkScanner>();
+    parser.inline.add_rule::<MathEquationScanner>();
+    parser.inline.add_rule::<TocMarkerScanner>();
+    parser.add_rule::<TocScanner>();
+
+    parser
+}
+
+fn common_markdown() -> MarkdownIt {
     let mut parser = MarkdownIt::new();
     let p = &mut parser;
     {
@@ -67,19 +92,6 @@ fn markdown_parser() -> MarkdownIt {
         tables::add(p);
         typographer::add(p);
     }
-
-    // Extensions from various authors
-    markdown_it_heading_anchors::add(p);
-    markdown_it_block_spoiler::add(p);
-    markdown_it_footnote::add(p);
-    markdown_it_sub::add(p);
-    markdown_it_sup::add(p);
-
-    // Ibis custom extensions
-    parser.inline.add_rule::<ArticleLinkScanner>();
-    parser.inline.add_rule::<MathEquationScanner>();
-    parser.inline.add_rule::<TocMarkerScanner>();
-    parser.add_rule::<TocScanner>();
 
     parser
 }

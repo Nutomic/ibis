@@ -8,6 +8,7 @@ use diesel::{
 use std::ops::DerefMut;
 
 pub mod article;
+pub mod comment;
 pub mod conflict;
 pub mod edit;
 pub mod instance;

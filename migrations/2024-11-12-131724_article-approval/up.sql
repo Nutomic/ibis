@@ -1,7 +1,11 @@
-alter table article add column approved bool not null default true;
+ALTER TABLE article
+    ADD COLUMN approved bool NOT NULL DEFAULT TRUE;
 
-alter table article add column published timestamptz not null default now();
+ALTER TABLE article
+    ADD COLUMN published timestamptz NOT NULL DEFAULT now();
 
-alter table conflict add column published timestamptz not null default now();
+ALTER TABLE CONFLICT
+    ADD COLUMN published timestamptz NOT NULL DEFAULT now();
 
-alter table edit rename column created to published;
+ALTER TABLE edit RENAME COLUMN created TO published;
+

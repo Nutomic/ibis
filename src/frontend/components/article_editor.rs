@@ -1,4 +1,4 @@
-use crate::frontend::{markdown::render_markdown, use_cookie};
+use crate::frontend::{markdown::render_article_markdown, use_cookie};
 use leptos::{ev::beforeunload, html::Textarea, prelude::*};
 use leptos_use::{use_event_listener, use_window};
 
@@ -8,7 +8,7 @@ pub fn EditorView(
     content: Signal<String>,
     set_content: WriteSignal<String>,
 ) -> impl IntoView {
-    let (preview, set_preview) = signal(render_markdown(&content.get_untracked()));
+    let (preview, set_preview) = signal(render_article_markdown(&content.get_untracked()));
     let cookie = use_cookie("editor_preview");
     let show_preview = Signal::derive(move || cookie.0.get().unwrap_or(true));
 
@@ -29,7 +29,7 @@ pub fn EditorView(
                     class="text-base resize-none grow textarea textarea-primary min-h-80"
                     on:input=move |evt| {
                         let val = event_target_value(&evt);
-                        set_preview.set(render_markdown(&val));
+                        set_preview.set(render_article_markdown(&val));
                         set_content.set(val);
                     }
                     node_ref=textarea_ref

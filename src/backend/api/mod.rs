@@ -12,6 +12,7 @@ use crate::{
                 resolve_article,
                 search_article,
             },
+            comment::{create_comment, edit_comment},
             instance::{follow_instance, get_instance, resolve_instance},
             user::{get_user, login_user, logout_user, register_user},
         },
@@ -29,7 +30,7 @@ use anyhow::anyhow;
 use article::{approve_article, delete_conflict};
 use axum::{
     extract::Query,
-    routing::{delete, get, post},
+    routing::{delete, get, patch, post},
     Extension,
     Json,
     Router,
@@ -38,9 +39,10 @@ use axum_macros::debug_handler;
 use instance::list_remote_instances;
 use user::{count_notifications, list_notifications, update_user_profile};
 
-pub mod article;
-pub mod instance;
-pub mod user;
+mod article;
+mod comment;
+mod instance;
+pub(super) mod user;
 
 pub fn api_routes() -> Router<()> {
     Router::new()
@@ -55,6 +57,8 @@ pub fn api_routes() -> Router<()> {
         .route("/article/approve", post(approve_article))
         .route("/edit/list", get(edit_list))
         .route("/conflict", delete(delete_conflict))
+        .route("/comment", post(create_comment))
+        .route("/comment", patch(edit_comment))
         .route("/instance", get(get_instance))
         .route("/instance/follow", post(follow_instance))
         .route("/instance/resolve", get(resolve_instance))

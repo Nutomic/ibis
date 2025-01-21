@@ -1,7 +1,7 @@
 use crate::{
     backend::{
         database::{
-            schema::{instance, instance_follow},
+            schema::{article, comment, instance, instance_follow},
             IbisData,
         },
         federation::objects::{
@@ -12,7 +12,7 @@ use crate::{
     },
     common::{
         instance::{DbInstance, InstanceView},
-        newtypes::InstanceId,
+        newtypes::{CommentId, InstanceId},
         user::DbPerson,
     },
 };
@@ -73,7 +73,7 @@ impl DbInstance {
             .get_result(conn.deref_mut())?)
     }
 
-    pub fn read_local_instance(data: &IbisData) -> MyResult<Self> {
+    pub fn read_local(data: &IbisData) -> MyResult<Self> {
         let mut conn = data.db_pool.get()?;
         Ok(instance::table
             .filter(instance::local.eq(true))
@@ -83,7 +83,7 @@ impl DbInstance {
     pub fn read_view(id: Option<InstanceId>, data: &Data<IbisData>) -> MyResult<InstanceView> {
         let instance = match id {
             Some(id) => DbInstance::read(id, data),
-            None => DbInstance::read_local_instance(data),
+            None => DbInstance::read_local(data),
         }?;
         let followers = DbInstance::read_followers(instance.id, data)?;
 
@@ -132,5 +132,17 @@ impl DbInstance {
         Ok(instance::table
             .filter(instance::local.eq(false))
             .get_results(conn.deref_mut())?)
+    }
+
+    /// Read the instance where an article is hosted, based on a comment id.
+    /// Note this may be different from the instance where the comment is hosted.
+    pub fn read_for_comment(comment_id: CommentId, data: &Data<IbisData>) -> MyResult<DbInstance> {
+        let mut conn = data.db_pool.get()?;
+        Ok(instance::table
+            .inner_join(article::table)
+            .inner_join(comment::table.on(comment::article_id.eq(article::id)))
+            .filter(comment::id.eq(comment_id))
+            .select(instance::all_columns)
+            .get_result(conn.deref_mut())?)
     }
 }

@@ -1,4 +1,5 @@
 pub mod article;
+pub mod comment;
 pub mod instance;
 pub mod newtypes;
 pub mod user;

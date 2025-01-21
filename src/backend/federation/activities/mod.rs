@@ -16,6 +16,8 @@ use crate::{
 use activitypub_federation::config::Data;
 
 pub mod accept;
+pub mod announce;
+pub mod comment;
 pub mod create_article;
 pub mod follow;
 pub mod reject;

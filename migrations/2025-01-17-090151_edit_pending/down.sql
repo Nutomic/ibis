@@ -1,1 +1,3 @@
-alter table edit drop column pending;
+ALTER TABLE edit
+    DROP COLUMN pending;
+

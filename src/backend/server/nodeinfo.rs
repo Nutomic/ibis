@@ -47,7 +47,7 @@ async fn node_info(data: Data<IbisData>) -> MyResult<Json<NodeInfo>> {
                 active_halfyear: stats.users_active_half_year,
             },
             local_posts: stats.articles,
-            local_comments: 0,
+            local_comments: stats.comments,
         },
         open_registrations: data.config.options.registration_open,
         services: Default::default(),

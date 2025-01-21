@@ -60,7 +60,7 @@ impl ActivityHandler for Follow {
 
     async fn receive(self, data: &Data<Self::DataType>) -> Result<(), Self::Error> {
         let actor = self.actor.dereference(data).await?;
-        let local_instance = DbInstance::read_local_instance(data)?;
+        let local_instance = DbInstance::read_local(data)?;
         verify_urls_match(self.object.inner(), local_instance.ap_id.inner())?;
         DbInstance::follow(&actor, &local_instance, false, data)?;
 

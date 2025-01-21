@@ -3,7 +3,7 @@ use crate::{
     frontend::{
         api::CLIENT,
         app::{is_admin, site, DefaultResource},
-        components::editor::EditorView,
+        components::article_editor::EditorView,
     },
 };
 use leptos::{html::Textarea, prelude::*};

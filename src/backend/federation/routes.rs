@@ -1,10 +1,21 @@
-use super::objects::instance_collection::{DbInstanceCollection, InstanceCollection};
+use super::{
+    activities::comment::{
+        create_or_update_comment::CreateOrUpdateComment,
+        delete_comment::DeleteComment,
+        undo_delete_comment::UndoDeleteComment,
+    },
+    objects::{
+        comment::ApubComment,
+        instance_collection::{DbInstanceCollection, InstanceCollection},
+    },
+};
 use crate::{
     backend::{
         database::IbisData,
         federation::{
             activities::{
                 accept::Accept,
+                announce::AnnounceActivity,
                 create_article::CreateArticle,
                 follow::Follow,
                 reject::RejectEdit,
@@ -21,7 +32,13 @@ use crate::{
         },
         utils::error::{Error, MyResult},
     },
-    common::{article::DbArticle, instance::DbInstance, user::DbPerson},
+    common::{
+        article::DbArticle,
+        comment::DbComment,
+        instance::DbInstance,
+        newtypes::CommentId,
+        user::DbPerson,
+    },
 };
 use activitypub_federation::{
     axum::{
@@ -51,6 +68,7 @@ pub fn federation_routes() -> Router<()> {
         .route("/linked_instances", get(http_get_linked_instances))
         .route("/article/:title", get(http_get_article))
         .route("/article/:title/edits", get(http_get_article_edits))
+        .route("/comment/:id", get(http_get_comment))
         .route("/inbox", post(http_post_inbox))
 }
 
@@ -58,7 +76,7 @@ pub fn federation_routes() -> Router<()> {
 async fn http_get_instance(
     data: Data<IbisData>,
 ) -> MyResult<FederationJson<WithContext<ApubInstance>>> {
-    let local_instance = DbInstance::read_local_instance(&data)?;
+    let local_instance = DbInstance::read_local(&data)?;
     let json_instance = local_instance.into_json(&data).await?;
     Ok(FederationJson(WithContext::new_default(json_instance)))
 }
@@ -109,6 +127,16 @@ async fn http_get_article_edits(
     Ok(FederationJson(WithContext::new_default(json)))
 }
 
+#[debug_handler]
+async fn http_get_comment(
+    Path(id): Path<i32>,
+    data: Data<IbisData>,
+) -> MyResult<FederationJson<WithContext<ApubComment>>> {
+    let comment = DbComment::read(CommentId(id), &data)?;
+    let json = comment.into_json(&data).await?;
+    Ok(FederationJson(WithContext::new_default(json)))
+}
+
 /// List of all activities which this actor can receive.
 #[derive(Deserialize, Serialize, Debug)]
 #[serde(untagged)]
@@ -120,6 +148,17 @@ pub enum InboxActivities {
     UpdateLocalArticle(UpdateLocalArticle),
     UpdateRemoteArticle(UpdateRemoteArticle),
     RejectEdit(RejectEdit),
+    AnnounceActivity(AnnounceActivity),
+    AnnouncableActivities(AnnouncableActivities),
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize)]
+#[serde(untagged)]
+#[enum_delegate::implement(ActivityHandler)]
+pub enum AnnouncableActivities {
+    CreateOrUpdateComment(CreateOrUpdateComment),
+    DeleteComment(DeleteComment),
+    UndoDeleteComment(UndoDeleteComment),
 }
 
 #[debug_handler]
@@ -147,7 +186,7 @@ pub enum PersonOrInstance {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub enum PersonOrInstanceType {
     Person,
-    Group,
+    Service,
 }
 
 #[async_trait::async_trait]

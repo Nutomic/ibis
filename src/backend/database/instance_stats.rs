@@ -11,6 +11,7 @@ pub struct InstanceStats {
     pub users_active_month: i32,
     pub users_active_half_year: i32,
     pub articles: i32,
+    pub comments: i32,
 }
 
 impl InstanceStats {

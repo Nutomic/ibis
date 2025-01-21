@@ -8,6 +8,7 @@ use crate::{
             article::{
                 actions::ArticleActions,
                 create::CreateArticle,
+                discussion::ArticleDiscussion,
                 edit::EditArticle,
                 history::ArticleHistory,
                 list::ListArticles,
@@ -105,6 +106,7 @@ pub fn App() -> impl IntoView {
                     <Routes fallback=|| "Page not found.".into_view()>
                         <Route path=path!("/") view=ReadArticle />
                         <Route path=path!("/article/:title") view=ReadArticle />
+                        <Route path=path!("/article/:title/discussion") view=ArticleDiscussion />
                         <Route path=path!("/article/:title/history") view=ArticleHistory />
                         <IbisProtectedRoute
                             path=path!("/article/:title/edit/:conflict_id?")

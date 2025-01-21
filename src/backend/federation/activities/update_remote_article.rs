@@ -47,7 +47,7 @@ impl UpdateRemoteArticle {
         article_instance: DbInstance,
         data: &Data<IbisData>,
     ) -> MyResult<()> {
-        let local_instance = DbInstance::read_local_instance(data)?;
+        let local_instance = DbInstance::read_local(data)?;
         let id = generate_activity_id(data)?;
         let update = UpdateRemoteArticle {
             actor: local_instance.ap_id.clone(),

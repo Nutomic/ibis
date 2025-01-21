@@ -1,4 +1,5 @@
 use super::{
+    comment::DbCommentView,
     instance::DbInstance,
     newtypes::{ArticleId, ConflictId, EditId, InstanceId, PersonId},
     user::DbPerson,
@@ -31,9 +32,10 @@ pub struct ListArticlesForm {
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[cfg_attr(feature = "ssr", derive(Queryable))]
 #[cfg_attr(feature = "ssr", diesel(table_name = article, check_for_backend(diesel::pg::Pg)))]
-pub struct ArticleView {
+pub struct DbArticleView {
     pub article: DbArticle,
     pub instance: DbInstance,
+    pub comments: Vec<DbCommentView>,
     pub latest_version: EditVersion,
 }
 

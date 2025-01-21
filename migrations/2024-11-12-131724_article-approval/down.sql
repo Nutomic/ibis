@@ -1,7 +1,11 @@
-alter table article drop column approved;
+ALTER TABLE article
+    DROP COLUMN approved;
 
-alter table article drop column published;
+ALTER TABLE article
+    DROP COLUMN published;
 
-alter table conflict drop column published;
+ALTER TABLE CONFLICT
+    DROP COLUMN published;
 
-alter table edit rename column published to created;
+ALTER TABLE edit RENAME COLUMN published TO created;
+

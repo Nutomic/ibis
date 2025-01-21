@@ -6,8 +6,8 @@ use crate::common::{TestData, TEST_ARTICLE_DEFAULT_TEXT};
 use anyhow::Result;
 use ibis::common::{
     article::{
-        ArticleView,
         CreateArticleForm,
+        DbArticleView,
         EditArticleForm,
         ForkArticleForm,
         GetArticleForm,
@@ -15,12 +15,15 @@ use ibis::common::{
         ProtectArticleForm,
         SearchArticleForm,
     },
+    comment::{CreateCommentForm, EditCommentForm},
     user::{GetUserForm, LoginUserForm, RegisterUserForm},
     utils::extract_domain,
     Notification,
 };
 use pretty_assertions::{assert_eq, assert_ne};
 use retry_future::{LinearRetryStrategy, RetryFuture, RetryPolicy};
+use std::time::Duration;
+use tokio::time::sleep;
 use url::Url;
 
 #[tokio::test]
@@ -437,7 +440,7 @@ async fn test_federated_edit_conflict() -> Result<()> {
     assert!(create_res.article.local);
 
     // fetch article to gamma
-    let resolve_res: ArticleView = gamma
+    let resolve_res: DbArticleView = gamma
         .resolve_article(create_res.article.ap_id.inner().clone())
         .await
         .unwrap();
@@ -734,7 +737,7 @@ async fn test_lock_article() -> Result<()> {
     let lock_res = alpha.protect_article(&lock_form).await.unwrap();
     assert!(lock_res.protected);
 
-    let resolve_res: ArticleView = gamma
+    let resolve_res: DbArticleView = gamma
         .resolve_article(create_res.article.ap_id.inner().clone())
         .await
         .unwrap();
@@ -833,6 +836,150 @@ async fn test_article_approval_required() -> Result<()> {
     let list_all = alpha.list_articles(Default::default()).await.unwrap();
     assert_eq!(2, list_all.len());
     assert!(list_all.iter().any(|a| a.id == create_res.article.id));
+
+    TestData::stop(alpha, beta, gamma)
+}
+
+#[tokio::test]
+async fn test_comment_create_edit() -> Result<()> {
+    let TestData(alpha, beta, gamma) = TestData::start(true).await;
+
+    beta.follow_instance_with_resolve(&alpha.hostname)
+        .await
+        .unwrap();
+    gamma
+        .follow_instance_with_resolve(&alpha.hostname)
+        .await
+        .unwrap();
+
+    // create article
+    let form = CreateArticleForm {
+        title: "Manu_Chao".to_string(),
+        text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
+        summary: "create article".to_string(),
+    };
+    let alpha_article = alpha.create_article(&form).await.unwrap();
+
+    // fetch article on beta and create comment
+    let beta_article = beta
+        .resolve_article(alpha_article.article.ap_id.inner().clone())
+        .await
+        .unwrap();
+    let form = CreateCommentForm {
+        content: "top comment".to_string(),
+        article_id: beta_article.article.id,
+        parent_id: None,
+    };
+    let top_comment = beta.create_comment(&form).await.unwrap().comment;
+    assert_eq!(top_comment.content, form.content);
+    assert_eq!(top_comment.article_id, beta_article.article.id);
+    assert_eq!(top_comment.depth, 0);
+    assert!(top_comment.parent_id.is_none());
+    assert!(top_comment.local);
+    assert!(!top_comment.deleted);
+    assert!(top_comment.updated.is_none());
+    sleep(Duration::from_secs(1)).await;
+
+    // now create child comment on alpha
+    let get_form = GetArticleForm {
+        title: Some(alpha_article.article.title),
+        domain: Some(alpha.hostname.clone()),
+        ..Default::default()
+    };
+    let article = alpha.get_article(get_form.clone()).await.unwrap();
+    assert_eq!(1, article.comments.len());
+    let form = CreateCommentForm {
+        content: "child comment".to_string(),
+        article_id: article.article.id,
+        parent_id: Some(article.comments[0].comment.id),
+    };
+    let child_comment = alpha.create_comment(&form).await.unwrap().comment;
+    assert_eq!(child_comment.parent_id, Some(top_comment.id));
+    assert_eq!(child_comment.depth, 1);
+
+    // edit comment text
+    let edit_form = EditCommentForm {
+        id: child_comment.id,
+        content: Some("edited comment".to_string()),
+        deleted: None,
+    };
+    let edited_comment = alpha.edit_comment(&edit_form).await.unwrap().comment;
+    assert_eq!(edited_comment.article_id, article.article.id);
+    assert_eq!(Some(&edited_comment.content), edit_form.content.as_ref());
+
+    let beta_comments = beta.get_article(get_form.clone()).await.unwrap().comments;
+    assert_eq!(2, beta_comments.len());
+    assert_eq!(beta_comments[1].comment.content, top_comment.content);
+    assert_eq!(
+        Some(&beta_comments[0].comment.content),
+        edit_form.content.as_ref()
+    );
+
+    let gamma_comments = gamma.get_article(get_form).await.unwrap().comments;
+    assert_eq!(2, gamma_comments.len());
+    assert_eq!(edited_comment.content, gamma_comments[0].comment.content);
+
+    TestData::stop(alpha, beta, gamma)
+}
+
+#[tokio::test]
+async fn test_comment_delete_restore() -> Result<()> {
+    let TestData(alpha, beta, gamma) = TestData::start(true).await;
+
+    beta.follow_instance_with_resolve(&alpha.hostname)
+        .await
+        .unwrap();
+
+    // create article and comment
+    let form = CreateArticleForm {
+        title: "Manu_Chao".to_string(),
+        text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
+        summary: "create article".to_string(),
+    };
+    let alpha_article = alpha.create_article(&form).await.unwrap();
+
+    let form = CreateCommentForm {
+        content: "my comment".to_string(),
+        article_id: alpha_article.article.id,
+        parent_id: None,
+    };
+    let comment = alpha.create_comment(&form).await.unwrap();
+    let get_form = GetArticleForm {
+        title: Some(alpha_article.article.title),
+        domain: Some(alpha.hostname.clone()),
+        ..Default::default()
+    };
+
+    // delete comment
+    let mut form = EditCommentForm {
+        id: comment.comment.id,
+        deleted: Some(true),
+        content: None,
+    };
+    alpha.edit_comment(&form).await.unwrap();
+    let alpha_comments = alpha.get_article(get_form.clone()).await.unwrap().comments;
+    assert!(alpha_comments[0].comment.deleted);
+    assert!(alpha_comments[0].comment.content.is_empty());
+    sleep(Duration::from_secs(1)).await;
+
+    // check that comment is deleted on beta
+    let beta_comments = beta.get_article(get_form.clone()).await.unwrap().comments;
+    assert_eq!(comment.comment.ap_id, beta_comments[0].comment.ap_id);
+    assert!(beta_comments[0].comment.deleted);
+    assert!(beta_comments[0].comment.content.is_empty());
+
+    // restore comment
+    form.deleted = Some(false);
+    alpha.edit_comment(&form).await.unwrap();
+    let alpha_comments = alpha.get_article(get_form.clone()).await.unwrap().comments;
+    assert!(!alpha_comments[0].comment.deleted);
+    assert!(!alpha_comments[0].comment.content.is_empty());
+    sleep(Duration::from_secs(1)).await;
+
+    // check that comment is restored on beta
+    let beta_comments = beta.get_article(get_form).await.unwrap().comments;
+    assert!(!beta_comments[0].comment.deleted);
+    assert!(!beta_comments[0].comment.content.is_empty());
 
     TestData::stop(alpha, beta, gamma)
 }

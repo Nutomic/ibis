@@ -35,6 +35,20 @@ pub fn validate_display_name(name: &Option<String>) -> MyResult<()> {
     Ok(())
 }
 
+pub fn validate_comment_max_depth(depth: i32) -> MyResult<()> {
+    if depth > 50 {
+        return Err(anyhow!("Max comment depth reached").into());
+    }
+    Ok(())
+}
+
+pub fn validate_not_empty(text: &str) -> MyResult<()> {
+    if text.trim().len() < 2 {
+        return Err(anyhow!("Empty text submitted").into());
+    }
+    Ok(())
+}
+
 #[test]
 #[expect(clippy::unwrap_used)]
 fn test_validate_article_title() {
