@@ -3,7 +3,7 @@ use crate::{
     frontend::{
         api::CLIENT,
         components::edit_list::EditList,
-        markdown::render_markdown,
+        markdown::render_article_markdown,
         user_title,
     },
 };
@@ -58,7 +58,7 @@ pub fn UserProfile() -> impl IntoView {
 
                     <div
                         class="mb-2 max-w-full prose prose-slate"
-                        inner_html=render_markdown(&person.bio.unwrap_or_default())
+                        inner_html=render_article_markdown(&person.bio.unwrap_or_default())
                     ></div>
 
                     <h2 class="font-serif text-xl font-bold">Edits</h2>

@@ -8,8 +8,8 @@ use crate::{
     frontend::{
         api::CLIENT,
         components::{
+            article_editor::EditorView,
             article_nav::{ActiveTab, ArticleNav},
-            editor::EditorView,
         },
         pages::article_resource,
     },

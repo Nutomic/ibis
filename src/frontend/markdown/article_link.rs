@@ -57,20 +57,22 @@ impl InlineRule for ArticleLinkScanner {
     }
 }
 
-#[test]
-fn test_markdown_article_link() {
-    let parser = super::markdown_parser();
-    let plain = parser.parse("[[Title@example.com]]").render();
-    assert_eq!(
-        "<p><a href=\"/article/Title@example.com\">Title</a></p>\n",
-        plain
-    );
+#[cfg(test)]
+mod test {
+    use crate::frontend::markdown::render_article_markdown;
 
-    let with_label = parser
-        .parse("[[Title@example.com|Example Article]]")
-        .render();
-    assert_eq!(
-        "<p><a href=\"/article/Title@example.com\">Example Article</a></p>\n",
-        with_label
-    );
+    #[test]
+    fn test_markdown_article_link() {
+        let plain = render_article_markdown("[[Title@example.com]]");
+        assert_eq!(
+            "<p><a href=\"/article/Title@example.com\">Title</a></p>\n",
+            plain
+        );
+
+        let with_label = render_article_markdown("[[Title@example.com|Example Article]]");
+        assert_eq!(
+            "<p><a href=\"/article/Title@example.com\">Example Article</a></p>\n",
+            with_label
+        );
+    }
 }

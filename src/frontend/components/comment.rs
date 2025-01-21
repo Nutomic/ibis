@@ -7,6 +7,7 @@ use crate::{
         api::CLIENT,
         app::{site, DefaultResource},
         components::comment_editor::CommentEditorView,
+        markdown::render_comment_markdown,
         user_link,
     },
 };
@@ -58,8 +59,10 @@ pub fn CommentView(article: Resource<DbArticleView>, comment: DbCommentView) -> 
         <div style=style_ id=comment_id>
             <div class="py-2">
                 <div class="text-xs">{user_link(&comment.creator)}</div>
-                <div class="my-2">{content}</div>
-                <div>{comment.comment.depth}</div>
+                <div
+                    class="my-2 prose prose-slate"
+                    inner_html=render_comment_markdown(&content)
+                ></div>
                 <div class="text-xs">
                     <Show when=move || !comment.comment.deleted>
                         <a class="link" on:click=move |_| set_show_editor.update(|s| *s = !*s)>

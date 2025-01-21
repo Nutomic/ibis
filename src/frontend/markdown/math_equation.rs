@@ -56,17 +56,20 @@ impl InlineRule for MathEquationScanner {
     }
 }
 
-#[test]
-#[expect(clippy::unwrap_used)]
-fn test_markdown_equation_katex() {
-    let parser = super::markdown_parser();
-    let rendered = parser
-        .parse("here is a math equation: $$E=mc^2$$. Pretty cool, right?")
-        .render();
-    assert_eq!(
-        "<p>here is a math equation: ".to_owned()
-            + &katex::render("E=mc^2").unwrap()
-            + ". Pretty cool, right?</p>\n",
-        rendered
-    );
+#[cfg(test)]
+mod test {
+    use crate::frontend::markdown::render_article_markdown;
+
+    #[test]
+    #[expect(clippy::unwrap_used)]
+    fn test_markdown_equation_katex() {
+        let rendered =
+            render_article_markdown("here is a math equation: $$E=mc^2$$. Pretty cool, right?");
+        assert_eq!(
+            "<p>here is a math equation: ".to_owned()
+                + &katex::render("E=mc^2").unwrap()
+                + ". Pretty cool, right?</p>\n",
+            rendered
+        );
+    }
 }
