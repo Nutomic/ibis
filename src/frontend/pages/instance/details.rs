@@ -1,5 +1,5 @@
 use crate::{
-    common::{article::ListArticlesForm, instance::DbInstance, utils::http_protocol_str},
+    common::{article::ListArticlesParams, instance::DbInstance, utils::http_protocol_str},
     frontend::{
         api::CLIENT,
         article_path,
@@ -33,7 +33,7 @@ pub fn InstanceDetails() -> impl IntoView {
                             move || instance.id,
                             |instance_id| async move {
                                 CLIENT
-                                    .list_articles(ListArticlesForm {
+                                    .list_articles(ListArticlesParams {
                                         only_local: None,
                                         instance_id: Some(instance_id),
                                     })

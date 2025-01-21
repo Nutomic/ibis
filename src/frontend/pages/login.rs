@@ -1,5 +1,5 @@
 use crate::{
-    common::user::LoginUserForm,
+    common::user::LoginUserParams,
     frontend::{api::CLIENT, app::site, components::credentials::*},
 };
 use leptos::prelude::*;
@@ -15,10 +15,10 @@ pub fn Login() -> impl IntoView {
     let login_action = Action::new(move |(email, password): &(String, String)| {
         let username = email.to_string();
         let password = password.to_string();
-        let credentials = LoginUserForm { username, password };
+        let params = LoginUserParams { username, password };
         async move {
             set_wait_for_response.update(|w| *w = true);
-            let result = CLIENT.login(credentials).await;
+            let result = CLIENT.login(params).await;
             set_wait_for_response.update(|w| *w = false);
             match result {
                 Ok(_res) => {

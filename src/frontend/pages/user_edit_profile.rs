@@ -1,5 +1,5 @@
 use crate::{
-    common::user::UpdateUserForm,
+    common::user::UpdateUserParams,
     frontend::{
         api::CLIENT,
         app::{site, DefaultResource},
@@ -13,10 +13,10 @@ pub fn UserEditProfile() -> impl IntoView {
     let (saved, set_saved) = signal(false);
     let (submit_error, set_submit_error) = signal(None::<String>);
 
-    let submit_action = Action::new(move |form: &UpdateUserForm| {
-        let form = form.clone();
+    let submit_action = Action::new(move |params: &UpdateUserParams| {
+        let params = params.clone();
         async move {
-            let result = CLIENT.update_user_profile(form).await;
+            let result = CLIENT.update_user_profile(params).await;
             match result {
                 Ok(_res) => {
                     site().refetch();
@@ -87,7 +87,7 @@ pub fn UserEditProfile() -> impl IntoView {
                     <button
                         class="btn btn-primary"
                         on:click=move |_| {
-                            let form = UpdateUserForm {
+                            let form = UpdateUserParams {
                                 person_id: my_profile.person.id,
                                 display_name: Some(display_name.get()),
                                 bio: Some(bio.get()),

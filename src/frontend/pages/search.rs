@@ -1,6 +1,6 @@
 use crate::{
     common::{
-        article::{DbArticle, SearchArticleForm},
+        article::{DbArticle, SearchArticleParams},
         instance::DbInstance,
     },
     frontend::{api::CLIENT, article_path, article_title},
@@ -32,7 +32,7 @@ pub fn Search() -> impl IntoView {
         set_error.set(None);
         let mut search_results = SearchResults::default();
         let url = Url::parse(&query);
-        let search_data = SearchArticleForm { query };
+        let search_data = SearchArticleParams { query };
         let search = CLIENT.search(&search_data);
 
         match search.await {

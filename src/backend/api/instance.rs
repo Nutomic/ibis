@@ -1,9 +1,9 @@
 use crate::{
     backend::{database::IbisData, federation::activities::follow::Follow, utils::error::MyResult},
     common::{
-        instance::{DbInstance, FollowInstance, GetInstance, InstanceView},
+        instance::{DbInstance, FollowInstanceParams, GetInstanceParams, InstanceView},
         user::LocalUserView,
-        ResolveObject,
+        ResolveObjectParams,
         SuccessResponse,
     },
 };
@@ -15,9 +15,9 @@ use axum_macros::debug_handler;
 #[debug_handler]
 pub(in crate::backend::api) async fn get_instance(
     data: Data<IbisData>,
-    Form(query): Form<GetInstance>,
+    Form(params): Form<GetInstanceParams>,
 ) -> MyResult<Json<InstanceView>> {
-    let local_instance = DbInstance::read_view(query.id, &data)?;
+    let local_instance = DbInstance::read_view(params.id, &data)?;
     Ok(Json(local_instance))
 }
 
@@ -27,12 +27,12 @@ pub(in crate::backend::api) async fn get_instance(
 pub(in crate::backend::api) async fn follow_instance(
     Extension(user): Extension<LocalUserView>,
     data: Data<IbisData>,
-    Form(query): Form<FollowInstance>,
+    Form(params): Form<FollowInstanceParams>,
 ) -> MyResult<Json<SuccessResponse>> {
-    let target = DbInstance::read(query.id, &data)?;
+    let target = DbInstance::read(params.id, &data)?;
     let pending = !target.local;
     DbInstance::follow(&user.person, &target, pending, &data)?;
-    let instance = DbInstance::read(query.id, &data)?;
+    let instance = DbInstance::read(params.id, &data)?;
     Follow::send(user.person, &instance, &data).await?;
     Ok(Json(SuccessResponse::default()))
 }
@@ -41,10 +41,10 @@ pub(in crate::backend::api) async fn follow_instance(
 /// the local instance, and allows for interactions such as following.
 #[debug_handler]
 pub(super) async fn resolve_instance(
-    Query(query): Query<ResolveObject>,
+    Query(params): Query<ResolveObjectParams>,
     data: Data<IbisData>,
 ) -> MyResult<Json<DbInstance>> {
-    let instance: DbInstance = ObjectId::from(query.id).dereference(&data).await?;
+    let instance: DbInstance = ObjectId::from(params.id).dereference(&data).await?;
     Ok(Json(instance))
 }
 

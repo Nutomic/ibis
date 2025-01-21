@@ -6,7 +6,7 @@ use crate::common::{
     utils::http_protocol_str,
     *,
 };
-use comment::{CreateCommentForm, DbCommentView, EditCommentForm};
+use comment::{CreateCommentParams, DbCommentView, EditCommentParams};
 use http::{Method, StatusCode};
 use leptos::{prelude::ServerFnError, server_fn::error::NoCustomError};
 use log::{error, info};
@@ -57,29 +57,28 @@ impl ApiClient {
         Self { hostname, ssl }
     }
 
-    pub async fn get_article(&self, data: GetArticleForm) -> Option<DbArticleView> {
+    pub async fn get_article(&self, data: GetArticleParams) -> Option<DbArticleView> {
         self.get("/api/v1/article", Some(data)).await
     }
 
-    pub async fn list_articles(&self, data: ListArticlesForm) -> Option<Vec<DbArticle>> {
+    pub async fn list_articles(&self, data: ListArticlesParams) -> Option<Vec<DbArticle>> {
         Some(self.get("/api/v1/article/list", Some(data)).await.unwrap())
     }
 
     pub async fn register(
         &self,
-        register_form: RegisterUserForm,
+        params: RegisterUserParams,
     ) -> Result<LocalUserView, ServerFnError> {
-        self.post("/api/v1/account/register", Some(&register_form))
-            .await
+        self.post("/api/v1/account/register", Some(&params)).await
     }
 
-    pub async fn login(&self, login_form: LoginUserForm) -> Result<LocalUserView, ServerFnError> {
-        self.post("/api/v1/account/login", Some(&login_form)).await
+    pub async fn login(&self, params: LoginUserParams) -> Result<LocalUserView, ServerFnError> {
+        self.post("/api/v1/account/login", Some(&params)).await
     }
 
     pub async fn create_article(
         &self,
-        data: &CreateArticleForm,
+        data: &CreateArticleParams,
     ) -> Result<DbArticleView, ServerFnError> {
         self.send(Method::POST, "/api/v1/article", Some(&data))
             .await
@@ -87,41 +86,41 @@ impl ApiClient {
 
     pub async fn edit_article_with_conflict(
         &self,
-        edit_form: &EditArticleForm,
+        params: &EditArticleParams,
     ) -> Result<Option<ApiConflict>, ServerFnError> {
-        self.send(Method::PATCH, "/api/v1/article", Some(&edit_form))
+        self.send(Method::PATCH, "/api/v1/article", Some(&params))
             .await
     }
 
     #[cfg(debug_assertions)]
-    pub async fn edit_article(&self, edit_form: &EditArticleForm) -> Option<DbArticleView> {
+    pub async fn edit_article(&self, params: &EditArticleParams) -> Option<DbArticleView> {
         let edit_res = self
-            .edit_article_with_conflict(edit_form)
+            .edit_article_with_conflict(params)
             .await
             .map_err(|e| error!("edit failed {e}"))
             .ok()?;
         assert_eq!(None, edit_res);
 
-        self.get_article(GetArticleForm {
+        self.get_article(GetArticleParams {
             title: None,
             domain: None,
-            id: Some(edit_form.article_id),
+            id: Some(params.article_id),
         })
         .await
     }
 
     pub async fn create_comment(
         &self,
-        data: &CreateCommentForm,
+        params: &CreateCommentParams,
     ) -> Result<DbCommentView, ServerFnError> {
-        self.post("/api/v1/comment", Some(&data)).await
+        self.post("/api/v1/comment", Some(&params)).await
     }
 
     pub async fn edit_comment(
         &self,
-        data: &EditCommentForm,
+        params: &EditCommentParams,
     ) -> Result<DbCommentView, ServerFnError> {
-        self.send(Method::PATCH, "/api/v1/comment", Some(&data))
+        self.send(Method::PATCH, "/api/v1/comment", Some(&params))
             .await
     }
 
@@ -136,35 +135,34 @@ impl ApiClient {
     }
 
     pub async fn approve_article(&self, article_id: ArticleId, approve: bool) -> Option<()> {
-        let form = ApproveArticleForm {
+        let params = ApproveArticleParams {
             article_id,
             approve,
         };
-        result_to_option(self.post("/api/v1/article/approve", Some(&form)).await)
+        result_to_option(self.post("/api/v1/article/approve", Some(&params)).await)
     }
 
     pub async fn delete_conflict(&self, conflict_id: ConflictId) -> Option<()> {
-        let form = DeleteConflictForm { conflict_id };
+        let params = DeleteConflictParams { conflict_id };
         result_to_option(
-            self.send(Method::DELETE, "/api/v1/conflict", Some(form))
+            self.send(Method::DELETE, "/api/v1/conflict", Some(params))
                 .await,
         )
     }
 
     pub async fn search(
         &self,
-        search_form: &SearchArticleForm,
+        params: &SearchArticleParams,
     ) -> Result<Vec<DbArticle>, ServerFnError> {
-        self.send(Method::GET, "/api/v1/search", Some(search_form))
-            .await
+        self.send(Method::GET, "/api/v1/search", Some(params)).await
     }
 
     pub async fn get_local_instance(&self) -> Option<InstanceView> {
         self.get("/api/v1/instance", None::<i32>).await
     }
 
-    pub async fn get_instance(&self, get_form: &GetInstance) -> Option<InstanceView> {
-        self.get("/api/v1/instance", Some(&get_form)).await
+    pub async fn get_instance(&self, params: &GetInstanceParams) -> Option<InstanceView> {
+        self.get("/api/v1/instance", Some(&params)).await
     }
 
     pub async fn list_instances(&self) -> Option<Vec<DbInstance>> {
@@ -173,28 +171,24 @@ impl ApiClient {
 
     pub async fn follow_instance_with_resolve(&self, follow_instance: &str) -> Option<DbInstance> {
         // fetch beta instance on alpha
-        let resolve_form = ResolveObject {
+        let params = ResolveObjectParams {
             id: Url::parse(&format!("{}://{}", http_protocol_str(), follow_instance))
                 .map_err(|e| error!("invalid url {e}"))
                 .ok()?,
         };
-        let instance_resolved: DbInstance = self
-            .get("/api/v1/instance/resolve", Some(resolve_form))
-            .await?;
+        let instance_resolved: DbInstance =
+            self.get("/api/v1/instance/resolve", Some(params)).await?;
 
         // send follow
-        let follow_form = FollowInstance {
+        let params = FollowInstanceParams {
             id: instance_resolved.id,
         };
-        self.follow_instance(follow_form).await?;
+        self.follow_instance(params).await?;
         Some(instance_resolved)
     }
 
-    pub async fn follow_instance(&self, follow_form: FollowInstance) -> Option<SuccessResponse> {
-        result_to_option(
-            self.post("/api/v1/instance/follow", Some(follow_form))
-                .await,
-        )
+    pub async fn follow_instance(&self, params: FollowInstanceParams) -> Option<SuccessResponse> {
+        result_to_option(self.post("/api/v1/instance/follow", Some(params)).await)
     }
 
     pub async fn site(&self) -> Option<SiteView> {
@@ -207,26 +201,26 @@ impl ApiClient {
 
     pub async fn fork_article(
         &self,
-        form: &ForkArticleForm,
+        params: &ForkArticleParams,
     ) -> Result<DbArticleView, ServerFnError> {
-        self.post("/api/v1/article/fork", Some(form)).await
+        self.post("/api/v1/article/fork", Some(params)).await
     }
 
     pub async fn protect_article(
         &self,
-        params: &ProtectArticleForm,
+        params: &ProtectArticleParams,
     ) -> Result<DbArticle, ServerFnError> {
         self.post("/api/v1/article/protect", Some(params)).await
     }
 
     pub async fn resolve_article(&self, id: Url) -> Result<DbArticleView, ServerFnError> {
-        let resolve_object = ResolveObject { id };
+        let resolve_object = ResolveObjectParams { id };
         self.send(Method::GET, "/api/v1/article/resolve", Some(resolve_object))
             .await
     }
 
     pub async fn resolve_instance(&self, id: Url) -> Result<DbInstance, ServerFnError> {
-        let resolve_object = ResolveObject { id };
+        let resolve_object = ResolveObjectParams { id };
         self.send(
             Method::GET,
             "/api/v1/instance/resolve",
@@ -235,13 +229,13 @@ impl ApiClient {
         .await
     }
 
-    pub async fn get_user(&self, data: GetUserForm) -> Option<DbPerson> {
+    pub async fn get_user(&self, data: GetUserParams) -> Option<DbPerson> {
         self.get("/api/v1/user", Some(data)).await
     }
 
     pub async fn update_user_profile(
         &self,
-        data: UpdateUserForm,
+        data: UpdateUserParams,
     ) -> Result<SuccessResponse, ServerFnError> {
         self.post("/api/v1/account/update", Some(data)).await
     }

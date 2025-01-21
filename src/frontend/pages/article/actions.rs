@@ -1,6 +1,6 @@
 use crate::{
     common::{
-        article::{ForkArticleForm, ProtectArticleForm},
+        article::{ForkArticleParams, ProtectArticleParams},
         newtypes::ArticleId,
     },
     frontend::{
@@ -22,7 +22,7 @@ pub fn ArticleActions() -> impl IntoView {
     let (fork_response, set_fork_response) = signal(Option::<DbArticle>::None);
     let (error, set_error) = signal(None::<String>);
     let fork_action = Action::new(move |(article_id, new_title): &(ArticleId, String)| {
-        let params = ForkArticleForm {
+        let params = ForkArticleParams {
             article_id: *article_id,
             new_title: new_title.to_string(),
         };
@@ -38,7 +38,7 @@ pub fn ArticleActions() -> impl IntoView {
         }
     });
     let protect_action = Action::new(move |(id, protected): &(ArticleId, bool)| {
-        let params = ProtectArticleForm {
+        let params = ProtectArticleParams {
             article_id: *id,
             protected: !protected,
         };

@@ -17,14 +17,14 @@ use {
 
 /// Should be an enum Title/Id but fails due to https://github.com/nox/serde_urlencoded/issues/66
 #[derive(Deserialize, Serialize, Clone, Debug, Default)]
-pub struct GetArticleForm {
+pub struct GetArticleParams {
     pub title: Option<String>,
     pub domain: Option<String>,
     pub id: Option<ArticleId>,
 }
 
 #[derive(Deserialize, Serialize, Clone, Default, Debug)]
-pub struct ListArticlesForm {
+pub struct ListArticlesParams {
     pub only_local: Option<bool>,
     pub instance_id: Option<InstanceId>,
 }
@@ -58,14 +58,14 @@ pub struct DbArticle {
 }
 
 #[derive(Deserialize, Serialize, Debug)]
-pub struct CreateArticleForm {
+pub struct CreateArticleParams {
     pub title: String,
     pub text: String,
     pub summary: String,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
-pub struct EditArticleForm {
+pub struct EditArticleParams {
     /// Id of the article to edit
     pub article_id: ArticleId,
     /// Full, new text of the article. A diff against `previous_version` is generated on the backend
@@ -81,25 +81,25 @@ pub struct EditArticleForm {
 }
 
 #[derive(Deserialize, Serialize, Debug)]
-pub struct ProtectArticleForm {
+pub struct ProtectArticleParams {
     pub article_id: ArticleId,
     pub protected: bool,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
-pub struct ForkArticleForm {
+pub struct ForkArticleParams {
     pub article_id: ArticleId,
     pub new_title: String,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
-pub struct ApproveArticleForm {
+pub struct ApproveArticleParams {
     pub article_id: ArticleId,
     pub approve: bool,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
-pub struct SearchArticleForm {
+pub struct SearchArticleParams {
     pub query: String,
 }
 
@@ -171,7 +171,7 @@ impl Default for EditVersion {
 }
 
 #[derive(Deserialize, Serialize, Debug)]
-pub struct DeleteConflictForm {
+pub struct DeleteConflictParams {
     pub conflict_id: ConflictId,
 }
 

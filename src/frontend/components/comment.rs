@@ -1,7 +1,7 @@
 use crate::{
     common::{
         article::DbArticleView,
-        comment::{DbComment, DbCommentView, EditCommentForm},
+        comment::{DbComment, DbCommentView, EditCommentParams},
         newtypes::CommentId,
     },
     frontend::{
@@ -40,12 +40,12 @@ pub fn CommentView(
     );
 
     let delete_restore_comment_action = Action::new(move |_: &()| async move {
-        let form = EditCommentForm {
+        let params = EditCommentParams {
             id: comment.comment.id,
             deleted: Some(!comment_change_signal.0.get_untracked().deleted),
             content: None,
         };
-        let comment = CLIENT.edit_comment(&form).await.unwrap();
+        let comment = CLIENT.edit_comment(&params).await.unwrap();
         comment_change_signal.1.set(comment.comment);
     });
 

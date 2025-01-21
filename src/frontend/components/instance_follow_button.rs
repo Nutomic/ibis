@@ -1,6 +1,6 @@
 use crate::{
     common::{
-        instance::{DbInstance, FollowInstance},
+        instance::{DbInstance, FollowInstanceParams},
         newtypes::InstanceId,
     },
     frontend::{
@@ -15,8 +15,8 @@ pub fn InstanceFollowButton(instance: DbInstance) -> impl IntoView {
     let follow_action = Action::new(move |instance_id: &InstanceId| {
         let instance_id = *instance_id;
         async move {
-            let form = FollowInstance { id: instance_id };
-            CLIENT.follow_instance(form).await.unwrap();
+            let params = FollowInstanceParams { id: instance_id };
+            CLIENT.follow_instance(params).await.unwrap();
             site().refetch();
         }
     });

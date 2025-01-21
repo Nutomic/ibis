@@ -38,20 +38,20 @@ pub struct DbCommentView {
 }
 
 #[derive(Deserialize, Serialize, Debug)]
-pub struct CreateCommentForm {
+pub struct CreateCommentParams {
     pub content: String,
     pub article_id: ArticleId,
     pub parent_id: Option<CommentId>,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
-pub struct EditCommentForm {
+pub struct EditCommentParams {
     pub id: CommentId,
     pub content: Option<String>,
     pub deleted: Option<bool>,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
-pub struct DeleteCommentForm {
+pub struct DeleteCommentParams {
     pub id: CommentId,
 }

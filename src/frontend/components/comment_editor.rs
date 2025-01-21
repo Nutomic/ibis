@@ -1,7 +1,7 @@
 use crate::{
     common::{
         article::DbArticleView,
-        comment::{CreateCommentForm, DbComment, EditCommentForm},
+        comment::{CreateCommentParams, DbComment, EditCommentParams},
         newtypes::CommentId,
     },
     frontend::api::CLIENT,
@@ -40,21 +40,21 @@ pub fn CommentEditorView(
         let edit_params = edit_params.clone();
         async move {
             if let Some(edit_params) = edit_params {
-                let form = EditCommentForm {
+                let params = EditCommentParams {
                     id: edit_params.comment.id,
                     content: Some(content.get_untracked()),
                     deleted: None,
                 };
-                let comment = CLIENT.edit_comment(&form).await.unwrap();
+                let comment = CLIENT.edit_comment(&params).await.unwrap();
                 edit_params.set_comment.set(comment.comment);
                 edit_params.set_is_editing.set(false);
             } else {
-                let form = CreateCommentForm {
+                let params = CreateCommentParams {
                     content: content.get_untracked(),
                     article_id: article.await.article.id,
                     parent_id,
                 };
-                CLIENT.create_comment(&form).await.unwrap();
+                CLIENT.create_comment(&params).await.unwrap();
                 article.refetch();
                 if let Some(set_show_editor) = set_show_editor {
                     set_show_editor.set(CommentId(-1));

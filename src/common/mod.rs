@@ -30,7 +30,7 @@ impl Default for SuccessResponse {
 }
 
 #[derive(Deserialize, Serialize, Debug)]
-pub struct ResolveObject {
+pub struct ResolveObjectParams {
     pub id: Url,
 }
 

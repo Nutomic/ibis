@@ -13,13 +13,13 @@ use {
 };
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
-pub struct RegisterUserForm {
+pub struct RegisterUserParams {
     pub username: String,
     pub password: String,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
-pub struct LoginUserForm {
+pub struct LoginUserParams {
     pub username: String,
     pub password: String,
 }
@@ -75,13 +75,13 @@ impl DbPerson {
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
-pub struct GetUserForm {
+pub struct GetUserParams {
     pub name: String,
     pub domain: Option<String>,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
-pub struct UpdateUserForm {
+pub struct UpdateUserParams {
     pub person_id: PersonId,
     pub display_name: Option<String>,
     pub bio: Option<String>,

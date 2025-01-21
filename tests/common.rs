@@ -6,7 +6,7 @@ use ibis::{
         config::{IbisConfig, IbisConfigDatabase, IbisConfigFederation},
         start,
     },
-    common::{instance::Options, user::RegisterUserForm},
+    common::{instance::Options, user::RegisterUserParams},
     frontend::api::ApiClient,
 };
 use reqwest::ClientBuilder;
@@ -137,11 +137,11 @@ impl IbisInstance {
         });
         // wait for the backend to start
         rx.await.unwrap();
-        let form = RegisterUserForm {
+        let params = RegisterUserParams {
             username: username.to_string(),
             password: "hunter2".to_string(),
         };
-        api_client.register(form).await.unwrap();
+        api_client.register(params).await.unwrap();
         Self {
             api_client,
             db_path,

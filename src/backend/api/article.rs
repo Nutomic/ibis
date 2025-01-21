@@ -17,26 +17,26 @@ use crate::{
     common::{
         article::{
             ApiConflict,
-            ApproveArticleForm,
-            CreateArticleForm,
+            ApproveArticleParams,
+            CreateArticleParams,
             DbArticle,
             DbArticleView,
             DbEdit,
-            DeleteConflictForm,
-            EditArticleForm,
+            DeleteConflictParams,
+            EditArticleParams,
             EditVersion,
-            ForkArticleForm,
-            GetArticleForm,
-            ListArticlesForm,
-            ProtectArticleForm,
-            SearchArticleForm,
+            ForkArticleParams,
+            GetArticleParams,
+            ListArticlesParams,
+            ProtectArticleParams,
+            SearchArticleParams,
         },
         comment::DbComment,
         instance::DbInstance,
         user::LocalUserView,
         utils::{extract_domain, http_protocol_str},
         validation::can_edit_article,
-        ResolveObject,
+        ResolveObjectParams,
     },
 };
 use activitypub_federation::{config::Data, fetch::object_id::ObjectId};
@@ -51,7 +51,7 @@ use diffy::create_patch;
 pub(in crate::backend::api) async fn create_article(
     user: Extension<LocalUserView>,
     data: Data<IbisData>,
-    Form(mut params): Form<CreateArticleForm>,
+    Form(mut params): Form<CreateArticleParams>,
 ) -> MyResult<Json<DbArticleView>> {
     params.title = validate_article_title(&params.title)?;
     validate_not_empty(&params.text)?;
@@ -74,7 +74,7 @@ pub(in crate::backend::api) async fn create_article(
     };
     let article = DbArticle::create(form, &data)?;
 
-    let edit_data = EditArticleForm {
+    let edit_data = EditArticleParams {
         article_id: article.id,
         new_text: params.text,
         summary: params.summary,
@@ -104,7 +104,7 @@ pub(in crate::backend::api) async fn create_article(
 pub(in crate::backend::api) async fn edit_article(
     Extension(user): Extension<LocalUserView>,
     data: Data<IbisData>,
-    Form(mut params): Form<EditArticleForm>,
+    Form(mut params): Form<EditArticleParams>,
 ) -> MyResult<Json<Option<ApiConflict>>> {
     validate_not_empty(&params.new_text)?;
     // resolve conflict if any
@@ -167,7 +167,7 @@ pub(in crate::backend::api) async fn edit_article(
 /// Retrieve an article by ID. It must already be stored in the local database.
 #[debug_handler]
 pub(in crate::backend::api) async fn get_article(
-    Query(query): Query<GetArticleForm>,
+    Query(query): Query<GetArticleParams>,
     data: Data<IbisData>,
 ) -> MyResult<Json<DbArticleView>> {
     match (query.title, query.id) {
@@ -189,7 +189,7 @@ pub(in crate::backend::api) async fn get_article(
 
 #[debug_handler]
 pub(in crate::backend::api) async fn list_articles(
-    Query(query): Query<ListArticlesForm>,
+    Query(query): Query<ListArticlesParams>,
     data: Data<IbisData>,
 ) -> MyResult<Json<Vec<DbArticle>>> {
     Ok(Json(DbArticle::read_all(
@@ -205,7 +205,7 @@ pub(in crate::backend::api) async fn list_articles(
 pub(in crate::backend::api) async fn fork_article(
     Extension(_user): Extension<LocalUserView>,
     data: Data<IbisData>,
-    Form(mut params): Form<ForkArticleForm>,
+    Form(mut params): Form<ForkArticleParams>,
 ) -> MyResult<Json<DbArticleView>> {
     // TODO: lots of code duplicated from create_article(), can move it into helper
     let original_article = DbArticle::read_view(params.article_id, &data)?;
@@ -258,7 +258,7 @@ pub(in crate::backend::api) async fn fork_article(
 /// article changes can only be received if we follow the instance, or if it is refetched manually.
 #[debug_handler]
 pub(super) async fn resolve_article(
-    Query(query): Query<ResolveObject>,
+    Query(query): Query<ResolveObjectParams>,
     data: Data<IbisData>,
 ) -> MyResult<Json<DbArticleView>> {
     let article: DbArticle = ObjectId::from(query.id).dereference(&data).await?;
@@ -276,7 +276,7 @@ pub(super) async fn resolve_article(
 /// Search articles for matching title or body text.
 #[debug_handler]
 pub(super) async fn search_article(
-    Query(query): Query<SearchArticleForm>,
+    Query(query): Query<SearchArticleParams>,
     data: Data<IbisData>,
 ) -> MyResult<Json<Vec<DbArticle>>> {
     if query.query.is_empty() {
@@ -290,11 +290,10 @@ pub(super) async fn search_article(
 pub(in crate::backend::api) async fn protect_article(
     Extension(user): Extension<LocalUserView>,
     data: Data<IbisData>,
-    Form(lock_params): Form<ProtectArticleForm>,
+    Form(params): Form<ProtectArticleParams>,
 ) -> MyResult<Json<DbArticle>> {
     check_is_admin(&user)?;
-    let article =
-        DbArticle::update_protected(lock_params.article_id, lock_params.protected, &data)?;
+    let article = DbArticle::update_protected(params.article_id, params.protected, &data)?;
     Ok(Json(article))
 }
 
@@ -303,7 +302,7 @@ pub(in crate::backend::api) async fn protect_article(
 pub async fn approve_article(
     Extension(user): Extension<LocalUserView>,
     data: Data<IbisData>,
-    Form(params): Form<ApproveArticleForm>,
+    Form(params): Form<ApproveArticleParams>,
 ) -> MyResult<Json<()>> {
     check_is_admin(&user)?;
     if params.approve {
@@ -319,7 +318,7 @@ pub async fn approve_article(
 pub async fn delete_conflict(
     Extension(user): Extension<LocalUserView>,
     data: Data<IbisData>,
-    Form(params): Form<DeleteConflictForm>,
+    Form(params): Form<DeleteConflictParams>,
 ) -> MyResult<Json<()>> {
     DbConflict::delete(params.conflict_id, user.person.id, &data)?;
     Ok(Json(()))

@@ -9,7 +9,7 @@ use crate::{
     common::{
         instance::DbInstance,
         newtypes::PersonId,
-        user::{DbLocalUser, DbPerson, LocalUserView, UpdateUserForm},
+        user::{DbLocalUser, DbPerson, LocalUserView, UpdateUserParams},
         utils::http_protocol_str,
     },
 };
@@ -144,7 +144,7 @@ impl DbPerson {
         Ok(query.get_result(conn.deref_mut())?)
     }
 
-    pub fn update_profile(params: &UpdateUserForm, data: &Data<IbisData>) -> MyResult<()> {
+    pub fn update_profile(params: &UpdateUserParams, data: &Data<IbisData>) -> MyResult<()> {
         let mut conn = data.db_pool.get()?;
         diesel::update(person::table.find(params.person_id))
             .set((

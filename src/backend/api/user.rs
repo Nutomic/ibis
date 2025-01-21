@@ -11,11 +11,11 @@ use crate::{
         article::DbArticle,
         user::{
             DbPerson,
-            GetUserForm,
+            GetUserParams,
             LocalUserView,
-            LoginUserForm,
-            RegisterUserForm,
-            UpdateUserForm,
+            LoginUserParams,
+            RegisterUserParams,
+            UpdateUserParams,
         },
         Notification,
         SuccessResponse,
@@ -81,13 +81,13 @@ pub async fn validate(jwt: &str, data: &IbisData) -> MyResult<LocalUserView> {
 pub(in crate::backend::api) async fn register_user(
     data: Data<IbisData>,
     jar: CookieJar,
-    Form(form): Form<RegisterUserForm>,
+    Form(params): Form<RegisterUserParams>,
 ) -> MyResult<(CookieJar, Json<LocalUserView>)> {
     if !data.config.options.registration_open {
         return Err(anyhow!("Registration is closed").into());
     }
-    validate_user_name(&form.username)?;
-    let user = DbPerson::create_local(form.username, form.password, false, &data)?;
+    validate_user_name(&params.username)?;
+    let user = DbPerson::create_local(params.username, params.password, false, &data)?;
     let token = generate_login_token(&user.person, &data)?;
     let jar = jar.add(create_cookie(token, &data));
     Ok((jar, Json(user)))
@@ -97,10 +97,10 @@ pub(in crate::backend::api) async fn register_user(
 pub(in crate::backend::api) async fn login_user(
     data: Data<IbisData>,
     jar: CookieJar,
-    Form(form): Form<LoginUserForm>,
+    Form(params): Form<LoginUserParams>,
 ) -> MyResult<(CookieJar, Json<LocalUserView>)> {
-    let user = DbPerson::read_local_from_name(&form.username, &data)?;
-    let valid = verify(&form.password, &user.local_user.password_encrypted)?;
+    let user = DbPerson::read_local_from_name(&params.username, &data)?;
+    let valid = verify(&params.password, &user.local_user.password_encrypted)?;
     if !valid {
         return Err(anyhow!("Invalid login").into());
     }
@@ -140,7 +140,7 @@ pub(in crate::backend::api) async fn logout_user(
 
 #[debug_handler]
 pub(in crate::backend::api) async fn get_user(
-    params: Query<GetUserForm>,
+    params: Query<GetUserParams>,
     data: Data<IbisData>,
 ) -> MyResult<Json<DbPerson>> {
     Ok(Json(DbPerson::read_from_name(
@@ -153,7 +153,7 @@ pub(in crate::backend::api) async fn get_user(
 #[debug_handler]
 pub(in crate::backend::api) async fn update_user_profile(
     data: Data<IbisData>,
-    Form(mut params): Form<UpdateUserForm>,
+    Form(mut params): Form<UpdateUserParams>,
 ) -> MyResult<Json<SuccessResponse>> {
     empty_to_none(&mut params.display_name);
     empty_to_none(&mut params.bio);

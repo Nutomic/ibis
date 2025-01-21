@@ -15,7 +15,7 @@ use crate::{
         },
     },
     common::{
-        comment::{CreateCommentForm, DbComment, DbCommentView, EditCommentForm},
+        comment::{CreateCommentParams, DbComment, DbCommentView, EditCommentParams},
         user::LocalUserView,
         utils::http_protocol_str,
     },
@@ -30,7 +30,7 @@ use chrono::Utc;
 pub(in crate::backend::api) async fn create_comment(
     user: Extension<LocalUserView>,
     data: Data<IbisData>,
-    Form(params): Form<CreateCommentForm>,
+    Form(params): Form<CreateCommentParams>,
 ) -> MyResult<Json<DbCommentView>> {
     validate_not_empty(&params.content)?;
     let mut depth = 0;
@@ -77,7 +77,7 @@ pub(in crate::backend::api) async fn create_comment(
 pub(in crate::backend::api) async fn edit_comment(
     user: Extension<LocalUserView>,
     data: Data<IbisData>,
-    Form(params): Form<EditCommentForm>,
+    Form(params): Form<EditCommentParams>,
 ) -> MyResult<Json<DbCommentView>> {
     if let Some(content) = &params.content {
         validate_not_empty(content)?;

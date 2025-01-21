@@ -1,5 +1,5 @@
 use crate::{
-    common::article::ListArticlesForm,
+    common::article::ListArticlesParams,
     frontend::{
         api::CLIENT,
         app::DefaultResource,
@@ -18,7 +18,7 @@ pub fn ListArticles() -> impl IntoView {
         move || only_local.get(),
         |only_local| async move {
             CLIENT
-                .list_articles(ListArticlesForm {
+                .list_articles(ListArticlesParams {
                     only_local: Some(only_local),
                     instance_id: None,
                 })

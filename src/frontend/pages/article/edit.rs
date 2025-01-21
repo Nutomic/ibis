@@ -1,6 +1,6 @@
 use crate::{
     common::{
-        article::{ApiConflict, DbArticleView, EditArticleForm},
+        article::{ApiConflict, DbArticleView, EditArticleParams},
         newtypes::ConflictId,
         Notification,
         MAIN_PAGE_NAME,
@@ -87,7 +87,7 @@ pub fn EditArticle() -> impl IntoView {
             };
             async move {
                 set_edit_error.update(|e| *e = None);
-                let form = EditArticleForm {
+                let params = EditArticleParams {
                     article_id: article.article.id,
                     new_text,
                     summary,
@@ -95,7 +95,7 @@ pub fn EditArticle() -> impl IntoView {
                     resolve_conflict_id,
                 };
                 set_wait_for_response.update(|w| *w = true);
-                let res = CLIENT.edit_article_with_conflict(&form).await;
+                let res = CLIENT.edit_article_with_conflict(&params).await;
                 set_wait_for_response.update(|w| *w = false);
                 match res {
                     Ok(Some(conflict)) => {

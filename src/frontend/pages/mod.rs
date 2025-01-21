@@ -1,6 +1,6 @@
 use crate::{
     common::{
-        article::{DbArticleView, EditView, GetArticleForm},
+        article::{DbArticleView, EditView, GetArticleParams},
         MAIN_PAGE_NAME,
     },
     frontend::api::CLIENT,
@@ -29,7 +29,7 @@ fn article_resource() -> Resource<DbArticleView> {
             domain = Some(domain_.to_string());
         }
         CLIENT
-            .get_article(GetArticleForm {
+            .get_article(GetArticleParams {
                 title: Some(title),
                 domain,
                 id: None,

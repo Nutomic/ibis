@@ -83,11 +83,11 @@ pub struct SiteView {
 }
 
 #[derive(Deserialize, Serialize, Debug)]
-pub struct GetInstance {
+pub struct GetInstanceParams {
     pub id: Option<InstanceId>,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
-pub struct FollowInstance {
+pub struct FollowInstanceParams {
     pub id: InstanceId,
 }

@@ -1,5 +1,5 @@
 use crate::{
-    common::user::RegisterUserForm,
+    common::user::RegisterUserParams,
     frontend::{api::CLIENT, app::site, components::credentials::*},
 };
 use leptos::prelude::*;
@@ -15,11 +15,11 @@ pub fn Register() -> impl IntoView {
     let register_action = Action::new(move |(email, password): &(String, String)| {
         let username = email.to_string();
         let password = password.to_string();
-        let credentials = RegisterUserForm { username, password };
-        info!("Try to register new account for {}", credentials.username);
+        let params = RegisterUserParams { username, password };
+        info!("Try to register new account for {}", params.username);
         async move {
             set_wait_for_response.set(true);
-            let result = CLIENT.register(credentials).await;
+            let result = CLIENT.register(params).await;
             set_wait_for_response.set(false);
             match result {
                 Ok(_res) => {

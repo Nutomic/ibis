@@ -1,5 +1,5 @@
 use crate::{
-    common::article::CreateArticleForm,
+    common::article::CreateArticleParams,
     frontend::{
         api::CLIENT,
         app::{is_admin, site, DefaultResource},
@@ -31,13 +31,13 @@ pub fn CreateArticle() -> impl IntoView {
         let text = text.clone();
         let summary = summary.clone();
         async move {
-            let form = CreateArticleForm {
+            let params = CreateArticleParams {
                 title,
                 text,
                 summary,
             };
             set_wait_for_response.update(|w| *w = true);
-            let res = CLIENT.create_article(&form).await;
+            let res = CLIENT.create_article(&params).await;
             set_wait_for_response.update(|w| *w = false);
             match res {
                 Ok(_res) => {

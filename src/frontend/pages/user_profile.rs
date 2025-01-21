@@ -1,5 +1,5 @@
 use crate::{
-    common::user::GetUserForm,
+    common::user::GetUserParams,
     frontend::{
         api::CLIENT,
         components::edit_list::EditList,
@@ -23,7 +23,7 @@ pub fn UserProfile() -> impl IntoView {
             name = title_.to_string();
             domain = Some(domain_.to_string());
         }
-        let params = GetUserForm { name, domain };
+        let params = GetUserParams { name, domain };
         CLIENT.get_user(params).await.unwrap()
     });
 
