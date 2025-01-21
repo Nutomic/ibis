@@ -1,6 +1,6 @@
 use crate::{
     backend::{
-        database::{edit::DbEditForm, IbisData},
+        database::{edit::DbEditForm, IbisContext},
         utils::error::Error,
     },
     common::{
@@ -43,20 +43,20 @@ pub struct ApubEdit {
 
 #[async_trait::async_trait]
 impl Object for DbEdit {
-    type DataType = IbisData;
+    type DataType = IbisContext;
     type Kind = ApubEdit;
     type Error = Error;
 
     async fn read_from_id(
         object_id: Url,
-        data: &Data<Self::DataType>,
+        context: &Data<Self::DataType>,
     ) -> Result<Option<Self>, Self::Error> {
-        Ok(DbEdit::read_from_ap_id(&object_id.into(), data).ok())
+        Ok(DbEdit::read_from_ap_id(&object_id.into(), context).ok())
     }
 
-    async fn into_json(self, data: &Data<Self::DataType>) -> Result<Self::Kind, Self::Error> {
-        let article = DbArticle::read_view(self.article_id, data)?;
-        let creator = DbPerson::read(self.creator_id, data)?;
+    async fn into_json(self, context: &Data<Self::DataType>) -> Result<Self::Kind, Self::Error> {
+        let article = DbArticle::read_view(self.article_id, context)?;
+        let creator = DbPerson::read(self.creator_id, context)?;
         Ok(ApubEdit {
             kind: PatchType::Patch,
             id: self.ap_id,
@@ -73,21 +73,24 @@ impl Object for DbEdit {
     async fn verify(
         json: &Self::Kind,
         expected_domain: &Url,
-        data: &Data<Self::DataType>,
+        context: &Data<Self::DataType>,
     ) -> Result<(), Self::Error> {
         verify_domains_match(json.id.inner(), expected_domain)?;
-        verify_is_remote_object(&json.id, data)?;
+        verify_is_remote_object(&json.id, context)?;
         Ok(())
     }
 
-    async fn from_json(json: Self::Kind, data: &Data<Self::DataType>) -> Result<Self, Self::Error> {
-        let article = json.object.dereference(data).await?;
-        let creator = match json.attributed_to.dereference(data).await {
+    async fn from_json(
+        json: Self::Kind,
+        context: &Data<Self::DataType>,
+    ) -> Result<Self, Self::Error> {
+        let article = json.object.dereference(context).await?;
+        let creator = match json.attributed_to.dereference(context).await {
             Ok(c) => c,
             Err(e) => {
                 // If actor couldnt be fetched, use ghost as placeholder
                 warn!("Failed to fetch user {}: {e}", json.attributed_to);
-                DbPerson::ghost(data)?
+                DbPerson::ghost(context)?
             }
         };
         let form = DbEditForm {
@@ -101,7 +104,7 @@ impl Object for DbEdit {
             published: json.published,
             pending: false,
         };
-        let edit = DbEdit::create(&form, data)?;
+        let edit = DbEdit::create(&form, context)?;
         Ok(edit)
     }
 }

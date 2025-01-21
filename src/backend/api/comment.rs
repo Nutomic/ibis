@@ -2,7 +2,7 @@ use crate::{
     backend::{
         database::{
             comment::{DbCommentInsertForm, DbCommentUpdateForm},
-            IbisData,
+            IbisContext,
         },
         federation::activities::comment::{
             create_or_update_comment::CreateOrUpdateComment,
@@ -29,13 +29,13 @@ use chrono::Utc;
 #[debug_handler]
 pub(in crate::backend::api) async fn create_comment(
     user: Extension<LocalUserView>,
-    data: Data<IbisData>,
+    context: Data<IbisContext>,
     Form(params): Form<CreateCommentParams>,
 ) -> MyResult<Json<DbCommentView>> {
     validate_not_empty(&params.content)?;
     let mut depth = 0;
     if let Some(parent_id) = params.parent_id {
-        let parent = DbComment::read(parent_id, &data)?;
+        let parent = DbComment::read(parent_id, &context)?;
         if parent.deleted {
             return Err(anyhow!("Cant reply to deleted comment").into());
         }
@@ -57,18 +57,18 @@ pub(in crate::backend::api) async fn create_comment(
         published: Utc::now(),
         updated: None,
     };
-    let comment = DbComment::create(form, &data)?;
+    let comment = DbComment::create(form, &context)?;
 
     // Set the ap_id which contains db id (so it is not know before inserting)
     let proto = http_protocol_str();
-    let ap_id = format!("{}://{}/comment/{}", proto, data.domain(), comment.id.0).parse()?;
+    let ap_id = format!("{}://{}/comment/{}", proto, context.domain(), comment.id.0).parse()?;
     let form = DbCommentUpdateForm {
         ap_id: Some(ap_id),
         ..Default::default()
     };
-    let comment = DbComment::update(form, comment.id, &data)?;
+    let comment = DbComment::update(form, comment.id, &context)?;
 
-    CreateOrUpdateComment::send(&comment.comment, &data).await?;
+    CreateOrUpdateComment::send(&comment.comment, &context).await?;
 
     Ok(Json(comment))
 }
@@ -76,7 +76,7 @@ pub(in crate::backend::api) async fn create_comment(
 #[debug_handler]
 pub(in crate::backend::api) async fn edit_comment(
     user: Extension<LocalUserView>,
-    data: Data<IbisData>,
+    context: Data<IbisContext>,
     Form(params): Form<EditCommentParams>,
 ) -> MyResult<Json<DbCommentView>> {
     if let Some(content) = &params.content {
@@ -85,7 +85,7 @@ pub(in crate::backend::api) async fn edit_comment(
     if params.content.is_none() && params.deleted.is_none() {
         return Err(anyhow!("Edit has no parameters").into());
     }
-    let orig_comment = DbComment::read(params.id, &data)?;
+    let orig_comment = DbComment::read(params.id, &context)?;
     if orig_comment.creator_id != user.person.id {
         return Err(anyhow!("Cannot edit comment created by another user").into());
     }
@@ -95,17 +95,17 @@ pub(in crate::backend::api) async fn edit_comment(
         updated: Some(Utc::now()),
         ..Default::default()
     };
-    let comment = DbComment::update(form, params.id, &data)?;
+    let comment = DbComment::update(form, params.id, &context)?;
 
     // federate
     if orig_comment.content != comment.comment.content {
-        CreateOrUpdateComment::send(&comment.comment, &data).await?;
+        CreateOrUpdateComment::send(&comment.comment, &context).await?;
     }
     if !orig_comment.deleted && comment.comment.deleted {
-        DeleteComment::send(&comment.comment, &data).await?;
+        DeleteComment::send(&comment.comment, &context).await?;
     }
     if orig_comment.deleted && !comment.comment.deleted {
-        UndoDeleteComment::send(&comment.comment, &data).await?;
+        UndoDeleteComment::send(&comment.comment, &context).await?;
     }
 
     Ok(Json(comment))

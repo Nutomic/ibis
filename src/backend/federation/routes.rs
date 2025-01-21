@@ -11,7 +11,7 @@ use super::{
 };
 use crate::{
     backend::{
-        database::IbisData,
+        database::IbisContext,
         federation::{
             activities::{
                 accept::Accept,
@@ -74,66 +74,66 @@ pub fn federation_routes() -> Router<()> {
 
 #[debug_handler]
 async fn http_get_instance(
-    data: Data<IbisData>,
+    context: Data<IbisContext>,
 ) -> MyResult<FederationJson<WithContext<ApubInstance>>> {
-    let local_instance = DbInstance::read_local(&data)?;
-    let json_instance = local_instance.into_json(&data).await?;
+    let local_instance = DbInstance::read_local(&context)?;
+    let json_instance = local_instance.into_json(&context).await?;
     Ok(FederationJson(WithContext::new_default(json_instance)))
 }
 
 #[debug_handler]
 async fn http_get_person(
     Path(name): Path<String>,
-    data: Data<IbisData>,
+    context: Data<IbisContext>,
 ) -> MyResult<FederationJson<WithContext<ApubUser>>> {
-    let person = DbPerson::read_local_from_name(&name, &data)?.person;
-    let json_person = person.into_json(&data).await?;
+    let person = DbPerson::read_local_from_name(&name, &context)?.person;
+    let json_person = person.into_json(&context).await?;
     Ok(FederationJson(WithContext::new_default(json_person)))
 }
 
 #[debug_handler]
 async fn http_get_all_articles(
-    data: Data<IbisData>,
+    context: Data<IbisContext>,
 ) -> MyResult<FederationJson<WithContext<ArticleCollection>>> {
-    let collection = DbArticleCollection::read_local(&(), &data).await?;
+    let collection = DbArticleCollection::read_local(&(), &context).await?;
     Ok(FederationJson(WithContext::new_default(collection)))
 }
 
 #[debug_handler]
 async fn http_get_linked_instances(
-    data: Data<IbisData>,
+    context: Data<IbisContext>,
 ) -> MyResult<FederationJson<WithContext<InstanceCollection>>> {
-    let collection = DbInstanceCollection::read_local(&(), &data).await?;
+    let collection = DbInstanceCollection::read_local(&(), &context).await?;
     Ok(FederationJson(WithContext::new_default(collection)))
 }
 
 #[debug_handler]
 async fn http_get_article(
     Path(title): Path<String>,
-    data: Data<IbisData>,
+    context: Data<IbisContext>,
 ) -> MyResult<FederationJson<WithContext<ApubArticle>>> {
-    let article = DbArticle::read_view_title(&title, None, &data)?;
-    let json = article.article.into_json(&data).await?;
+    let article = DbArticle::read_view_title(&title, None, &context)?;
+    let json = article.article.into_json(&context).await?;
     Ok(FederationJson(WithContext::new_default(json)))
 }
 
 #[debug_handler]
 async fn http_get_article_edits(
     Path(title): Path<String>,
-    data: Data<IbisData>,
+    context: Data<IbisContext>,
 ) -> MyResult<FederationJson<WithContext<ApubEditCollection>>> {
-    let article = DbArticle::read_view_title(&title, None, &data)?;
-    let json = DbEditCollection::read_local(&article.article, &data).await?;
+    let article = DbArticle::read_view_title(&title, None, &context)?;
+    let json = DbEditCollection::read_local(&article.article, &context).await?;
     Ok(FederationJson(WithContext::new_default(json)))
 }
 
 #[debug_handler]
 async fn http_get_comment(
     Path(id): Path<i32>,
-    data: Data<IbisData>,
+    context: Data<IbisContext>,
 ) -> MyResult<FederationJson<WithContext<ApubComment>>> {
-    let comment = DbComment::read(CommentId(id), &data)?;
-    let json = comment.into_json(&data).await?;
+    let comment = DbComment::read(CommentId(id), &context)?;
+    let json = comment.into_json(&context).await?;
     Ok(FederationJson(WithContext::new_default(json)))
 }
 
@@ -163,10 +163,10 @@ pub enum AnnouncableActivities {
 
 #[debug_handler]
 pub async fn http_post_inbox(
-    data: Data<IbisData>,
+    context: Data<IbisContext>,
     activity_data: ActivityData,
 ) -> impl IntoResponse {
-    receive_activity::<WithContext<InboxActivities>, UserOrInstance, IbisData>(activity_data, &data)
+    receive_activity::<WithContext<InboxActivities>, UserOrInstance, _>(activity_data, &context)
         .await
 }
 
@@ -191,7 +191,7 @@ pub enum PersonOrInstanceType {
 
 #[async_trait::async_trait]
 impl Object for UserOrInstance {
-    type DataType = IbisData;
+    type DataType = IbisContext;
     type Kind = PersonOrInstance;
     type Error = Error;
 

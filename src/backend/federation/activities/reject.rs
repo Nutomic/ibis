@@ -2,7 +2,7 @@ use crate::{
     backend::{
         database::{
             conflict::{DbConflict, DbConflictForm},
-            IbisData,
+            IbisContext,
         },
         federation::{objects::edit::ApubEdit, send_activity},
         utils::{
@@ -38,10 +38,10 @@ impl RejectEdit {
     pub async fn send(
         edit: ApubEdit,
         user_instance: DbInstance,
-        data: &Data<IbisData>,
+        context: &Data<IbisContext>,
     ) -> MyResult<()> {
-        let local_instance = DbInstance::read_local(data)?;
-        let id = generate_activity_id(data)?;
+        let local_instance = DbInstance::read_local(context)?;
+        let id = generate_activity_id(context)?;
         let reject = RejectEdit {
             actor: local_instance.ap_id.clone(),
             to: vec![user_instance.ap_id.into_inner()],
@@ -53,7 +53,7 @@ impl RejectEdit {
             &local_instance,
             reject,
             vec![Url::parse(&user_instance.inbox_url)?],
-            data,
+            context,
         )
         .await?;
         Ok(())
@@ -62,7 +62,7 @@ impl RejectEdit {
 
 #[async_trait::async_trait]
 impl ActivityHandler for RejectEdit {
-    type DataType = IbisData;
+    type DataType = IbisContext;
     type Error = Error;
 
     fn id(&self) -> &Url {
@@ -73,14 +73,14 @@ impl ActivityHandler for RejectEdit {
         self.actor.inner()
     }
 
-    async fn verify(&self, _data: &Data<Self::DataType>) -> Result<(), Self::Error> {
+    async fn verify(&self, _context: &Data<Self::DataType>) -> Result<(), Self::Error> {
         Ok(())
     }
 
-    async fn receive(self, data: &Data<Self::DataType>) -> Result<(), Self::Error> {
+    async fn receive(self, context: &Data<Self::DataType>) -> Result<(), Self::Error> {
         // cant convert this to DbEdit as it tries to apply patch and fails
-        let article = self.object.object.dereference(data).await?;
-        let creator = self.object.attributed_to.dereference(data).await?;
+        let article = self.object.object.dereference(context).await?;
+        let creator = self.object.attributed_to.dereference(context).await?;
         let form = DbConflictForm {
             hash: EditVersion::new(&self.object.content),
             diff: self.object.content,
@@ -89,7 +89,7 @@ impl ActivityHandler for RejectEdit {
             article_id: article.id,
             previous_version_id: self.object.previous_version,
         };
-        DbConflict::create(&form, data)?;
+        DbConflict::create(&form, context)?;
         Ok(())
     }
 }

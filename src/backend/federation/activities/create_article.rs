@@ -1,6 +1,6 @@
 use crate::{
     backend::{
-        database::IbisData,
+        database::IbisContext,
         federation::objects::article::ApubArticle,
         utils::{
             error::{Error, MyResult},
@@ -32,11 +32,14 @@ pub struct CreateArticle {
 }
 
 impl CreateArticle {
-    pub async fn send_to_followers(article: DbArticle, data: &Data<IbisData>) -> MyResult<()> {
-        let local_instance = DbInstance::read_local(data)?;
-        let object = article.clone().into_json(data).await?;
-        let id = generate_activity_id(data)?;
-        let to = local_instance.follower_ids(data)?;
+    pub async fn send_to_followers(
+        article: DbArticle,
+        context: &Data<IbisContext>,
+    ) -> MyResult<()> {
+        let local_instance = DbInstance::read_local(context)?;
+        let object = article.clone().into_json(context).await?;
+        let id = generate_activity_id(context)?;
+        let to = local_instance.follower_ids(context)?;
         let create = CreateArticle {
             actor: local_instance.ap_id.clone(),
             to,
@@ -45,14 +48,14 @@ impl CreateArticle {
             id,
         };
         local_instance
-            .send_to_followers(create, vec![], data)
+            .send_to_followers(create, vec![], context)
             .await?;
         Ok(())
     }
 }
 #[async_trait::async_trait]
 impl ActivityHandler for CreateArticle {
-    type DataType = IbisData;
+    type DataType = IbisContext;
     type Error = Error;
 
     fn id(&self) -> &Url {
@@ -63,15 +66,17 @@ impl ActivityHandler for CreateArticle {
         self.actor.inner()
     }
 
-    async fn verify(&self, _data: &Data<Self::DataType>) -> Result<(), Self::Error> {
+    async fn verify(&self, _context: &Data<Self::DataType>) -> Result<(), Self::Error> {
         Ok(())
     }
 
-    async fn receive(self, data: &Data<Self::DataType>) -> Result<(), Self::Error> {
-        let article = DbArticle::from_json(self.object.clone(), data).await?;
+    async fn receive(self, context: &Data<Self::DataType>) -> Result<(), Self::Error> {
+        let article = DbArticle::from_json(self.object.clone(), context).await?;
         if article.local {
-            let local_instance = DbInstance::read_local(data)?;
-            local_instance.send_to_followers(self, vec![], data).await?;
+            let local_instance = DbInstance::read_local(context)?;
+            local_instance
+                .send_to_followers(self, vec![], context)
+                .await?;
         }
         Ok(())
     }

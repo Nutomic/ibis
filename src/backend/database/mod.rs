@@ -19,13 +19,13 @@ pub mod user;
 pub type DbPool = Pool<ConnectionManager<PgConnection>>;
 
 #[derive(Clone)]
-pub struct IbisData {
+pub struct IbisContext {
     pub db_pool: DbPool,
     pub config: IbisConfig,
 }
 
-pub fn read_jwt_secret(data: &IbisData) -> MyResult<String> {
-    let mut conn = data.db_pool.get()?;
+pub fn read_jwt_secret(context: &IbisContext) -> MyResult<String> {
+    let mut conn = context.db_pool.get()?;
     Ok(jwt_secret::table
         .select(jwt_secret::dsl::secret)
         .first(conn.deref_mut())?)

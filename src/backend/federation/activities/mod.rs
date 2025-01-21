@@ -1,6 +1,6 @@
 use crate::{
     backend::{
-        database::{edit::DbEditForm, IbisData},
+        database::{edit::DbEditForm, IbisContext},
         federation::activities::{
             update_local_article::UpdateLocalArticle,
             update_remote_article::UpdateRemoteArticle,
@@ -30,7 +30,7 @@ pub async fn submit_article_update(
     previous_version: EditVersion,
     original_article: &DbArticle,
     creator_id: PersonId,
-    data: &Data<IbisData>,
+    context: &Data<IbisContext>,
 ) -> Result<(), Error> {
     let mut form = DbEditForm::new(
         original_article,
@@ -41,16 +41,16 @@ pub async fn submit_article_update(
         false,
     )?;
     if original_article.local {
-        let edit = DbEdit::create(&form, data)?;
-        let updated_article = DbArticle::update_text(edit.article_id, &new_text, data)?;
+        let edit = DbEdit::create(&form, context)?;
+        let updated_article = DbArticle::update_text(edit.article_id, &new_text, context)?;
 
-        UpdateLocalArticle::send(updated_article, vec![], data).await?;
+        UpdateLocalArticle::send(updated_article, vec![], context).await?;
     } else {
         // insert edit as pending, so only the creator can see it
         form.pending = true;
-        let edit = DbEdit::create(&form, data)?;
-        let instance = DbInstance::read(original_article.instance_id, data)?;
-        UpdateRemoteArticle::send(edit, instance, data).await?;
+        let edit = DbEdit::create(&form, context)?;
+        let instance = DbInstance::read(original_article.instance_id, context)?;
+        UpdateRemoteArticle::send(edit, instance, context).await?;
     }
     Ok(())
 }

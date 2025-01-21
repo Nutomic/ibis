@@ -16,7 +16,7 @@ use crate::{
             instance::{follow_instance, get_instance, resolve_instance},
             user::{get_user, login_user, logout_user, register_user},
         },
-        database::IbisData,
+        database::IbisContext,
         utils::error::MyResult,
     },
     common::{
@@ -83,12 +83,12 @@ fn check_is_admin(user: &LocalUserView) -> MyResult<()> {
 
 #[debug_handler]
 pub(in crate::backend::api) async fn site_view(
-    data: Data<IbisData>,
+    context: Data<IbisContext>,
     user: Option<Extension<LocalUserView>>,
 ) -> MyResult<Json<SiteView>> {
     Ok(Json(SiteView {
         my_profile: user.map(|u| u.0),
-        config: data.config.options.clone(),
+        config: context.config.options.clone(),
     }))
 }
 
@@ -97,7 +97,7 @@ pub(in crate::backend::api) async fn site_view(
 pub async fn edit_list(
     Query(query): Query<GetEditList>,
     user: Option<Extension<LocalUserView>>,
-    data: Data<IbisData>,
+    context: Data<IbisContext>,
 ) -> MyResult<Json<Vec<EditView>>> {
     let params = if let Some(article_id) = query.article_id {
         ViewEditParams::ArticleId(article_id)
@@ -106,7 +106,7 @@ pub async fn edit_list(
     } else {
         return Err(anyhow!("Must provide article_id or person_id").into());
     };
-    Ok(Json(DbEdit::view(params, &user.map(|u| u.0), &data)?))
+    Ok(Json(DbEdit::view(params, &user.map(|u| u.0), &context)?))
 }
 
 /// Trims the string param, and converts to None if it is empty

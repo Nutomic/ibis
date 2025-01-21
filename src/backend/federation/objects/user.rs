@@ -1,6 +1,6 @@
 use crate::{
     backend::{
-        database::{user::DbPersonForm, IbisData},
+        database::{user::DbPersonForm, IbisContext},
         utils::error::Error,
     },
     common::user::DbPerson,
@@ -33,7 +33,7 @@ pub struct ApubUser {
 
 #[async_trait::async_trait]
 impl Object for DbPerson {
-    type DataType = IbisData;
+    type DataType = IbisContext;
     type Kind = ApubUser;
     type Error = Error;
 
@@ -43,12 +43,12 @@ impl Object for DbPerson {
 
     async fn read_from_id(
         object_id: Url,
-        data: &Data<Self::DataType>,
+        context: &Data<Self::DataType>,
     ) -> Result<Option<Self>, Self::Error> {
-        Ok(DbPerson::read_from_ap_id(&object_id.into(), data).ok())
+        Ok(DbPerson::read_from_ap_id(&object_id.into(), context).ok())
     }
 
-    async fn into_json(self, _data: &Data<Self::DataType>) -> Result<Self::Kind, Self::Error> {
+    async fn into_json(self, _context: &Data<Self::DataType>) -> Result<Self::Kind, Self::Error> {
         Ok(ApubUser {
             kind: Default::default(),
             id: __self.ap_id.clone(),
@@ -63,13 +63,16 @@ impl Object for DbPerson {
     async fn verify(
         json: &Self::Kind,
         expected_domain: &Url,
-        _data: &Data<Self::DataType>,
+        _context: &Data<Self::DataType>,
     ) -> Result<(), Self::Error> {
         verify_domains_match(json.id.inner(), expected_domain)?;
         Ok(())
     }
 
-    async fn from_json(json: Self::Kind, data: &Data<Self::DataType>) -> Result<Self, Self::Error> {
+    async fn from_json(
+        json: Self::Kind,
+        context: &Data<Self::DataType>,
+    ) -> Result<Self, Self::Error> {
         let form = DbPersonForm {
             username: json.preferred_username,
             ap_id: json.id,
@@ -81,7 +84,7 @@ impl Object for DbPerson {
             display_name: json.name,
             bio: json.summary,
         };
-        DbPerson::create(&form, data)
+        DbPerson::create(&form, context)
     }
 }
 

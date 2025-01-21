@@ -1,6 +1,6 @@
 use crate::{
     backend::{
-        database::IbisData,
+        database::IbisContext,
         federation::{
             activities::{reject::RejectEdit, update_local_article::UpdateLocalArticle},
             objects::edit::ApubEdit,
@@ -45,14 +45,14 @@ impl UpdateRemoteArticle {
     pub async fn send(
         edit: DbEdit,
         article_instance: DbInstance,
-        data: &Data<IbisData>,
+        context: &Data<IbisContext>,
     ) -> MyResult<()> {
-        let local_instance = DbInstance::read_local(data)?;
-        let id = generate_activity_id(data)?;
+        let local_instance = DbInstance::read_local(context)?;
+        let id = generate_activity_id(context)?;
         let update = UpdateRemoteArticle {
             actor: local_instance.ap_id.clone(),
             to: vec![article_instance.ap_id.into_inner()],
-            object: edit.into_json(data).await?,
+            object: edit.into_json(context).await?,
             kind: Default::default(),
             id,
         };
@@ -60,7 +60,7 @@ impl UpdateRemoteArticle {
             &local_instance,
             update,
             vec![Url::parse(&article_instance.inbox_url)?],
-            data,
+            context,
         )
         .await?;
         Ok(())
@@ -69,7 +69,7 @@ impl UpdateRemoteArticle {
 
 #[async_trait::async_trait]
 impl ActivityHandler for UpdateRemoteArticle {
-    type DataType = IbisData;
+    type DataType = IbisContext;
     type Error = Error;
 
     fn id(&self) -> &Url {
@@ -80,27 +80,31 @@ impl ActivityHandler for UpdateRemoteArticle {
         self.actor.inner()
     }
 
-    async fn verify(&self, data: &Data<Self::DataType>) -> Result<(), Self::Error> {
-        let article = DbArticle::read_from_ap_id(&self.object.object, data)?;
+    async fn verify(&self, context: &Data<Self::DataType>) -> Result<(), Self::Error> {
+        let article = DbArticle::read_from_ap_id(&self.object.object, context)?;
         can_edit_article(&article, false)?;
         Ok(())
     }
 
     /// Received on article origin instance
-    async fn receive(self, data: &Data<Self::DataType>) -> Result<(), Self::Error> {
-        let local_article = DbArticle::read_from_ap_id(&self.object.object, data)?;
+    async fn receive(self, context: &Data<Self::DataType>) -> Result<(), Self::Error> {
+        let local_article = DbArticle::read_from_ap_id(&self.object.object, context)?;
         let patch = Patch::from_str(&self.object.content)?;
 
         match apply(&local_article.text, &patch) {
             Ok(applied) => {
-                let edit = DbEdit::from_json(self.object.clone(), data).await?;
-                let article = DbArticle::update_text(edit.article_id, &applied, data)?;
-                UpdateLocalArticle::send(article, vec![self.actor.dereference(data).await?], data)
-                    .await?;
+                let edit = DbEdit::from_json(self.object.clone(), context).await?;
+                let article = DbArticle::update_text(edit.article_id, &applied, context)?;
+                UpdateLocalArticle::send(
+                    article,
+                    vec![self.actor.dereference(context).await?],
+                    context,
+                )
+                .await?;
             }
             Err(_e) => {
-                let user_instance = self.actor.dereference(data).await?;
-                RejectEdit::send(self.object.clone(), user_instance, data).await?;
+                let user_instance = self.actor.dereference(context).await?;
+                RejectEdit::send(self.object.clone(), user_instance, context).await?;
             }
         }
 

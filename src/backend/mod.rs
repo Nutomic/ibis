@@ -1,7 +1,7 @@
 use crate::{
     backend::{
         config::IbisConfig,
-        database::{article::DbArticleForm, instance::DbInstanceForm, IbisData},
+        database::{article::DbArticleForm, instance::DbInstanceForm, IbisContext},
         federation::{activities::submit_article_update, VerifyUrlData},
         utils::{
             error::{Error, MyResult},
@@ -59,11 +59,11 @@ pub async fn start(
         .get()?
         .run_pending_migrations(MIGRATIONS)
         .expect("run migrations");
-    let ibis_data = IbisData { db_pool, config };
+    let context = IbisContext { db_pool, config };
     let data = FederationConfig::builder()
-        .domain(ibis_data.config.federation.domain.clone())
-        .url_verifier(Box::new(VerifyUrlData(ibis_data.config.clone())))
-        .app_data(ibis_data)
+        .domain(context.config.federation.domain.clone())
+        .url_verifier(Box::new(VerifyUrlData(context.config.clone())))
+        .app_data(context)
         .http_fetch_limit(1000)
         .debug(cfg!(debug_assertions))
         .build()
@@ -89,8 +89,8 @@ const MAIN_PAGE_DEFAULT_TEXT: &str = "Welcome to Ibis, the federated Wikipedia a
 This main page can only be edited by the admin. Use it as an introduction for new users, \
 and to list interesting articles.";
 
-async fn setup(data: &Data<IbisData>) -> Result<(), Error> {
-    let domain = &data.config.federation.domain;
+async fn setup(context: &Data<IbisContext>) -> Result<(), Error> {
+    let domain = &context.config.federation.domain;
     let ap_id = ObjectId::parse(&format!("{}://{domain}", http_protocol_str()))?;
     let inbox_url = format!("{}://{domain}/inbox", http_protocol_str());
     let keypair = generate_keypair()?;
@@ -106,13 +106,13 @@ async fn setup(data: &Data<IbisData>) -> Result<(), Error> {
         last_refreshed_at: Utc::now(),
         local: true,
     };
-    let instance = DbInstance::create(&form, data)?;
+    let instance = DbInstance::create(&form, context)?;
 
     let person = DbPerson::create_local(
-        data.config.setup.admin_username.clone(),
-        data.config.setup.admin_password.clone(),
+        context.config.setup.admin_username.clone(),
+        context.config.setup.admin_password.clone(),
         true,
-        data,
+        context,
     )?;
 
     // Create the main page which is shown by default
@@ -128,7 +128,7 @@ async fn setup(data: &Data<IbisData>) -> Result<(), Error> {
         protected: true,
         approved: true,
     };
-    let article = DbArticle::create(form, data)?;
+    let article = DbArticle::create(form, context)?;
     // also create an article so its included in most recently edited list
     submit_article_update(
         MAIN_PAGE_DEFAULT_TEXT.to_string(),
@@ -136,12 +136,12 @@ async fn setup(data: &Data<IbisData>) -> Result<(), Error> {
         EditVersion::default(),
         &article,
         person.person.id,
-        data,
+        context,
     )
     .await?;
 
     // create ghost user
-    DbPerson::ghost(data)?;
+    DbPerson::ghost(context)?;
 
     Ok(())
 }

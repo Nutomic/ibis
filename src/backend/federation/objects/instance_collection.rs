@@ -1,7 +1,7 @@
 use super::instance::ApubInstance;
 use crate::{
     backend::{
-        database::IbisData,
+        database::IbisContext,
         utils::error::{Error, MyResult},
     },
     common::{instance::DbInstance, utils::http_protocol_str},
@@ -40,25 +40,25 @@ pub fn linked_instances_url(domain: &str) -> MyResult<CollectionId<DbInstanceCol
 #[async_trait::async_trait]
 impl Collection for DbInstanceCollection {
     type Owner = ();
-    type DataType = IbisData;
+    type DataType = IbisContext;
     type Kind = InstanceCollection;
     type Error = Error;
 
     async fn read_local(
         _owner: &Self::Owner,
-        data: &Data<Self::DataType>,
+        context: &Data<Self::DataType>,
     ) -> Result<Self::Kind, Self::Error> {
-        let instances = DbInstance::read_remote(data)?;
+        let instances = DbInstance::read_remote(context)?;
         let instances = future::try_join_all(
             instances
                 .into_iter()
-                .map(|i| i.into_json(data))
+                .map(|i| i.into_json(context))
                 .collect::<Vec<_>>(),
         )
         .await?;
         let collection = InstanceCollection {
             r#type: Default::default(),
-            id: linked_instances_url(&data.config.federation.domain)?.into(),
+            id: linked_instances_url(&context.config.federation.domain)?.into(),
             total_items: instances.len() as i32,
             items: instances,
         };
@@ -68,7 +68,7 @@ impl Collection for DbInstanceCollection {
     async fn verify(
         json: &Self::Kind,
         expected_domain: &Url,
-        _data: &Data<Self::DataType>,
+        _context: &Data<Self::DataType>,
     ) -> Result<(), Self::Error> {
         verify_domains_match(&json.id, expected_domain)?;
         Ok(())
@@ -77,20 +77,20 @@ impl Collection for DbInstanceCollection {
     async fn from_json(
         apub: Self::Kind,
         _owner: &Self::Owner,
-        data: &Data<Self::DataType>,
+        context: &Data<Self::DataType>,
     ) -> Result<Self, Self::Error> {
-        let instances =
-            apub.items
-                .into_iter()
-                .filter(|i| !i.id.is_local(data))
-                .map(|instance| async {
-                    let id = instance.id.clone();
-                    let res = DbInstance::from_json(instance, data).await;
-                    if let Err(e) = &res {
-                        warn!("Failed to synchronize article {id}: {e}");
-                    }
-                    res
-                });
+        let instances = apub
+            .items
+            .into_iter()
+            .filter(|i| !i.id.is_local(context))
+            .map(|instance| async {
+                let id = instance.id.clone();
+                let res = DbInstance::from_json(instance, context).await;
+                if let Err(e) = &res {
+                    warn!("Failed to synchronize article {id}: {e}");
+                }
+                res
+            });
         join_all(instances).await;
 
         Ok(DbInstanceCollection(()))

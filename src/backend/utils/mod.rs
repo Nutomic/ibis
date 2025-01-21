@@ -1,5 +1,5 @@
 use crate::{
-    backend::{database::IbisData, utils::error::MyResult},
+    backend::{database::IbisContext, utils::error::MyResult},
     common::{
         article::{DbEdit, EditVersion},
         utils,
@@ -19,8 +19,8 @@ pub mod error;
 pub(super) mod scheduled_tasks;
 pub(super) mod validate;
 
-pub(super) fn generate_activity_id(data: &Data<IbisData>) -> Result<Url, ParseError> {
-    let domain = &data.config.federation.domain;
+pub(super) fn generate_activity_id(context: &Data<IbisContext>) -> Result<Url, ParseError> {
+    let domain = &context.config.federation.domain;
     let id: String = thread_rng()
         .sample_iter(&Alphanumeric)
         .take(7)

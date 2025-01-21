@@ -1,5 +1,9 @@
 use crate::{
-    backend::{database::IbisData, federation::activities::follow::Follow, utils::error::MyResult},
+    backend::{
+        database::IbisContext,
+        federation::activities::follow::Follow,
+        utils::error::MyResult,
+    },
     common::{
         instance::{DbInstance, FollowInstanceParams, GetInstanceParams, InstanceView},
         user::LocalUserView,
@@ -14,10 +18,10 @@ use axum_macros::debug_handler;
 /// Retrieve details about an instance. If no id is provided, return local instance.
 #[debug_handler]
 pub(in crate::backend::api) async fn get_instance(
-    data: Data<IbisData>,
+    context: Data<IbisContext>,
     Form(params): Form<GetInstanceParams>,
 ) -> MyResult<Json<InstanceView>> {
-    let local_instance = DbInstance::read_view(params.id, &data)?;
+    let local_instance = DbInstance::read_view(params.id, &context)?;
     Ok(Json(local_instance))
 }
 
@@ -26,14 +30,14 @@ pub(in crate::backend::api) async fn get_instance(
 #[debug_handler]
 pub(in crate::backend::api) async fn follow_instance(
     Extension(user): Extension<LocalUserView>,
-    data: Data<IbisData>,
+    context: Data<IbisContext>,
     Form(params): Form<FollowInstanceParams>,
 ) -> MyResult<Json<SuccessResponse>> {
-    let target = DbInstance::read(params.id, &data)?;
+    let target = DbInstance::read(params.id, &context)?;
     let pending = !target.local;
-    DbInstance::follow(&user.person, &target, pending, &data)?;
-    let instance = DbInstance::read(params.id, &data)?;
-    Follow::send(user.person, &instance, &data).await?;
+    DbInstance::follow(&user.person, &target, pending, &context)?;
+    let instance = DbInstance::read(params.id, &context)?;
+    Follow::send(user.person, &instance, &context).await?;
     Ok(Json(SuccessResponse::default()))
 }
 
@@ -42,16 +46,16 @@ pub(in crate::backend::api) async fn follow_instance(
 #[debug_handler]
 pub(super) async fn resolve_instance(
     Query(params): Query<ResolveObjectParams>,
-    data: Data<IbisData>,
+    context: Data<IbisContext>,
 ) -> MyResult<Json<DbInstance>> {
-    let instance: DbInstance = ObjectId::from(params.id).dereference(&data).await?;
+    let instance: DbInstance = ObjectId::from(params.id).dereference(&context).await?;
     Ok(Json(instance))
 }
 
 #[debug_handler]
 pub(in crate::backend::api) async fn list_remote_instances(
-    data: Data<IbisData>,
+    context: Data<IbisContext>,
 ) -> MyResult<Json<Vec<DbInstance>>> {
-    let instances = DbInstance::read_remote(&data)?;
+    let instances = DbInstance::read_remote(&context)?;
     Ok(Json(instances))
 }

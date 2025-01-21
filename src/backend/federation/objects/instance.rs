@@ -1,7 +1,7 @@
 use super::instance_collection::DbInstanceCollection;
 use crate::{
     backend::{
-        database::{instance::DbInstanceForm, IbisData},
+        database::{instance::DbInstanceForm, IbisContext},
         federation::{objects::articles_collection::DbArticleCollection, send_activity},
         utils::error::{Error, MyResult},
     },
@@ -40,8 +40,8 @@ impl DbInstance {
         Ok(Url::parse(&format!("{}/followers", self.ap_id.inner()))?)
     }
 
-    pub fn follower_ids(&self, data: &Data<IbisData>) -> MyResult<Vec<Url>> {
-        Ok(DbInstance::read_followers(self.id, data)?
+    pub fn follower_ids(&self, context: &Data<IbisContext>) -> MyResult<Vec<Url>> {
+        Ok(DbInstance::read_followers(self.id, context)?
             .into_iter()
             .map(|f| f.ap_id.into())
             .collect())
@@ -51,26 +51,26 @@ impl DbInstance {
         &self,
         activity: Activity,
         extra_recipients: Vec<DbInstance>,
-        data: &Data<IbisData>,
+        context: &Data<IbisContext>,
     ) -> Result<(), <Activity as ActivityHandler>::Error>
     where
         Activity: ActivityHandler + Serialize + Debug + Send + Sync,
         <Activity as ActivityHandler>::Error: From<activitypub_federation::error::Error>,
         <Activity as ActivityHandler>::Error: From<Error>,
     {
-        let mut inboxes: Vec<_> = DbInstance::read_followers(self.id, data)?
+        let mut inboxes: Vec<_> = DbInstance::read_followers(self.id, context)?
             .iter()
             .map(|f| f.inbox_url())
             .collect();
         inboxes.extend(extra_recipients.into_iter().map(|i| i.inbox_url()));
-        send_activity(self, activity, inboxes, data).await?;
+        send_activity(self, activity, inboxes, context).await?;
         Ok(())
     }
 }
 
 #[async_trait::async_trait]
 impl Object for DbInstance {
-    type DataType = IbisData;
+    type DataType = IbisContext;
     type Kind = ApubInstance;
     type Error = Error;
 
@@ -80,12 +80,12 @@ impl Object for DbInstance {
 
     async fn read_from_id(
         object_id: Url,
-        data: &Data<Self::DataType>,
+        context: &Data<Self::DataType>,
     ) -> Result<Option<Self>, Self::Error> {
-        Ok(DbInstance::read_from_ap_id(&object_id.into(), data).ok())
+        Ok(DbInstance::read_from_ap_id(&object_id.into(), context).ok())
     }
 
-    async fn into_json(self, _data: &Data<Self::DataType>) -> Result<Self::Kind, Self::Error> {
+    async fn into_json(self, _context: &Data<Self::DataType>) -> Result<Self::Kind, Self::Error> {
         Ok(ApubInstance {
             kind: Default::default(),
             id: self.ap_id.clone(),
@@ -100,14 +100,17 @@ impl Object for DbInstance {
     async fn verify(
         json: &Self::Kind,
         expected_domain: &Url,
-        data: &Data<Self::DataType>,
+        context: &Data<Self::DataType>,
     ) -> Result<(), Self::Error> {
         verify_domains_match(json.id.inner(), expected_domain)?;
-        verify_is_remote_object(&json.id, data)?;
+        verify_is_remote_object(&json.id, context)?;
         Ok(())
     }
 
-    async fn from_json(json: Self::Kind, data: &Data<Self::DataType>) -> Result<Self, Self::Error> {
+    async fn from_json(
+        json: Self::Kind,
+        context: &Data<Self::DataType>,
+    ) -> Result<Self, Self::Error> {
         let domain = extract_domain(&json.id);
         let form = DbInstanceForm {
             domain,
@@ -121,20 +124,20 @@ impl Object for DbInstance {
             last_refreshed_at: Utc::now(),
             local: false,
         };
-        let instance = DbInstance::create(&form, data)?;
+        let instance = DbInstance::create(&form, context)?;
 
         // TODO: very inefficient to sync all articles every time
         let instance_ = instance.clone();
-        let data_ = data.reset_request_count();
+        let context_ = context.reset_request_count();
         tokio::spawn(async move {
             if let Some(articles_url) = &instance_.articles_url {
-                let res = articles_url.dereference(&(), &data_).await;
+                let res = articles_url.dereference(&(), &context_).await;
                 if let Err(e) = res {
                     tracing::warn!("error in spawn: {e}");
                 }
             }
             if let Some(instances_url) = &instance_.instances_url {
-                let res = instances_url.dereference(&(), &data_).await;
+                let res = instances_url.dereference(&(), &context_).await;
                 if let Err(e) = res {
                     tracing::warn!("error in spawn: {e}");
                 }

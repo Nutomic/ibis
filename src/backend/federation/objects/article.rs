@@ -1,6 +1,6 @@
 use crate::{
     backend::{
-        database::{article::DbArticleForm, IbisData},
+        database::{article::DbArticleForm, IbisContext},
         federation::objects::edits_collection::DbEditCollection,
         utils::{error::Error, validate::validate_article_title},
     },
@@ -40,27 +40,27 @@ pub struct ApubArticle {
 
 #[async_trait::async_trait]
 impl Object for DbArticle {
-    type DataType = IbisData;
+    type DataType = IbisContext;
     type Kind = ApubArticle;
     type Error = Error;
 
     async fn read_from_id(
         object_id: Url,
-        data: &Data<Self::DataType>,
+        context: &Data<Self::DataType>,
     ) -> Result<Option<Self>, Self::Error> {
-        let article = DbArticle::read_from_ap_id(&object_id.into(), data).ok();
+        let article = DbArticle::read_from_ap_id(&object_id.into(), context).ok();
         Ok(article)
     }
 
-    async fn into_json(self, data: &Data<Self::DataType>) -> Result<Self::Kind, Self::Error> {
-        let local_instance = DbInstance::read_local(data)?;
+    async fn into_json(self, context: &Data<Self::DataType>) -> Result<Self::Kind, Self::Error> {
+        let local_instance = DbInstance::read_local(context)?;
         Ok(ApubArticle {
             kind: Default::default(),
             id: self.ap_id.clone(),
             attributed_to: local_instance.ap_id.clone(),
             to: vec![public(), local_instance.followers_url()?],
             edits: self.edits_id()?,
-            latest_version: self.latest_edit_version(data)?,
+            latest_version: self.latest_edit_version(context)?,
             content: self.text,
             name: self.title,
             protected: self.protected,
@@ -70,15 +70,18 @@ impl Object for DbArticle {
     async fn verify(
         json: &Self::Kind,
         expected_domain: &Url,
-        data: &Data<Self::DataType>,
+        context: &Data<Self::DataType>,
     ) -> Result<(), Self::Error> {
         verify_domains_match(json.id.inner(), expected_domain)?;
-        verify_is_remote_object(&json.id, data)?;
+        verify_is_remote_object(&json.id, context)?;
         Ok(())
     }
 
-    async fn from_json(json: Self::Kind, data: &Data<Self::DataType>) -> Result<Self, Self::Error> {
-        let instance = json.attributed_to.dereference(data).await?;
+    async fn from_json(
+        json: Self::Kind,
+        context: &Data<Self::DataType>,
+    ) -> Result<Self, Self::Error> {
+        let instance = json.attributed_to.dereference(context).await?;
         let mut form = DbArticleForm {
             title: json.name,
             text: json.content,
@@ -89,9 +92,9 @@ impl Object for DbArticle {
             approved: true,
         };
         form.title = validate_article_title(&form.title)?;
-        let article = DbArticle::create_or_update(form, data)?;
+        let article = DbArticle::create_or_update(form, context)?;
 
-        json.edits.dereference(&article, data).await?;
+        json.edits.dereference(&article, context).await?;
 
         Ok(article)
     }

@@ -1,7 +1,7 @@
 use super::generate_comment_activity_to;
 use crate::{
     backend::{
-        database::{comment::DbCommentUpdateForm, IbisData},
+        database::{comment::DbCommentUpdateForm, IbisContext},
         federation::{routes::AnnouncableActivities, send_activity_to_instance},
         utils::{
             error::{Error, MyResult},
@@ -38,9 +38,9 @@ impl DeleteComment {
         comment: &DbComment,
         creator: &DbPerson,
         instance: &DbInstance,
-        data: &Data<IbisData>,
+        context: &Data<IbisContext>,
     ) -> MyResult<Self> {
-        let id = generate_activity_id(data)?;
+        let id = generate_activity_id(context)?;
         Ok(DeleteComment {
             actor: creator.ap_id.clone(),
             object: comment.ap_id.clone(),
@@ -49,19 +49,19 @@ impl DeleteComment {
             id,
         })
     }
-    pub async fn send(comment: &DbComment, data: &Data<IbisData>) -> MyResult<()> {
-        let instance = DbInstance::read_for_comment(comment.id, data)?;
-        let creator = DbPerson::read(comment.creator_id, data)?;
-        let activity = Self::new(comment, &creator, &instance, data)?;
+    pub async fn send(comment: &DbComment, context: &Data<IbisContext>) -> MyResult<()> {
+        let instance = DbInstance::read_for_comment(comment.id, context)?;
+        let creator = DbPerson::read(comment.creator_id, context)?;
+        let activity = Self::new(comment, &creator, &instance, context)?;
         let activity = AnnouncableActivities::DeleteComment(activity);
-        send_activity_to_instance(&creator, activity, &instance, data).await?;
+        send_activity_to_instance(&creator, activity, &instance, context).await?;
         Ok(())
     }
 }
 
 #[async_trait::async_trait]
 impl ActivityHandler for DeleteComment {
-    type DataType = IbisData;
+    type DataType = IbisContext;
     type Error = Error;
 
     fn id(&self) -> &Url {
@@ -72,24 +72,24 @@ impl ActivityHandler for DeleteComment {
         self.actor.inner()
     }
 
-    async fn verify(&self, _data: &Data<Self::DataType>) -> Result<(), Self::Error> {
+    async fn verify(&self, _context: &Data<Self::DataType>) -> Result<(), Self::Error> {
         verify_domains_match(self.actor.inner(), &self.id)?;
         verify_domains_match(self.actor.inner(), self.object.inner())?;
         Ok(())
     }
 
-    async fn receive(self, data: &Data<Self::DataType>) -> Result<(), Self::Error> {
+    async fn receive(self, context: &Data<Self::DataType>) -> Result<(), Self::Error> {
         let form = DbCommentUpdateForm {
             deleted: Some(true),
             updated: Some(Utc::now()),
             ..Default::default()
         };
-        let comment = self.object.dereference(data).await?;
-        DbComment::update(form, comment.id, data)?;
+        let comment = self.object.dereference(context).await?;
+        DbComment::update(form, comment.id, context)?;
 
-        let instance = DbInstance::read_for_comment(comment.id, data)?;
+        let instance = DbInstance::read_for_comment(comment.id, context)?;
         if instance.local {
-            Self::send(&comment, data).await?;
+            Self::send(&comment, context).await?;
         }
         Ok(())
     }

@@ -1,4 +1,4 @@
-use super::{database::IbisData, utils::error::MyResult};
+use super::{database::IbisContext, utils::error::MyResult};
 use crate::{
     backend::{api::api_routes, federation::routes::federation_routes},
     common::Auth,
@@ -31,7 +31,7 @@ mod middleware;
 mod nodeinfo;
 
 pub(super) async fn start_server(
-    data: FederationConfig<IbisData>,
+    context: FederationConfig<IbisContext>,
     override_hostname: Option<SocketAddr>,
     notify_start: Option<oneshot::Sender<()>>,
 ) -> MyResult<()> {
@@ -42,7 +42,7 @@ pub(super) async fn start_server(
     }
     let routes = generate_route_list(App);
 
-    let arc_data = Arc::new(data.deref().clone());
+    let arc_data = Arc::new(context.deref().clone());
     let app = Router::new()
         .leptos_routes_with_handler(routes, get(leptos_routes_handler))
         .fallback(file_and_error_handler)
@@ -50,7 +50,7 @@ pub(super) async fn start_server(
         .nest(FEDERATION_ROUTES_PREFIX, federation_routes())
         .nest("/api/v1", api_routes())
         .nest("", nodeinfo::config())
-        .layer(FederationMiddleware::new(data))
+        .layer(FederationMiddleware::new(context))
         .layer(CorsLayer::permissive())
         .layer(CompressionLayer::new())
         .route_layer(from_fn_with_state(arc_data, auth_middleware));

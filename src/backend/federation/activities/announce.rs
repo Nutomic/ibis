@@ -1,6 +1,6 @@
 use crate::{
     backend::{
-        database::IbisData,
+        database::IbisContext,
         federation::{routes::AnnouncableActivities, send_activity},
         utils::{
             error::{Error, MyResult},
@@ -32,7 +32,7 @@ pub struct AnnounceActivity {
 }
 
 impl AnnounceActivity {
-    pub async fn send(object: AnnouncableActivities, context: &Data<IbisData>) -> MyResult<()> {
+    pub async fn send(object: AnnouncableActivities, context: &Data<IbisContext>) -> MyResult<()> {
         let id = generate_activity_id(context)?;
         let instance = DbInstance::read_local(context)?;
         let announce = AnnounceActivity {
@@ -56,7 +56,7 @@ impl AnnounceActivity {
 
 #[async_trait::async_trait]
 impl ActivityHandler for AnnounceActivity {
-    type DataType = IbisData;
+    type DataType = IbisContext;
     type Error = Error;
 
     fn id(&self) -> &Url {

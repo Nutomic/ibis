@@ -1,5 +1,5 @@
 use crate::{
-    backend::{database::IbisData, federation::objects::edit::ApubEdit, utils::error::Error},
+    backend::{database::IbisContext, federation::objects::edit::ApubEdit, utils::error::Error},
     common::article::{DbArticle, DbEdit},
 };
 use activitypub_federation::{
@@ -28,20 +28,20 @@ pub struct DbEditCollection();
 #[async_trait::async_trait]
 impl Collection for DbEditCollection {
     type Owner = DbArticle;
-    type DataType = IbisData;
+    type DataType = IbisContext;
     type Kind = ApubEditCollection;
     type Error = Error;
 
     async fn read_local(
         article: &Self::Owner,
-        data: &Data<Self::DataType>,
+        context: &Data<Self::DataType>,
     ) -> Result<Self::Kind, Self::Error> {
-        let article = DbArticle::read(article.id, data)?;
-        let edits = DbEdit::list_for_article(article.id, data)?;
+        let article = DbArticle::read(article.id, context)?;
+        let edits = DbEdit::list_for_article(article.id, context)?;
         let edits = future::try_join_all(
             edits
                 .into_iter()
-                .map(|e| e.into_json(data))
+                .map(|e| e.into_json(context))
                 .collect::<Vec<_>>(),
         )
         .await?;
@@ -57,7 +57,7 @@ impl Collection for DbEditCollection {
     async fn verify(
         json: &Self::Kind,
         expected_domain: &Url,
-        _data: &Data<Self::DataType>,
+        _context: &Data<Self::DataType>,
     ) -> Result<(), Self::Error> {
         verify_domains_match(&json.id, expected_domain)?;
         Ok(())
@@ -66,12 +66,16 @@ impl Collection for DbEditCollection {
     async fn from_json(
         apub: Self::Kind,
         owner: &Self::Owner,
-        data: &Data<Self::DataType>,
+        context: &Data<Self::DataType>,
     ) -> Result<Self, Self::Error> {
-        try_join_all(apub.items.into_iter().map(|i| DbEdit::from_json(i, data)))
-            .await
-            .map_err(|e| warn!("Failed to synchronize edits for {}: {e}", owner.ap_id))
-            .ok();
+        try_join_all(
+            apub.items
+                .into_iter()
+                .map(|i| DbEdit::from_json(i, context)),
+        )
+        .await
+        .map_err(|e| warn!("Failed to synchronize edits for {}: {e}", owner.ap_id))
+        .ok();
         Ok(DbEditCollection())
     }
 }

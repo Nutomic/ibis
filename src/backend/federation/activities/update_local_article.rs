@@ -1,6 +1,6 @@
 use crate::{
     backend::{
-        database::IbisData,
+        database::IbisContext,
         federation::objects::article::ApubArticle,
         utils::{
             error::{Error, MyResult},
@@ -36,22 +36,22 @@ impl UpdateLocalArticle {
     pub async fn send(
         article: DbArticle,
         extra_recipients: Vec<DbInstance>,
-        data: &Data<IbisData>,
+        context: &Data<IbisContext>,
     ) -> MyResult<()> {
         debug_assert!(article.local);
-        let local_instance = DbInstance::read_local(data)?;
-        let id = generate_activity_id(data)?;
-        let mut to = local_instance.follower_ids(data)?;
+        let local_instance = DbInstance::read_local(context)?;
+        let id = generate_activity_id(context)?;
+        let mut to = local_instance.follower_ids(context)?;
         to.extend(extra_recipients.iter().map(|i| i.ap_id.inner().clone()));
         let update = UpdateLocalArticle {
             actor: local_instance.ap_id.clone(),
             to,
-            object: article.into_json(data).await?,
+            object: article.into_json(context).await?,
             kind: Default::default(),
             id,
         };
         local_instance
-            .send_to_followers(update, extra_recipients, data)
+            .send_to_followers(update, extra_recipients, context)
             .await?;
         Ok(())
     }
@@ -59,7 +59,7 @@ impl UpdateLocalArticle {
 
 #[async_trait::async_trait]
 impl ActivityHandler for UpdateLocalArticle {
-    type DataType = IbisData;
+    type DataType = IbisContext;
     type Error = Error;
 
     fn id(&self) -> &Url {
@@ -70,13 +70,13 @@ impl ActivityHandler for UpdateLocalArticle {
         self.actor.inner()
     }
 
-    async fn verify(&self, _data: &Data<Self::DataType>) -> Result<(), Self::Error> {
+    async fn verify(&self, _context: &Data<Self::DataType>) -> Result<(), Self::Error> {
         Ok(())
     }
 
     /// Received on article follower instances (where article is always remote)
-    async fn receive(self, data: &Data<Self::DataType>) -> Result<(), Self::Error> {
-        DbArticle::from_json(self.object, data).await?;
+    async fn receive(self, context: &Data<Self::DataType>) -> Result<(), Self::Error> {
+        DbArticle::from_json(self.object, context).await?;
 
         Ok(())
     }

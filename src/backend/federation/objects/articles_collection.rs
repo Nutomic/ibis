@@ -1,6 +1,6 @@
 use crate::{
     backend::{
-        database::IbisData,
+        database::IbisContext,
         federation::objects::article::ApubArticle,
         utils::error::{Error, MyResult},
     },
@@ -40,25 +40,25 @@ pub fn local_articles_url(domain: &str) -> MyResult<CollectionId<DbArticleCollec
 #[async_trait::async_trait]
 impl Collection for DbArticleCollection {
     type Owner = ();
-    type DataType = IbisData;
+    type DataType = IbisContext;
     type Kind = ArticleCollection;
     type Error = Error;
 
     async fn read_local(
         _owner: &Self::Owner,
-        data: &Data<Self::DataType>,
+        context: &Data<Self::DataType>,
     ) -> Result<Self::Kind, Self::Error> {
-        let local_articles = DbArticle::read_all(Some(true), None, data)?;
+        let local_articles = DbArticle::read_all(Some(true), None, context)?;
         let articles = try_join_all(
             local_articles
                 .into_iter()
-                .map(|a| a.into_json(data))
+                .map(|a| a.into_json(context))
                 .collect::<Vec<_>>(),
         )
         .await?;
         let collection = ArticleCollection {
             r#type: Default::default(),
-            id: local_articles_url(&data.config.federation.domain)?.into(),
+            id: local_articles_url(&context.config.federation.domain)?.into(),
             total_items: articles.len() as i32,
             items: articles,
         };
@@ -68,7 +68,7 @@ impl Collection for DbArticleCollection {
     async fn verify(
         json: &Self::Kind,
         expected_domain: &Url,
-        _data: &Data<Self::DataType>,
+        _context: &Data<Self::DataType>,
     ) -> Result<(), Self::Error> {
         verify_domains_match(&json.id, expected_domain)?;
         Ok(())
@@ -77,20 +77,20 @@ impl Collection for DbArticleCollection {
     async fn from_json(
         apub: Self::Kind,
         _owner: &Self::Owner,
-        data: &Data<Self::DataType>,
+        context: &Data<Self::DataType>,
     ) -> Result<Self, Self::Error> {
-        let articles =
-            apub.items
-                .into_iter()
-                .filter(|i| !i.id.is_local(data))
-                .map(|article| async {
-                    let id = article.id.clone();
-                    let res = DbArticle::from_json(article, data).await;
-                    if let Err(e) = &res {
-                        warn!("Failed to synchronize article {id}: {e}");
-                    }
-                    res
-                });
+        let articles = apub
+            .items
+            .into_iter()
+            .filter(|i| !i.id.is_local(context))
+            .map(|article| async {
+                let id = article.id.clone();
+                let res = DbArticle::from_json(article, context).await;
+                if let Err(e) = &res {
+                    warn!("Failed to synchronize article {id}: {e}");
+                }
+                res
+            });
         join_all(articles).await;
 
         Ok(DbArticleCollection(()))

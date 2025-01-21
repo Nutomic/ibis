@@ -2,7 +2,7 @@ use crate::{
     backend::{
         database::schema::{article, edit, person},
         utils::error::MyResult,
-        IbisData,
+        IbisContext,
     },
     common::{
         article::{DbArticle, DbEdit, EditVersion, EditView},
@@ -77,8 +77,8 @@ impl DbEditForm {
 }
 
 impl DbEdit {
-    pub fn create(form: &DbEditForm, data: &IbisData) -> MyResult<Self> {
-        let mut conn = data.db_pool.get()?;
+    pub fn create(form: &DbEditForm, context: &IbisContext) -> MyResult<Self> {
+        let mut conn = context.db_pool.get()?;
         Ok(insert_into(edit::table)
             .values(form)
             .on_conflict(edit::dsl::ap_id)
@@ -87,22 +87,22 @@ impl DbEdit {
             .get_result(conn.deref_mut())?)
     }
 
-    pub fn read(version: &EditVersion, data: &IbisData) -> MyResult<Self> {
-        let mut conn = data.db_pool.get()?;
+    pub fn read(version: &EditVersion, context: &IbisContext) -> MyResult<Self> {
+        let mut conn = context.db_pool.get()?;
         Ok(edit::table
             .filter(edit::dsl::hash.eq(version))
             .get_result(conn.deref_mut())?)
     }
 
-    pub fn read_from_ap_id(ap_id: &ObjectId<DbEdit>, data: &IbisData) -> MyResult<Self> {
-        let mut conn = data.db_pool.get()?;
+    pub fn read_from_ap_id(ap_id: &ObjectId<DbEdit>, context: &IbisContext) -> MyResult<Self> {
+        let mut conn = context.db_pool.get()?;
         Ok(edit::table
             .filter(edit::dsl::ap_id.eq(ap_id))
             .get_result(conn.deref_mut())?)
     }
 
-    pub fn list_for_article(id: ArticleId, data: &IbisData) -> MyResult<Vec<Self>> {
-        let mut conn = data.db_pool.get()?;
+    pub fn list_for_article(id: ArticleId, context: &IbisContext) -> MyResult<Vec<Self>> {
+        let mut conn = context.db_pool.get()?;
         Ok(edit::table
             .filter(edit::article_id.eq(id))
             .order(edit::published)
@@ -112,9 +112,9 @@ impl DbEdit {
     pub fn view(
         params: ViewEditParams,
         user: &Option<LocalUserView>,
-        data: &IbisData,
+        context: &IbisContext,
     ) -> MyResult<Vec<EditView>> {
-        let mut conn = data.db_pool.get()?;
+        let mut conn = context.db_pool.get()?;
         let person_id = user.as_ref().map(|u| u.person.id).unwrap_or(PersonId(-1));
         let query = edit::table
             .inner_join(article::table)

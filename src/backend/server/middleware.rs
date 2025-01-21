@@ -1,5 +1,5 @@
 use crate::{
-    backend::{api::user::validate, database::IbisData},
+    backend::{api::user::validate, database::IbisContext},
     common::{Auth, AUTH_COOKIE},
 };
 use axum::{body::Body, extract::State, http::Request, middleware::Next, response::Response};
@@ -14,7 +14,7 @@ pub(super) const FEDERATION_ROUTES_PREFIX: &str = "/federation_routes";
 /// If user is authenticated sets extensions `Auth` and `LocalUserView`.
 #[debug_middleware]
 pub(super) async fn auth_middleware(
-    State(data): State<Arc<IbisData>>,
+    State(context): State<Arc<IbisContext>>,
     mut request: Request<Body>,
     next: Next,
 ) -> Response {
@@ -34,7 +34,7 @@ pub(super) async fn auth_middleware(
     let auth: HashSet<_> = headers.chain(cookies).map(|s| s.to_string()).collect();
 
     for auth in auth {
-        if let Ok(local_user) = validate(&auth, &data).await {
+        if let Ok(local_user) = validate(&auth, &context).await {
             request.extensions_mut().insert(Auth(Some(auth)));
             request.extensions_mut().insert(local_user);
         }

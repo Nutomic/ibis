@@ -1,6 +1,6 @@
 use crate::{
     backend::{
-        database::{instance_stats::InstanceStats, IbisData},
+        database::{instance_stats::InstanceStats, IbisContext},
         utils::error::MyResult,
     },
     common::utils::http_protocol_str,
@@ -16,21 +16,21 @@ pub fn config() -> Router<()> {
         .route("/.well-known/nodeinfo", get(node_info_well_known))
 }
 
-async fn node_info_well_known(data: Data<IbisData>) -> MyResult<Json<NodeInfoWellKnown>> {
+async fn node_info_well_known(context: Data<IbisContext>) -> MyResult<Json<NodeInfoWellKnown>> {
     Ok(Json(NodeInfoWellKnown {
         links: vec![NodeInfoWellKnownLinks {
             rel: Url::parse("http://nodeinfo.diaspora.software/ns/schema/2.1")?,
             href: Url::parse(&format!(
                 "{}://{}/nodeinfo/2.1.json",
                 http_protocol_str(),
-                data.domain()
+                context.domain()
             ))?,
         }],
     }))
 }
 
-async fn node_info(data: Data<IbisData>) -> MyResult<Json<NodeInfo>> {
-    let stats = InstanceStats::read(&data)?;
+async fn node_info(context: Data<IbisContext>) -> MyResult<Json<NodeInfo>> {
+    let stats = InstanceStats::read(&context)?;
     Ok(Json(NodeInfo {
         version: "2.1".to_string(),
         software: NodeInfoSoftware {
@@ -49,7 +49,7 @@ async fn node_info(data: Data<IbisData>) -> MyResult<Json<NodeInfo>> {
             local_posts: stats.articles,
             local_comments: stats.comments,
         },
-        open_registrations: data.config.options.registration_open,
+        open_registrations: context.config.options.registration_open,
         services: Default::default(),
         metadata: vec![],
     }))
