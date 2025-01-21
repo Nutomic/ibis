@@ -1,7 +1,7 @@
 use crate::{
     common::{
         article::DbArticleView,
-        comment::{DbCommentView, EditCommentForm},
+        comment::{DbCommentView, EditCommentForm}, newtypes::CommentId,
     },
     frontend::{
         api::CLIENT,
@@ -14,7 +14,7 @@ use crate::{
 use leptos::prelude::*;
 
 #[component]
-pub fn CommentView(article: Resource<DbArticleView>, comment: DbCommentView) -> impl IntoView {
+pub fn CommentView(article: Resource<DbArticleView>, comment: DbCommentView, show_editor: (ReadSignal<CommentId>, WriteSignal<CommentId>)) -> impl IntoView {
     // css class is not included because its dynamically generated, need to use raw css instead of class
     let margin = comment.comment.depth * 2;
     let style_ = format!("margin-left: {margin}rem;");
@@ -27,8 +27,6 @@ pub fn CommentView(article: Resource<DbArticleView>, comment: DbCommentView) -> 
             .map(|a| a.article.title.clone())
             .unwrap_or_default(),
     );
-
-    let (show_editor, set_show_editor) = signal(false);
 
     let delete_restore_comment_action = Action::new(move |_: &()| async move {
         let form = EditCommentForm {
@@ -65,7 +63,7 @@ pub fn CommentView(article: Resource<DbArticleView>, comment: DbCommentView) -> 
                 ></div>
                 <div class="text-xs">
                     <Show when=move || !comment.comment.deleted>
-                        <a class="link" on:click=move |_| set_show_editor.update(|s| *s = !*s)>
+                        <a class="link" on:click=move |_| show_editor.1.set(comment.comment.id)>
                             Reply
                         </a>
                     </Show>
@@ -84,11 +82,11 @@ pub fn CommentView(article: Resource<DbArticleView>, comment: DbCommentView) -> 
                             {delete_restore_label}
                         </a>
                     </Show>
-                    <Show when=move || show_editor.get()>
+                    <Show when=move || show_editor.0.get() == comment.comment.id>
                         <CommentEditorView
                             article=article
                             parent_id=Some(comment.comment.id)
-                            set_show_editor=Some(set_show_editor)
+                            set_show_editor=Some(show_editor.1)
                         />
                     </Show>
                 </div>

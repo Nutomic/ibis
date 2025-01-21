@@ -16,7 +16,8 @@ use std::collections::HashMap;
 pub fn ArticleDiscussion() -> impl IntoView {
     let article = article_resource();
 
-    // TODO: need to use correct order
+    let show_editor = signal(CommentId(-1));
+
     view! {
         <ArticleNav article=article active_tab=ActiveTab::Discussion />
         <Suspense fallback=|| view! { "Loading..." }>
@@ -27,7 +28,9 @@ pub fn ArticleDiscussion() -> impl IntoView {
                         article.get().map(|a| build_comments_tree(a.comments)).unwrap_or_default()
                     }
                     key=|comment| comment.comment.id
-                    children=move |comment: DbCommentView| view! { <CommentView article comment /> }
+                    children=move |comment: DbCommentView| {
+                        view! { <CommentView article comment show_editor /> }
+                    }
                 />
             </div>
         </Suspense>

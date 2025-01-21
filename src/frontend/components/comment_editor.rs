@@ -9,7 +9,7 @@ use leptos_use::{use_textarea_autosize, UseTextareaAutosizeReturn};
 pub fn CommentEditorView(
     article: Resource<DbArticleView>,
     parent_id: Option<CommentId>,
-    set_show_editor: Option<WriteSignal<bool>>,
+    set_show_editor: Option<WriteSignal<CommentId>>,
 ) -> impl IntoView {
     let textarea_ref = NodeRef::<Textarea>::new();
     let UseTextareaAutosizeReturn {
@@ -26,7 +26,7 @@ pub fn CommentEditorView(
         };
         CLIENT.create_comment(&form).await.unwrap();
         if let Some(set_show_editor) = set_show_editor {
-            set_show_editor.set(false);
+            set_show_editor.set(CommentId(-1));
         }
         article.refetch();
     });
@@ -57,7 +57,7 @@ pub fn CommentEditorView(
                         class="ml-2 btn btn-secondary btn-sm"
                         on:click=move |_| {
                             if let Some(set_show_editor) = set_show_editor {
-                                set_show_editor.set(false);
+                                set_show_editor.set(CommentId(-1));
                             }
                         }
                     >

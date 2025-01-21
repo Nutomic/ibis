@@ -43,7 +43,7 @@ pub fn validate_comment_max_depth(depth: i32) -> MyResult<()> {
 }
 
 pub fn validate_not_empty(text: &str) -> MyResult<()> {
-    if text.len() < 2 {
+    if text.trim().len() < 2 {
         return Err(anyhow!("Empty text submitted").into());
     }
     Ok(())
