@@ -1,7 +1,7 @@
 use crate::{
     common::{
         article::DbArticleView,
-        comment::{DbCommentView, EditCommentForm},
+        comment::{DbComment, DbCommentView, EditCommentForm},
         newtypes::CommentId,
     },
     frontend::{
@@ -20,6 +20,10 @@ pub fn CommentView(
     comment: DbCommentView,
     show_editor: (ReadSignal<CommentId>, WriteSignal<CommentId>),
 ) -> impl IntoView {
+    let (comment_signal, set_comment_signal) = signal(comment.comment.clone());
+    let render_comment = move || render_content(comment_signal.get());
+    let delete_restore_label = move || delete_restore_label(comment_signal.get());
+
     // css class is not included because its dynamically generated, need to use raw css instead of class
     let margin = comment.comment.depth * 2;
     let style_ = format!("margin-left: {margin}rem;");
@@ -36,27 +40,15 @@ pub fn CommentView(
     let delete_restore_comment_action = Action::new(move |_: &()| async move {
         let form = EditCommentForm {
             id: comment.comment.id,
-            deleted: Some(!comment.comment.deleted),
+            deleted: Some(!comment_signal.get_untracked().deleted),
             content: None,
         };
-        CLIENT.edit_comment(&form).await.unwrap();
-        // TODO: Somehow the refetch doesnt change content to deleted as expected, and anyway
-        //       its inefficient.
-        article.refetch();
+        let comment = CLIENT.edit_comment(&form).await.unwrap();
+        set_comment_signal.set(comment.comment);
     });
 
     let allow_delete = site().with_default(|site| site.my_profile.as_ref().map(|p| p.person.id))
         == Some(comment.comment.creator_id);
-    let content = if comment.comment.deleted {
-        "*deleted*".to_string()
-    } else {
-        comment.comment.content.clone()
-    };
-    let delete_restore_label = if comment.comment.deleted {
-        "Restore"
-    } else {
-        "Delete"
-    };
 
     view! {
         <div style=style_ id=comment_id>
@@ -67,10 +59,7 @@ pub fn CommentView(
                         {time_ago(comment.comment.published)}
                     </a>
                 </div>
-                <div
-                    class="my-2 prose prose-slate"
-                    inner_html=render_comment_markdown(&content)
-                ></div>
+                <div class="my-2 prose prose-slate" inner_html=render_comment></div>
                 <div class="text-xs">
                     <Show when=move || !comment.comment.deleted>
                         <a class="link" on:click=move |_| show_editor.1.set(comment.comment.id)>
@@ -103,5 +92,22 @@ pub fn CommentView(
             </div>
             <div class="m-0 divider"></div>
         </div>
+    }
+}
+
+fn render_content(comment: DbComment) -> String {
+    let content = if comment.deleted {
+        "*deleted*"
+    } else {
+        &comment.content
+    };
+    render_comment_markdown(content)
+}
+
+fn delete_restore_label(comment: DbComment) -> &'static str {
+    if comment.deleted {
+        "Restore"
+    } else {
+        "Delete"
     }
 }
