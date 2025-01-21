@@ -64,6 +64,7 @@ web-sys = "0.3.77"
 http = "1.2.0"
 serde_urlencoded = "0.7.1"
 github-slugger = "0.1.0"
+timeago = "0.4.2"
 
 # backend-only deps
 [target.'cfg(not(target_family = "wasm"))'.dependencies]

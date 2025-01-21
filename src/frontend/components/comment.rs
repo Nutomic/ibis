@@ -1,20 +1,25 @@
 use crate::{
     common::{
         article::DbArticleView,
-        comment::{DbCommentView, EditCommentForm}, newtypes::CommentId,
+        comment::{DbCommentView, EditCommentForm},
+        newtypes::CommentId,
     },
     frontend::{
         api::CLIENT,
         app::{site, DefaultResource},
         components::comment_editor::CommentEditorView,
         markdown::render_comment_markdown,
-        user_link,
+        time_ago, user_link,
     },
 };
 use leptos::prelude::*;
 
 #[component]
-pub fn CommentView(article: Resource<DbArticleView>, comment: DbCommentView, show_editor: (ReadSignal<CommentId>, WriteSignal<CommentId>)) -> impl IntoView {
+pub fn CommentView(
+    article: Resource<DbArticleView>,
+    comment: DbCommentView,
+    show_editor: (ReadSignal<CommentId>, WriteSignal<CommentId>),
+) -> impl IntoView {
     // css class is not included because its dynamically generated, need to use raw css instead of class
     let margin = comment.comment.depth * 2;
     let style_ = format!("margin-left: {margin}rem;");
@@ -56,7 +61,10 @@ pub fn CommentView(article: Resource<DbArticleView>, comment: DbCommentView, sho
     view! {
         <div style=style_ id=comment_id>
             <div class="py-2">
-                <div class="text-xs">{user_link(&comment.creator)}</div>
+                <div class="text-xs flex">
+                    <span class="grow">{user_link(&comment.creator)}</span>
+                    {time_ago(comment.comment.published)}
+                </div>
                 <div
                     class="my-2 prose prose-slate"
                     inner_html=render_comment_markdown(&content)
