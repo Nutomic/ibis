@@ -6,11 +6,12 @@ use crate::{
     },
     frontend::{
         api::CLIENT,
-        app::{site, DefaultResource},
         components::comment_editor::{CommentEditorView, EditParams},
         markdown::render_comment_markdown,
-        time_ago,
-        user_link,
+        utils::{
+            formatting::{time_ago, user_link},
+            resources::{site, DefaultResource},
+        },
     },
 };
 use leptos::prelude::*;

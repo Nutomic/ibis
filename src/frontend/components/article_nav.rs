@@ -1,9 +1,8 @@
 use crate::{
     common::{article::DbArticleView, validation::can_edit_article},
-    frontend::{
-        app::{is_admin, is_logged_in},
-        article_path,
-        article_title,
+    frontend::utils::{
+        formatting::{article_path, article_title},
+        resources::{is_admin, is_logged_in},
     },
 };
 use leptos::prelude::*;

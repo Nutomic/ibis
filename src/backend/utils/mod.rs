@@ -15,6 +15,7 @@ use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use std::sync::LazyLock;
 use url::{ParseError, Url};
 
+pub mod config;
 pub mod error;
 pub(super) mod scheduled_tasks;
 pub(super) mod validate;

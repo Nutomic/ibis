@@ -8,15 +8,9 @@ use crate::{
 use leptos::prelude::*;
 use leptos_router::hooks::use_params_map;
 
-pub(crate) mod article;
-pub(crate) mod diff;
-pub(crate) mod instance;
-pub(crate) mod login;
-pub(crate) mod notifications;
-pub(crate) mod register;
-pub(crate) mod search;
-pub(crate) mod user_edit_profile;
-pub(crate) mod user_profile;
+pub mod article;
+pub mod instance;
+pub mod user;
 
 fn article_resource() -> Resource<DbArticleView> {
     let params = use_params_map();

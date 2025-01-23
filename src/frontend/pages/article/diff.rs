@@ -1,9 +1,7 @@
 use crate::frontend::{
-    article_title,
     components::article_nav::{ActiveTab, ArticleNav},
     pages::{article_edits_resource, article_resource},
-    render_date_time,
-    user_link,
+    utils::formatting::{article_title, render_date_time, user_link},
 };
 use leptos::prelude::*;
 use leptos_meta::Title;

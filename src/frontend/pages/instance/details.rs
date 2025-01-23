@@ -2,11 +2,13 @@ use crate::{
     common::{article::ListArticlesParams, instance::DbInstance, utils::http_protocol_str},
     frontend::{
         api::CLIENT,
-        article_path,
-        article_title,
         components::instance_follow_button::InstanceFollowButton,
-        instance_title_with_domain,
-        instance_updated,
+        utils::formatting::{
+            article_path,
+            article_title,
+            instance_title_with_domain,
+            instance_updated,
+        },
     },
 };
 use leptos::prelude::*;

@@ -1,7 +1,7 @@
 #[cfg(feature = "ssr")]
 #[tokio::main]
 pub async fn main() -> ibis::backend::utils::error::MyResult<()> {
-    use ibis::backend::config::IbisConfig;
+    use ibis::backend::utils::config::IbisConfig;
     use log::LevelFilter;
 
     if std::env::args().collect::<Vec<_>>().get(1) == Some(&"--print-config".to_string()) {

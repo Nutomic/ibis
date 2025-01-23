@@ -3,8 +3,8 @@
 use anyhow::Result;
 use ibis::{
     backend::{
-        config::{IbisConfig, IbisConfigDatabase, IbisConfigFederation},
         start,
+        utils::config::{IbisConfig, IbisConfigDatabase, IbisConfigFederation},
     },
     common::{instance::Options, user::RegisterUserParams},
     frontend::api::ApiClient,

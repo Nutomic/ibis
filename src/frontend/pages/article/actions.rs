@@ -5,10 +5,9 @@ use crate::{
     },
     frontend::{
         api::CLIENT,
-        app::is_admin,
-        article_path,
         components::article_nav::{ActiveTab, ArticleNav},
         pages::article_resource,
+        utils::{formatting::article_path, resources::is_admin},
         DbArticle,
     },
 };

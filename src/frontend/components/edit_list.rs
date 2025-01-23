@@ -1,6 +1,6 @@
 use crate::{
     common::{article::EditView, utils::extract_domain},
-    frontend::{article_link, render_date_time, user_link},
+    frontend::utils::formatting::{article_link, render_date_time, user_link},
 };
 use leptos::{either::Either, prelude::*};
 

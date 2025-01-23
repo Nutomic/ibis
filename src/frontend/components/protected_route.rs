@@ -1,4 +1,4 @@
-use crate::frontend::app::is_logged_in;
+use crate::frontend::utils::resources::is_logged_in;
 use leptos::prelude::*;
 use leptos_router::{
     components::{ProtectedRoute, ProtectedRouteProps},

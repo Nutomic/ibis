@@ -2,7 +2,7 @@ use crate::{
     common::user::UpdateUserParams,
     frontend::{
         api::CLIENT,
-        app::{site, DefaultResource},
+        utils::resources::{site, DefaultResource},
     },
 };
 use leptos::prelude::*;

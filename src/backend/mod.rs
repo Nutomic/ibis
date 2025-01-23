@@ -1,9 +1,9 @@
 use crate::{
     backend::{
-        config::IbisConfig,
         database::{article::DbArticleForm, instance::DbInstanceForm, IbisContext},
         federation::{activities::submit_article_update, VerifyUrlData},
         utils::{
+            config::IbisConfig,
             error::{Error, MyResult},
             generate_activity_id,
         },
@@ -37,7 +37,6 @@ use tokio::sync::oneshot;
 use utils::{generate_keypair, scheduled_tasks};
 
 pub mod api;
-pub mod config;
 pub mod database;
 pub mod federation;
 mod server;

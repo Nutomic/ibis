@@ -1,30 +1,32 @@
-use crate::{
-    common::instance::SiteView,
-    frontend::{
-        api::CLIENT,
-        components::{nav::Nav, protected_route::IbisProtectedRoute},
-        dark_mode::DarkMode,
-        instance_title,
-        pages::{
-            article::{
-                actions::ArticleActions,
-                create::CreateArticle,
-                discussion::ArticleDiscussion,
-                edit::EditArticle,
-                history::ArticleHistory,
-                list::ListArticles,
-                read::ReadArticle,
-            },
+use crate::frontend::{
+    api::CLIENT,
+    components::{nav::Nav, protected_route::IbisProtectedRoute},
+    pages::{
+        article::{
+            actions::ArticleActions,
+            create::CreateArticle,
             diff::EditDiff,
-            instance::{details::InstanceDetails, list::ListInstances, settings::InstanceSettings},
+            discussion::ArticleDiscussion,
+            edit::EditArticle,
+            history::ArticleHistory,
+            list::ListArticles,
+            read::ReadArticle,
+        },
+        instance::{
+            details::InstanceDetails,
+            list::ListInstances,
+            search::Search,
+            settings::InstanceSettings,
+        },
+        user::{
+            edit_profile::UserEditProfile,
             login::Login,
             notifications::Notifications,
+            profile::UserProfile,
             register::Register,
-            search::Search,
-            user_edit_profile::UserEditProfile,
-            user_profile::UserProfile,
         },
     },
+    utils::{dark_mode::DarkMode, formatting::instance_title},
 };
 use leptos::prelude::*;
 use leptos_meta::{provide_meta_context, *};
@@ -33,40 +35,6 @@ use leptos_router::{
     path,
 };
 
-pub fn site() -> Resource<SiteView> {
-    use_context::<Resource<SiteView>>().unwrap()
-}
-
-pub fn is_logged_in() -> bool {
-    site().with_default(|site| site.my_profile.is_some())
-}
-pub fn is_admin() -> bool {
-    site().with_default(|site| {
-        site.my_profile
-            .as_ref()
-            .map(|p| p.local_user.admin)
-            .unwrap_or(false)
-    })
-}
-pub trait DefaultResource<T> {
-    fn with_default<O>(&self, f: impl FnOnce(&T) -> O) -> O;
-    fn get_default(&self) -> T;
-}
-
-impl<T: Default + Send + Sync + Clone> DefaultResource<T> for Resource<T> {
-    fn with_default<O>(&self, f: impl FnOnce(&T) -> O) -> O {
-        self.with(|x| match x {
-            Some(x) => f(x),
-            None => f(&T::default()),
-        })
-    }
-    fn get_default(&self) -> T {
-        match self.get() {
-            Some(x) => x.clone(),
-            None => T::default(),
-        }
-    }
-}
 pub fn shell(options: LeptosOptions) -> impl IntoView {
     view! {
         <!DOCTYPE html>

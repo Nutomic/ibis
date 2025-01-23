@@ -2,8 +2,8 @@ use crate::{
     common::article::CreateArticleParams,
     frontend::{
         api::CLIENT,
-        app::{is_admin, site, DefaultResource},
         components::article_editor::EditorView,
+        utils::resources::{is_admin, site, DefaultResource},
     },
 };
 use leptos::{html::Textarea, prelude::*};

@@ -1,8 +1,7 @@
 use crate::frontend::{
     api::CLIENT,
     components::connect::ConnectView,
-    instance_title_with_domain,
-    instance_updated,
+    utils::formatting::{instance_title_with_domain, instance_updated},
 };
 use leptos::prelude::*;
 use leptos_meta::Title;

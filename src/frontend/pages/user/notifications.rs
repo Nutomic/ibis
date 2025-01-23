@@ -1,6 +1,9 @@
 use crate::{
     common::Notification,
-    frontend::{api::CLIENT, article_path, article_title},
+    frontend::{
+        api::CLIENT,
+        utils::formatting::{article_path, article_title},
+    },
 };
 use leptos::prelude::*;
 use leptos_meta::Title;

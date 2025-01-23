@@ -2,10 +2,11 @@ use crate::{
     common::article::ListArticlesParams,
     frontend::{
         api::CLIENT,
-        app::DefaultResource,
-        article_path,
-        article_title,
         components::connect::ConnectView,
+        utils::{
+            formatting::{article_path, article_title},
+            resources::DefaultResource,
+        },
     },
 };
 use leptos::prelude::*;

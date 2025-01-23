@@ -1,6 +1,6 @@
 use crate::{
     common::user::LoginUserParams,
-    frontend::{api::CLIENT, app::site, components::credentials::*},
+    frontend::{api::CLIENT, components::credentials::*, utils::resources::site},
 };
 use leptos::prelude::*;
 use leptos_meta::Title;

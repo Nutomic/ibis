@@ -1,8 +1,10 @@
 use crate::frontend::{
     api::CLIENT,
-    app::{is_admin, is_logged_in, site, DefaultResource},
-    dark_mode::DarkMode,
-    instance_title,
+    utils::{
+        dark_mode::DarkMode,
+        formatting::instance_title,
+        resources::{is_admin, is_logged_in, site, DefaultResource},
+    },
 };
 use leptos::{component, prelude::*, view, IntoView, *};
 use leptos_router::hooks::use_navigate;

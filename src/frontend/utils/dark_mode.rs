@@ -1,4 +1,4 @@
-use super::use_cookie;
+use crate::frontend::utils::use_cookie;
 use leptos::prelude::*;
 use leptos_use::use_preferred_dark;
 

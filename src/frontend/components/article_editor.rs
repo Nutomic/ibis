@@ -1,4 +1,4 @@
-use crate::frontend::{markdown::render_article_markdown, use_cookie};
+use crate::frontend::{markdown::render_article_markdown, utils::use_cookie};
 use leptos::{ev::beforeunload, html::Textarea, prelude::*};
 use leptos_use::{use_event_listener, use_window};
 

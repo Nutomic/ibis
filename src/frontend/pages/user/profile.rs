@@ -4,7 +4,7 @@ use crate::{
         api::CLIENT,
         components::edit_list::EditList,
         markdown::render_article_markdown,
-        user_title,
+        utils::formatting::user_title,
     },
 };
 use leptos::prelude::*;
