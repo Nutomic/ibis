@@ -67,7 +67,7 @@ diesel::table! {
         domain -> Text,
         #[max_length = 255]
         ap_id -> Varchar,
-        description -> Nullable<Text>,
+        topic -> Nullable<Text>,
         #[max_length = 255]
         articles_url -> Nullable<Varchar>,
         #[max_length = 255]
@@ -78,6 +78,7 @@ diesel::table! {
         local -> Bool,
         #[max_length = 255]
         instances_url -> Nullable<Varchar>,
+        name -> Nullable<Text>,
     }
 }
 

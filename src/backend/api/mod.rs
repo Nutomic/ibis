@@ -36,7 +36,7 @@ use axum::{
     Router,
 };
 use axum_macros::debug_handler;
-use instance::list_remote_instances;
+use instance::{list_instances, update_instance};
 use user::{count_notifications, list_notifications, update_user_profile};
 
 mod article;
@@ -60,9 +60,10 @@ pub fn api_routes() -> Router<()> {
         .route("/comment", post(create_comment))
         .route("/comment", patch(edit_comment))
         .route("/instance", get(get_instance))
+        .route("/instance", patch(update_instance))
         .route("/instance/follow", post(follow_instance))
         .route("/instance/resolve", get(resolve_instance))
-        .route("/instance/list", get(list_remote_instances))
+        .route("/instance/list", get(list_instances))
         .route("/search", get(search_article))
         .route("/user", get(get_user))
         .route("/user/notifications/list", get(list_notifications))

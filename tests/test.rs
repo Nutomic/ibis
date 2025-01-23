@@ -763,7 +763,7 @@ async fn test_synchronize_instances() -> Result<()> {
         .await
         .unwrap();
     let beta_instances = beta.list_instances().await.unwrap();
-    assert_eq!(1, beta_instances.len());
+    assert_eq!(2, beta_instances.len());
 
     // fetch beta instance on gamma
     gamma
@@ -777,7 +777,7 @@ async fn test_synchronize_instances() -> Result<()> {
             let res = gamma.list_instances().await;
             match res {
                 None => Err(RetryPolicy::<String>::Retry(None)),
-                Some(i) if i.len() < 2 => Err(RetryPolicy::Retry(None)),
+                Some(i) if i.len() < 3 => Err(RetryPolicy::Retry(None)),
                 Some(i) => Ok(i),
             }
         },
@@ -786,7 +786,7 @@ async fn test_synchronize_instances() -> Result<()> {
     .await?;
 
     // now gamma also knows about alpha
-    assert_eq!(2, gamma_instances.len());
+    assert_eq!(3, gamma_instances.len());
     assert!(gamma_instances.iter().any(|i| i.domain == alpha.hostname));
 
     TestData::stop(alpha, beta, gamma)

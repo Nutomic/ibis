@@ -23,6 +23,7 @@ use activitypub_federation::{
 use chrono::{DateTime, Utc};
 use diesel::{
     insert_into,
+    update,
     AsChangeset,
     ExpressionMethods,
     Insertable,
@@ -37,7 +38,7 @@ use std::{fmt::Debug, ops::DerefMut};
 pub struct DbInstanceForm {
     pub domain: String,
     pub ap_id: ObjectId<DbInstance>,
-    pub description: Option<String>,
+    pub topic: Option<String>,
     pub articles_url: Option<CollectionId<DbArticleCollection>>,
     pub inbox_url: String,
     pub public_key: String,
@@ -45,6 +46,14 @@ pub struct DbInstanceForm {
     pub last_refreshed_at: DateTime<Utc>,
     pub local: bool,
     pub instances_url: Option<CollectionId<DbInstanceCollection>>,
+    pub name: Option<String>,
+}
+
+#[derive(Debug, Clone, AsChangeset)]
+#[diesel(table_name = instance, check_for_backend(diesel::pg::Pg))]
+pub struct DbInstanceUpdateForm {
+    pub topic: Option<String>,
+    pub name: Option<String>,
 }
 
 impl DbInstance {
@@ -61,6 +70,14 @@ impl DbInstance {
     pub fn read(id: InstanceId, context: &IbisContext) -> MyResult<Self> {
         let mut conn = context.db_pool.get()?;
         Ok(instance::table.find(id).get_result(conn.deref_mut())?)
+    }
+
+    pub fn update(form: DbInstanceUpdateForm, context: &IbisContext) -> MyResult<Self> {
+        let mut conn = context.db_pool.get()?;
+        Ok(update(instance::table)
+            .filter(instance::local)
+            .set(form)
+            .get_result(conn.deref_mut())?)
     }
 
     pub fn read_from_ap_id(
@@ -130,11 +147,13 @@ impl DbInstance {
             .get_results(conn.deref_mut())?)
     }
 
-    pub fn read_remote(context: &Data<IbisContext>) -> MyResult<Vec<DbInstance>> {
+    pub fn list(only_remote: bool, context: &Data<IbisContext>) -> MyResult<Vec<DbInstance>> {
         let mut conn = context.db_pool.get()?;
-        Ok(instance::table
-            .filter(instance::local.eq(false))
-            .get_results(conn.deref_mut())?)
+        let mut query = instance::table.into_boxed();
+        if only_remote {
+            query = query.filter(instance::local.eq(false));
+        }
+        Ok(query.get_results(conn.deref_mut())?)
     }
 
     /// Read the instance where an article is hosted, based on a comment id.

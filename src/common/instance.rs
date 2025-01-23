@@ -28,7 +28,7 @@ pub struct DbInstance {
     pub ap_id: ObjectId<DbInstance>,
     #[cfg(not(feature = "ssr"))]
     pub ap_id: String,
-    pub description: Option<String>,
+    pub topic: Option<String>,
     #[cfg(feature = "ssr")]
     pub articles_url: Option<CollectionId<DbArticleCollection>>,
     #[cfg(not(feature = "ssr"))]
@@ -42,6 +42,7 @@ pub struct DbInstance {
     pub local: bool,
     #[cfg(feature = "ssr")]
     pub instances_url: Option<CollectionId<DbInstanceCollection>>,
+    pub name: Option<String>,
 }
 
 impl DbInstance {
@@ -90,4 +91,10 @@ pub struct GetInstanceParams {
 #[derive(Deserialize, Serialize, Debug)]
 pub struct FollowInstanceParams {
     pub id: InstanceId,
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug)]
+pub struct UpdateInstanceParams {
+    pub name: Option<String>,
+    pub topic: Option<String>,
 }

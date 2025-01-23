@@ -5,6 +5,8 @@ use crate::{
         article_path,
         article_title,
         components::instance_follow_button::InstanceFollowButton,
+        instance_title_with_domain,
+        instance_updated,
     },
 };
 use leptos::prelude::*;
@@ -41,20 +43,19 @@ pub fn InstanceDetails() -> impl IntoView {
                                     .unwrap()
                             },
                         );
-                        let title = instance.clone().description.unwrap_or(instance.clone().domain);
+                        let title = instance_title_with_domain(&instance);
                         let instance_ = instance.clone();
                         view! {
-                            <Title text=title />
+                            <Title text=title.clone() />
                             <div class="grid gap-3 mt-4">
                                 <div class="flex flex-row items-center">
-                                    <h1 class="w-full font-serif text-4xl font-bold">
-                                        {instance.domain}
-                                    </h1>
+                                    <h1 class="w-full font-serif text-4xl font-bold">{title}</h1>
+                                    {instance_updated(&instance_)}
                                     <InstanceFollowButton instance=instance_.clone() />
                                 </div>
 
                                 <div class="divider"></div>
-                                <div>{instance.description}</div>
+                                <div>{instance.topic}</div>
                                 <h2 class="font-serif text-xl font-bold">Articles</h2>
                                 <ul class="list-none">
                                     <Suspense>

@@ -1,4 +1,9 @@
-use crate::frontend::{api::CLIENT, components::connect::ConnectView};
+use crate::frontend::{
+    api::CLIENT,
+    components::connect::ConnectView,
+    instance_title_with_domain,
+    instance_updated,
+};
 use leptos::prelude::*;
 use leptos_meta::Title;
 
@@ -26,12 +31,20 @@ pub fn ListInstances() -> impl IntoView {
                                     .map(|ref i| {
                                         view! {
                                             <li>
-                                                <a
-                                                    class="text-lg link"
-                                                    href=format!("/instance/{}", i.domain)
-                                                >
-                                                    {i.domain.to_string()}
-                                                </a>
+                                                <div class="m-4 shadow card bg-base-100">
+                                                    <div class="p-4 card-body">
+                                                        <div class="flex">
+                                                            <a
+                                                                class="card-title grow"
+                                                                href=format!("/instance/{}", i.domain)
+                                                            >
+                                                                {instance_title_with_domain(i)}
+                                                            </a>
+                                                            {instance_updated(i)}
+                                                        </div>
+                                                        <p>{i.topic.clone()}</p>
+                                                    </div>
+                                                </div>
                                             </li>
                                         }
                                     })

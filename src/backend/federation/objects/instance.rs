@@ -28,7 +28,8 @@ pub struct ApubInstance {
     #[serde(rename = "type")]
     kind: ServiceType,
     pub id: ObjectId<DbInstance>,
-    content: Option<String>,
+    name: Option<String>,
+    summary: Option<String>,
     articles: Option<CollectionId<DbArticleCollection>>,
     instances: Option<CollectionId<DbInstanceCollection>>,
     inbox: Url,
@@ -89,11 +90,12 @@ impl Object for DbInstance {
         Ok(ApubInstance {
             kind: Default::default(),
             id: self.ap_id.clone(),
-            content: self.description.clone(),
+            summary: self.topic.clone(),
             articles: self.articles_url.clone(),
             instances: self.instances_url.clone(),
             inbox: Url::parse(&self.inbox_url)?,
             public_key: self.public_key(),
+            name: self.name,
         })
     }
 
@@ -115,7 +117,7 @@ impl Object for DbInstance {
         let form = DbInstanceForm {
             domain,
             ap_id: json.id,
-            description: json.content,
+            topic: json.summary,
             articles_url: json.articles,
             instances_url: json.instances,
             inbox_url: json.inbox.to_string(),
@@ -123,6 +125,7 @@ impl Object for DbInstance {
             private_key: None,
             last_refreshed_at: Utc::now(),
             local: false,
+            name: json.name,
         };
         let instance = DbInstance::create(&form, context)?;
 

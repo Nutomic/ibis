@@ -4,6 +4,7 @@ use crate::{
         api::CLIENT,
         components::{nav::Nav, protected_route::IbisProtectedRoute},
         dark_mode::DarkMode,
+        instance_title,
         pages::{
             article::{
                 actions::ArticleActions,
@@ -15,7 +16,7 @@ use crate::{
                 read::ReadArticle,
             },
             diff::EditDiff,
-            instance::{details::InstanceDetails, list::ListInstances},
+            instance::{details::InstanceDetails, list::ListInstances, settings::InstanceSettings},
             login::Login,
             notifications::Notifications,
             register::Register,
@@ -94,15 +95,29 @@ pub fn App() -> impl IntoView {
     let darkmode = DarkMode::init();
     provide_context(darkmode.clone());
 
-    // TODO: use instance name/description for title
+    let instance = Resource::new(
+        || (),
+        |_| async move { CLIENT.get_local_instance().await.unwrap() },
+    );
     view! {
         <Html attr:data-theme=darkmode.theme {..} class="h-full" />
-        <Title formatter=|text| format!("{text} — Ibis") />
         <Body {..} class="h-full max-sm:flex max-sm:flex-col" />
         <>
             <Stylesheet id="ibis" href="/pkg/ibis.css" />
             <Stylesheet id="katex" href="/katex.min.css" />
             <Router>
+                <Suspense>
+                    {move || {
+                        instance
+                            .get()
+                            .map(|i| {
+                                let formatter = move |text| {
+                                    format!("{text} — {}", instance_title(&i.instance))
+                                };
+                                view! { <Title formatter /> }
+                            })
+                    }}
+                </Suspense>
                 <Nav />
                 <main class="p-4 md:ml-64">
                     <Routes fallback=|| "Page not found.".into_view()>
@@ -129,6 +144,7 @@ pub fn App() -> impl IntoView {
                         <Route path=path!("/search") view=Search />
                         <IbisProtectedRoute path=path!("/edit_profile") view=UserEditProfile />
                         <IbisProtectedRoute path=path!("/notifications") view=Notifications />
+                        <IbisProtectedRoute path=path!("/settings") view=InstanceSettings />
                     </Routes>
                 </main>
             </Router>

@@ -1,11 +1,18 @@
+use super::empty_to_none;
 use crate::{
     backend::{
-        database::IbisContext,
+        database::{instance::DbInstanceUpdateForm, IbisContext},
         federation::activities::follow::Follow,
         utils::error::MyResult,
     },
     common::{
-        instance::{DbInstance, FollowInstanceParams, GetInstanceParams, InstanceView},
+        instance::{
+            DbInstance,
+            FollowInstanceParams,
+            GetInstanceParams,
+            InstanceView,
+            UpdateInstanceParams,
+        },
         user::LocalUserView,
         ResolveObjectParams,
         SuccessResponse,
@@ -23,6 +30,19 @@ pub(in crate::backend::api) async fn get_instance(
 ) -> MyResult<Json<InstanceView>> {
     let local_instance = DbInstance::read_view(params.id, &context)?;
     Ok(Json(local_instance))
+}
+
+pub(in crate::backend::api) async fn update_instance(
+    context: Data<IbisContext>,
+    Form(mut params): Form<UpdateInstanceParams>,
+) -> MyResult<Json<DbInstance>> {
+    empty_to_none(&mut params.name);
+    empty_to_none(&mut params.topic);
+    let form = DbInstanceUpdateForm {
+        name: params.name,
+        topic: params.topic,
+    };
+    Ok(Json(DbInstance::update(form, &context)?))
 }
 
 /// Make the local instance follow a given remote instance, to receive activities about new and
@@ -53,9 +73,9 @@ pub(super) async fn resolve_instance(
 }
 
 #[debug_handler]
-pub(in crate::backend::api) async fn list_remote_instances(
+pub(in crate::backend::api) async fn list_instances(
     context: Data<IbisContext>,
 ) -> MyResult<Json<Vec<DbInstance>>> {
-    let instances = DbInstance::read_remote(&context)?;
+    let instances = DbInstance::list(false, &context)?;
     Ok(Json(instances))
 }

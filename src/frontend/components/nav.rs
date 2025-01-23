@@ -1,7 +1,8 @@
 use crate::frontend::{
     api::CLIENT,
-    app::{is_logged_in, site, DefaultResource},
+    app::{is_admin, is_logged_in, site, DefaultResource},
     dark_mode::DarkMode,
+    instance_title,
 };
 use leptos::{component, prelude::*, view, IntoView, *};
 use leptos_router::hooks::use_navigate;
@@ -16,6 +17,10 @@ pub fn Nav() -> impl IntoView {
         || (),
         move |_| async move { CLIENT.notifications_count().await.unwrap_or_default() },
     );
+    let instance = Resource::new(
+        || (),
+        |_| async move { CLIENT.get_local_instance().await.unwrap() },
+    );
 
     let (search_query, set_search_query) = signal(String::new());
     let mut dark_mode = expect_context::<DarkMode>();
@@ -27,17 +32,15 @@ pub fn Nav() -> impl IntoView {
             >
                 <h1 class="w-min font-serif text-3xl font-bold md:hidden">Ibis</h1>
                 <div class="flex-grow md:hidden"></div>
-                <button tabindex="0" class="lg:hidden btn btn-outline">
-                    Menu
-                </button>
-                <div
-                    tabindex="0"
-                    class="p-2 md:h-full menu dropdown-content max-sm:rounded-box max-sm:z-[1] max-sm:shadow"
-                >
+                <button class="lg:hidden btn btn-outline">Menu</button>
+                <div class="md:h-full menu dropdown-content max-sm:rounded-box max-sm:z-[1] max-sm:shadow">
                     <Transition>
                         <a href="/">
                             <img src="/logo.png" class="m-auto max-sm:hidden" />
                         </a>
+                        <h2 class="m-4 font-serif text-xl font-bold">
+                            {move || { instance.get().map(|i| instance_title(&i.instance)) }}
+                        </h2>
                         <ul>
                             <li>
                                 <a href="/">"Main Page"</a>
@@ -59,6 +62,11 @@ pub fn Nav() -> impl IntoView {
                                             {notification_count}
                                         </span>
                                     </a>
+                                </li>
+                            </Show>
+                            <Show when=is_admin>
+                                <li>
+                                    <a href="/settings">"Settings"</a>
                                 </li>
                             </Show>
                             <li>

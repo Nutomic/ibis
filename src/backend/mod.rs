@@ -97,7 +97,6 @@ async fn setup(context: &Data<IbisContext>) -> Result<(), Error> {
     let form = DbInstanceForm {
         domain: domain.to_string(),
         ap_id,
-        description: Some("New Ibis instance".to_string()),
         articles_url: Some(local_articles_url(domain)?),
         instances_url: Some(linked_instances_url(domain)?),
         inbox_url,
@@ -105,6 +104,8 @@ async fn setup(context: &Data<IbisContext>) -> Result<(), Error> {
         private_key: Some(keypair.private_key),
         last_refreshed_at: Utc::now(),
         local: true,
+        topic: None,
+        name: None,
     };
     let instance = DbInstance::create(&form, context)?;
 

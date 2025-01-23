@@ -1,4 +1,9 @@
-use crate::common::{article::DbArticle, user::DbPerson, utils::extract_domain};
+use crate::common::{
+    article::DbArticle,
+    instance::DbInstance,
+    user::DbPerson,
+    utils::extract_domain,
+};
 use chrono::{DateTime, Duration, Local, Utc};
 use codee::string::FromToStringCodec;
 use leptos::prelude::*;
@@ -102,4 +107,26 @@ fn time_ago(time: DateTime<Utc>) -> String {
     let secs = Utc::now().signed_duration_since(time).num_seconds();
     let duration = std::time::Duration::from_secs(secs.try_into().unwrap_or_default());
     INSTANCE.get_or_init(Formatter::new).convert(duration)
+}
+
+fn instance_title_with_domain(instance: &DbInstance) -> String {
+    let name = instance.name.clone();
+    let domain = instance.domain.clone();
+    if let Some(name) = name {
+        format!("{name} ({domain})")
+    } else {
+        domain
+    }
+}
+
+fn instance_title(instance: &DbInstance) -> String {
+    instance.name.clone().unwrap_or(instance.domain.clone())
+}
+
+fn instance_updated(instance: &DbInstance) -> String {
+    if instance.local {
+        "Local".to_string()
+    } else {
+        format!("Updated {}", time_ago(instance.last_refreshed_at))
+    }
 }

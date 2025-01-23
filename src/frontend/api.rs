@@ -80,16 +80,14 @@ impl ApiClient {
         &self,
         data: &CreateArticleParams,
     ) -> Result<DbArticleView, ServerFnError> {
-        self.send(Method::POST, "/api/v1/article", Some(&data))
-            .await
+        self.post("/api/v1/article", Some(&data)).await
     }
 
     pub async fn edit_article_with_conflict(
         &self,
         params: &EditArticleParams,
     ) -> Result<Option<ApiConflict>, ServerFnError> {
-        self.send(Method::PATCH, "/api/v1/article", Some(&params))
-            .await
+        self.patch("/api/v1/article", Some(&params)).await
     }
 
     #[cfg(debug_assertions)]
@@ -120,8 +118,7 @@ impl ApiClient {
         &self,
         params: &EditCommentParams,
     ) -> Result<DbCommentView, ServerFnError> {
-        self.send(Method::PATCH, "/api/v1/comment", Some(&params))
-            .await
+        self.patch("/api/v1/comment", Some(&params)).await
     }
 
     pub async fn notifications_list(&self) -> Option<Vec<Notification>> {
@@ -167,6 +164,13 @@ impl ApiClient {
 
     pub async fn list_instances(&self) -> Option<Vec<DbInstance>> {
         self.get("/api/v1/instance/list", None::<i32>).await
+    }
+
+    pub async fn update_local_instance(
+        &self,
+        params: &UpdateInstanceParams,
+    ) -> Result<DbInstance, ServerFnError> {
+        self.patch("/api/v1/instance", Some(params)).await
     }
 
     pub async fn follow_instance_with_resolve(&self, follow_instance: &str) -> Option<DbInstance> {
@@ -270,6 +274,14 @@ impl ApiClient {
         R: Serialize + Debug,
     {
         self.send(Method::POST, endpoint, query).await
+    }
+
+    async fn patch<T, R>(&self, endpoint: &str, query: Option<R>) -> Result<T, ServerFnError>
+    where
+        T: for<'de> Deserialize<'de>,
+        R: Serialize + Debug,
+    {
+        self.send(Method::PATCH, endpoint, query).await
     }
 
     #[cfg(feature = "ssr")]

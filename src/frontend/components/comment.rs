@@ -72,9 +72,9 @@ pub fn CommentView(
                         view! {
                             <CommentEditorView
                                 article=article
-                                parent_id=Some(comment.comment.id)
-                                set_show_editor=Some(show_editor.1)
-                                edit_params=Some(edit_params.clone())
+                                parent_id=comment.comment.id
+                                set_show_editor=show_editor.1
+                                edit_params=edit_params.clone()
                             />
                         }
                     }
@@ -115,9 +115,8 @@ pub fn CommentView(
                         <Show when=move || show_editor.0.get() == comment.comment.id>
                             <CommentEditorView
                                 article=article
-                                parent_id=Some(comment.comment.id)
-                                set_show_editor=Some(show_editor.1)
-                                edit_params=None
+                                parent_id=comment.comment.id
+                                set_show_editor=show_editor.1
                             />
                         </Show>
                     </div>

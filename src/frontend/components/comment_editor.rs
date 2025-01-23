@@ -19,10 +19,12 @@ pub struct EditParams {
 #[component]
 pub fn CommentEditorView(
     article: Resource<DbArticleView>,
-    parent_id: Option<CommentId>,
+    #[prop(optional)] parent_id: Option<CommentId>,
     /// Set this to CommentId(-1) to hide all editors
+    #[prop(optional)]
     set_show_editor: Option<WriteSignal<CommentId>>,
     /// If this is present we are editing an existing comment
+    #[prop(optional)]
     edit_params: Option<EditParams>,
 ) -> impl IntoView {
     let textarea_ref = NodeRef::<Textarea>::new();
