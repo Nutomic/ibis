@@ -4,7 +4,6 @@ use crate::common::{
     instance::{
         DbInstance,
         FollowInstanceParams,
-        GetInstanceParams,
         InstanceView,
         SiteView,
         UpdateInstanceParams,
@@ -20,10 +19,6 @@ use url::Url;
 impl ApiClient {
     pub async fn get_local_instance(&self) -> Option<InstanceView> {
         self.get("/api/v1/instance", None::<i32>).await
-    }
-
-    pub async fn get_instance(&self, params: &GetInstanceParams) -> Option<InstanceView> {
-        self.get("/api/v1/instance", Some(&params)).await
     }
 
     pub async fn list_instances(&self) -> Option<Vec<DbInstance>> {

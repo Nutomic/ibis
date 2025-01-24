@@ -147,13 +147,9 @@ impl DbInstance {
             .get_results(conn.deref_mut())?)
     }
 
-    pub fn list(only_remote: bool, context: &Data<IbisContext>) -> MyResult<Vec<DbInstance>> {
+    pub fn list(context: &Data<IbisContext>) -> MyResult<Vec<DbInstance>> {
         let mut conn = context.db_pool.get()?;
-        let mut query = instance::table.into_boxed();
-        if only_remote {
-            query = query.filter(instance::local.eq(false));
-        }
-        Ok(query.get_results(conn.deref_mut())?)
+        Ok(instance::table.get_results(conn.deref_mut())?)
     }
 
     /// Read the instance where an article is hosted, based on a comment id.
