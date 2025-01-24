@@ -4,13 +4,15 @@ use super::{
     user::{DbPerson, LocalUserView},
 };
 use chrono::{DateTime, Utc};
+use diesel::QueryableByName;
 use serde::{Deserialize, Serialize};
 use smart_default::SmartDefault;
 use url::Url;
 #[cfg(feature = "ssr")]
 use {
     crate::backend::{
-        database::schema::instance, federation::objects::articles_collection::DbArticleCollection,
+        database::schema::instance,
+        federation::objects::articles_collection::DbArticleCollection,
         federation::objects::instance_collection::DbInstanceCollection,
     },
     activitypub_federation::fetch::{collection_id::CollectionId, object_id::ObjectId},
@@ -18,7 +20,7 @@ use {
     doku::Document,
 };
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, QueryableByName)]
 #[cfg_attr(feature = "ssr", derive(Queryable, Selectable, Identifiable))]
 #[cfg_attr(feature = "ssr", diesel(table_name = instance, check_for_backend(diesel::pg::Pg)))]
 pub struct DbInstance {
@@ -52,10 +54,12 @@ impl DbInstance {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
-#[cfg_attr(feature = "ssr", derive(Queryable))]
-#[cfg_attr(feature = "ssr", diesel(table_name = article, check_for_backend(diesel::pg::Pg)))]
+#[cfg_attr(feature = "ssr", derive(Queryable, QueryableByName))]
+#[cfg_attr(feature = "ssr", diesel(check_for_backend(diesel::pg::Pg)))]
 pub struct InstanceView {
+    #[diesel(embed)]
     pub instance: DbInstance,
+    #[diesel(embed)]
     pub articles: Vec<DbArticle>,
 }
 

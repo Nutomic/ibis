@@ -5,14 +5,14 @@ use crate::{
             IbisContext,
         },
         federation::objects::{
-            articles_collection::DbArticleCollection, instance_collection::DbInstanceCollection,
+            articles_collection::DbArticleCollection,
+            instance_collection::DbInstanceCollection,
         },
         utils::error::MyResult,
     },
     common::{
-        article::DbArticle,
         instance::{DbInstance, InstanceView, InstanceView2},
-        newtypes::{ArticleId, CommentId, InstanceId},
+        newtypes::{CommentId, InstanceId},
         user::DbPerson,
     },
 };
@@ -21,19 +21,8 @@ use activitypub_federation::{
     fetch::{collection_id::CollectionId, object_id::ObjectId},
 };
 use chrono::{DateTime, Utc};
-use diesel::{
-    associations::HasTable,
-    define_sql_function,
-    deserialize::{self, FromSql},
-    insert_into,
-    pg::{Pg, PgValue},
-    sql_types::Record,
-    update, AsChangeset, ExpressionMethods, Insertable, JoinOnDsl, NullableExpressionMethods,
-    QueryDsl, RunQueryDsl,
-};
+use diesel::*;
 use std::{fmt::Debug, ops::DerefMut};
-
-use super::array_agg;
 
 #[derive(Debug, Clone, Insertable, AsChangeset)]
 #[diesel(table_name = instance, check_for_backend(diesel::pg::Pg))]
@@ -151,26 +140,28 @@ impl DbInstance {
 
     pub fn list(context: &Data<IbisContext>) -> MyResult<Vec<InstanceView>> {
         let mut conn = context.db_pool.get()?;
-        // select instance, array_agg(article) from instance left join article on instance.id=article.instance_id group by instance.id;
-        let res: Vec<_> = instance::table
-            .left_join(article::table.on(instance::id.eq(article::instance_id)))
-            .select((
-                instance::all_columns,
-                //array_agg(article::all_columns)
-                diesel::dsl::sql::<diesel::sql_types::Array<article::SqlType>>(
-                    "array_agg(article.*)",
-                ),
-            ))
-            .group_by(instance::id)
-            // TODO: throws invalid trait bound
-            .get_results::<(DbInstance, Vec<DbArticle>)>(conn.deref_mut())?;
-        Ok(res
-            .into_iter()
-            .map(|x| InstanceView {
-                instance: x.0,
-                articles: x.1,
-            })
-            .collect())
+        let res: Vec<_> = sql_query(
+            "SELECT
+                instance,
+                array_agg(a) as articles
+            FROM
+                instance
+                CROSS JOIN LATERAL (
+                    SELECT
+                        title
+                    FROM
+                        article
+                    WHERE
+                        instance.id = article.instance_id
+                    GROUP BY
+                        article.id
+                    LIMIT 5) a
+            GROUP BY
+                id;",
+        )
+        .select(InstanceView::as_select())
+        .get_results::<InstanceView>(conn.deref_mut())?;
+        Ok(res)
     }
 
     /// Read the instance where an article is hosted, based on a comment id.
@@ -186,18 +177,5 @@ impl DbInstance {
             .filter(comment::id.eq(comment_id))
             .select(instance::all_columns)
             .get_result(conn.deref_mut())?)
-    }
-}
-
-define_sql_function!(fn array_agg<T: diesel::sql_types::SingleValue>(expr: T) -> Array<T>);
-
-// https://github.com/diesel-rs/diesel/discussions/3826
-impl FromSql<diesel::sql_types::Record<article::SqlType>, Pg> for DbArticle {
-    fn from_sql(value: PgValue<'_>) -> deserialize::Result<Self> {
-        //let mut bytes = value.as_bytes();
-        //let res: (i32,) = FromSql::<Record<article::SqlType>, Pg>::from_sql(value)?;
-
-        //Ok(Label1 { id: res.0 })
-        todo!()
     }
 }

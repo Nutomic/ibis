@@ -5,6 +5,7 @@ use super::{
     user::DbPerson,
 };
 use chrono::{DateTime, Utc};
+use diesel::QueryableByName;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use uuid::Uuid;
@@ -39,7 +40,7 @@ pub struct DbArticleView {
     pub latest_version: EditVersion,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, QueryableByName)]
 #[cfg_attr(feature = "ssr", derive(Queryable, Selectable, Identifiable))]
 #[cfg_attr(feature = "ssr", diesel(table_name = article, check_for_backend(diesel::pg::Pg), belongs_to(DbInstance, foreign_key = instance_id)))]
 pub struct DbArticle {

@@ -4,7 +4,9 @@ use crate::backend::{
 };
 use diesel::{
     r2d2::{ConnectionManager, Pool},
-    PgConnection, QueryDsl, RunQueryDsl,
+    PgConnection,
+    QueryDsl,
+    RunQueryDsl,
 };
 use std::ops::DerefMut;
 

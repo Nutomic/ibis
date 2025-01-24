@@ -7,11 +7,16 @@ use crate::{
     },
     common::{
         instance::{
-            DbInstance, FollowInstanceParams, GetInstanceParams, InstanceView, InstanceView2,
+            DbInstance,
+            FollowInstanceParams,
+            GetInstanceParams,
+            InstanceView,
+            InstanceView2,
             UpdateInstanceParams,
         },
         user::LocalUserView,
-        ResolveObjectParams, SuccessResponse,
+        ResolveObjectParams,
+        SuccessResponse,
     },
 };
 use activitypub_federation::{config::Data, fetch::object_id::ObjectId};

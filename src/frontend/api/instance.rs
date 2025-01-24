@@ -1,13 +1,7 @@
 use super::{result_to_option, ApiClient};
 use crate::common::{
     article::{DbArticle, SearchArticleParams},
-    instance::{
-        DbInstance,
-        FollowInstanceParams,
-        InstanceView2,
-        SiteView,
-        UpdateInstanceParams,
-    },
+    instance::{DbInstance, FollowInstanceParams, InstanceView2, SiteView, UpdateInstanceParams},
     Notification,
     ResolveObjectParams,
     SuccessResponse,
