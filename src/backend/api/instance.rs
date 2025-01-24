@@ -7,15 +7,11 @@ use crate::{
     },
     common::{
         instance::{
-            DbInstance,
-            FollowInstanceParams,
-            GetInstanceParams,
-            InstanceView,
+            DbInstance, FollowInstanceParams, GetInstanceParams, InstanceView, InstanceView2,
             UpdateInstanceParams,
         },
         user::LocalUserView,
-        ResolveObjectParams,
-        SuccessResponse,
+        ResolveObjectParams, SuccessResponse,
     },
 };
 use activitypub_federation::{config::Data, fetch::object_id::ObjectId};
@@ -27,7 +23,7 @@ use axum_macros::debug_handler;
 pub(in crate::backend::api) async fn get_instance(
     context: Data<IbisContext>,
     Form(params): Form<GetInstanceParams>,
-) -> MyResult<Json<InstanceView>> {
+) -> MyResult<Json<InstanceView2>> {
     let local_instance = DbInstance::read_view(params.id, &context)?;
     Ok(Json(local_instance))
 }
@@ -75,7 +71,7 @@ pub(super) async fn resolve_instance(
 #[debug_handler]
 pub(in crate::backend::api) async fn list_instances(
     context: Data<IbisContext>,
-) -> MyResult<Json<Vec<DbInstance>>> {
+) -> MyResult<Json<Vec<InstanceView>>> {
     let instances = DbInstance::list(&context)?;
     Ok(Json(instances))
 }

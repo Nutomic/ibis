@@ -1,4 +1,5 @@
 use super::{
+    article::DbArticle,
     newtypes::InstanceId,
     user::{DbPerson, LocalUserView},
 };
@@ -9,8 +10,7 @@ use url::Url;
 #[cfg(feature = "ssr")]
 use {
     crate::backend::{
-        database::schema::instance,
-        federation::objects::articles_collection::DbArticleCollection,
+        database::schema::instance, federation::objects::articles_collection::DbArticleCollection,
         federation::objects::instance_collection::DbInstanceCollection,
     },
     activitypub_federation::fetch::{collection_id::CollectionId, object_id::ObjectId},
@@ -55,6 +55,14 @@ impl DbInstance {
 #[cfg_attr(feature = "ssr", derive(Queryable))]
 #[cfg_attr(feature = "ssr", diesel(table_name = article, check_for_backend(diesel::pg::Pg)))]
 pub struct InstanceView {
+    pub instance: DbInstance,
+    pub articles: Vec<DbArticle>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[cfg_attr(feature = "ssr", derive(Queryable))]
+#[cfg_attr(feature = "ssr", diesel(table_name = article, check_for_backend(diesel::pg::Pg)))]
+pub struct InstanceView2 {
     pub instance: DbInstance,
     pub followers: Vec<DbPerson>,
 }

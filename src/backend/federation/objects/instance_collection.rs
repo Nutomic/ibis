@@ -52,6 +52,7 @@ impl Collection for DbInstanceCollection {
         let instances = future::try_join_all(
             instances
                 .into_iter()
+                .map(|i| i.instance)
                 .filter(|i| !i.local)
                 .map(|i| i.into_json(context))
                 .collect::<Vec<_>>(),

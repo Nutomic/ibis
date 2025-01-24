@@ -4,7 +4,7 @@ use crate::common::{
     instance::{
         DbInstance,
         FollowInstanceParams,
-        InstanceView,
+        InstanceView2,
         SiteView,
         UpdateInstanceParams,
     },
@@ -17,7 +17,7 @@ use leptos::prelude::ServerFnError;
 use url::Url;
 
 impl ApiClient {
-    pub async fn get_local_instance(&self) -> Option<InstanceView> {
+    pub async fn get_local_instance(&self) -> Option<InstanceView2> {
         self.get("/api/v1/instance", None::<i32>).await
     }
 
