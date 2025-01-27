@@ -148,7 +148,7 @@ impl DbInstance {
                 instance
                 CROSS JOIN LATERAL (
                     SELECT
-                        title
+                        *
                     FROM
                         article
                     WHERE
