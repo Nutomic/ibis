@@ -5,8 +5,7 @@ use crate::{
             IbisContext,
         },
         federation::objects::{
-            articles_collection::DbArticleCollection,
-            instance_collection::DbInstanceCollection,
+            articles_collection::DbArticleCollection, instance_collection::DbInstanceCollection,
         },
         utils::error::MyResult,
     },
@@ -142,22 +141,22 @@ impl DbInstance {
         let mut conn = context.db_pool.get()?;
         let res: Vec<_> = sql_query(
             "SELECT
-                instance,
-                array_agg(a) as articles
-            FROM
-                instance
-                CROSS JOIN LATERAL (
-                    SELECT
-                        *
-                    FROM
-                        article
-                    WHERE
-                        instance.id = article.instance_id
-                    GROUP BY
-                        article.id
-                    LIMIT 5) a
-            GROUP BY
-                id;",
+                    instance,
+                    array_agg(a) as articles
+                FROM
+                    instance
+                    CROSS JOIN LATERAL (
+                        SELECT
+                            *
+                        FROM
+                            article
+                        WHERE
+                            instance.id = article.instance_id
+                        GROUP BY
+                            article.id
+                        LIMIT 5) a
+                GROUP BY
+                    id;",
         )
         .select(InstanceView::as_select())
         .get_results::<InstanceView>(conn.deref_mut())?;

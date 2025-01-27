@@ -11,11 +11,12 @@ use url::Url;
 #[cfg(feature = "ssr")]
 use {
     crate::backend::{
-        database::schema::instance,
+        database::schema::{article, instance},
         federation::objects::articles_collection::DbArticleCollection,
         federation::objects::instance_collection::DbInstanceCollection,
     },
     activitypub_federation::fetch::{collection_id::CollectionId, object_id::ObjectId},
+    diesel::sql_types::Array,
     diesel::{Identifiable, Queryable, Selectable},
     doku::Document,
 };
@@ -57,9 +58,9 @@ impl DbInstance {
 #[cfg_attr(feature = "ssr", derive(Queryable, QueryableByName))]
 #[cfg_attr(feature = "ssr", diesel(check_for_backend(diesel::pg::Pg)))]
 pub struct InstanceView {
-    #[diesel(embed)]
+    #[diesel(column_name = "instance", sql_type = instance::SqlType)]
     pub instance: DbInstance,
-    #[diesel(embed)]
+    #[diesel(column_name = "articles", sql_type = Array<article::SqlType>)]
     pub articles: Vec<DbArticle>,
 }
 
