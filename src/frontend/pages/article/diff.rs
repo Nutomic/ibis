@@ -44,7 +44,7 @@ pub fn EditDiff() -> impl IntoView {
                         </Show>
                     </div>
                     <p>"by " {user_link(&edit.creator)}</p>
-                    <div class="p-2 my-2 bg-gray-200 rounded">
+                    <div class="max-w-full prose prose-slate">
                         <pre class="text-wrap">
                             <code>{edit.edit.diff.clone()}</code>
                         </pre>
