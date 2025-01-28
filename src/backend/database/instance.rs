@@ -21,7 +21,7 @@ use activitypub_federation::{
     fetch::{collection_id::CollectionId, object_id::ObjectId},
 };
 use chrono::{DateTime, Utc};
-use diesel::{deserialize::FromSql, *};
+use diesel::{deserialize::FromSql, dsl::array, *};
 use pg::sql_types::Record;
 use pg::{Pg, PgValue};
 use std::{fmt::Debug, ops::DerefMut};
@@ -141,6 +141,10 @@ impl DbInstance {
     }
 
     pub fn list(context: &Data<IbisContext>) -> MyResult<Vec<InstanceView>> {
+        // Lateral join is not supported in diesel so we need to implement it manually
+        // https://github.com/diesel-rs/diesel/discussions/4450
+        // Raw sql queries don't use prepared statement cache and are ~2.5 times slower than normal
+        // https://github.com/diesel-rs/diesel/discussions/4084
         let mut conn = context.db_pool.get()?;
         let res: Vec<_> = sql_query(
             "SELECT
