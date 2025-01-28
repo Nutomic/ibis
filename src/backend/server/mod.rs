@@ -29,6 +29,7 @@ use tower_layer::Layer;
 mod assets;
 mod middleware;
 mod nodeinfo;
+pub(super) mod setup;
 
 pub(super) async fn start_server(
     context: FederationConfig<IbisContext>,
