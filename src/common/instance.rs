@@ -4,7 +4,7 @@ use super::{
     user::{DbPerson, LocalUserView},
 };
 use chrono::{DateTime, Utc};
-use diesel::QueryableByName;
+use diesel::{pg::sql_types::Record, QueryableByName};
 use serde::{Deserialize, Serialize};
 use smart_default::SmartDefault;
 use url::Url;
@@ -58,9 +58,9 @@ impl DbInstance {
 #[cfg_attr(feature = "ssr", derive(Queryable, QueryableByName))]
 #[cfg_attr(feature = "ssr", diesel(check_for_backend(diesel::pg::Pg)))]
 pub struct InstanceView {
-    #[diesel(column_name = "instance", sql_type = instance::SqlType)]
+    #[diesel(sql_type = instance::SqlType)]
     pub instance: DbInstance,
-    #[diesel(column_name = "articles", sql_type = Array<article::SqlType>)]
+    #[diesel(sql_type = Array<Record<article::SqlType>>)]
     pub articles: Vec<DbArticle>,
 }
 

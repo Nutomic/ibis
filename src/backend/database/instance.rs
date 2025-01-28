@@ -10,8 +10,9 @@ use crate::{
         utils::error::MyResult,
     },
     common::{
+        article::DbArticle,
         instance::{DbInstance, InstanceView, InstanceView2},
-        newtypes::{CommentId, InstanceId},
+        newtypes::{ArticleId, CommentId, InstanceId},
         user::DbPerson,
     },
 };
@@ -20,7 +21,9 @@ use activitypub_federation::{
     fetch::{collection_id::CollectionId, object_id::ObjectId},
 };
 use chrono::{DateTime, Utc};
-use diesel::*;
+use diesel::{deserialize::FromSql, *};
+use pg::sql_types::Record;
+use pg::{Pg, PgValue};
 use std::{fmt::Debug, ops::DerefMut};
 
 #[derive(Debug, Clone, Insertable, AsChangeset)]
@@ -176,5 +179,33 @@ impl DbInstance {
             .filter(comment::id.eq(comment_id))
             .select(instance::all_columns)
             .get_result(conn.deref_mut())?)
+    }
+}
+
+impl FromSql<Record<article::SqlType>, Pg> for DbArticle {
+    fn from_sql(bytes: PgValue<'_>) -> deserialize::Result<Self> {
+        let res: (
+            ArticleId,
+            String,
+            String,
+            ObjectId<DbArticle>,
+            InstanceId,
+            bool,
+            bool,
+            bool,
+            DateTime<Utc>,
+        ) = FromSql::<Record<article::SqlType>, Pg>::from_sql(bytes)?;
+
+        Ok(DbArticle {
+            id: res.0,
+            title: res.1,
+            text: res.2,
+            ap_id: res.3,
+            instance_id: res.4,
+            local: res.5,
+            protected: res.6,
+            approved: res.7,
+            published: res.8,
+        })
     }
 }
