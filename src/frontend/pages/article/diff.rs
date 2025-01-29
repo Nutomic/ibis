@@ -18,7 +18,7 @@ pub fn EditDiff() -> impl IntoView {
     let edits = article_edits_resource(article);
 
     view! {
-        <ArticleNav2 article=article active_tab=ActiveTab2::Read />
+        <ArticleNav2 article=article active_tab=ActiveTab2::History />
         <SuspenseError result=edits>
             {move || Suspend::new(async move {
                 let article_title = article

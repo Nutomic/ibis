@@ -5,8 +5,11 @@ use crate::{
     },
     frontend::{
         api::CLIENT,
-        components::article_nav::{ActiveTab, ArticleNav},
-        pages::article_resource,
+        components::{
+            article_nav2::{ActiveTab2, ArticleNav2},
+            suspense_error::SuspenseError,
+        },
+        pages::article_resource_result,
         utils::{formatting::article_path, resources::is_admin},
         DbArticle,
     },
@@ -16,7 +19,7 @@ use leptos_router::components::Redirect;
 
 #[component]
 pub fn ArticleActions() -> impl IntoView {
-    let article = article_resource();
+    let article = article_resource_result();
     let (new_title, set_new_title) = signal(String::new());
     let (fork_response, set_fork_response) = signal(Option::<DbArticle>::None);
     let (error, set_error) = signal(None::<String>);
@@ -53,13 +56,11 @@ pub fn ArticleActions() -> impl IntoView {
         }
     });
     view! {
-        <ArticleNav article=article active_tab=ActiveTab::Actions />
-        <Suspense fallback=|| {
-            view! { "Loading..." }
-        }>
-            {move || {
+        <ArticleNav2 article=article active_tab=ActiveTab2::Actions />
+        <SuspenseError result=article>
+            {move || Suspend::new(async move {
                 article
-                    .get()
+                    .await
                     .map(|article| {
                         view! {
                             <div>
@@ -108,9 +109,9 @@ pub fn ArticleActions() -> impl IntoView {
                             </div>
                         }
                     })
-            }}
+            })}
 
-        </Suspense>
+        </SuspenseError>
         <Show when=move || fork_response.get().is_some()>
             <Redirect path=article_path(&fork_response.get().unwrap()) />
         </Show>
