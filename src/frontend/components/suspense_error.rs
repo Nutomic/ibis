@@ -1,6 +1,5 @@
-use leptos::{either::Either, prelude::*};
-
 use crate::frontend::utils::errors::FrontendResult;
+use leptos::{either::Either, prelude::*};
 
 #[component]
 pub fn SuspenseError<T>(children: ChildrenFn, result: Resource<FrontendResult<T>>) -> impl IntoView

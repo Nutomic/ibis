@@ -1,20 +1,20 @@
 use crate::frontend::{
     components::{
-        article_nav2::{ActiveTab2, ArticleNav2},
+        article_nav::{ActiveTab, ArticleNav},
         edit_list::EditList,
         suspense_error::SuspenseError,
     },
-    pages::{article_edits_resource, article_resource_result},
+    pages::{article_edits_resource, article_resource},
 };
 use leptos::prelude::*;
 
 #[component]
 pub fn ArticleHistory() -> impl IntoView {
-    let article = article_resource_result();
+    let article = article_resource();
     let edits = article_edits_resource(article);
 
     view! {
-        <ArticleNav2 article=article active_tab=ActiveTab2::History />
+        <ArticleNav article=article active_tab=ActiveTab::History />
         <SuspenseError result=edits>
             {move || Suspend::new(async move {
                 edits

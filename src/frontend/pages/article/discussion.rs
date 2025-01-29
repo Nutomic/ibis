@@ -2,12 +2,12 @@ use crate::{
     common::{comment::DbCommentView, newtypes::CommentId},
     frontend::{
         components::{
-            article_nav2::{ActiveTab2, ArticleNav2},
+            article_nav::{ActiveTab, ArticleNav},
             comment::CommentView,
             comment_editor::CommentEditorView,
             suspense_error::SuspenseError,
         },
-        pages::article_resource_result,
+        pages::article_resource,
     },
 };
 use leptos::prelude::*;
@@ -15,12 +15,12 @@ use std::collections::HashMap;
 
 #[component]
 pub fn ArticleDiscussion() -> impl IntoView {
-    let article = article_resource_result();
+    let article = article_resource();
 
     let show_editor = signal(CommentId(-1));
 
     view! {
-        <ArticleNav2 article=article active_tab=ActiveTab2::Discussion />
+        <ArticleNav article=article active_tab=ActiveTab::Discussion />
         <SuspenseError result=article>
             {move || Suspend::new(async move {
                 let article2 = article.await;

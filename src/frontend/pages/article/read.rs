@@ -1,22 +1,22 @@
 use crate::frontend::{
     components::{
-        article_nav2::{ActiveTab2, ArticleNav2},
+        article_nav::{ActiveTab, ArticleNav},
         suspense_error::SuspenseError,
     },
     markdown::render_article_markdown,
-    pages::article_resource_result,
+    pages::article_resource,
 };
 use leptos::{either::Either, prelude::*};
 use leptos_router::hooks::use_query_map;
 
 #[component]
 pub fn ReadArticle() -> impl IntoView {
-    let article = article_resource_result();
+    let article = article_resource();
     let query = use_query_map();
     let edit_successful = query.get_untracked().get("edit_successful").is_some();
 
     view! {
-        <ArticleNav2 article=article active_tab=ActiveTab2::Read />
+        <ArticleNav article=article active_tab=ActiveTab::Read />
         <SuspenseError result=article>
             {move || Suspend::new(async move {
                 let article = article.await;

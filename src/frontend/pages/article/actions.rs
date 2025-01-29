@@ -6,10 +6,10 @@ use crate::{
     frontend::{
         api::CLIENT,
         components::{
-            article_nav2::{ActiveTab2, ArticleNav2},
+            article_nav::{ActiveTab, ArticleNav},
             suspense_error::SuspenseError,
         },
-        pages::article_resource_result,
+        pages::article_resource,
         utils::{formatting::article_path, resources::is_admin},
         DbArticle,
     },
@@ -19,7 +19,7 @@ use leptos_router::components::Redirect;
 
 #[component]
 pub fn ArticleActions() -> impl IntoView {
-    let article = article_resource_result();
+    let article = article_resource();
     let (new_title, set_new_title) = signal(String::new());
     let (fork_response, set_fork_response) = signal(Option::<DbArticle>::None);
     let (error, set_error) = signal(None::<String>);
@@ -56,7 +56,7 @@ pub fn ArticleActions() -> impl IntoView {
         }
     });
     view! {
-        <ArticleNav2 article=article active_tab=ActiveTab2::Actions />
+        <ArticleNav article=article active_tab=ActiveTab::Actions />
         <SuspenseError result=article>
             {move || Suspend::new(async move {
                 article

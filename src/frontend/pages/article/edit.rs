@@ -2,16 +2,17 @@ use crate::{
     common::{
         article::{ApiConflict, DbArticleView, EditArticleParams},
         newtypes::ConflictId,
-        Notification, MAIN_PAGE_NAME,
+        Notification,
+        MAIN_PAGE_NAME,
     },
     frontend::{
         api::CLIENT,
         components::{
             article_editor::EditorView,
-            article_nav2::{ActiveTab2, ArticleNav2},
+            article_nav::{ActiveTab, ArticleNav},
             suspense_error::SuspenseError,
         },
-        pages::article_resource_result,
+        pages::article_resource,
     },
 };
 use chrono::{Days, Utc};
@@ -30,7 +31,7 @@ const CONFLICT_MESSAGE: &str = "There was an edit conflict. Resolve it manually 
 
 #[component]
 pub fn EditArticle() -> impl IntoView {
-    let article = article_resource_result();
+    let article = article_resource();
     let (edit_response, set_edit_response) = signal(EditResponse::None);
     let (edit_error, set_edit_error) = signal(None::<String>);
 
@@ -116,7 +117,7 @@ pub fn EditArticle() -> impl IntoView {
     );
 
     view! {
-        <ArticleNav2 article=article active_tab=ActiveTab2::Edit />
+        <ArticleNav article=article active_tab=ActiveTab::Edit />
         <Show
             when=move || edit_response.get() == EditResponse::Success
             fallback=move || {
