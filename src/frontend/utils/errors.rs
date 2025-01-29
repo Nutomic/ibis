@@ -32,49 +32,9 @@ impl From<url::ParseError> for FrontendError {
         Self(value.to_string())
     }
 }
-/*
-impl Render for FrontendError {
-    type State = StringState;
 
-    fn build(self) -> Self::State {
-        todo!()
-    }
-
-    fn rebuild(self, state: &mut Self::State) {
-        todo!()
+impl From<&'static str> for FrontendError {
+    fn from(value: &'static str) -> Self {
+        Self(value.to_string())
     }
 }
-
-impl RenderHtml for FrontendError {
-    type AsyncOutput = String;
-
-    const MIN_LENGTH: usize = 0;
-
-    fn dry_resolve(&mut self) {
-        todo!()
-    }
-
-    async fn resolve(self) -> Self::AsyncOutput {
-        todo!()
-    }
-
-    fn to_html_with_buf(
-        self,
-        buf: &mut String,
-        position: &mut leptos::tachys::view::Position,
-        escape: bool,
-        mark_branches: bool,
-    ) {
-        todo!()
-    }
-
-    fn hydrate<const FROM_SERVER: bool>(
-        self,
-        cursor: &leptos::tachys::hydration::Cursor,
-        position: &leptos::tachys::view::PositionState,
-    ) -> Self::State {
-        todo!()
-    }
-}
-
-*/

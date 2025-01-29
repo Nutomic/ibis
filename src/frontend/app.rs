@@ -36,6 +36,11 @@ use leptos_router::{
 };
 
 pub fn shell(options: LeptosOptions) -> impl IntoView {
+    let site_resource = Resource::new(|| (), |_| async move { CLIENT.site().await.unwrap() });
+    provide_context(site_resource);
+
+    let instance = Resource::new(|| (), |_| async move { CLIENT.get_local_instance().await });
+
     view! {
         <!DOCTYPE html>
         <html lang="en">
@@ -45,6 +50,15 @@ pub fn shell(options: LeptosOptions) -> impl IntoView {
                 <AutoReload options=options.clone() />
                 <HydrationScripts options />
                 <MetaTags />
+                <Suspense>
+                    {move || Suspend::new(async move {
+                        instance.await.map(|i| {
+                        let formatter = move |text| {
+                            format!("{text} — {}", instance_title(&i.instance))
+                        };
+                        view! { <Title formatter /> }})
+                    })}
+                </Suspense>
             </head>
             <body>
                 <App />
@@ -57,16 +71,9 @@ pub fn shell(options: LeptosOptions) -> impl IntoView {
 pub fn App() -> impl IntoView {
     provide_meta_context();
 
-    let site_resource = Resource::new(|| (), |_| async move { CLIENT.site().await.unwrap() });
-    provide_context(site_resource);
-
     let darkmode = DarkMode::init();
     provide_context(darkmode.clone());
 
-    let instance = Resource::new(
-        || (),
-        |_| async move { CLIENT.get_local_instance().await.unwrap() },
-    );
     view! {
         <Html attr:data-theme=darkmode.theme {..} class="h-full" />
         <Body {..} class="h-full max-sm:flex max-sm:flex-col" />
@@ -74,18 +81,6 @@ pub fn App() -> impl IntoView {
             <Stylesheet id="ibis" href="/pkg/ibis.css" />
             <Stylesheet id="katex" href="/katex.min.css" />
             <Router>
-                <Suspense>
-                    {move || {
-                        instance
-                            .get()
-                            .map(|i| {
-                                let formatter = move |text| {
-                                    format!("{text} — {}", instance_title(&i.instance))
-                                };
-                                view! { <Title formatter /> }
-                            })
-                    }}
-                </Suspense>
                 <Nav />
                 <main class="p-4 md:ml-64">
                     <Routes fallback=|| "Page not found.".into_view()>

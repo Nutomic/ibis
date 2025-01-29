@@ -9,47 +9,33 @@ pub mod comment;
 pub mod instance;
 pub mod user;
 
-pub static CLIENT: LazyLock<ApiClient> = LazyLock::new(|| {
-    #[cfg(feature = "ssr")]
-    {
-        ApiClient::new(reqwest::Client::new(), None)
-    }
-    #[cfg(not(feature = "ssr"))]
-    {
-        ApiClient::new()
-    }
-});
+pub static CLIENT: LazyLock<ApiClient> = LazyLock::new(|| ApiClient::new(None));
 
 #[derive(Clone, Debug)]
 pub struct ApiClient {
     #[cfg(feature = "ssr")]
     client: reqwest::Client,
-    pub hostname: String,
-    ssl: bool,
+    test_hostname: Option<String>,
 }
 
 impl ApiClient {
-    #[cfg(feature = "ssr")]
-    pub fn new(client: reqwest::Client, hostname_: Option<String>) -> Self {
-        use leptos::config::get_config_from_str;
-        let leptos_options = get_config_from_str(include_str!("../../../Cargo.toml")).unwrap();
-        let mut hostname = leptos_options.site_addr.to_string();
-        // required for tests
-        if let Some(hostname_) = hostname_ {
-            hostname = hostname_;
+    pub fn new(test_hostname: Option<String>) -> Self {
+        #[cfg(feature = "ssr")]
+        {
+            // need cookie store for auth in tests
+            let client = reqwest::ClientBuilder::new()
+                .cookie_store(true)
+                .build()
+                .expect("init reqwest");
+            Self {
+                client,
+                test_hostname,
+            }
         }
-        Self {
-            client,
-            hostname,
-            ssl: false,
+        #[cfg(not(feature = "ssr"))]
+        {
+            Self { test_hostname }
         }
-    }
-    #[cfg(not(feature = "ssr"))]
-    pub fn new() -> Self {
-        use leptos_use::use_document;
-        let hostname = use_document().location().unwrap().host().unwrap();
-        let ssl = !cfg!(debug_assertions);
-        Self { hostname, ssl }
     }
 
     async fn get<T, R>(&self, endpoint: &str, query: Option<R>) -> FrontendResult<T>
@@ -88,7 +74,7 @@ impl ApiClient {
 
         let mut req = self
             .client
-            .request(method.clone(), self.request_endpoint(path));
+            .request(method.clone(), self.request_endpoint(path)?);
         req = if method == Method::GET {
             req.query(&params)
         } else {
@@ -132,7 +118,7 @@ impl ApiClient {
                 }
             });
 
-            let path_with_endpoint = self.request_endpoint(path);
+            let path_with_endpoint = self.request_endpoint(path)?;
             let params_encoded = serde_urlencoded::to_string(&params).unwrap();
             let path = if method == Method::GET {
                 // Cannot pass the form data directly but need to convert it manually
@@ -177,8 +163,38 @@ impl ApiClient {
         }
     }
 
-    fn request_endpoint(&self, path: &str) -> String {
-        let protocol = if self.ssl { "https" } else { "http" };
-        format!("{protocol}://{}{path}", &self.hostname)
+    fn request_endpoint(&self, path: &str) -> FrontendResult<String> {
+        let protocol = if cfg!(debug_assertions) {
+            "http"
+        } else {
+            "https"
+        };
+
+        let hostname: String;
+
+        #[cfg(feature = "ssr")]
+        {
+            use leptos::{config::LeptosOptions, prelude::use_context};
+            let val = self
+                .test_hostname
+                .clone()
+                .or_else(|| use_context::<LeptosOptions>().map(|o| o.site_addr.to_string()));
+            // Needed because during tests App() gets initialized from
+            // backend generate_route_list() which attempts to load some
+            // resources without providing LeptosOptions.
+            let Some(val) = val else {
+                return Err(FrontendError::from("Failed to get hostname"));
+            };
+            hostname = val;
+        }
+        #[cfg(not(feature = "ssr"))]
+        {
+            use leptos::prelude::location;
+            hostname = location()
+                .host()
+                .map_err(|e| FrontendError(format!("Failed to get hostname: {:?}", e)))?;
+        }
+
+        Ok(format!("{protocol}://{}{path}", hostname))
     }
 }

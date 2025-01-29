@@ -6,7 +6,12 @@ pub fn site() -> Resource<SiteView> {
 }
 
 pub fn is_logged_in() -> bool {
-    site().with_default(|site| site.my_profile.is_some())
+    let site = use_context::<Resource<SiteView>>();
+    if let Some(site) = site {
+        site.with_default(|site| site.my_profile.is_some())
+    } else {
+        false
+    }
 }
 pub fn is_admin() -> bool {
     site().with_default(|site| {

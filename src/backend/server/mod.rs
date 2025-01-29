@@ -76,8 +76,10 @@ async fn leptos_routes_handler(
     State(leptos_options): State<LeptosOptions>,
     request: Request<Body>,
 ) -> Response {
+    let leptos_options_ = leptos_options.clone();
     let handler = leptos_axum::render_app_async_with_context(
         move || {
+            provide_context(leptos_options_.clone());
             if let Some(auth) = &auth {
                 provide_context(auth.0.clone());
             }

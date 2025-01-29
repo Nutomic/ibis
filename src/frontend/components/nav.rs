@@ -17,12 +17,15 @@ pub fn Nav() -> impl IntoView {
     });
     let notification_count = Resource::new(
         || (),
-        move |_| async move { CLIENT.notifications_count().await.unwrap_or_default() },
+        move |_| async move {
+            if is_logged_in() {
+                CLIENT.notifications_count().await.unwrap_or_default()
+            } else {
+                0
+            }
+        },
     );
-    let instance = Resource::new(
-        || (),
-        |_| async move { CLIENT.get_local_instance().await.unwrap() },
-    );
+    let instance = Resource::new(|| (), |_| async move { CLIENT.get_local_instance().await });
 
     let (search_query, set_search_query) = signal(String::new());
     let mut dark_mode = expect_context::<DarkMode>();
@@ -41,7 +44,9 @@ pub fn Nav() -> impl IntoView {
                             <img src="/logo.png" class="m-auto max-sm:hidden" />
                         </a>
                         <h2 class="m-4 font-serif text-xl font-bold">
-                            {move || { instance.get().map(|i| instance_title(&i.instance)) }}
+                            {move || Suspend::new(async move {
+                                instance.await.map(|i| instance_title(&i.instance))
+                            })}
                         </h2>
                         <ul>
                             <li>
