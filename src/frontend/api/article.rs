@@ -25,8 +25,7 @@ impl ApiClient {
     }
 
     pub async fn get_article(&self, data: GetArticleParams) -> FrontendResult<DbArticleView> {
-        //self.get("/api/v1/article", Some(data)).await;
-        Err(FrontendError("test".to_string()))
+        Ok(self.get("/api/v1/article", Some(data)).await.unwrap())
     }
 
     pub async fn list_articles(&self, data: ListArticlesParams) -> Option<Vec<DbArticle>> {
