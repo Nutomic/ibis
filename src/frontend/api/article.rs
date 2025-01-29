@@ -2,17 +2,26 @@ use super::{result_to_option, ApiClient};
 use crate::{
     common::{
         article::{
-            ApiConflict, ApproveArticleParams, CreateArticleParams, DbArticle, DbArticleView,
-            DeleteConflictParams, EditArticleParams, EditView, ForkArticleParams, GetArticleParams,
-            GetEditList, ListArticlesParams, ProtectArticleParams,
+            ApiConflict,
+            ApproveArticleParams,
+            CreateArticleParams,
+            DbArticle,
+            DbArticleView,
+            DeleteConflictParams,
+            EditArticleParams,
+            EditView,
+            ForkArticleParams,
+            GetArticleParams,
+            GetEditList,
+            ListArticlesParams,
+            ProtectArticleParams,
         },
         newtypes::{ArticleId, ConflictId},
         ResolveObjectParams,
     },
-    frontend::utils::errors::{FrontendError, FrontendResult},
+    frontend::utils::errors::FrontendResult,
 };
 use http::Method;
-use leptos::prelude::ServerFnError;
 use log::error;
 use url::Url;
 
@@ -20,12 +29,12 @@ impl ApiClient {
     pub async fn create_article(
         &self,
         data: &CreateArticleParams,
-    ) -> Result<DbArticleView, ServerFnError> {
+    ) -> FrontendResult<DbArticleView> {
         self.post("/api/v1/article", Some(&data)).await
     }
 
     pub async fn get_article(&self, data: GetArticleParams) -> FrontendResult<DbArticleView> {
-        Ok(self.get("/api/v1/article", Some(data)).await.unwrap())
+        self.send(Method::GET, "/api/v1/article", Some(data)).await
     }
 
     pub async fn list_articles(&self, data: ListArticlesParams) -> Option<Vec<DbArticle>> {
@@ -35,25 +44,22 @@ impl ApiClient {
     pub async fn edit_article(
         &self,
         params: &EditArticleParams,
-    ) -> Result<Option<ApiConflict>, ServerFnError> {
+    ) -> FrontendResult<Option<ApiConflict>> {
         self.patch("/api/v1/article", Some(&params)).await
     }
 
-    pub async fn fork_article(
-        &self,
-        params: &ForkArticleParams,
-    ) -> Result<DbArticleView, ServerFnError> {
+    pub async fn fork_article(&self, params: &ForkArticleParams) -> FrontendResult<DbArticleView> {
         self.post("/api/v1/article/fork", Some(params)).await
     }
 
     pub async fn protect_article(
         &self,
         params: &ProtectArticleParams,
-    ) -> Result<DbArticle, ServerFnError> {
+    ) -> FrontendResult<DbArticle> {
         self.post("/api/v1/article/protect", Some(params)).await
     }
 
-    pub async fn resolve_article(&self, id: Url) -> Result<DbArticleView, ServerFnError> {
+    pub async fn resolve_article(&self, id: Url) -> FrontendResult<DbArticleView> {
         let resolve_object = ResolveObjectParams { id };
         self.send(Method::GET, "/api/v1/article/resolve", Some(resolve_object))
             .await

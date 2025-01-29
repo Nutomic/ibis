@@ -1,5 +1,5 @@
+use crate::frontend::utils::errors::{FrontendError, FrontendResult};
 use http::{Method, StatusCode};
-use leptos::{prelude::ServerFnError, server_fn::error::NoCustomError};
 use log::{error, info};
 use serde::{Deserialize, Serialize};
 use std::{fmt::Debug, sync::LazyLock};
@@ -60,7 +60,7 @@ impl ApiClient {
         result_to_option(self.send(Method::GET, endpoint, query).await)
     }
 
-    async fn post<T, R>(&self, endpoint: &str, query: Option<R>) -> Result<T, ServerFnError>
+    async fn post<T, R>(&self, endpoint: &str, query: Option<R>) -> FrontendResult<T>
     where
         T: for<'de> Deserialize<'de>,
         R: Serialize + Debug,
@@ -68,7 +68,7 @@ impl ApiClient {
         self.send(Method::POST, endpoint, query).await
     }
 
-    async fn patch<T, R>(&self, endpoint: &str, query: Option<R>) -> Result<T, ServerFnError>
+    async fn patch<T, R>(&self, endpoint: &str, query: Option<R>) -> FrontendResult<T>
     where
         T: for<'de> Deserialize<'de>,
         R: Serialize + Debug,
@@ -77,12 +77,7 @@ impl ApiClient {
     }
 
     #[cfg(feature = "ssr")]
-    async fn send<P, T>(
-        &self,
-        method: Method,
-        path: &str,
-        params: Option<P>,
-    ) -> Result<T, ServerFnError>
+    async fn send<P, T>(&self, method: Method, path: &str, params: Option<P>) -> FrontendResult<T>
     where
         P: Serialize + Debug,
         T: for<'de> Deserialize<'de>,
@@ -90,6 +85,7 @@ impl ApiClient {
         use crate::common::{Auth, AUTH_COOKIE};
         use leptos::prelude::use_context;
         use reqwest::header::HeaderName;
+
         let mut req = self
             .client
             .request(method.clone(), self.request_endpoint(path));
@@ -115,7 +111,7 @@ impl ApiClient {
         method: Method,
         path: &'a str,
         params: Option<P>,
-    ) -> impl std::future::Future<Output = Result<T, ServerFnError>> + Send + 'a
+    ) -> impl std::future::Future<Output = FrontendResult<T>> + Send + 'a
     where
         P: Serialize + Debug + 'a,
         T: for<'de> Deserialize<'de>,
@@ -165,19 +161,19 @@ impl ApiClient {
         })
     }
 
-    fn response<T>(status: u16, text: String, url: &str) -> Result<T, ServerFnError>
+    fn response<T>(status: u16, text: String, url: &str) -> FrontendResult<T>
     where
         T: for<'de> Deserialize<'de>,
     {
         let json = serde_json::from_str(&text).map_err(|e| {
             info!("Failed to deserialize api response: {e} from {text} on {url}");
-            ServerFnError::<NoCustomError>::Deserialization(text.clone())
+            FrontendError(text.clone())
         })?;
         if status == StatusCode::OK {
             Ok(json)
         } else {
             info!("API error: {text} on {url} status {status}");
-            Err(ServerFnError::Response(text))
+            Err(FrontendError(text))
         }
     }
 
@@ -187,7 +183,7 @@ impl ApiClient {
     }
 }
 
-fn result_to_option<T>(val: Result<T, ServerFnError>) -> Option<T> {
+fn result_to_option<T>(val: FrontendResult<T>) -> Option<T> {
     match val {
         Ok(v) => Some(v),
         Err(e) => {

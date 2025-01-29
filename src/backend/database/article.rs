@@ -70,14 +70,22 @@ impl DbArticle {
             .get_result::<Self>(conn.deref_mut())?)
     }
 
-    pub fn update_protected(id: ArticleId, locked: bool, context: &IbisContext) -> BackendResult<Self> {
+    pub fn update_protected(
+        id: ArticleId,
+        locked: bool,
+        context: &IbisContext,
+    ) -> BackendResult<Self> {
         let mut conn = context.db_pool.get()?;
         Ok(diesel::update(article::dsl::article.find(id))
             .set(article::dsl::protected.eq(locked))
             .get_result::<Self>(conn.deref_mut())?)
     }
 
-    pub fn update_approved(id: ArticleId, approved: bool, context: &IbisContext) -> BackendResult<Self> {
+    pub fn update_approved(
+        id: ArticleId,
+        approved: bool,
+        context: &IbisContext,
+    ) -> BackendResult<Self> {
         let mut conn = context.db_pool.get()?;
         Ok(diesel::update(article::dsl::article.find(id))
             .set(article::dsl::approved.eq(approved))
@@ -141,7 +149,10 @@ impl DbArticle {
         })
     }
 
-    pub fn read_from_ap_id(ap_id: &ObjectId<DbArticle>, context: &IbisContext) -> BackendResult<Self> {
+    pub fn read_from_ap_id(
+        ap_id: &ObjectId<DbArticle>,
+        context: &IbisContext,
+    ) -> BackendResult<Self> {
         let mut conn = context.db_pool.get()?;
         Ok(article::table
             .filter(article::dsl::ap_id.eq(ap_id))

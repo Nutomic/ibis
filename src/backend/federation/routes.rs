@@ -237,7 +237,10 @@ impl Object for UserOrInstance {
         }
     }
 
-    async fn from_json(apub: Self::Kind, data: &Data<Self::DataType>) -> Result<Self, BackendError> {
+    async fn from_json(
+        apub: Self::Kind,
+        data: &Data<Self::DataType>,
+    ) -> Result<Self, BackendError> {
         Ok(match apub {
             PersonOrInstance::Person(p) => {
                 UserOrInstance::User(DbPerson::from_json(p, data).await?)

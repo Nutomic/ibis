@@ -1,3 +1,4 @@
+use super::utils::errors::FrontendResult;
 use crate::{
     common::{
         article::{DbArticleView, EditView, GetArticleParams},
@@ -7,7 +8,6 @@ use crate::{
 };
 use leptos::prelude::*;
 use leptos_router::hooks::use_params_map;
-use super::utils::errors::FrontendResult;
 
 pub mod article;
 pub mod instance;

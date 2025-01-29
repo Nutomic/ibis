@@ -16,7 +16,9 @@ pub fn config() -> Router<()> {
         .route("/.well-known/nodeinfo", get(node_info_well_known))
 }
 
-async fn node_info_well_known(context: Data<IbisContext>) -> BackendResult<Json<NodeInfoWellKnown>> {
+async fn node_info_well_known(
+    context: Data<IbisContext>,
+) -> BackendResult<Json<NodeInfoWellKnown>> {
     Ok(Json(NodeInfoWellKnown {
         links: vec![NodeInfoWellKnownLinks {
             rel: Url::parse("http://nodeinfo.diaspora.software/ns/schema/2.1")?,

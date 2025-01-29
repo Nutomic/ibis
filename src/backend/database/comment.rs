@@ -68,7 +68,10 @@ impl DbComment {
         Ok(DbCommentView { comment, creator })
     }
 
-    pub fn create_or_update(form: DbCommentInsertForm, context: &IbisContext) -> BackendResult<Self> {
+    pub fn create_or_update(
+        form: DbCommentInsertForm,
+        context: &IbisContext,
+    ) -> BackendResult<Self> {
         let mut conn = context.db_pool.get()?;
         Ok(insert_into(comment::table)
             .values(&form)
@@ -94,7 +97,10 @@ impl DbComment {
         Ok(DbCommentView { comment, creator })
     }
 
-    pub fn read_from_ap_id(ap_id: &ObjectId<DbComment>, context: &IbisContext) -> BackendResult<Self> {
+    pub fn read_from_ap_id(
+        ap_id: &ObjectId<DbComment>,
+        context: &IbisContext,
+    ) -> BackendResult<Self> {
         let mut conn = context.db_pool.get()?;
         Ok(comment::table
             .filter(comment::dsl::ap_id.eq(ap_id))

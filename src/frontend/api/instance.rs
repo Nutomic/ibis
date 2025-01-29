@@ -1,20 +1,22 @@
 use super::{result_to_option, ApiClient};
-use crate::common::{
-    article::{DbArticle, SearchArticleParams},
-    instance::{
-        DbInstance,
-        FollowInstanceParams,
-        GetInstanceParams,
-        InstanceView,
-        SiteView,
-        UpdateInstanceParams,
+use crate::{
+    common::{
+        article::{DbArticle, SearchArticleParams},
+        instance::{
+            DbInstance,
+            FollowInstanceParams,
+            GetInstanceParams,
+            InstanceView,
+            SiteView,
+            UpdateInstanceParams,
+        },
+        Notification,
+        ResolveObjectParams,
+        SuccessResponse,
     },
-    Notification,
-    ResolveObjectParams,
-    SuccessResponse,
+    frontend::utils::errors::FrontendResult,
 };
 use http::Method;
-use leptos::prelude::ServerFnError;
 use url::Url;
 
 impl ApiClient {
@@ -33,7 +35,7 @@ impl ApiClient {
     pub async fn update_local_instance(
         &self,
         params: &UpdateInstanceParams,
-    ) -> Result<DbInstance, ServerFnError> {
+    ) -> FrontendResult<DbInstance> {
         self.patch("/api/v1/instance", Some(params)).await
     }
 
@@ -46,14 +48,11 @@ impl ApiClient {
         self.get("/api/v1/user/notifications/count", None::<()>)
             .await
     }
-    pub async fn search(
-        &self,
-        params: &SearchArticleParams,
-    ) -> Result<Vec<DbArticle>, ServerFnError> {
+    pub async fn search(&self, params: &SearchArticleParams) -> FrontendResult<Vec<DbArticle>> {
         self.send(Method::GET, "/api/v1/search", Some(params)).await
     }
 
-    pub async fn resolve_instance(&self, id: Url) -> Result<DbInstance, ServerFnError> {
+    pub async fn resolve_instance(&self, id: Url) -> FrontendResult<DbInstance> {
         let resolve_object = ResolveObjectParams { id };
         self.send(
             Method::GET,

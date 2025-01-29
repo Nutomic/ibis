@@ -2,7 +2,8 @@ use crate::{
     backend::{
         database::{edit::DbEditForm, IbisContext},
         federation::activities::{
-            update_local_article::UpdateLocalArticle, update_remote_article::UpdateRemoteArticle,
+            update_local_article::UpdateLocalArticle,
+            update_remote_article::UpdateRemoteArticle,
         },
         utils::error::BackendError,
     },

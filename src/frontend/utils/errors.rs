@@ -13,6 +13,20 @@ impl Display for FrontendError {
 }
 
 impl Error for FrontendError {}
+
+#[cfg(feature = "ssr")]
+impl From<reqwest::Error> for FrontendError {
+    fn from(value: reqwest::Error) -> Self {
+        todo!()
+    }
+}
+#[cfg(not(feature = "ssr"))]
+impl From<gloo_net::Error> for FrontendError {
+    fn from(value: gloo_net::Error) -> Self {
+        todo!()
+    }
+}
+
 /*
 impl Render for FrontendError {
     type State = StringState;

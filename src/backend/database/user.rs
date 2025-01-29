@@ -144,7 +144,10 @@ impl DbPerson {
         Ok(query.get_result(conn.deref_mut())?)
     }
 
-    pub fn update_profile(params: &UpdateUserParams, context: &Data<IbisContext>) -> BackendResult<()> {
+    pub fn update_profile(
+        params: &UpdateUserParams,
+        context: &Data<IbisContext>,
+    ) -> BackendResult<()> {
         let mut conn = context.db_pool.get()?;
         diesel::update(person::table.find(params.person_id))
             .set((
@@ -155,7 +158,10 @@ impl DbPerson {
         Ok(())
     }
 
-    pub fn read_local_from_name(username: &str, context: &IbisContext) -> BackendResult<LocalUserView> {
+    pub fn read_local_from_name(
+        username: &str,
+        context: &IbisContext,
+    ) -> BackendResult<LocalUserView> {
         let mut conn = context.db_pool.get()?;
         let (person, local_user) = person::table
             .inner_join(local_user::table)

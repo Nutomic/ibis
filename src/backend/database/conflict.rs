@@ -72,7 +72,11 @@ impl DbConflict {
     }
 
     /// Delete merge conflict which was created by specific user
-    pub fn delete(id: ConflictId, creator_id: PersonId, context: &IbisContext) -> BackendResult<()> {
+    pub fn delete(
+        id: ConflictId,
+        creator_id: PersonId,
+        context: &IbisContext,
+    ) -> BackendResult<()> {
         let mut conn = context.db_pool.get()?;
         let conflict: Self = delete(
             conflict::table

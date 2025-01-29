@@ -12,8 +12,8 @@ where
             <ErrorBoundary
                 fallback=|errors| {
                     view! {
-                        <div class="grid h-screen place-items-center">
-                            <div class="alert alert-error w-min">
+                        <div class="grid place-items-center h-screen">
+                            <div class="alert alert-error w-fit">
                                 {move || {
                                     errors
                                         .get()
@@ -26,7 +26,7 @@ where
                     }
                 }
                 children
-            ></ErrorBoundary>
+            />
         </Suspense>
     }
 }

@@ -1,5 +1,5 @@
 use super::schema::instance_stats;
-use crate::backend::{IbisContext, BackendResult};
+use crate::backend::{BackendResult, IbisContext};
 use diesel::{query_dsl::methods::FindDsl, Queryable, RunQueryDsl, Selectable};
 use std::ops::DerefMut;
 

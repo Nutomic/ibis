@@ -1,7 +1,7 @@
-use crate::frontend::utils::errors::FrontendResult;
 use crate::{
     common::{article::DbArticleView, validation::can_edit_article},
     frontend::utils::{
+        errors::FrontendResult,
         formatting::{article_path, article_title},
         resources::{is_admin, is_logged_in},
     },
