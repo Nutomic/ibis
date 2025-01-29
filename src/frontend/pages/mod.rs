@@ -33,6 +33,7 @@ fn article_resource() -> Resource<DbArticleView> {
             .unwrap()
     })
 }
+
 fn article_resource_result() -> Resource<FrontendResult<DbArticleView>> {
     let params = use_params_map();
     let title = move || params.get().get("title").clone();
@@ -53,14 +54,14 @@ fn article_resource_result() -> Resource<FrontendResult<DbArticleView>> {
     })
 }
 
-fn article_edits_resource(article: Resource<DbArticleView>) -> Resource<Vec<EditView>> {
+fn article_edits_resource(
+    article: Resource<FrontendResult<DbArticleView>>,
+) -> Resource<FrontendResult<Vec<EditView>>> {
     Resource::new(
         move || article.get(),
         move |_| async move {
-            CLIENT
-                .get_article_edits(article.await.article.id)
-                .await
-                .unwrap_or_default()
+            let id = article.await.map(|a| a.article.id)?;
+            CLIENT.get_article_edits(id).await
         },
     )
 }

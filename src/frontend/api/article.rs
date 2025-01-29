@@ -2,19 +2,9 @@ use super::{result_to_option, ApiClient};
 use crate::{
     common::{
         article::{
-            ApiConflict,
-            ApproveArticleParams,
-            CreateArticleParams,
-            DbArticle,
-            DbArticleView,
-            DeleteConflictParams,
-            EditArticleParams,
-            EditView,
-            ForkArticleParams,
-            GetArticleParams,
-            GetEditList,
-            ListArticlesParams,
-            ProtectArticleParams,
+            ApiConflict, ApproveArticleParams, CreateArticleParams, DbArticle, DbArticleView,
+            DeleteConflictParams, EditArticleParams, EditView, ForkArticleParams, GetArticleParams,
+            GetEditList, ListArticlesParams, ProtectArticleParams,
         },
         newtypes::{ArticleId, ConflictId},
         ResolveObjectParams,
@@ -65,12 +55,13 @@ impl ApiClient {
             .await
     }
 
-    pub async fn get_article_edits(&self, article_id: ArticleId) -> Option<Vec<EditView>> {
+    pub async fn get_article_edits(&self, article_id: ArticleId) -> FrontendResult<Vec<EditView>> {
         let data = GetEditList {
             article_id: Some(article_id),
             ..Default::default()
         };
-        self.get("/api/v1/edit/list", Some(data)).await
+        self.send(Method::GET, "/api/v1/edit/list", Some(data))
+            .await
     }
 
     pub async fn approve_article(&self, article_id: ArticleId, approve: bool) -> Option<()> {

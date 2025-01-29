@@ -3,7 +3,7 @@ use std::{error::Error, fmt::Display};
 
 pub type FrontendResult<T> = Result<T, FrontendError>;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct FrontendError(pub String);
 
 impl Display for FrontendError {
