@@ -2,16 +2,16 @@ use crate::{
     common::{
         article::{ApiConflict, DbArticleView, EditArticleParams},
         newtypes::ConflictId,
-        Notification,
-        MAIN_PAGE_NAME,
+        Notification, MAIN_PAGE_NAME,
     },
     frontend::{
         api::CLIENT,
         components::{
             article_editor::EditorView,
-            article_nav::{ActiveTab, ArticleNav},
+            article_nav2::{ActiveTab2, ArticleNav2},
+            suspense_error::SuspenseError,
         },
-        pages::article_resource,
+        pages::article_resource_result,
     },
 };
 use chrono::{Days, Utc};
@@ -30,7 +30,7 @@ const CONFLICT_MESSAGE: &str = "There was an edit conflict. Resolve it manually 
 
 #[component]
 pub fn EditArticle() -> impl IntoView {
-    let article = article_resource();
+    let article = article_resource_result();
     let (edit_response, set_edit_response) = signal(EditResponse::None);
     let (edit_error, set_edit_error) = signal(None::<String>);
 
@@ -116,17 +116,15 @@ pub fn EditArticle() -> impl IntoView {
     );
 
     view! {
-        <ArticleNav article=article active_tab=ActiveTab::Edit />
+        <ArticleNav2 article=article active_tab=ActiveTab2::Edit />
         <Show
             when=move || edit_response.get() == EditResponse::Success
             fallback=move || {
                 view! {
-                    <Suspense fallback=|| {
-                        view! { "Loading..." }
-                    }>
-                        {move || {
+                    <SuspenseError result=article>
+                        {move || Suspend::new(async move {
                             article
-                                .get()
+                                .await
                                 .map(|mut article| {
                                     if let EditResponse::Conflict(conflict) = edit_response.get() {
                                         article.article.text = conflict.three_way_merge;
@@ -188,9 +186,8 @@ pub fn EditArticle() -> impl IntoView {
                                         </div>
                                     }
                                 })
-                        }}
-
-                    </Suspense>
+                        })}
+                    </SuspenseError>
                 }
             }
         >
