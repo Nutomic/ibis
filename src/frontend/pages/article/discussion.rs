@@ -2,11 +2,12 @@ use crate::{
     common::{comment::DbCommentView, newtypes::CommentId},
     frontend::{
         components::{
-            article_nav::{ActiveTab, ArticleNav},
+            article_nav2::{ActiveTab2, ArticleNav2},
             comment::CommentView,
             comment_editor::CommentEditorView,
+            suspense_error::SuspenseError,
         },
-        pages::article_resource,
+        pages::article_resource_result,
     },
 };
 use leptos::prelude::*;
@@ -14,26 +15,34 @@ use std::collections::HashMap;
 
 #[component]
 pub fn ArticleDiscussion() -> impl IntoView {
-    let article = article_resource();
+    let article = article_resource_result();
 
     let show_editor = signal(CommentId(-1));
 
     view! {
-        <ArticleNav article=article active_tab=ActiveTab::Discussion />
-        <Suspense fallback=|| view! { "Loading..." }>
-            <CommentEditorView article=article />
-            <div>
-                <For
-                    each=move || {
-                        article.get().map(|a| build_comments_tree(a.comments)).unwrap_or_default()
-                    }
-                    key=|comment| comment.comment.id
-                    children=move |comment: DbCommentView| {
-                        view! { <CommentView article comment show_editor /> }
-                    }
-                />
-            </div>
-        </Suspense>
+        <ArticleNav2 article=article active_tab=ActiveTab2::Discussion />
+        <SuspenseError result=article>
+            {move || Suspend::new(async move {
+                let article2 = article.await;
+                view! {
+                    <CommentEditorView article=article />
+                    <div>
+                        <For
+                            each=move || {
+                                article2
+                                    .clone()
+                                    .map(|a| build_comments_tree(a.comments))
+                                    .unwrap_or_default()
+                            }
+                            key=|comment| comment.comment.id
+                            children=move |comment: DbCommentView| {
+                                view! { <CommentView article comment show_editor /> }
+                            }
+                        />
+                    </div>
+                }
+            })}
+        </SuspenseError>
     }
 }
 

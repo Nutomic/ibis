@@ -9,6 +9,7 @@ use crate::{
         components::comment_editor::{CommentEditorView, EditParams},
         markdown::render_comment_markdown,
         utils::{
+            errors::FrontendResult,
             formatting::{time_ago, user_link},
             resources::{site, DefaultResource},
         },
@@ -18,7 +19,7 @@ use leptos::prelude::*;
 
 #[component]
 pub fn CommentView(
-    article: Resource<DbArticleView>,
+    article: Resource<FrontendResult<DbArticleView>>,
     comment: DbCommentView,
     show_editor: (ReadSignal<CommentId>, WriteSignal<CommentId>),
 ) -> impl IntoView {
@@ -36,6 +37,7 @@ pub fn CommentView(
         "/article/{}/discussion#{comment_id}",
         article
             .get()
+            .and_then(|a| a.ok())
             .map(|a| a.article.title.clone())
             .unwrap_or_default(),
     );

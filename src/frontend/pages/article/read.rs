@@ -1,6 +1,5 @@
 use crate::frontend::{
     components::{
-        article_nav::{ActiveTab, ArticleNav},
         article_nav2::{ActiveTab2, ArticleNav2},
         suspense_error::SuspenseError,
     },
@@ -18,7 +17,7 @@ pub fn ReadArticle() -> impl IntoView {
 
     view! {
         <ArticleNav2 article=article active_tab=ActiveTab2::Read />
-        <SuspenseError>
+        <SuspenseError result=article>
             {move || Suspend::new(async move {
                 let article = article.await;
                 let markdown = article.map(|a| render_article_markdown(&a.article.text));

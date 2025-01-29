@@ -4,7 +4,7 @@ use crate::{
         comment::{CreateCommentParams, DbComment, EditCommentParams},
         newtypes::CommentId,
     },
-    frontend::api::CLIENT,
+    frontend::{api::CLIENT, utils::errors::FrontendResult},
 };
 use leptos::{html::Textarea, prelude::*};
 use leptos_use::{use_textarea_autosize, UseTextareaAutosizeReturn};
@@ -18,7 +18,7 @@ pub struct EditParams {
 
 #[component]
 pub fn CommentEditorView(
-    article: Resource<DbArticleView>,
+    article: Resource<FrontendResult<DbArticleView>>,
     #[prop(optional)] parent_id: Option<CommentId>,
     /// Set this to CommentId(-1) to hide all editors
     #[prop(optional)]
@@ -53,7 +53,7 @@ pub fn CommentEditorView(
             } else {
                 let params = CreateCommentParams {
                     content: content.get_untracked(),
-                    article_id: article.await.article.id,
+                    article_id: article.await.map(|a| a.article.id).unwrap_or_default(),
                     parent_id,
                 };
                 CLIENT.create_comment(&params).await.unwrap();

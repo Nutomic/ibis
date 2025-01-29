@@ -1,32 +1,30 @@
-use leptos::prelude::*;
+use leptos::{either::Either, prelude::*};
+
+use crate::frontend::utils::errors::FrontendResult;
 
 #[component]
-pub fn SuspenseError<Chil>(children: TypedChildren<Chil>) -> impl IntoView
+pub fn SuspenseError<T>(children: ChildrenFn, result: Resource<FrontendResult<T>>) -> impl IntoView
 where
-    Chil: IntoView + Send + 'static,
+    T: Clone + Send + Sync + 'static,
 {
     view! {
         <Suspense fallback=|| {
             view! { "Loading..." }
         }>
-            <ErrorBoundary
-                fallback=|errors| {
-                    view! {
-                        <div class="grid place-items-center h-screen">
-                            <div class="alert alert-error w-fit">
-                                {move || {
-                                    errors
-                                        .get()
-                                        .into_iter()
-                                        .map(|(_, e)| e.to_string())
-                                        .collect::<Vec<_>>()
-                                }}
+            {move || {
+                if let Some(Err(e)) = result.get() {
+                    Either::Left(
+                        view! {
+                            <div class="grid place-items-center h-screen">
+                                <div class="alert alert-error w-fit">{e.0}</div>
                             </div>
-                        </div>
-                    }
+                        },
+                    )
+                } else {
+                    Either::Right(children())
                 }
-                children
-            />
+            }}
+
         </Suspense>
     }
 }
