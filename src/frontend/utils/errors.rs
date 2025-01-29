@@ -27,6 +27,11 @@ impl From<gloo_net::Error> for FrontendError {
     }
 }
 
+impl From<url::ParseError> for FrontendError {
+    fn from(value: url::ParseError) -> Self {
+        Self(value.to_string())
+    }
+}
 /*
 impl Render for FrontendError {
     type State = StringState;

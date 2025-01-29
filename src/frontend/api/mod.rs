@@ -1,6 +1,6 @@
 use crate::frontend::utils::errors::{FrontendError, FrontendResult};
 use http::{Method, StatusCode};
-use log::{error, info};
+use log::info;
 use serde::{Deserialize, Serialize};
 use std::{fmt::Debug, sync::LazyLock};
 
@@ -52,12 +52,12 @@ impl ApiClient {
         Self { hostname, ssl }
     }
 
-    async fn get<T, R>(&self, endpoint: &str, query: Option<R>) -> Option<T>
+    async fn get<T, R>(&self, endpoint: &str, query: Option<R>) -> FrontendResult<T>
     where
         T: for<'de> Deserialize<'de>,
         R: Serialize + Debug,
     {
-        result_to_option(self.send(Method::GET, endpoint, query).await)
+        self.send(Method::GET, endpoint, query).await
     }
 
     async fn post<T, R>(&self, endpoint: &str, query: Option<R>) -> FrontendResult<T>
@@ -180,15 +180,5 @@ impl ApiClient {
     fn request_endpoint(&self, path: &str) -> String {
         let protocol = if self.ssl { "https" } else { "http" };
         format!("{protocol}://{}{path}", &self.hostname)
-    }
-}
-
-fn result_to_option<T>(val: FrontendResult<T>) -> Option<T> {
-    match val {
-        Ok(v) => Some(v),
-        Err(e) => {
-            error!("API error: {e}");
-            None
-        }
     }
 }

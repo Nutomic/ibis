@@ -15,12 +15,15 @@ pub fn ArticleHistory() -> impl IntoView {
 
     view! {
         <ArticleNav article=article active_tab=ActiveTab::History />
-        <SuspenseError result=edits>
+        <SuspenseError result=article>
             {move || Suspend::new(async move {
                 edits
                     .await
                     .map(|edits| {
-                        view! { <EditList edits=edits for_article=true /> }
+                        view! {
+                            // TODO: move edits resource here? but leads to strange crash
+                            <EditList edits=edits for_article=true />
+                        }
                     })
             })}
 

@@ -1,4 +1,4 @@
-use super::{result_to_option, ApiClient};
+use super::ApiClient;
 use crate::{
     common::{
         article::{
@@ -74,20 +74,22 @@ impl ApiClient {
             .await
     }
 
-    pub async fn approve_article(&self, article_id: ArticleId, approve: bool) -> Option<()> {
+    pub async fn approve_article(
+        &self,
+        article_id: ArticleId,
+        approve: bool,
+    ) -> FrontendResult<()> {
         let params = ApproveArticleParams {
             article_id,
             approve,
         };
-        result_to_option(self.post("/api/v1/article/approve", Some(&params)).await)
+        self.post("/api/v1/article/approve", Some(&params)).await
     }
 
-    pub async fn delete_conflict(&self, conflict_id: ConflictId) -> Option<()> {
+    pub async fn delete_conflict(&self, conflict_id: ConflictId) -> FrontendResult<()> {
         let params = DeleteConflictParams { conflict_id };
-        result_to_option(
-            self.send(Method::DELETE, "/api/v1/conflict", Some(params))
-                .await,
-        )
+        self.send(Method::DELETE, "/api/v1/conflict", Some(params))
+            .await
     }
 
     #[cfg(debug_assertions)]
