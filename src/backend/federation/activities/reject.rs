@@ -6,7 +6,7 @@ use crate::{
         },
         federation::{objects::edit::ApubEdit, send_activity},
         utils::{
-            error::{Error, MyResult},
+            error::{BackendError, BackendResult},
             generate_activity_id,
         },
     },
@@ -39,7 +39,7 @@ impl RejectEdit {
         edit: ApubEdit,
         user_instance: DbInstance,
         context: &Data<IbisContext>,
-    ) -> MyResult<()> {
+    ) -> BackendResult<()> {
         let local_instance = DbInstance::read_local(context)?;
         let id = generate_activity_id(context)?;
         let reject = RejectEdit {
@@ -63,7 +63,7 @@ impl RejectEdit {
 #[async_trait::async_trait]
 impl ActivityHandler for RejectEdit {
     type DataType = IbisContext;
-    type Error = Error;
+    type Error = BackendError;
 
     fn id(&self) -> &Url {
         &self.id

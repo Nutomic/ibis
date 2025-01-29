@@ -3,7 +3,7 @@ use crate::{
         database::IbisContext,
         federation::objects::article::ApubArticle,
         utils::{
-            error::{Error, MyResult},
+            error::{BackendError, BackendResult},
             generate_activity_id,
         },
     },
@@ -35,7 +35,7 @@ impl CreateArticle {
     pub async fn send_to_followers(
         article: DbArticle,
         context: &Data<IbisContext>,
-    ) -> MyResult<()> {
+    ) -> BackendResult<()> {
         let local_instance = DbInstance::read_local(context)?;
         let object = article.clone().into_json(context).await?;
         let id = generate_activity_id(context)?;
@@ -56,7 +56,7 @@ impl CreateArticle {
 #[async_trait::async_trait]
 impl ActivityHandler for CreateArticle {
     type DataType = IbisContext;
-    type Error = Error;
+    type Error = BackendError;
 
     fn id(&self) -> &Url {
         &self.id

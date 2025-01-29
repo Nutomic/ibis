@@ -5,7 +5,7 @@ use crate::{
             IbisContext,
         },
         federation::activities::submit_article_update,
-        utils::{error::MyResult, generate_article_version},
+        utils::{error::BackendResult, generate_article_version},
     },
     common::{
         article::{ApiConflict, DbArticle, DbEdit, EditVersion},
@@ -57,14 +57,14 @@ pub struct DbConflictForm {
 }
 
 impl DbConflict {
-    pub fn create(form: &DbConflictForm, context: &IbisContext) -> MyResult<Self> {
+    pub fn create(form: &DbConflictForm, context: &IbisContext) -> BackendResult<Self> {
         let mut conn = context.db_pool.get()?;
         Ok(insert_into(conflict::table)
             .values(form)
             .get_result(conn.deref_mut())?)
     }
 
-    pub fn list(person: &DbPerson, context: &IbisContext) -> MyResult<Vec<Self>> {
+    pub fn list(person: &DbPerson, context: &IbisContext) -> BackendResult<Vec<Self>> {
         let mut conn = context.db_pool.get()?;
         Ok(conflict::table
             .filter(conflict::dsl::creator_id.eq(person.id))
@@ -72,7 +72,7 @@ impl DbConflict {
     }
 
     /// Delete merge conflict which was created by specific user
-    pub fn delete(id: ConflictId, creator_id: PersonId, context: &IbisContext) -> MyResult<()> {
+    pub fn delete(id: ConflictId, creator_id: PersonId, context: &IbisContext) -> BackendResult<()> {
         let mut conn = context.db_pool.get()?;
         let conflict: Self = delete(
             conflict::table
@@ -92,7 +92,7 @@ impl DbConflict {
     pub async fn to_api_conflict(
         &self,
         context: &Data<IbisContext>,
-    ) -> MyResult<Option<ApiConflict>> {
+    ) -> BackendResult<Option<ApiConflict>> {
         let article = DbArticle::read_view(self.article_id, context)?;
         // Make sure to get latest version from origin so that all conflicts can be resolved
         let original_article = article.article.ap_id.dereference_forced(context).await?;

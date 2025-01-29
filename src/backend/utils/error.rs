@@ -1,27 +1,27 @@
 use std::fmt::{Display, Formatter};
 
-pub type MyResult<T> = Result<T, Error>;
+pub type BackendResult<T> = Result<T, BackendError>;
 
 #[derive(Debug)]
-pub struct Error(pub anyhow::Error);
+pub struct BackendError(pub anyhow::Error);
 
-impl Display for Error {
+impl Display for BackendError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         std::fmt::Display::fmt(&self.0, f)
     }
 }
 
-impl<T> From<T> for Error
+impl<T> From<T> for BackendError
 where
     T: Into<anyhow::Error>,
 {
     fn from(t: T) -> Self {
-        Error(t.into())
+        BackendError(t.into())
     }
 }
 
 #[cfg(feature = "ssr")]
-impl axum::response::IntoResponse for Error {
+impl axum::response::IntoResponse for BackendError {
     fn into_response(self) -> axum::response::Response {
         (
             axum::http::StatusCode::INTERNAL_SERVER_ERROR,

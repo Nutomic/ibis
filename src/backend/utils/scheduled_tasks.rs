@@ -1,4 +1,4 @@
-use crate::backend::{database::DbPool, utils::error::MyResult};
+use crate::backend::{database::DbPool, utils::error::BackendResult};
 use clokwerk::{Scheduler, TimeUnits};
 use diesel::{sql_query, RunQueryDsl};
 use log::{error, info};
@@ -15,7 +15,7 @@ pub fn start(pool: DbPool) {
     let _ = scheduler.watch_thread(Duration::from_secs(60));
 }
 
-fn active_counts(pool: &DbPool) -> MyResult<()> {
+fn active_counts(pool: &DbPool) -> BackendResult<()> {
     info!("Updating active user count");
     let mut conn = pool.get()?;
 

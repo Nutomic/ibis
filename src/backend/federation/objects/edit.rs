@@ -1,7 +1,7 @@
 use crate::{
     backend::{
         database::{edit::DbEditForm, IbisContext},
-        utils::error::Error,
+        utils::error::BackendError,
     },
     common::{
         article::{DbArticle, DbEdit, EditVersion},
@@ -45,7 +45,7 @@ pub struct ApubEdit {
 impl Object for DbEdit {
     type DataType = IbisContext;
     type Kind = ApubEdit;
-    type Error = Error;
+    type Error = BackendError;
 
     async fn read_from_id(
         object_id: Url,

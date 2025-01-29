@@ -10,7 +10,7 @@ use crate::{
             undo_delete_comment::UndoDeleteComment,
         },
         utils::{
-            error::MyResult,
+            error::BackendResult,
             validate::{validate_comment_max_depth, validate_not_empty},
         },
     },
@@ -31,7 +31,7 @@ pub(in crate::backend::api) async fn create_comment(
     user: Extension<LocalUserView>,
     context: Data<IbisContext>,
     Form(params): Form<CreateCommentParams>,
-) -> MyResult<Json<DbCommentView>> {
+) -> BackendResult<Json<DbCommentView>> {
     validate_not_empty(&params.content)?;
     let mut depth = 0;
     if let Some(parent_id) = params.parent_id {
@@ -78,7 +78,7 @@ pub(in crate::backend::api) async fn edit_comment(
     user: Extension<LocalUserView>,
     context: Data<IbisContext>,
     Form(params): Form<EditCommentParams>,
-) -> MyResult<Json<DbCommentView>> {
+) -> BackendResult<Json<DbCommentView>> {
     if let Some(content) = &params.content {
         validate_not_empty(content)?;
     }

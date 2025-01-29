@@ -8,7 +8,7 @@ use crate::{
                 instance_collection::linked_instances_url,
             },
         },
-        utils::{error::Error, generate_keypair},
+        utils::{error::BackendError, generate_keypair},
     },
     common::{
         article::{DbArticle, EditVersion},
@@ -27,7 +27,7 @@ This main page can only be edited by the admin. Use it as an introduction for ne
 and to list interesting articles.
 ";
 
-pub async fn setup(context: &Data<IbisContext>) -> Result<(), Error> {
+pub async fn setup(context: &Data<IbisContext>) -> Result<(), BackendError> {
     let domain = &context.config.federation.domain;
     let ap_id = ObjectId::parse(&format!("{}://{domain}", http_protocol_str()))?;
     let inbox_url = format!("{}://{domain}/inbox", http_protocol_str());

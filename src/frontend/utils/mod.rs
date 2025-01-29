@@ -5,7 +5,7 @@ use leptos_use::{use_cookie_with_options, SameSite, UseCookieOptions};
 
 pub mod dark_mode;
 pub mod formatting;
-pub mod resources;
+pub mod resources;pub mod errors;
 
 pub fn use_cookie(name: &str) -> (Signal<Option<bool>>, WriteSignal<Option<bool>>) {
     let expires = (Local::now() + Duration::days(356)).timestamp();

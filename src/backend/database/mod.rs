@@ -1,6 +1,6 @@
 use crate::backend::{
     database::schema::jwt_secret,
-    utils::{config::IbisConfig, error::MyResult},
+    utils::{config::IbisConfig, error::BackendResult},
 };
 use diesel::{
     r2d2::{ConnectionManager, Pool},
@@ -27,7 +27,7 @@ pub struct IbisContext {
     pub config: IbisConfig,
 }
 
-pub fn read_jwt_secret(context: &IbisContext) -> MyResult<String> {
+pub fn read_jwt_secret(context: &IbisContext) -> BackendResult<String> {
     let mut conn = context.db_pool.get()?;
     Ok(jwt_secret::table
         .select(jwt_secret::dsl::secret)

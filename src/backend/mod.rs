@@ -2,7 +2,7 @@ use crate::{
     backend::{
         database::IbisContext,
         federation::VerifyUrlData,
-        utils::{config::IbisConfig, error::MyResult, generate_activity_id},
+        utils::{config::IbisConfig, error::BackendResult, generate_activity_id},
     },
     common::instance::DbInstance,
 };
@@ -30,7 +30,7 @@ pub async fn start(
     config: IbisConfig,
     override_hostname: Option<SocketAddr>,
     notify_start: Option<oneshot::Sender<()>>,
-) -> MyResult<()> {
+) -> BackendResult<()> {
     let manager = ConnectionManager::<PgConnection>::new(&config.database.connection_url);
     let db_pool = Pool::builder()
         .max_size(config.database.pool_size)

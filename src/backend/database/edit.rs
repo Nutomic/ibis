@@ -1,7 +1,7 @@
 use crate::{
     backend::{
         database::schema::{article, edit, person},
-        utils::error::MyResult,
+        utils::error::BackendResult,
         IbisContext,
     },
     common::{
@@ -47,7 +47,7 @@ impl DbEditForm {
         summary: String,
         previous_version_id: EditVersion,
         pending: bool,
-    ) -> MyResult<Self> {
+    ) -> BackendResult<Self> {
         let diff = create_patch(&original_article.text, updated_text);
         let version = EditVersion::new(&diff.to_string());
         let ap_id = Self::generate_ap_id(original_article, &version)?;
@@ -67,7 +67,7 @@ impl DbEditForm {
     pub fn generate_ap_id(
         article: &DbArticle,
         version: &EditVersion,
-    ) -> MyResult<ObjectId<DbEdit>> {
+    ) -> BackendResult<ObjectId<DbEdit>> {
         Ok(ObjectId::parse(&format!(
             "{}/{}",
             article.ap_id,
@@ -77,7 +77,7 @@ impl DbEditForm {
 }
 
 impl DbEdit {
-    pub fn create(form: &DbEditForm, context: &IbisContext) -> MyResult<Self> {
+    pub fn create(form: &DbEditForm, context: &IbisContext) -> BackendResult<Self> {
         let mut conn = context.db_pool.get()?;
         Ok(insert_into(edit::table)
             .values(form)
@@ -87,21 +87,21 @@ impl DbEdit {
             .get_result(conn.deref_mut())?)
     }
 
-    pub fn read(version: &EditVersion, context: &IbisContext) -> MyResult<Self> {
+    pub fn read(version: &EditVersion, context: &IbisContext) -> BackendResult<Self> {
         let mut conn = context.db_pool.get()?;
         Ok(edit::table
             .filter(edit::dsl::hash.eq(version))
             .get_result(conn.deref_mut())?)
     }
 
-    pub fn read_from_ap_id(ap_id: &ObjectId<DbEdit>, context: &IbisContext) -> MyResult<Self> {
+    pub fn read_from_ap_id(ap_id: &ObjectId<DbEdit>, context: &IbisContext) -> BackendResult<Self> {
         let mut conn = context.db_pool.get()?;
         Ok(edit::table
             .filter(edit::dsl::ap_id.eq(ap_id))
             .get_result(conn.deref_mut())?)
     }
 
-    pub fn list_for_article(id: ArticleId, context: &IbisContext) -> MyResult<Vec<Self>> {
+    pub fn list_for_article(id: ArticleId, context: &IbisContext) -> BackendResult<Vec<Self>> {
         let mut conn = context.db_pool.get()?;
         Ok(edit::table
             .filter(edit::article_id.eq(id))
@@ -113,7 +113,7 @@ impl DbEdit {
         params: ViewEditParams,
         user: &Option<LocalUserView>,
         context: &IbisContext,
-    ) -> MyResult<Vec<EditView>> {
+    ) -> BackendResult<Vec<EditView>> {
         let mut conn = context.db_pool.get()?;
         let person_id = user.as_ref().map(|u| u.person.id).unwrap_or(PersonId(-1));
         let query = edit::table

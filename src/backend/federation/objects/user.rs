@@ -1,7 +1,7 @@
 use crate::{
     backend::{
         database::{user::DbPersonForm, IbisContext},
-        utils::error::Error,
+        utils::error::BackendError,
     },
     common::user::DbPerson,
 };
@@ -35,7 +35,7 @@ pub struct ApubUser {
 impl Object for DbPerson {
     type DataType = IbisContext;
     type Kind = ApubUser;
-    type Error = Error;
+    type Error = BackendError;
 
     fn last_refreshed_at(&self) -> Option<DateTime<Utc>> {
         Some(self.last_refreshed_at)
