@@ -1,22 +1,15 @@
 use super::{result_to_option, ApiClient};
-use crate::common::{
-    article::{
-        ApiConflict,
-        ApproveArticleParams,
-        CreateArticleParams,
-        DbArticle,
-        DbArticleView,
-        DeleteConflictParams,
-        EditArticleParams,
-        EditView,
-        ForkArticleParams,
-        GetArticleParams,
-        GetEditList,
-        ListArticlesParams,
-        ProtectArticleParams,
+use crate::{
+    common::{
+        article::{
+            ApiConflict, ApproveArticleParams, CreateArticleParams, DbArticle, DbArticleView,
+            DeleteConflictParams, EditArticleParams, EditView, ForkArticleParams, GetArticleParams,
+            GetEditList, ListArticlesParams, ProtectArticleParams,
+        },
+        newtypes::{ArticleId, ConflictId},
+        ResolveObjectParams,
     },
-    newtypes::{ArticleId, ConflictId},
-    ResolveObjectParams,
+    frontend::utils::errors::{FrontendError, FrontendResult},
 };
 use http::Method;
 use leptos::prelude::ServerFnError;
@@ -31,8 +24,9 @@ impl ApiClient {
         self.post("/api/v1/article", Some(&data)).await
     }
 
-    pub async fn get_article(&self, data: GetArticleParams) -> Option<DbArticleView> {
-        self.get("/api/v1/article", Some(data)).await
+    pub async fn get_article(&self, data: GetArticleParams) -> FrontendResult<DbArticleView> {
+        //self.get("/api/v1/article", Some(data)).await;
+        Err(FrontendError("test".to_string()))
     }
 
     pub async fn list_articles(&self, data: ListArticlesParams) -> Option<Vec<DbArticle>> {
@@ -108,5 +102,6 @@ impl ApiClient {
             id: Some(params.article_id),
         })
         .await
+        .ok()
     }
 }
