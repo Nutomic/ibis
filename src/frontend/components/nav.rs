@@ -17,13 +17,7 @@ pub fn Nav() -> impl IntoView {
     });
     let notification_count = Resource::new(
         || (),
-        move |_| async move {
-            if is_logged_in() {
-                CLIENT.notifications_count().await.unwrap_or_default()
-            } else {
-                0
-            }
-        },
+        move |_| async move { CLIENT.notifications_count().await.unwrap_or_default() },
     );
     let instance = Resource::new(|| (), |_| async move { CLIENT.get_local_instance().await });
 

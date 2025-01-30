@@ -15,11 +15,12 @@ pub static CLIENT: LazyLock<ApiClient> = LazyLock::new(|| ApiClient::new(None));
 pub struct ApiClient {
     #[cfg(feature = "ssr")]
     client: reqwest::Client,
+    #[cfg(feature = "ssr")]
     test_hostname: Option<String>,
 }
 
 impl ApiClient {
-    pub fn new(test_hostname: Option<String>) -> Self {
+    pub fn new(#[allow(unused)] test_hostname: Option<String>) -> Self {
         #[cfg(feature = "ssr")]
         {
             // need cookie store for auth in tests
@@ -34,7 +35,7 @@ impl ApiClient {
         }
         #[cfg(not(feature = "ssr"))]
         {
-            Self { test_hostname }
+            Self {}
         }
     }
 
@@ -179,17 +180,19 @@ impl ApiClient {
                 .test_hostname
                 .clone()
                 .or_else(|| use_context::<LeptosOptions>().map(|o| o.site_addr.to_string()))
-                // Needed because during tests App() gets initialized from
-                // backend generate_route_list() which attempts to load some
-                // resources without providing LeptosOptions.
-                .ok_or(FrontendError::new("Failed to get hostname"))?;
+                // Needed because during tests App() gets initialized from backend
+                // generate_route_list() which attempts to load some resources without providing
+                // LeptosOptions. Returning an error results in hydration errors, but an invalid
+                // host seems fine.
+                // TODO: maybe can change this to Err after unwraps are all removed
+                .unwrap_or_else(|| "localhost".to_string());
         }
         #[cfg(not(feature = "ssr"))]
         {
             use leptos::prelude::location;
             hostname = location()
                 .host()
-                .map_err(|e| FrontendError(format!("Failed to get hostname: {:?}", e)))?;
+                .map_err(|e| FrontendError::new(format!("Failed to get hostname: {:?}", e)))?;
         }
 
         Ok(format!("{protocol}://{}{path}", hostname))

@@ -194,16 +194,20 @@ pub(crate) async fn list_notifications(
 
 #[debug_handler]
 pub(crate) async fn count_notifications(
-    Extension(user): Extension<LocalUserView>,
+    user: Option<Extension<LocalUserView>>,
     context: Data<IbisContext>,
 ) -> BackendResult<Json<usize>> {
-    let mut count = 0;
-    let conflicts = DbConflict::list(&user.person, &context)?;
-    count += conflicts.len();
-    if check_is_admin(&user).is_ok() {
-        let articles = DbArticle::list_approval_required(&context)?;
-        count += articles.len();
-    }
+    if let Some(user) = user {
+        let mut count = 0;
+        let conflicts = DbConflict::list(&user.person, &context)?;
+        count += conflicts.len();
+        if check_is_admin(&user).is_ok() {
+            let articles = DbArticle::list_approval_required(&context)?;
+            count += articles.len();
+        }
 
-    Ok(Json(count))
+        Ok(Json(count))
+    } else {
+        Ok(Json(0))
+    }
 }
