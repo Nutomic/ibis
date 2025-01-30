@@ -1,4 +1,4 @@
-use leptos::{ev::KeyboardEvent, prelude::*};
+use leptos::prelude::*;
 
 #[component]
 pub fn CredentialsForm(
@@ -33,15 +33,8 @@ pub fn CredentialsForm(
                 class="input input-primary input-bordered"
                 required
                 placeholder="Username"
+                bind:value=(username, set_username)
                 prop:disabled=move || disabled.get()
-                on:keyup=move |ev: KeyboardEvent| {
-                    let val = event_target_value(&ev);
-                    set_username.update(|v| *v = val);
-                }
-                on:change=move |ev| {
-                    let val = event_target_value(&ev);
-                    set_username.update(|v| *v = val);
-                }
             />
             <div class="h-2"></div>
             <input
@@ -50,21 +43,7 @@ pub fn CredentialsForm(
                 required
                 placeholder="Password"
                 prop:disabled=move || disabled.get()
-                on:keyup=move |ev: KeyboardEvent| {
-                    match &*ev.key() {
-                        "Enter" => {
-                            dispatch_action();
-                        }
-                        _ => {
-                            let val = event_target_value(&ev);
-                            set_password.update(|p| *p = val);
-                        }
-                    }
-                }
-                on:change=move |ev| {
-                    let val = event_target_value(&ev);
-                    set_password.update(|p| *p = val);
-                }
+                bind:value=(password, set_password)
             />
 
             <div>

@@ -1,7 +1,9 @@
 use crate::{
     common::instance::UpdateInstanceParams,
     frontend::{
-        api::CLIENT, components::suspense_error::SuspenseError, utils::errors::FrontendResultExt,
+        api::CLIENT,
+        components::suspense_error::SuspenseError,
+        utils::errors::FrontendResultExt,
     },
 };
 use leptos::prelude::*;
@@ -50,12 +52,7 @@ pub fn InstanceSettings() -> impl IntoView {
                                     type="text"
                                     id="name"
                                     class="w-80 input input-secondary input-bordered"
-                                    prop:value=name
-                                    value=name
-                                    on:change=move |ev| {
-                                        let val = event_target_value(&ev);
-                                        set_name.set(val);
-                                    }
+                                    bind:value=(name, set_name)
                                 />
                             </div>
                             <div class="flex flex-row mb-2">
@@ -66,12 +63,7 @@ pub fn InstanceSettings() -> impl IntoView {
                                     type="text"
                                     id="name"
                                     class="w-80 input input-secondary input-bordered"
-                                    prop:value=topic
-                                    value=topic
-                                    on:change=move |ev| {
-                                        let val = event_target_value(&ev);
-                                        set_topic.set(val);
-                                    }
+                                    bind:value=(topic, set_topic)
                                 />
                             </div>
                             <button

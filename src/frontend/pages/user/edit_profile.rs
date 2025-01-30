@@ -46,12 +46,7 @@ pub fn UserEditProfile() -> impl IntoView {
                             type="text"
                             id="displayname"
                             class="w-80 input input-secondary input-bordered"
-                            prop:value=display_name
-                            value=display_name
-                            on:change=move |ev| {
-                                let val = event_target_value(&ev);
-                                set_display_name.set(val);
-                            }
+                            bind:value=(display_name, set_display_name)
                         />
                     </div>
                     <div class="flex flex-row mb-2">
@@ -61,11 +56,7 @@ pub fn UserEditProfile() -> impl IntoView {
                         <textarea
                             id="bio"
                             class="w-80 text-base textarea textarea-secondary"
-                            prop:value=move || bio.get()
-                            on:input:target=move |evt| {
-                                let val = evt.target().value();
-                                set_bio.set(val);
-                            }
+                            bind:value=(bio, set_bio)
                         >
                             bio.get()
                         </textarea>
