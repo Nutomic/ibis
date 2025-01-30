@@ -21,6 +21,22 @@ impl FrontendError {
     }
 }
 
+pub trait FrontendResultExt<T> {
+    fn error_popup(self) -> Option<T>;
+}
+
+impl<T> FrontendResultExt<T> for FrontendResult<T> {
+    fn error_popup(self) -> Option<T> {
+        match self {
+            Ok(o) => Some(o),
+            Err(e) => {
+                log::warn!("{e}");
+                None
+            }
+        }
+    }
+}
+
 impl Display for FrontendError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.0)

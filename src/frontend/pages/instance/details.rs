@@ -2,7 +2,7 @@ use crate::{
     common::{article::ListArticlesParams, instance::DbInstance, utils::http_protocol_str},
     frontend::{
         api::CLIENT,
-        components::instance_follow_button::InstanceFollowButton,
+        components::{instance_follow_button::InstanceFollowButton, suspense_error::SuspenseError},
         utils::formatting::{
             article_path,
             article_title,
@@ -21,17 +21,15 @@ pub fn InstanceDetails() -> impl IntoView {
     let params = use_params_map();
     let hostname = move || params.get().get("hostname").clone().unwrap();
     let instance_profile = Resource::new(hostname, move |hostname| async move {
-        let url = Url::parse(&format!("{}://{hostname}", http_protocol_str())).unwrap();
-        CLIENT.resolve_instance(url).await.unwrap()
+        let url = Url::parse(&format!("{}://{hostname}", http_protocol_str()))?;
+        CLIENT.resolve_instance(url).await
     });
 
     view! {
-        <Suspense fallback=|| {
-            view! { "Loading..." }
-        }>
-            {move || {
+        <SuspenseError result=instance_profile>
+            {move || Suspend::new(async move {
                 instance_profile
-                    .get()
+                    .await
                     .map(|instance: DbInstance| {
                         let articles = Resource::new(
                             move || instance.id,
@@ -42,7 +40,6 @@ pub fn InstanceDetails() -> impl IntoView {
                                         instance_id: Some(instance_id),
                                     })
                                     .await
-                                    .unwrap()
                             },
                         );
                         let title = instance_title_with_domain(&instance);
@@ -60,10 +57,10 @@ pub fn InstanceDetails() -> impl IntoView {
                                 <div>{instance.topic}</div>
                                 <h2 class="font-serif text-xl font-bold">Articles</h2>
                                 <ul class="list-none">
-                                    <Suspense>
-                                        {move || {
+                                    <SuspenseError result=articles>
+                                        {move || Suspend::new(async move {
                                             articles
-                                                .get()
+                                                .await
                                                 .map(|a| {
                                                     a.into_iter()
                                                         .map(|a| {
@@ -77,14 +74,14 @@ pub fn InstanceDetails() -> impl IntoView {
                                                         })
                                                         .collect::<Vec<_>>()
                                                 })
-                                        }}
-                                    </Suspense>
+                                        })}
+                                    </SuspenseError>
                                 </ul>
                             </div>
                         }
                     })
-            }}
+            })}
 
-        </Suspense>
+        </SuspenseError>
     }
 }
