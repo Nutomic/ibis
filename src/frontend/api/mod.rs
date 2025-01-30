@@ -153,13 +153,13 @@ impl ApiClient {
     {
         let json = serde_json::from_str(&text).map_err(|e| {
             info!("Failed to deserialize api response: {e} from {text} on {url}");
-            FrontendError(text.clone())
+            FrontendError::new(&text)
         })?;
         if status == StatusCode::OK {
             Ok(json)
         } else {
             info!("API error: {text} on {url} status {status}");
-            Err(FrontendError(text))
+            Err(FrontendError::new(text))
         }
     }
 
@@ -175,17 +175,14 @@ impl ApiClient {
         #[cfg(feature = "ssr")]
         {
             use leptos::{config::LeptosOptions, prelude::use_context};
-            let val = self
+            hostname = self
                 .test_hostname
                 .clone()
-                .or_else(|| use_context::<LeptosOptions>().map(|o| o.site_addr.to_string()));
-            // Needed because during tests App() gets initialized from
-            // backend generate_route_list() which attempts to load some
-            // resources without providing LeptosOptions.
-            let Some(val) = val else {
-                return Err(FrontendError::from("Failed to get hostname"));
-            };
-            hostname = val;
+                .or_else(|| use_context::<LeptosOptions>().map(|o| o.site_addr.to_string()))
+                // Needed because during tests App() gets initialized from
+                // backend generate_route_list() which attempts to load some
+                // resources without providing LeptosOptions.
+                .ok_or(FrontendError::new("Failed to get hostname"))?;
         }
         #[cfg(not(feature = "ssr"))]
         {

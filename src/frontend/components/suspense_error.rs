@@ -15,7 +15,7 @@ where
                     Either::Left(
                         view! {
                             <div class="grid place-items-center h-screen">
-                                <div class="alert alert-error w-fit">{e.0}</div>
+                                <div class="alert alert-error w-fit">{e.message()}</div>
                             </div>
                         },
                     )

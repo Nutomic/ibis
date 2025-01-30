@@ -4,7 +4,17 @@ use std::{error::Error, fmt::Display};
 pub type FrontendResult<T> = Result<T, FrontendError>;
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub struct FrontendError(pub String);
+pub struct FrontendError(String);
+
+impl FrontendError {
+    pub fn new(message: impl Into<String>) -> Self {
+        Self(message.into())
+    }
+
+    pub fn message(self) -> String {
+        self.0
+    }
+}
 
 impl Display for FrontendError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -29,12 +39,6 @@ impl From<gloo_net::Error> for FrontendError {
 
 impl From<url::ParseError> for FrontendError {
     fn from(value: url::ParseError) -> Self {
-        Self(value.to_string())
-    }
-}
-
-impl From<&'static str> for FrontendError {
-    fn from(value: &'static str) -> Self {
         Self(value.to_string())
     }
 }
