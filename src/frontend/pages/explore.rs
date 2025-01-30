@@ -7,14 +7,14 @@ use leptos::prelude::*;
 use leptos_meta::Title;
 
 #[component]
-pub fn ListInstances() -> impl IntoView {
+pub fn Explore() -> impl IntoView {
     let instances = Resource::new(
         move || (),
         |_| async move { CLIENT.list_instances().await.unwrap() },
     );
 
     view! {
-        <Title text="Instances" />
+        <Title text="Explore" />
         <h1 class="my-4 font-serif text-4xl font-bold">Instances</h1>
         <Suspense fallback=|| view! { "Loading..." }>
             <Show

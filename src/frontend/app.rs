@@ -9,15 +9,10 @@ use crate::frontend::{
             discussion::ArticleDiscussion,
             edit::EditArticle,
             history::ArticleHistory,
-            list::ListArticles,
             read::ReadArticle,
         },
-        instance::{
-            details::InstanceDetails,
-            list::ListInstances,
-            search::Search,
-            settings::InstanceSettings,
-        },
+        explore::Explore,
+        instance::{details::InstanceDetails, search::Search, settings::InstanceSettings},
         user::{
             edit_profile::UserEditProfile,
             login::Login,
@@ -101,8 +96,7 @@ pub fn App() -> impl IntoView {
                         />
                         <Route path=path!("/article/:title/diff/:hash") view=EditDiff />
                         <IbisProtectedRoute path=path!("/create-article") view=CreateArticle />
-                        <Route path=path!("/articles") view=ListArticles />
-                        <Route path=path!("/instances") view=ListInstances />
+                        <Route path=path!("/explore") view=Explore />
                         <Route path=path!("/instance/:hostname") view=InstanceDetails />
                         <Route path=path!("/user/:name") view=UserProfile />
                         <Route path=path!("/login") view=Login />

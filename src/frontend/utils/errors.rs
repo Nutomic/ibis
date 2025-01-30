@@ -14,6 +14,11 @@ impl FrontendError {
     pub fn message(self) -> String {
         self.0
     }
+
+    pub fn popup(self) {
+        // TODO: show the error as popup and log it
+        todo!();
+    }
 }
 
 impl Display for FrontendError {

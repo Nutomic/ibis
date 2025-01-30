@@ -47,10 +47,7 @@ pub fn Nav() -> impl IntoView {
                                 <a href="/">"Main Page"</a>
                             </li>
                             <li>
-                                <a href="/instances">"Instances"</a>
-                            </li>
-                            <li>
-                                <a href="/articles">"Articles"</a>
+                                <a href="/explore">"Explore"</a>
                             </li>
                             <Show when=is_logged_in>
                                 <li>

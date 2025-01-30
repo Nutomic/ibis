@@ -23,7 +23,6 @@ pub fn is_admin() -> bool {
 }
 pub trait DefaultResource<T> {
     fn with_default<O>(&self, f: impl FnOnce(&T) -> O) -> O;
-    fn get_default(&self) -> T;
 }
 
 impl<T: Default + Send + Sync + Clone> DefaultResource<T> for Resource<T> {
@@ -32,11 +31,5 @@ impl<T: Default + Send + Sync + Clone> DefaultResource<T> for Resource<T> {
             Some(x) => f(x),
             None => f(&T::default()),
         })
-    }
-    fn get_default(&self) -> T {
-        match self.get() {
-            Some(x) => x.clone(),
-            None => T::default(),
-        }
     }
 }

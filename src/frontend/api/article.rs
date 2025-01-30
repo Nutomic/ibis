@@ -37,8 +37,8 @@ impl ApiClient {
         self.send(Method::GET, "/api/v1/article", Some(data)).await
     }
 
-    pub async fn list_articles(&self, data: ListArticlesParams) -> Option<Vec<DbArticle>> {
-        Some(self.get("/api/v1/article/list", Some(data)).await.unwrap())
+    pub async fn list_articles(&self, data: ListArticlesParams) -> FrontendResult<Vec<DbArticle>> {
+        self.get("/api/v1/article/list", Some(data)).await
     }
 
     pub async fn edit_article(
