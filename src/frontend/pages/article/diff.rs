@@ -27,8 +27,8 @@ pub fn EditDiff() -> impl IntoView {
                 edits
                     .await
                     .map(|edits| {
-                        let hash = params.get_untracked().get("hash").clone().unwrap();
-                        let edit = edits.iter().find(|e| e.edit.hash.0.to_string() == hash);
+                        let hash = params.get_untracked().get("hash").clone();
+                        let edit = edits.iter().find(|e| Some(e.edit.hash.0.to_string()) == hash);
                         if let Some(edit) = edit {
                             let label = format!(
                                 "{} ({})",

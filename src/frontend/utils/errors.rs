@@ -1,3 +1,5 @@
+use leptos::prelude::*;
+use log::warn;
 use serde::{Deserialize, Serialize};
 use std::{error::Error, fmt::Display};
 
@@ -14,24 +16,26 @@ impl FrontendError {
     pub fn message(self) -> String {
         self.0
     }
-
-    pub fn popup(self) {
-        // TODO: show the error as popup and log it
-        todo!();
-    }
 }
 
 pub trait FrontendResultExt<T> {
-    fn error_popup(self) -> Option<T>;
+    fn error_popup<F>(self, on_success: F)
+    where
+        F: FnOnce(T);
 }
 
 impl<T> FrontendResultExt<T> for FrontendResult<T> {
-    fn error_popup(self) -> Option<T> {
+    fn error_popup<F>(self, on_success: F)
+    where
+        F: FnOnce(T),
+    {
         match self {
-            Ok(o) => Some(o),
+            Ok(o) => on_success(o),
             Err(e) => {
-                log::warn!("{e}");
-                None
+                warn!("{e}");
+                if let Some(error_popup) = use_context::<WriteSignal<Option<String>>>() {
+                    error_popup.set(Some(e.0));
+                }
             }
         }
     }

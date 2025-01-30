@@ -9,7 +9,7 @@ use crate::{
         components::comment_editor::{CommentEditorView, EditParams},
         markdown::render_comment_markdown,
         utils::{
-            errors::FrontendResult,
+            errors::{FrontendResult, FrontendResultExt},
             formatting::{time_ago, user_link},
             resources::{site, DefaultResource},
         },
@@ -48,8 +48,10 @@ pub fn CommentView(
             deleted: Some(!comment_change_signal.0.get_untracked().deleted),
             content: None,
         };
-        let comment = CLIENT.edit_comment(&params).await.unwrap();
-        comment_change_signal.1.set(comment.comment);
+        CLIENT
+            .edit_comment(&params)
+            .await
+            .error_popup(|comment| comment_change_signal.1.set(comment.comment));
     });
 
     let is_creator = site().with_default(|site| site.my_profile.as_ref().map(|p| p.person.id))

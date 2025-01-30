@@ -5,7 +5,10 @@ use crate::{
     },
     frontend::{
         api::CLIENT,
-        utils::resources::{site, DefaultResource},
+        utils::{
+            errors::FrontendResultExt,
+            resources::{site, DefaultResource},
+        },
     },
 };
 use leptos::prelude::*;
@@ -16,8 +19,10 @@ pub fn InstanceFollowButton(instance: DbInstance) -> impl IntoView {
         let instance_id = *instance_id;
         async move {
             let params = FollowInstanceParams { id: instance_id };
-            CLIENT.follow_instance(params).await.unwrap();
-            site().refetch();
+            CLIENT
+                .follow_instance(params)
+                .await
+                .error_popup(|_| site().refetch());
         }
     });
     let is_following = site()

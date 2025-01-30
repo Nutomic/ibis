@@ -60,6 +60,9 @@ pub fn App() -> impl IntoView {
     let darkmode = DarkMode::init();
     provide_context(darkmode.clone());
 
+    let error_popup = signal(None::<String>);
+    provide_context(error_popup.1);
+
     view! {
         <Html attr:data-theme=darkmode.theme {..} class="h-full" />
         <Body {..} class="h-full max-sm:flex max-sm:flex-col" />
@@ -81,6 +84,13 @@ pub fn App() -> impl IntoView {
                                 })
                         })}
                     </Suspense>
+                    <Show when=move || error_popup.0.get().is_some()>
+                        <div class="toast">
+                            <div class="alert alert-error">
+                                <span>{error_popup.0}</span>
+                            </div>
+                        </div>
+                    </Show>
                     <Routes fallback=|| "Page not found.".into_view()>
                         <Route path=path!("/") view=ReadArticle />
                         <Route path=path!("/article/:title") view=ReadArticle />

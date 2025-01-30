@@ -2,6 +2,7 @@ use crate::frontend::{
     api::CLIENT,
     utils::{
         dark_mode::DarkMode,
+        errors::FrontendResultExt,
         formatting::instance_title,
         resources::{is_admin, is_logged_in, site, DefaultResource},
     },
@@ -12,8 +13,7 @@ use leptos_router::hooks::use_navigate;
 #[component]
 pub fn Nav() -> impl IntoView {
     let logout_action = Action::new(move |_| async move {
-        CLIENT.logout().await.unwrap();
-        site().refetch();
+        CLIENT.logout().await.error_popup(|_| site().refetch());
     });
     let notification_count = Resource::new(
         || (),
