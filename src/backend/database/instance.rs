@@ -163,7 +163,7 @@ impl DbInstance {
                             article.id
                         LIMIT 5) a
                 GROUP BY
-                    id;",
+                    instance.id;",
         )
         .select(InstanceView::as_select())
         .get_results::<InstanceView>(conn.deref_mut())?;

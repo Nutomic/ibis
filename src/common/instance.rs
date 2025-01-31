@@ -55,10 +55,10 @@ impl DbInstance {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
-#[cfg_attr(feature = "ssr", derive(Queryable, QueryableByName))]
+#[cfg_attr(feature = "ssr", derive(Queryable, Selectable))]
 #[cfg_attr(feature = "ssr", diesel(check_for_backend(diesel::pg::Pg)))]
 pub struct InstanceView {
-    #[diesel(sql_type = instance::SqlType)]
+    #[diesel(embed)]
     pub instance: DbInstance,
     #[diesel(sql_type = Array<Record<article::SqlType>>)]
     pub articles: Vec<DbArticle>,
