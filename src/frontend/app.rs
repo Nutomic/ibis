@@ -52,7 +52,7 @@ pub fn shell(options: LeptosOptions) -> impl IntoView {
 pub fn App() -> impl IntoView {
     provide_meta_context();
 
-    let site_resource = Resource::new(|| (), |_| async move { CLIENT.site().await.unwrap() });
+    let site_resource = Resource::new(|| (), |_| async move { CLIENT.site().await });
     provide_context(site_resource);
 
     let instance = Resource::new(|| (), |_| async move { CLIENT.get_local_instance().await });

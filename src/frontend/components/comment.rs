@@ -11,7 +11,7 @@ use crate::{
         utils::{
             errors::{FrontendResult, FrontendResultExt},
             formatting::{time_ago, user_link},
-            resources::{site, DefaultResource},
+            resources::my_profile,
         },
     },
 };
@@ -54,8 +54,8 @@ pub fn CommentView(
             .error_popup(|comment| comment_change_signal.1.set(comment.comment));
     });
 
-    let is_creator = site().with_default(|site| site.my_profile.as_ref().map(|p| p.person.id))
-        == Some(comment.comment.creator_id);
+    let is_creator =
+        my_profile().map(|my_profile| my_profile.person.id) == Some(comment.comment.creator_id);
 
     let edit_params = EditParams {
         comment: comment.comment.clone(),

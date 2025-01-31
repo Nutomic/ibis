@@ -7,7 +7,7 @@ use crate::{
         api::CLIENT,
         utils::{
             errors::FrontendResultExt,
-            resources::{site, DefaultResource},
+            resources::{my_profile, site},
         },
     },
 };
@@ -25,12 +25,8 @@ pub fn InstanceFollowButton(instance: DbInstance) -> impl IntoView {
                 .error_popup(|_| site().refetch());
         }
     });
-    let is_following = site()
-        .with_default(|site| {
-            site.clone()
-                .my_profile
-                .map(|p| p.following.contains(&instance))
-        })
+    let is_following = my_profile()
+        .map(|my_profile| my_profile.following.contains(&instance))
         .unwrap_or(false);
     let follow_text = if is_following {
         "Following instance"

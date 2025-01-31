@@ -1,35 +1,42 @@
-use crate::common::instance::SiteView;
+use super::errors::FrontendResult;
+use crate::{
+    common::{
+        instance::{Options, SiteView},
+        user::LocalUserView,
+    },
+    frontend::api::CLIENT,
+};
 use leptos::prelude::*;
 
-pub fn site() -> Resource<SiteView> {
-    use_context::<Resource<SiteView>>().unwrap()
+type SiteResource = Resource<FrontendResult<SiteView>>;
+
+pub fn site() -> SiteResource {
+    site_internal().unwrap_or_else(|| Resource::new(|| (), |_| async move { CLIENT.site().await }))
+}
+
+fn site_internal() -> Option<SiteResource> {
+    use_context::<Resource<FrontendResult<SiteView>>>()
+}
+
+pub fn my_profile() -> Option<LocalUserView> {
+    match site_internal() {
+        Some(s) => s.map(|s| s.clone().ok().map(|s| s.my_profile))??,
+        None => None,
+    }
+}
+
+pub fn config() -> Options {
+    match site_internal() {
+        Some(s) => s.map(|s| s.clone().ok().map(|s| s.config)).flatten(),
+        None => None,
+    }
+    .unwrap_or_default()
 }
 
 pub fn is_logged_in() -> bool {
-    let site = use_context::<Resource<SiteView>>();
-    if let Some(site) = site {
-        site.with_default(|site| site.my_profile.is_some())
-    } else {
-        false
-    }
-}
-pub fn is_admin() -> bool {
-    site().with_default(|site| {
-        site.my_profile
-            .as_ref()
-            .map(|p| p.local_user.admin)
-            .unwrap_or(false)
-    })
-}
-pub trait DefaultResource<T> {
-    fn with_default<O>(&self, f: impl FnOnce(&T) -> O) -> O;
+    my_profile().is_some()
 }
 
-impl<T: Default + Send + Sync + Clone> DefaultResource<T> for Resource<T> {
-    fn with_default<O>(&self, f: impl FnOnce(&T) -> O) -> O {
-        self.with(|x| match x {
-            Some(x) => f(x),
-            None => f(&T::default()),
-        })
-    }
+pub fn is_admin() -> bool {
+    my_profile().map(|p| p.local_user.admin).unwrap_or(false)
 }

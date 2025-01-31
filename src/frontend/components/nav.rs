@@ -4,7 +4,7 @@ use crate::frontend::{
         dark_mode::DarkMode,
         errors::FrontendResultExt,
         formatting::instance_title,
-        resources::{is_admin, is_logged_in, site, DefaultResource},
+        resources::{config, is_admin, is_logged_in, my_profile, site},
     },
 };
 use leptos::{component, prelude::*, view, IntoView, *};
@@ -105,9 +105,7 @@ pub fn Nav() -> impl IntoView {
                                     <li>
                                         <a href="/login">"Login"</a>
                                     </li>
-                                    <Show when=move || {
-                                        site().with_default(|s| s.config.registration_open)
-                                    }>
+                                    <Show when=move || config().registration_open>
                                         <li>
                                             <a href="/register">"Register"</a>
                                         </li>
@@ -116,29 +114,31 @@ pub fn Nav() -> impl IntoView {
                             }
                         >
 
-                            {
-                                let my_profile = site()
-                                    .with_default(|site| site.clone().my_profile.unwrap());
-                                let profile_link = format!("/user/{}", my_profile.person.username);
-                                view! {
-                                    <p class="self-center">
-                                        "Logged in as " <a class="link" href=profile_link>
-                                            {my_profile.person.username}
+                            {my_profile()
+                                .map(|my_profile| {
+                                    let profile_link = format!(
+                                        "/user/{}",
+                                        my_profile.person.username,
+                                    );
+                                    view! {
+                                        <p class="self-center">
+                                            "Logged in as " <a class="link" href=profile_link>
+                                                {my_profile.person.username}
+                                            </a>
+                                        </p>
+                                        <a class="self-center py-2 link" href="/edit_profile">
+                                            Edit Profile
                                         </a>
-                                    </p>
-                                    <a class="self-center py-2 link" href="/edit_profile">
-                                        Edit Profile
-                                    </a>
-                                    <button
-                                        class="self-center w-min btn btn-outline btn-xs"
-                                        on:click=move |_| {
-                                            logout_action.dispatch(());
-                                        }
-                                    >
-                                        Logout
-                                    </button>
-                                }
-                            }
+                                        <button
+                                            class="self-center w-min btn btn-outline btn-xs"
+                                            on:click=move |_| {
+                                                logout_action.dispatch(());
+                                            }
+                                        >
+                                            Logout
+                                        </button>
+                                    }
+                                })}
 
                         </Show>
                         <div class="grow min-h-2"></div>

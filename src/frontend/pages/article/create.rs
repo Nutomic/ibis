@@ -3,7 +3,7 @@ use crate::{
     frontend::{
         api::CLIENT,
         components::article_editor::EditorView,
-        utils::resources::{is_admin, site, DefaultResource},
+        utils::resources::{config, is_admin},
     },
 };
 use leptos::{html::Textarea, prelude::*};
@@ -59,9 +59,7 @@ pub fn CreateArticle() -> impl IntoView {
             }
         }
     });
-    let show_approval_message = Signal::derive(move || {
-        site().with_default(|site| site.config.article_approval) && !is_admin()
-    });
+    let show_approval_message = Signal::derive(move || config().article_approval && !is_admin());
 
     view! {
         <Title text="Create new Article" />
