@@ -35,7 +35,7 @@ pub fn Notifications() -> impl IntoView {
                                         EditConflict(c) => {
                                             (
                                                 "visibility: hidden",
-                                                format!("{}/edit/{}", article_path(&c.article), c.id.0),
+                                                format!("{}/edit?conflict_id={}", article_path(&c.article), c.id.0),
                                                 format!(
                                                     "Conflict: {} - {}",
                                                     article_title(&c.article),

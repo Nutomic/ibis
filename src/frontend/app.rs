@@ -97,7 +97,7 @@ pub fn App() -> impl IntoView {
                         <Route path=path!("/article/:title/discussion") view=ArticleDiscussion />
                         <Route path=path!("/article/:title/history") view=ArticleHistory />
                         <IbisProtectedRoute
-                            path=path!("/article/:title/edit/:conflict_id?")
+                            path=path!("/article/:title/edit")
                             view=EditArticle
                         />
                         <IbisProtectedRoute
