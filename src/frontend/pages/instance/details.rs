@@ -3,12 +3,9 @@ use crate::{
     frontend::{
         api::CLIENT,
         components::{instance_follow_button::InstanceFollowButton, suspense_error::SuspenseError},
-        utils::formatting::{
-            article_path,
-            article_title,
-            instance_title_with_domain,
-            instance_updated,
-        },
+        utils::{errors::FrontendError, formatting::{
+            article_path, article_title, instance_title_with_domain, instance_updated,
+        }},
     },
 };
 use leptos::prelude::*;
@@ -19,8 +16,9 @@ use url::Url;
 #[component]
 pub fn InstanceDetails() -> impl IntoView {
     let params = use_params_map();
-    let hostname = move || params.get().get("hostname").clone().unwrap();
+    let hostname = move || params.get().get("hostname").clone();
     let instance_profile = Resource::new(hostname, move |hostname| async move {
+        let hostname = hostname.ok_or(FrontendError::new("No instance given"))?;
         let url = Url::parse(&format!("{}://{hostname}", http_protocol_str()))?;
         CLIENT.resolve_instance(url).await
     });
