@@ -1,5 +1,9 @@
 use crate::{
-    backend::{database::IbisContext, federation::objects::edit::ApubEdit, utils::error::Error},
+    backend::{
+        database::IbisContext,
+        federation::objects::edit::ApubEdit,
+        utils::error::BackendError,
+    },
     common::article::{DbArticle, DbEdit},
 };
 use activitypub_federation::{
@@ -30,7 +34,7 @@ impl Collection for DbEditCollection {
     type Owner = DbArticle;
     type DataType = IbisContext;
     type Kind = ApubEditCollection;
-    type Error = Error;
+    type Error = BackendError;
 
     async fn read_local(
         article: &Self::Owner,

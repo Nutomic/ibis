@@ -2,8 +2,9 @@ use crate::frontend::{
     api::CLIENT,
     utils::{
         dark_mode::DarkMode,
+        errors::FrontendResultExt,
         formatting::instance_title,
-        resources::{is_admin, is_logged_in, site, DefaultResource},
+        resources::{config, is_admin, is_logged_in, my_profile, site},
     },
 };
 use leptos::{component, prelude::*, view, IntoView, *};
@@ -12,17 +13,13 @@ use leptos_router::hooks::use_navigate;
 #[component]
 pub fn Nav() -> impl IntoView {
     let logout_action = Action::new(move |_| async move {
-        CLIENT.logout().await.unwrap();
-        site().refetch();
+        CLIENT.logout().await.error_popup(|_| site().refetch());
     });
     let notification_count = Resource::new(
         || (),
         move |_| async move { CLIENT.notifications_count().await.unwrap_or_default() },
     );
-    let instance = Resource::new(
-        || (),
-        |_| async move { CLIENT.get_local_instance().await.unwrap() },
-    );
+    let instance = Resource::new(|| (), |_| async move { CLIENT.get_local_instance().await });
 
     let (search_query, set_search_query) = signal(String::new());
     let mut dark_mode = expect_context::<DarkMode>();
@@ -41,17 +38,16 @@ pub fn Nav() -> impl IntoView {
                             <img src="/logo.png" class="m-auto max-sm:hidden" />
                         </a>
                         <h2 class="m-4 font-serif text-xl font-bold">
-                            {move || { instance.get().map(|i| instance_title(&i.instance)) }}
+                            {move || Suspend::new(async move {
+                                instance.await.map(|i| instance_title(&i.instance))
+                            })}
                         </h2>
                         <ul>
                             <li>
                                 <a href="/">"Main Page"</a>
                             </li>
                             <li>
-                                <a href="/instances">"Instances"</a>
-                            </li>
-                            <li>
-                                <a href="/articles">"Articles"</a>
+                                <a href="/explore">"Explore"</a>
                             </li>
                             <Show when=is_logged_in>
                                 <li>
@@ -109,9 +105,7 @@ pub fn Nav() -> impl IntoView {
                                     <li>
                                         <a href="/login">"Login"</a>
                                     </li>
-                                    <Show when=move || {
-                                        site().with_default(|s| s.config.registration_open)
-                                    }>
+                                    <Show when=move || config().registration_open>
                                         <li>
                                             <a href="/register">"Register"</a>
                                         </li>
@@ -120,29 +114,31 @@ pub fn Nav() -> impl IntoView {
                             }
                         >
 
-                            {
-                                let my_profile = site()
-                                    .with_default(|site| site.clone().my_profile.unwrap());
-                                let profile_link = format!("/user/{}", my_profile.person.username);
-                                view! {
-                                    <p class="self-center">
-                                        "Logged in as " <a class="link" href=profile_link>
-                                            {my_profile.person.username}
+                            {my_profile()
+                                .map(|my_profile| {
+                                    let profile_link = format!(
+                                        "/user/{}",
+                                        my_profile.person.username,
+                                    );
+                                    view! {
+                                        <p class="self-center">
+                                            "Logged in as " <a class="link" href=profile_link>
+                                                {my_profile.person.username}
+                                            </a>
+                                        </p>
+                                        <a class="self-center py-2 link" href="/edit_profile">
+                                            Edit Profile
                                         </a>
-                                    </p>
-                                    <a class="self-center py-2 link" href="/edit_profile">
-                                        Edit Profile
-                                    </a>
-                                    <button
-                                        class="self-center w-min btn btn-outline btn-xs"
-                                        on:click=move |_| {
-                                            logout_action.dispatch(());
-                                        }
-                                    >
-                                        Logout
-                                    </button>
-                                }
-                            }
+                                        <button
+                                            class="self-center w-min btn btn-outline btn-xs"
+                                            on:click=move |_| {
+                                                logout_action.dispatch(());
+                                            }
+                                        >
+                                            Logout
+                                        </button>
+                                    }
+                                })}
 
                         </Show>
                         <div class="grow min-h-2"></div>

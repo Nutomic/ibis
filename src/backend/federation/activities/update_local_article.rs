@@ -3,7 +3,7 @@ use crate::{
         database::IbisContext,
         federation::objects::article::ApubArticle,
         utils::{
-            error::{Error, MyResult},
+            error::{BackendError, BackendResult},
             generate_activity_id,
         },
     },
@@ -37,7 +37,7 @@ impl UpdateLocalArticle {
         article: DbArticle,
         extra_recipients: Vec<DbInstance>,
         context: &Data<IbisContext>,
-    ) -> MyResult<()> {
+    ) -> BackendResult<()> {
         debug_assert!(article.local);
         let local_instance = DbInstance::read_local(context)?;
         let id = generate_activity_id(context)?;
@@ -60,7 +60,7 @@ impl UpdateLocalArticle {
 #[async_trait::async_trait]
 impl ActivityHandler for UpdateLocalArticle {
     type DataType = IbisContext;
-    type Error = Error;
+    type Error = BackendError;
 
     fn id(&self) -> &Url {
         &self.id

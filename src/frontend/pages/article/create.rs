@@ -3,17 +3,24 @@ use crate::{
     frontend::{
         api::CLIENT,
         components::article_editor::EditorView,
-        utils::resources::{is_admin, site, DefaultResource},
+        utils::resources::{config, is_admin},
     },
 };
 use leptos::{html::Textarea, prelude::*};
 use leptos_meta::Title;
-use leptos_router::components::Redirect;
+use leptos_router::{components::Redirect, hooks::use_query_map};
 use leptos_use::{use_textarea_autosize, UseTextareaAutosizeReturn};
 
 #[component]
 pub fn CreateArticle() -> impl IntoView {
-    let (title, set_title) = signal(String::new());
+    let title = use_query_map()
+        .get()
+        .get("title")
+        .unwrap_or_default()
+        .replace('_', " ");
+    let title = title.split_once('@').map(|(t, _)| t).unwrap_or(&title);
+    let (title, set_title) = signal(title.to_string());
+
     let textarea_ref = NodeRef::<Textarea>::new();
     let UseTextareaAutosizeReturn {
         content,
@@ -52,9 +59,7 @@ pub fn CreateArticle() -> impl IntoView {
             }
         }
     });
-    let show_approval_message = Signal::derive(move || {
-        site().with_default(|site| site.config.article_approval) && !is_admin()
-    });
+    let show_approval_message = Signal::derive(move || config().article_approval && !is_admin());
 
     view! {
         <Title text="Create new Article" />
@@ -76,6 +81,7 @@ pub fn CreateArticle() -> impl IntoView {
                             type="text"
                             required
                             placeholder="Title"
+                            value=title
                             prop:disabled=move || wait_for_response.get()
                             on:keyup=move |ev| {
                                 let val = event_target_value(&ev);

@@ -2,7 +2,7 @@ use crate::{
     backend::{
         database::{article::DbArticleForm, IbisContext},
         federation::objects::edits_collection::DbEditCollection,
-        utils::{error::Error, validate::validate_article_title},
+        utils::{error::BackendError, validate::validate_article_title},
     },
     common::{
         article::{DbArticle, EditVersion},
@@ -42,7 +42,7 @@ pub struct ApubArticle {
 impl Object for DbArticle {
     type DataType = IbisContext;
     type Kind = ApubArticle;
-    type Error = Error;
+    type Error = BackendError;
 
     async fn read_from_id(
         object_id: Url,

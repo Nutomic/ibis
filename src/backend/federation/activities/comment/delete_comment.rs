@@ -4,7 +4,7 @@ use crate::{
         database::{comment::DbCommentUpdateForm, IbisContext},
         federation::{routes::AnnouncableActivities, send_activity_to_instance},
         utils::{
-            error::{Error, MyResult},
+            error::{BackendError, BackendResult},
             generate_activity_id,
         },
     },
@@ -39,7 +39,7 @@ impl DeleteComment {
         creator: &DbPerson,
         instance: &DbInstance,
         context: &Data<IbisContext>,
-    ) -> MyResult<Self> {
+    ) -> BackendResult<Self> {
         let id = generate_activity_id(context)?;
         Ok(DeleteComment {
             actor: creator.ap_id.clone(),
@@ -49,7 +49,7 @@ impl DeleteComment {
             id,
         })
     }
-    pub async fn send(comment: &DbComment, context: &Data<IbisContext>) -> MyResult<()> {
+    pub async fn send(comment: &DbComment, context: &Data<IbisContext>) -> BackendResult<()> {
         let instance = DbInstance::read_for_comment(comment.id, context)?;
         let creator = DbPerson::read(comment.creator_id, context)?;
         let activity = Self::new(comment, &creator, &instance, context)?;
@@ -62,7 +62,7 @@ impl DeleteComment {
 #[async_trait::async_trait]
 impl ActivityHandler for DeleteComment {
     type DataType = IbisContext;
-    type Error = Error;
+    type Error = BackendError;
 
     fn id(&self) -> &Url {
         &self.id

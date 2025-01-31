@@ -3,7 +3,7 @@ use crate::{
         database::IbisContext,
         federation::{routes::AnnouncableActivities, send_activity},
         utils::{
-            error::{Error, MyResult},
+            error::{BackendError, BackendResult},
             generate_activity_id,
         },
     },
@@ -32,7 +32,10 @@ pub struct AnnounceActivity {
 }
 
 impl AnnounceActivity {
-    pub async fn send(object: AnnouncableActivities, context: &Data<IbisContext>) -> MyResult<()> {
+    pub async fn send(
+        object: AnnouncableActivities,
+        context: &Data<IbisContext>,
+    ) -> BackendResult<()> {
         let id = generate_activity_id(context)?;
         let instance = DbInstance::read_local(context)?;
         let announce = AnnounceActivity {
@@ -57,7 +60,7 @@ impl AnnounceActivity {
 #[async_trait::async_trait]
 impl ActivityHandler for AnnounceActivity {
     type DataType = IbisContext;
-    type Error = Error;
+    type Error = BackendError;
 
     fn id(&self) -> &Url {
         &self.id
@@ -68,12 +71,12 @@ impl ActivityHandler for AnnounceActivity {
     }
 
     #[tracing::instrument(skip_all)]
-    async fn verify(&self, _context: &Data<Self::DataType>) -> MyResult<()> {
+    async fn verify(&self, _context: &Data<Self::DataType>) -> BackendResult<()> {
         Ok(())
     }
 
     #[tracing::instrument(skip_all)]
-    async fn receive(self, context: &Data<Self::DataType>) -> MyResult<()> {
+    async fn receive(self, context: &Data<Self::DataType>) -> BackendResult<()> {
         self.object.verify(context).await?;
         self.object.receive(context).await
     }

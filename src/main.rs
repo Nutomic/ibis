@@ -1,6 +1,6 @@
 #[cfg(feature = "ssr")]
 #[tokio::main]
-pub async fn main() -> ibis::backend::utils::error::MyResult<()> {
+pub async fn main() -> ibis::backend::utils::error::BackendResult<()> {
     use ibis::backend::utils::config::IbisConfig;
     use log::LevelFilter;
 

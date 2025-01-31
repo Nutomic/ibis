@@ -9,7 +9,6 @@ use ibis::{
     common::{instance::Options, user::RegisterUserParams},
     frontend::api::ApiClient,
 };
-use reqwest::ClientBuilder;
 use std::{
     env::current_dir,
     fs::{create_dir_all, remove_dir_all},
@@ -90,6 +89,7 @@ pub struct IbisInstance {
     pub api_client: ApiClient,
     db_path: String,
     db_handle: JoinHandle<()>,
+    pub hostname: String,
 }
 
 impl IbisInstance {
@@ -110,15 +110,15 @@ impl IbisInstance {
 
     async fn start(db_path: String, port: i32, username: &str, article_approval: bool) -> Self {
         let connection_url = format!("postgresql://ibis:password@/ibis?host={db_path}");
-        let hostname = format!("127.0.0.1:{port}");
-        let domain = format!("localhost:{port}");
+
+        let hostname = format!("localhost:{port}");
         let config = IbisConfig {
             database: IbisConfigDatabase {
                 connection_url,
                 ..Default::default()
             },
             federation: IbisConfigFederation {
-                domain: domain.clone(),
+                domain: hostname.clone(),
                 ..Default::default()
             },
             options: Options {
@@ -127,10 +127,10 @@ impl IbisInstance {
             },
             ..Default::default()
         };
-        let client = ClientBuilder::new().cookie_store(true).build().unwrap();
-        let api_client = ApiClient::new(client, Some(domain));
+        let api_client = ApiClient::new(Some(hostname.clone()));
         let (tx, rx) = oneshot::channel::<()>();
-        let handle = tokio::task::spawn(async move {
+        let db_handle = tokio::task::spawn(async move {
+            let hostname = format!("127.0.0.1:{port}");
             start(config, Some(hostname.parse().unwrap()), Some(tx))
                 .await
                 .unwrap();
@@ -145,7 +145,8 @@ impl IbisInstance {
         Self {
             api_client,
             db_path,
-            db_handle: handle,
+            db_handle,
+            hostname,
         }
     }
 

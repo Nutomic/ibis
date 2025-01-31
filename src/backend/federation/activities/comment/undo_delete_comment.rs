@@ -4,7 +4,7 @@ use crate::{
         database::{comment::DbCommentUpdateForm, IbisContext},
         federation::{routes::AnnouncableActivities, send_activity_to_instance},
         utils::{
-            error::{Error, MyResult},
+            error::{BackendError, BackendResult},
             generate_activity_id,
         },
     },
@@ -37,7 +37,7 @@ pub struct UndoDeleteComment {
 }
 
 impl UndoDeleteComment {
-    pub async fn send(comment: &DbComment, context: &Data<IbisContext>) -> MyResult<()> {
+    pub async fn send(comment: &DbComment, context: &Data<IbisContext>) -> BackendResult<()> {
         let instance = DbInstance::read_for_comment(comment.id, context)?;
         let id = generate_activity_id(context)?;
         let creator = DbPerson::read(comment.creator_id, context)?;
@@ -58,7 +58,7 @@ impl UndoDeleteComment {
 #[async_trait::async_trait]
 impl ActivityHandler for UndoDeleteComment {
     type DataType = IbisContext;
-    type Error = Error;
+    type Error = BackendError;
 
     fn id(&self) -> &Url {
         &self.id

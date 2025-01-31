@@ -4,6 +4,7 @@ use leptos::prelude::*;
 use leptos_use::{use_cookie_with_options, SameSite, UseCookieOptions};
 
 pub mod dark_mode;
+pub mod errors;
 pub mod formatting;
 pub mod resources;
 

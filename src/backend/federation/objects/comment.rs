@@ -2,7 +2,7 @@ use super::article_or_comment::DbArticleOrComment;
 use crate::{
     backend::{
         database::{comment::DbCommentInsertForm, IbisContext},
-        utils::{error::Error, validate::validate_comment_max_depth},
+        utils::{error::BackendError, validate::validate_comment_max_depth},
     },
     common::{article::DbArticle, comment::DbComment, user::DbPerson},
 };
@@ -39,7 +39,7 @@ pub struct ApubComment {
 impl Object for DbComment {
     type DataType = IbisContext;
     type Kind = ApubComment;
-    type Error = Error;
+    type Error = BackendError;
 
     async fn read_from_id(
         object_id: Url,

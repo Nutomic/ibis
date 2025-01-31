@@ -5,7 +5,7 @@ use crate::{
             update_local_article::UpdateLocalArticle,
             update_remote_article::UpdateRemoteArticle,
         },
-        utils::error::Error,
+        utils::error::BackendError,
     },
     common::{
         article::{DbArticle, DbEdit, EditVersion},
@@ -31,7 +31,7 @@ pub async fn submit_article_update(
     original_article: &DbArticle,
     creator_id: PersonId,
     context: &Data<IbisContext>,
-) -> Result<(), Error> {
+) -> Result<(), BackendError> {
     let mut form = DbEditForm::new(
         original_article,
         creator_id,

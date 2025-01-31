@@ -1,4 +1,4 @@
-use crate::frontend::api::CLIENT;
+use crate::frontend::{api::CLIENT, utils::errors::FrontendResultExt};
 use codee::{Decoder, Encoder};
 use leptos::prelude::*;
 use std::fmt::Debug;
@@ -17,10 +17,9 @@ where
 {
     let connect_ibis_wiki = Action::new(move |_: &()| async move {
         CLIENT
-            .resolve_instance(Url::parse("https://ibis.wiki").unwrap())
+            .resolve_instance(Url::parse("https://ibis.wiki").expect("parse ibis.wiki url"))
             .await
-            .unwrap();
-        res.refetch();
+            .error_popup(|_| res.refetch());
     });
 
     view! {

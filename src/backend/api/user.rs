@@ -3,7 +3,7 @@ use crate::{
     backend::{
         database::{conflict::DbConflict, read_jwt_secret, IbisContext},
         utils::{
-            error::MyResult,
+            error::BackendResult,
             validate::{validate_display_name, validate_user_name},
         },
     },
@@ -54,7 +54,7 @@ struct Claims {
     pub exp: u64,
 }
 
-fn generate_login_token(person: &DbPerson, context: &Data<IbisContext>) -> MyResult<String> {
+fn generate_login_token(person: &DbPerson, context: &Data<IbisContext>) -> BackendResult<String> {
     let hostname = context.domain().to_string();
     let claims = Claims {
         sub: person.username.clone(),
@@ -69,7 +69,7 @@ fn generate_login_token(person: &DbPerson, context: &Data<IbisContext>) -> MyRes
     Ok(jwt)
 }
 
-pub async fn validate(jwt: &str, context: &IbisContext) -> MyResult<LocalUserView> {
+pub async fn validate(jwt: &str, context: &IbisContext) -> BackendResult<LocalUserView> {
     let validation = Validation::default();
     let secret = read_jwt_secret(context)?;
     let key = DecodingKey::from_secret(secret.as_bytes());
@@ -82,7 +82,7 @@ pub(in crate::backend::api) async fn register_user(
     context: Data<IbisContext>,
     jar: CookieJar,
     Form(params): Form<RegisterUserParams>,
-) -> MyResult<(CookieJar, Json<LocalUserView>)> {
+) -> BackendResult<(CookieJar, Json<LocalUserView>)> {
     if !context.config.options.registration_open {
         return Err(anyhow!("Registration is closed").into());
     }
@@ -98,7 +98,7 @@ pub(in crate::backend::api) async fn login_user(
     context: Data<IbisContext>,
     jar: CookieJar,
     Form(params): Form<LoginUserParams>,
-) -> MyResult<(CookieJar, Json<LocalUserView>)> {
+) -> BackendResult<(CookieJar, Json<LocalUserView>)> {
     let user = DbPerson::read_local_from_name(&params.username, &context)?;
     let valid = verify(&params.password, &user.local_user.password_encrypted)?;
     if !valid {
@@ -133,7 +133,7 @@ fn create_cookie(jwt: String, context: &Data<IbisContext>) -> Cookie<'static> {
 pub(in crate::backend::api) async fn logout_user(
     context: Data<IbisContext>,
     jar: CookieJar,
-) -> MyResult<(CookieJar, Json<SuccessResponse>)> {
+) -> BackendResult<(CookieJar, Json<SuccessResponse>)> {
     let jar = jar.remove(create_cookie(String::new(), &context));
     Ok((jar, Json(SuccessResponse::default())))
 }
@@ -142,7 +142,7 @@ pub(in crate::backend::api) async fn logout_user(
 pub(in crate::backend::api) async fn get_user(
     params: Query<GetUserParams>,
     context: Data<IbisContext>,
-) -> MyResult<Json<DbPerson>> {
+) -> BackendResult<Json<DbPerson>> {
     Ok(Json(DbPerson::read_from_name(
         &params.name,
         &params.domain,
@@ -154,7 +154,7 @@ pub(in crate::backend::api) async fn get_user(
 pub(in crate::backend::api) async fn update_user_profile(
     context: Data<IbisContext>,
     Form(mut params): Form<UpdateUserParams>,
-) -> MyResult<Json<SuccessResponse>> {
+) -> BackendResult<Json<SuccessResponse>> {
     empty_to_none(&mut params.display_name);
     empty_to_none(&mut params.bio);
     validate_display_name(&params.display_name)?;
@@ -166,7 +166,7 @@ pub(in crate::backend::api) async fn update_user_profile(
 pub(crate) async fn list_notifications(
     Extension(user): Extension<LocalUserView>,
     context: Data<IbisContext>,
-) -> MyResult<Json<Vec<Notification>>> {
+) -> BackendResult<Json<Vec<Notification>>> {
     let conflicts = DbConflict::list(&user.person, &context)?;
     let conflicts: Vec<_> = try_join_all(conflicts.into_iter().map(|c| {
         let data = context.reset_request_count();
@@ -194,16 +194,20 @@ pub(crate) async fn list_notifications(
 
 #[debug_handler]
 pub(crate) async fn count_notifications(
-    Extension(user): Extension<LocalUserView>,
+    user: Option<Extension<LocalUserView>>,
     context: Data<IbisContext>,
-) -> MyResult<Json<usize>> {
-    let mut count = 0;
-    let conflicts = DbConflict::list(&user.person, &context)?;
-    count += conflicts.len();
-    if check_is_admin(&user).is_ok() {
-        let articles = DbArticle::list_approval_required(&context)?;
-        count += articles.len();
-    }
+) -> BackendResult<Json<usize>> {
+    if let Some(user) = user {
+        let mut count = 0;
+        let conflicts = DbConflict::list(&user.person, &context)?;
+        count += conflicts.len();
+        if check_is_admin(&user).is_ok() {
+            let articles = DbArticle::list_approval_required(&context)?;
+            count += articles.len();
+        }
 
-    Ok(Json(count))
+        Ok(Json(count))
+    } else {
+        Ok(Json(0))
+    }
 }

@@ -27,6 +27,7 @@ panic = "abort"
 [lints.clippy]
 dbg_macro = "deny"
 unwrap_used = "deny"
+todo = "deny"
 
 # frontend and shared deps
 [dependencies]

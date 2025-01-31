@@ -17,7 +17,7 @@ use crate::{
             user::{get_user, login_user, logout_user, register_user},
         },
         database::IbisContext,
-        utils::error::MyResult,
+        utils::error::BackendResult,
     },
     common::{
         article::{DbEdit, EditView, GetEditList},
@@ -75,7 +75,7 @@ pub fn api_routes() -> Router<()> {
         .route("/site", get(site_view))
 }
 
-fn check_is_admin(user: &LocalUserView) -> MyResult<()> {
+fn check_is_admin(user: &LocalUserView) -> BackendResult<()> {
     if !user.local_user.admin {
         return Err(anyhow!("Only admin can perform this action").into());
     }
@@ -86,7 +86,7 @@ fn check_is_admin(user: &LocalUserView) -> MyResult<()> {
 pub(in crate::backend::api) async fn site_view(
     context: Data<IbisContext>,
     user: Option<Extension<LocalUserView>>,
-) -> MyResult<Json<SiteView>> {
+) -> BackendResult<Json<SiteView>> {
     Ok(Json(SiteView {
         my_profile: user.map(|u| u.0),
         config: context.config.options.clone(),
@@ -99,7 +99,7 @@ pub async fn edit_list(
     Query(query): Query<GetEditList>,
     user: Option<Extension<LocalUserView>>,
     context: Data<IbisContext>,
-) -> MyResult<Json<Vec<EditView>>> {
+) -> BackendResult<Json<Vec<EditView>>> {
     let params = if let Some(article_id) = query.article_id {
         ViewEditParams::ArticleId(article_id)
     } else if let Some(person_id) = query.person_id {
