@@ -43,7 +43,7 @@ pub fn EditArticle() -> impl IntoView {
     if let Some(conflict_id) = conflict_id {
         let conflict_id = conflict_id.parse().map(ConflictId);
         spawn_local(async move {
-            CLIENT
+            if let Some(conflict) = CLIENT
                 .notifications_list()
                 .await
                 .ok()
@@ -54,10 +54,10 @@ pub fn EditArticle() -> impl IntoView {
                     _ => None,
                 })
                 .find(|c| Ok(c.id) == conflict_id)
-                .map(|conflict| {
-                    set_edit_response.set(EditResponse::Conflict(conflict));
-                    set_edit_error.set(Some(CONFLICT_MESSAGE.to_string()));
-                });
+            {
+                set_edit_response.set(EditResponse::Conflict(conflict));
+                set_edit_error.set(Some(CONFLICT_MESSAGE.to_string()));
+            }
         })
     }
 
