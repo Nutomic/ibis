@@ -1,7 +1,7 @@
 use leptos::prelude::*;
 use log::warn;
 use serde::{Deserialize, Serialize};
-use std::{error::Error, fmt::Display};
+use std::{error::Error, fmt::Display, time::Duration};
 
 pub type FrontendResult<T> = Result<T, FrontendError>;
 
@@ -33,11 +33,33 @@ impl<T> FrontendResultExt<T> for FrontendResult<T> {
             Ok(o) => on_success(o),
             Err(e) => {
                 warn!("{e}");
-                if let Some(error_popup) = use_context::<WriteSignal<Option<String>>>() {
-                    error_popup.set(Some(e.0));
-                }
+                ErrorPopup::set(e.0);
             }
         }
+    }
+}
+
+#[derive(Clone)]
+pub struct ErrorPopup {
+    read: ReadSignal<Option<String>>,
+    write: WriteSignal<Option<String>>,
+}
+
+impl ErrorPopup {
+    pub fn init() {
+        let (read, write) = signal(None::<String>);
+        provide_context(Self { read, write });
+    }
+
+    pub fn set(msg: String) {
+        if let Some(s) = use_context::<Self>() {
+            s.write.set(Some(msg));
+            set_timeout(move || s.write.set(None), Duration::from_secs(15));
+        }
+    }
+
+    pub fn get() -> Option<String> {
+        use_context::<Self>()?.read.get()
     }
 }
 

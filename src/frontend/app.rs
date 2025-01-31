@@ -21,7 +21,7 @@ use crate::frontend::{
             register::Register,
         },
     },
-    utils::{dark_mode::DarkMode, formatting::instance_title},
+    utils::{dark_mode::DarkMode, errors::ErrorPopup, formatting::instance_title},
 };
 use leptos::prelude::*;
 use leptos_meta::{provide_meta_context, *};
@@ -60,8 +60,7 @@ pub fn App() -> impl IntoView {
     let darkmode = DarkMode::init();
     provide_context(darkmode.clone());
 
-    let error_popup = signal(None::<String>);
-    provide_context(error_popup.1);
+    ErrorPopup::init();
 
     view! {
         <Html attr:data-theme=darkmode.theme {..} class="h-full" />
@@ -84,10 +83,10 @@ pub fn App() -> impl IntoView {
                                 })
                         })}
                     </Suspense>
-                    <Show when=move || error_popup.0.get().is_some()>
+                    <Show when=move || ErrorPopup::get().is_some()>
                         <div class="toast">
                             <div class="alert alert-error">
-                                <span>{error_popup.0}</span>
+                                <span>{ErrorPopup::get()}</span>
                             </div>
                         </div>
                     </Show>
@@ -96,10 +95,7 @@ pub fn App() -> impl IntoView {
                         <Route path=path!("/article/:title") view=ReadArticle />
                         <Route path=path!("/article/:title/discussion") view=ArticleDiscussion />
                         <Route path=path!("/article/:title/history") view=ArticleHistory />
-                        <IbisProtectedRoute
-                            path=path!("/article/:title/edit")
-                            view=EditArticle
-                        />
+                        <IbisProtectedRoute path=path!("/article/:title/edit") view=EditArticle />
                         <IbisProtectedRoute
                             path=path!("/article/:title/actions")
                             view=ArticleActions

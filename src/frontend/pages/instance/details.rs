@@ -3,9 +3,15 @@ use crate::{
     frontend::{
         api::CLIENT,
         components::{instance_follow_button::InstanceFollowButton, suspense_error::SuspenseError},
-        utils::{errors::FrontendError, formatting::{
-            article_path, article_title, instance_title_with_domain, instance_updated,
-        }},
+        utils::{
+            errors::FrontendError,
+            formatting::{
+                article_path,
+                article_title,
+                instance_title_with_domain,
+                instance_updated,
+            },
+        },
     },
 };
 use leptos::prelude::*;

@@ -2,7 +2,8 @@ use crate::{
     common::{
         article::{ApiConflict, DbArticleView, EditArticleParams},
         newtypes::ConflictId,
-        Notification, MAIN_PAGE_NAME,
+        Notification,
+        MAIN_PAGE_NAME,
     },
     frontend::{
         api::CLIENT,
@@ -15,8 +16,7 @@ use crate::{
     },
 };
 use chrono::{Days, Utc};
-use leptos::task::spawn_local;
-use leptos::{html::Textarea, prelude::*};
+use leptos::{html::Textarea, prelude::*, task::spawn_local};
 use leptos_router::{
     components::Redirect,
     hooks::{use_params_map, use_query_map},
