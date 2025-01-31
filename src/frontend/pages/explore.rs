@@ -2,12 +2,17 @@ use crate::{
     common::instance::DbInstance,
     frontend::{
         api::CLIENT,
-        components::{connect::ConnectView, suspense_error::SuspenseError},
-        utils::formatting::{instance_title_with_domain, instance_updated},
+        components::suspense_error::SuspenseError,
+        utils::{
+            errors::{FrontendResult, FrontendResultExt},
+            formatting::{instance_title_with_domain, instance_updated},
+        },
     },
 };
+use codee::string::JsonSerdeCodec;
 use leptos::prelude::*;
 use leptos_meta::Title;
+use url::Url;
 
 #[component]
 pub fn Explore() -> impl IntoView {
@@ -56,5 +61,28 @@ pub fn instance_card(i: &DbInstance) -> impl IntoView {
                 </div>
             </div>
         </li>
+    }
+}
+
+#[component]
+fn ConnectView(res: Resource<FrontendResult<Vec<DbInstance>>, JsonSerdeCodec>) -> impl IntoView {
+    let connect_ibis_wiki = Action::new(move |_: &()| async move {
+        CLIENT
+            .resolve_instance(Url::parse("https://ibis.wiki").expect("parse ibis.wiki url"))
+            .await
+            .error_popup(|_| res.refetch());
+    });
+
+    view! {
+        <div class="flex justify-center h-screen">
+            <button
+                class="place-self-center btn btn-primary"
+                on:click=move |_| {
+                    connect_ibis_wiki.dispatch(());
+                }
+            >
+                Connect with ibis.wiki
+            </button>
+        </div>
     }
 }
