@@ -120,7 +120,7 @@ impl ApiClient {
             });
 
             let path_with_endpoint = self.request_endpoint(path)?;
-            let params_encoded = serde_urlencoded::to_string(&params).unwrap();
+            let params_encoded = serde_urlencoded::to_string(&params)?;
             let path = if method == Method::GET {
                 // Cannot pass the form data directly but need to convert it manually
                 // https://github.com/rustwasm/gloo/issues/378
@@ -139,8 +139,7 @@ impl ApiClient {
                     .body(params_encoded)
             } else {
                 builder.build()
-            }
-            .unwrap();
+            }?;
             let res = req.send().await?;
             let status = res.status();
             let text = res.text().await?;

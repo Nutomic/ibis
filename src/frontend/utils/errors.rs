@@ -67,3 +67,9 @@ impl From<url::ParseError> for FrontendError {
         Self(value.to_string())
     }
 }
+
+impl From<serde_urlencoded::ser::Error> for FrontendError {
+    fn from(value: serde_urlencoded::ser::Error) -> Self {
+        Self(value.to_string())
+    }
+}

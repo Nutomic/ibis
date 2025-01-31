@@ -110,11 +110,8 @@ pub fn ArticleActions() -> impl IntoView {
                         }
                     })
             })}
-
+            {fork_response.get().map(|article| view! { <Redirect path=article_path(&article) /> })}
         </SuspenseError>
-        <Show when=move || fork_response.get().is_some()>
-            <Redirect path=article_path(&fork_response.get().unwrap()) />
-        </Show>
         <p>"TODO: add option for admin to delete article etc"</p>
     }
 }
