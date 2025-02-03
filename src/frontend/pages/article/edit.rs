@@ -2,7 +2,6 @@ use crate::{
     common::{
         article::{ApiConflict, DbArticleView, EditArticleParams},
         newtypes::ConflictId,
-        Notification,
         MAIN_PAGE_NAME,
     },
     frontend::{
@@ -16,7 +15,7 @@ use crate::{
     },
 };
 use chrono::{Days, Utc};
-use leptos::{html::Textarea, prelude::*, task::spawn_local};
+use leptos::{html::Textarea, prelude::*};
 use leptos_router::{
     components::Redirect,
     hooks::{use_params_map, use_query_map},
@@ -39,27 +38,18 @@ pub fn EditArticle() -> impl IntoView {
     let (edit_response, set_edit_response) = signal(EditResponse::None);
     let (edit_error, set_edit_error) = signal(None::<String>);
 
-    let conflict_id = use_query_map().get_untracked().get("conflict_id").clone();
-    if let Some(conflict_id) = conflict_id {
-        let conflict_id = conflict_id.parse().map(ConflictId);
-        spawn_local(async move {
-            if let Some(conflict) = CLIENT
-                .notifications_list()
-                .await
-                .ok()
-                .into_iter()
-                .flatten()
-                .filter_map(|n| match n {
-                    Notification::EditConflict(c) => Some(c),
-                    _ => None,
-                })
-                .find(|c| Ok(c.id) == conflict_id)
-            {
+    let conflict = Resource::new(
+        || use_query_map().get_untracked().get("conflict_id").clone(),
+        move |conflict_id| async move {
+            if let Some(conflict_id) = conflict_id {
+                let conflict_id = conflict_id.parse().map(ConflictId)?;
+                let conflict = CLIENT.get_conflict(conflict_id).await?;
                 set_edit_response.set(EditResponse::Conflict(conflict));
                 set_edit_error.set(Some(CONFLICT_MESSAGE.to_string()));
             }
-        })
-    }
+            Ok(())
+        },
+    );
 
     let textarea_ref = NodeRef::<Textarea>::new();
     let UseTextareaAutosizeReturn {
@@ -201,5 +191,6 @@ pub fn EditArticle() -> impl IntoView {
                 format!("/article/{title}?edit_successful")
             } />
         </Show>
+        <SuspenseError result=conflict>""</SuspenseError>
     }
 }

@@ -10,21 +10,13 @@ use crate::{
     common::{
         article::{ApiConflict, DbArticle, DbEdit, EditVersion},
         newtypes::{ArticleId, ConflictId, PersonId},
-        user::DbPerson,
     },
 };
 use activitypub_federation::config::Data;
 use chrono::{DateTime, Utc};
 use diesel::{
-    delete,
-    insert_into,
-    ExpressionMethods,
-    Identifiable,
-    Insertable,
-    QueryDsl,
-    Queryable,
-    RunQueryDsl,
-    Selectable,
+    delete, insert_into, ExpressionMethods, Identifiable, Insertable, QueryDsl, Queryable,
+    RunQueryDsl, Selectable,
 };
 use diffy::{apply, merge, Patch};
 use serde::{Deserialize, Serialize};
@@ -64,10 +56,22 @@ impl DbConflict {
             .get_result(conn.deref_mut())?)
     }
 
-    pub fn list(person: &DbPerson, context: &IbisContext) -> BackendResult<Vec<Self>> {
+    pub fn read(
+        id: ConflictId,
+        person_id: PersonId,
+        context: &IbisContext,
+    ) -> BackendResult<DbConflict> {
         let mut conn = context.db_pool.get()?;
         Ok(conflict::table
-            .filter(conflict::dsl::creator_id.eq(person.id))
+            .find(id)
+            .filter(conflict::dsl::creator_id.eq(person_id))
+            .get_result(conn.deref_mut())?)
+    }
+
+    pub fn list(person_id: PersonId, context: &IbisContext) -> BackendResult<Vec<Self>> {
+        let mut conn = context.db_pool.get()?;
+        Ok(conflict::table
+            .filter(conflict::dsl::creator_id.eq(person_id))
             .get_results(conn.deref_mut())?)
     }
 

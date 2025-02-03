@@ -2,19 +2,9 @@ use super::ApiClient;
 use crate::{
     common::{
         article::{
-            ApiConflict,
-            ApproveArticleParams,
-            CreateArticleParams,
-            DbArticle,
-            DbArticleView,
-            DeleteConflictParams,
-            EditArticleParams,
-            EditView,
-            ForkArticleParams,
-            GetArticleParams,
-            GetEditList,
-            ListArticlesParams,
-            ProtectArticleParams,
+            ApiConflict, ApproveArticleParams, CreateArticleParams, DbArticle, DbArticleView,
+            DeleteConflictParams, EditArticleParams, EditView, ForkArticleParams, GetArticleParams,
+            GetConflictParams, GetEditList, ListArticlesParams, ProtectArticleParams,
         },
         newtypes::{ArticleId, ConflictId},
         ResolveObjectParams,
@@ -84,6 +74,11 @@ impl ApiClient {
             approve,
         };
         self.post("/api/v1/article/approve", Some(&params)).await
+    }
+
+    pub async fn get_conflict(&self, conflict_id: ConflictId) -> FrontendResult<ApiConflict> {
+        let params = GetConflictParams { conflict_id };
+        self.get("/api/v1/conflict", Some(params)).await
     }
 
     pub async fn delete_conflict(&self, conflict_id: ConflictId) -> FrontendResult<()> {

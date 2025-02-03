@@ -10,16 +10,10 @@ use crate::{
     common::{
         article::DbArticle,
         user::{
-            DbPerson,
-            GetUserParams,
-            LocalUserView,
-            LoginUserParams,
-            RegisterUserParams,
+            DbPerson, GetUserParams, LocalUserView, LoginUserParams, RegisterUserParams,
             UpdateUserParams,
         },
-        Notification,
-        SuccessResponse,
-        AUTH_COOKIE,
+        Notification, SuccessResponse, AUTH_COOKIE,
     },
 };
 use activitypub_federation::config::Data;
@@ -31,13 +25,7 @@ use bcrypt::verify;
 use chrono::Utc;
 use futures::future::try_join_all;
 use jsonwebtoken::{
-    decode,
-    encode,
-    get_current_timestamp,
-    DecodingKey,
-    EncodingKey,
-    Header,
-    Validation,
+    decode, encode, get_current_timestamp, DecodingKey, EncodingKey, Header, Validation,
 };
 use serde::{Deserialize, Serialize};
 use time::{Duration, OffsetDateTime};
@@ -167,7 +155,7 @@ pub(crate) async fn list_notifications(
     Extension(user): Extension<LocalUserView>,
     context: Data<IbisContext>,
 ) -> BackendResult<Json<Vec<Notification>>> {
-    let conflicts = DbConflict::list(&user.person, &context)?;
+    let conflicts = DbConflict::list(user.person.id, &context)?;
     let conflicts: Vec<_> = try_join_all(conflicts.into_iter().map(|c| {
         let data = context.reset_request_count();
         async move { c.to_api_conflict(&data).await }
@@ -199,7 +187,7 @@ pub(crate) async fn count_notifications(
 ) -> BackendResult<Json<usize>> {
     if let Some(user) = user {
         let mut count = 0;
-        let conflicts = DbConflict::list(&user.person, &context)?;
+        let conflicts = DbConflict::list(user.person.id, &context)?;
         count += conflicts.len();
         if check_is_admin(&user).is_ok() {
             let articles = DbArticle::list_approval_required(&context)?;

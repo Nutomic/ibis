@@ -16,19 +16,9 @@ use crate::{
     },
     common::{
         article::{
-            ApiConflict,
-            ApproveArticleParams,
-            CreateArticleParams,
-            DbArticle,
-            DbArticleView,
-            DbEdit,
-            DeleteConflictParams,
-            EditArticleParams,
-            EditVersion,
-            ForkArticleParams,
-            GetArticleParams,
-            ListArticlesParams,
-            ProtectArticleParams,
+            ApiConflict, ApproveArticleParams, CreateArticleParams, DbArticle, DbArticleView,
+            DbEdit, DeleteConflictParams, EditArticleParams, EditVersion, ForkArticleParams,
+            GetArticleParams, GetConflictParams, ListArticlesParams, ProtectArticleParams,
             SearchArticleParams,
         },
         comment::DbComment,
@@ -297,7 +287,6 @@ pub(in crate::backend::api) async fn protect_article(
     Ok(Json(article))
 }
 
-/// Get a list of all unresolved edit conflicts.
 #[debug_handler]
 pub async fn approve_article(
     Extension(user): Extension<LocalUserView>,
@@ -313,7 +302,20 @@ pub async fn approve_article(
     Ok(Json(()))
 }
 
-/// Get a list of all unresolved edit conflicts.
+#[debug_handler]
+pub async fn get_conflict(
+    Extension(user): Extension<LocalUserView>,
+    context: Data<IbisContext>,
+    Form(params): Form<GetConflictParams>,
+) -> BackendResult<Json<ApiConflict>> {
+    let conflict = DbConflict::read(params.conflict_id, user.person.id, &context)?;
+    let conflict = conflict
+        .to_api_conflict(&context)
+        .await?
+        .ok_or(anyhow!("Patch was applied cleanly"))?;
+    Ok(Json(conflict))
+}
+
 #[debug_handler]
 pub async fn delete_conflict(
     Extension(user): Extension<LocalUserView>,

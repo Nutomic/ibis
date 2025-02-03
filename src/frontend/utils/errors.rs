@@ -1,7 +1,7 @@
 use leptos::prelude::*;
 use log::warn;
 use serde::{Deserialize, Serialize};
-use std::{error::Error, fmt::Display, time::Duration};
+use std::{error::Error, fmt::Display, num::ParseIntError, time::Duration};
 
 pub type FrontendResult<T> = Result<T, FrontendError>;
 
@@ -92,6 +92,12 @@ impl From<url::ParseError> for FrontendError {
 
 impl From<serde_urlencoded::ser::Error> for FrontendError {
     fn from(value: serde_urlencoded::ser::Error) -> Self {
+        Self(value.to_string())
+    }
+}
+
+impl From<ParseIntError> for FrontendError {
+    fn from(value: ParseIntError) -> Self {
         Self(value.to_string())
     }
 }
