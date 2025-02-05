@@ -41,7 +41,7 @@ psql -c "CREATE DATABASE ibis WITH OWNER ibis;" -U postgres
 
 You need to install [cargo](https://rustup.rs/), [pnpm](https://pnpm.io/) and [cargo-leptos](https://github.com/leptos-rs/cargo-leptos). Use `pnpm install` to get Javascript dependencies. You need to enable the wasm target for Rust using `rustup target add wasm32-unknown-unknown`. Then run `cargo leptos watch` which automatically rebuilds the project after changes. Open the site at [localhost:3000](http://localhost:3000/). You can login with user `ibis` and password `ibis`.
 
-By default the frontend runs on port 3000, which can be changed with env var `TRUNK_SERVE_PORT`. The backend port is 8081 and can be changed with `IBIS_BACKEND_PORT`.
+The IP and port where the server serves the content can be changed with the env var `LEPTOS_SITE_ADDR`. Defaults to `127.0.0.1:3000`.
 
 ## Federation
 
