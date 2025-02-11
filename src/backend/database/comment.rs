@@ -3,7 +3,7 @@ use super::{
     IbisContext,
 };
 use crate::{
-    backend::utils::error::MyResult,
+    backend::utils::error::BackendResult,
     common::{
         comment::{DbComment, DbCommentView},
         newtypes::{ArticleId, CommentId, PersonId},
@@ -48,7 +48,7 @@ pub struct DbCommentUpdateForm {
 }
 
 impl DbComment {
-    pub fn create(form: DbCommentInsertForm, context: &IbisContext) -> MyResult<Self> {
+    pub fn create(form: DbCommentInsertForm, context: &IbisContext) -> BackendResult<Self> {
         let mut conn = context.db_pool.get()?;
         Ok(insert_into(comment::table)
             .values(form)
@@ -59,7 +59,7 @@ impl DbComment {
         form: DbCommentUpdateForm,
         id: CommentId,
         context: &IbisContext,
-    ) -> MyResult<DbCommentView> {
+    ) -> BackendResult<DbCommentView> {
         let mut conn = context.db_pool.get()?;
         let comment: DbComment = update(comment::table.find(id))
             .set(form)
@@ -68,7 +68,10 @@ impl DbComment {
         Ok(DbCommentView { comment, creator })
     }
 
-    pub fn create_or_update(form: DbCommentInsertForm, context: &IbisContext) -> MyResult<Self> {
+    pub fn create_or_update(
+        form: DbCommentInsertForm,
+        context: &IbisContext,
+    ) -> BackendResult<Self> {
         let mut conn = context.db_pool.get()?;
         Ok(insert_into(comment::table)
             .values(&form)
@@ -78,14 +81,14 @@ impl DbComment {
             .get_result(conn.deref_mut())?)
     }
 
-    pub fn read(id: CommentId, context: &IbisContext) -> MyResult<Self> {
+    pub fn read(id: CommentId, context: &IbisContext) -> BackendResult<Self> {
         let mut conn = context.db_pool.get()?;
         Ok(comment::table
             .find(id)
             .get_result::<Self>(conn.deref_mut())?)
     }
 
-    pub fn read_view(id: CommentId, context: &IbisContext) -> MyResult<DbCommentView> {
+    pub fn read_view(id: CommentId, context: &IbisContext) -> BackendResult<DbCommentView> {
         let mut conn = context.db_pool.get()?;
         let comment = comment::table
             .find(id)
@@ -94,7 +97,10 @@ impl DbComment {
         Ok(DbCommentView { comment, creator })
     }
 
-    pub fn read_from_ap_id(ap_id: &ObjectId<DbComment>, context: &IbisContext) -> MyResult<Self> {
+    pub fn read_from_ap_id(
+        ap_id: &ObjectId<DbComment>,
+        context: &IbisContext,
+    ) -> BackendResult<Self> {
         let mut conn = context.db_pool.get()?;
         Ok(comment::table
             .filter(comment::dsl::ap_id.eq(ap_id))
@@ -104,7 +110,7 @@ impl DbComment {
     pub fn read_for_article(
         article_id: ArticleId,
         context: &IbisContext,
-    ) -> MyResult<Vec<DbCommentView>> {
+    ) -> BackendResult<Vec<DbCommentView>> {
         let mut conn = context.db_pool.get()?;
         let comments = comment::table
             .inner_join(person::table)

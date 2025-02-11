@@ -1,9 +1,9 @@
-use super::error::MyResult;
+use super::error::BackendResult;
 use anyhow::anyhow;
 use regex::Regex;
 use std::sync::LazyLock;
 
-pub fn validate_article_title(title: &str) -> MyResult<String> {
+pub fn validate_article_title(title: &str) -> BackendResult<String> {
     #[expect(clippy::expect_used)]
     static TITLE_REGEX: LazyLock<Regex> =
         LazyLock::new(|| Regex::new(r"^[a-zA-Z0-9_]{3,100}$").expect("compile regex"));
@@ -14,7 +14,7 @@ pub fn validate_article_title(title: &str) -> MyResult<String> {
     Ok(title)
 }
 
-pub fn validate_user_name(name: &str) -> MyResult<()> {
+pub fn validate_user_name(name: &str) -> BackendResult<()> {
     #[allow(clippy::expect_used)]
     static VALID_ACTOR_NAME_REGEX: LazyLock<Regex> =
         LazyLock::new(|| Regex::new(r"^[a-zA-Z0-9_]{3,20}$").expect("compile regex"));
@@ -26,7 +26,7 @@ pub fn validate_user_name(name: &str) -> MyResult<()> {
     }
 }
 
-pub fn validate_display_name(name: &Option<String>) -> MyResult<()> {
+pub fn validate_display_name(name: &Option<String>) -> BackendResult<()> {
     if let Some(name) = name {
         if name.contains('@') || name.len() < 3 || name.len() > 20 {
             return Err(anyhow!("Invalid displayname").into());
@@ -35,14 +35,14 @@ pub fn validate_display_name(name: &Option<String>) -> MyResult<()> {
     Ok(())
 }
 
-pub fn validate_comment_max_depth(depth: i32) -> MyResult<()> {
+pub fn validate_comment_max_depth(depth: i32) -> BackendResult<()> {
     if depth > 50 {
         return Err(anyhow!("Max comment depth reached").into());
     }
     Ok(())
 }
 
-pub fn validate_not_empty(text: &str) -> MyResult<()> {
+pub fn validate_not_empty(text: &str) -> BackendResult<()> {
     if text.trim().len() < 2 {
         return Err(anyhow!("Empty text submitted").into());
     }

@@ -27,6 +27,11 @@ panic = "abort"
 [lints.clippy]
 dbg_macro = "deny"
 unwrap_used = "deny"
+todo = "deny"
+correctness = { level = "deny", priority = -1 }
+perf = { level = "deny", priority = -1 }
+style = { level = "deny", priority = -1 }
+suspicious = { level = "deny", priority = -1 }
 
 # frontend and shared deps
 [dependencies]

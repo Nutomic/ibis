@@ -5,7 +5,10 @@ use crate::{
     },
     frontend::{
         api::CLIENT,
-        components::article_nav::{ActiveTab, ArticleNav},
+        components::{
+            article_nav::{ActiveTab, ArticleNav},
+            suspense_error::SuspenseError,
+        },
         pages::article_resource,
         utils::{formatting::article_path, resources::is_admin},
         DbArticle,
@@ -54,12 +57,10 @@ pub fn ArticleActions() -> impl IntoView {
     });
     view! {
         <ArticleNav article=article active_tab=ActiveTab::Actions />
-        <Suspense fallback=|| {
-            view! { "Loading..." }
-        }>
-            {move || {
+        <SuspenseError result=article>
+            {move || Suspend::new(async move {
                 article
-                    .get()
+                    .await
                     .map(|article| {
                         view! {
                             <div>
@@ -108,12 +109,9 @@ pub fn ArticleActions() -> impl IntoView {
                             </div>
                         }
                     })
-            }}
-
-        </Suspense>
-        <Show when=move || fork_response.get().is_some()>
-            <Redirect path=article_path(&fork_response.get().unwrap()) />
-        </Show>
+            })}
+            {fork_response.get().map(|article| view! { <Redirect path=article_path(&article) /> })}
+        </SuspenseError>
         <p>"TODO: add option for admin to delete article etc"</p>
     }
 }

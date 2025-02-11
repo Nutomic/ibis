@@ -1,5 +1,3 @@
-#![deny(clippy::unwrap_used)]
-
 use article_link::ArticleLinkScanner;
 use markdown_it::{
     plugins::cmark::block::{heading::ATXHeading, lheading::SetextHeader},

@@ -7,7 +7,7 @@ use crate::{
             send_activity,
         },
         utils::{
-            error::{Error, MyResult},
+            error::{BackendError, BackendResult},
             generate_activity_id,
         },
     },
@@ -46,7 +46,7 @@ impl UpdateRemoteArticle {
         edit: DbEdit,
         article_instance: DbInstance,
         context: &Data<IbisContext>,
-    ) -> MyResult<()> {
+    ) -> BackendResult<()> {
         let local_instance = DbInstance::read_local(context)?;
         let id = generate_activity_id(context)?;
         let update = UpdateRemoteArticle {
@@ -70,7 +70,7 @@ impl UpdateRemoteArticle {
 #[async_trait::async_trait]
 impl ActivityHandler for UpdateRemoteArticle {
     type DataType = IbisContext;
-    type Error = Error;
+    type Error = BackendError;
 
     fn id(&self) -> &Url {
         &self.id

@@ -2,7 +2,7 @@ use crate::{
     backend::{
         database::IbisContext,
         federation::objects::article::ApubArticle,
-        utils::error::{Error, MyResult},
+        utils::error::{BackendError, BackendResult},
     },
     common::{article::DbArticle, utils::http_protocol_str},
 };
@@ -30,7 +30,7 @@ pub struct ArticleCollection {
 #[derive(Clone, Debug)]
 pub struct DbArticleCollection(());
 
-pub fn local_articles_url(domain: &str) -> MyResult<CollectionId<DbArticleCollection>> {
+pub fn local_articles_url(domain: &str) -> BackendResult<CollectionId<DbArticleCollection>> {
     Ok(CollectionId::parse(&format!(
         "{}://{domain}/all_articles",
         http_protocol_str()
@@ -42,7 +42,7 @@ impl Collection for DbArticleCollection {
     type Owner = ();
     type DataType = IbisContext;
     type Kind = ArticleCollection;
-    type Error = Error;
+    type Error = BackendError;
 
     async fn read_local(
         _owner: &Self::Owner,

@@ -3,7 +3,7 @@ use crate::{
     backend::{
         database::{instance::DbInstanceForm, IbisContext},
         federation::{objects::articles_collection::DbArticleCollection, send_activity},
-        utils::error::{Error, MyResult},
+        utils::error::{BackendError, BackendResult},
     },
     common::{instance::DbInstance, utils::extract_domain},
 };
@@ -37,11 +37,11 @@ pub struct ApubInstance {
 }
 
 impl DbInstance {
-    pub fn followers_url(&self) -> MyResult<Url> {
+    pub fn followers_url(&self) -> BackendResult<Url> {
         Ok(Url::parse(&format!("{}/followers", self.ap_id.inner()))?)
     }
 
-    pub fn follower_ids(&self, context: &Data<IbisContext>) -> MyResult<Vec<Url>> {
+    pub fn follower_ids(&self, context: &Data<IbisContext>) -> BackendResult<Vec<Url>> {
         Ok(DbInstance::read_followers(self.id, context)?
             .into_iter()
             .map(|f| f.ap_id.into())
@@ -57,7 +57,7 @@ impl DbInstance {
     where
         Activity: ActivityHandler + Serialize + Debug + Send + Sync,
         <Activity as ActivityHandler>::Error: From<activitypub_federation::error::Error>,
-        <Activity as ActivityHandler>::Error: From<Error>,
+        <Activity as ActivityHandler>::Error: From<BackendError>,
     {
         let mut inboxes: Vec<_> = DbInstance::read_followers(self.id, context)?
             .iter()
@@ -73,7 +73,7 @@ impl DbInstance {
 impl Object for DbInstance {
     type DataType = IbisContext;
     type Kind = ApubInstance;
-    type Error = Error;
+    type Error = BackendError;
 
     fn last_refreshed_at(&self) -> Option<DateTime<Utc>> {
         Some(self.last_refreshed_at)

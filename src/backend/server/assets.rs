@@ -1,4 +1,4 @@
-use crate::backend::utils::error::MyResult;
+use crate::backend::utils::error::BackendResult;
 use anyhow::anyhow;
 use axum::{
     body::Body,
@@ -19,7 +19,7 @@ use tower_http::services::ServeDir;
 pub async fn file_and_error_handler(
     State(options): State<LeptosOptions>,
     request: Request<Body>,
-) -> MyResult<Response<Body>> {
+) -> BackendResult<Response<Body>> {
     if cfg!(debug_assertions) {
         // in debug mode serve assets directly from local folder
         Ok(ServeDir::new(options.site_root.as_ref())

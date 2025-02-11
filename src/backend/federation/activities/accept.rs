@@ -3,7 +3,7 @@ use crate::{
         database::IbisContext,
         federation::{activities::follow::Follow, send_activity},
         utils::{
-            error::{Error, MyResult},
+            error::{BackendError, BackendResult},
             generate_activity_id,
         },
     },
@@ -33,7 +33,7 @@ impl Accept {
         local_instance: DbInstance,
         object: Follow,
         context: &Data<IbisContext>,
-    ) -> MyResult<()> {
+    ) -> BackendResult<()> {
         let id = generate_activity_id(context)?;
         let follower = object.actor.dereference(context).await?;
         let accept = Accept {
@@ -56,7 +56,7 @@ impl Accept {
 #[async_trait::async_trait]
 impl ActivityHandler for Accept {
     type DataType = IbisContext;
-    type Error = Error;
+    type Error = BackendError;
 
     fn id(&self) -> &Url {
         &self.id

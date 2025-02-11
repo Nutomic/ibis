@@ -9,7 +9,7 @@ use crate::{
         },
         federation::activities::{create_article::CreateArticle, submit_article_update},
         utils::{
-            error::MyResult,
+            error::BackendResult,
             generate_article_version,
             validate::{validate_article_title, validate_not_empty},
         },
@@ -27,6 +27,7 @@ use crate::{
             EditVersion,
             ForkArticleParams,
             GetArticleParams,
+            GetConflictParams,
             ListArticlesParams,
             ProtectArticleParams,
             SearchArticleParams,
@@ -52,7 +53,7 @@ pub(in crate::backend::api) async fn create_article(
     user: Extension<LocalUserView>,
     context: Data<IbisContext>,
     Form(mut params): Form<CreateArticleParams>,
-) -> MyResult<Json<DbArticleView>> {
+) -> BackendResult<Json<DbArticleView>> {
     params.title = validate_article_title(&params.title)?;
     validate_not_empty(&params.text)?;
 
@@ -105,7 +106,7 @@ pub(in crate::backend::api) async fn edit_article(
     Extension(user): Extension<LocalUserView>,
     context: Data<IbisContext>,
     Form(mut params): Form<EditArticleParams>,
-) -> MyResult<Json<Option<ApiConflict>>> {
+) -> BackendResult<Json<Option<ApiConflict>>> {
     validate_not_empty(&params.new_text)?;
     // resolve conflict if any
     if let Some(resolve_conflict_id) = params.resolve_conflict_id {
@@ -169,7 +170,7 @@ pub(in crate::backend::api) async fn edit_article(
 pub(in crate::backend::api) async fn get_article(
     Query(query): Query<GetArticleParams>,
     context: Data<IbisContext>,
-) -> MyResult<Json<DbArticleView>> {
+) -> BackendResult<Json<DbArticleView>> {
     match (query.title, query.id) {
         (Some(title), None) => Ok(Json(DbArticle::read_view_title(
             &title,
@@ -191,7 +192,7 @@ pub(in crate::backend::api) async fn get_article(
 pub(in crate::backend::api) async fn list_articles(
     Query(query): Query<ListArticlesParams>,
     context: Data<IbisContext>,
-) -> MyResult<Json<Vec<DbArticle>>> {
+) -> BackendResult<Json<Vec<DbArticle>>> {
     Ok(Json(DbArticle::read_all(
         query.only_local,
         query.instance_id,
@@ -206,7 +207,7 @@ pub(in crate::backend::api) async fn fork_article(
     Extension(_user): Extension<LocalUserView>,
     context: Data<IbisContext>,
     Form(mut params): Form<ForkArticleParams>,
-) -> MyResult<Json<DbArticleView>> {
+) -> BackendResult<Json<DbArticleView>> {
     // TODO: lots of code duplicated from create_article(), can move it into helper
     let original_article = DbArticle::read_view(params.article_id, &context)?;
     params.new_title = validate_article_title(&params.new_title)?;
@@ -260,7 +261,7 @@ pub(in crate::backend::api) async fn fork_article(
 pub(super) async fn resolve_article(
     Query(query): Query<ResolveObjectParams>,
     context: Data<IbisContext>,
-) -> MyResult<Json<DbArticleView>> {
+) -> BackendResult<Json<DbArticleView>> {
     let article: DbArticle = ObjectId::from(query.id).dereference(&context).await?;
     let instance = DbInstance::read(article.instance_id, &context)?;
     let comments = DbComment::read_for_article(article.id, &context)?;
@@ -278,7 +279,7 @@ pub(super) async fn resolve_article(
 pub(super) async fn search_article(
     Query(query): Query<SearchArticleParams>,
     context: Data<IbisContext>,
-) -> MyResult<Json<Vec<DbArticle>>> {
+) -> BackendResult<Json<Vec<DbArticle>>> {
     if query.query.is_empty() {
         return Err(anyhow!("Query is empty").into());
     }
@@ -291,19 +292,18 @@ pub(in crate::backend::api) async fn protect_article(
     Extension(user): Extension<LocalUserView>,
     context: Data<IbisContext>,
     Form(params): Form<ProtectArticleParams>,
-) -> MyResult<Json<DbArticle>> {
+) -> BackendResult<Json<DbArticle>> {
     check_is_admin(&user)?;
     let article = DbArticle::update_protected(params.article_id, params.protected, &context)?;
     Ok(Json(article))
 }
 
-/// Get a list of all unresolved edit conflicts.
 #[debug_handler]
 pub async fn approve_article(
     Extension(user): Extension<LocalUserView>,
     context: Data<IbisContext>,
     Form(params): Form<ApproveArticleParams>,
-) -> MyResult<Json<()>> {
+) -> BackendResult<Json<()>> {
     check_is_admin(&user)?;
     if params.approve {
         DbArticle::update_approved(params.article_id, true, &context)?;
@@ -313,13 +313,26 @@ pub async fn approve_article(
     Ok(Json(()))
 }
 
-/// Get a list of all unresolved edit conflicts.
+#[debug_handler]
+pub async fn get_conflict(
+    Extension(user): Extension<LocalUserView>,
+    context: Data<IbisContext>,
+    Form(params): Form<GetConflictParams>,
+) -> BackendResult<Json<ApiConflict>> {
+    let conflict = DbConflict::read(params.conflict_id, user.person.id, &context)?;
+    let conflict = conflict
+        .to_api_conflict(&context)
+        .await?
+        .ok_or(anyhow!("Patch was applied cleanly"))?;
+    Ok(Json(conflict))
+}
+
 #[debug_handler]
 pub async fn delete_conflict(
     Extension(user): Extension<LocalUserView>,
     context: Data<IbisContext>,
     Form(params): Form<DeleteConflictParams>,
-) -> MyResult<Json<()>> {
+) -> BackendResult<Json<()>> {
     DbConflict::delete(params.conflict_id, user.person.id, &context)?;
     Ok(Json(()))
 }

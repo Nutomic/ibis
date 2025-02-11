@@ -1,7 +1,7 @@
 use crate::{
     backend::{
         database::{instance_stats::InstanceStats, IbisContext},
-        utils::error::MyResult,
+        utils::error::BackendResult,
     },
     common::utils::http_protocol_str,
 };
@@ -16,7 +16,9 @@ pub fn config() -> Router<()> {
         .route("/.well-known/nodeinfo", get(node_info_well_known))
 }
 
-async fn node_info_well_known(context: Data<IbisContext>) -> MyResult<Json<NodeInfoWellKnown>> {
+async fn node_info_well_known(
+    context: Data<IbisContext>,
+) -> BackendResult<Json<NodeInfoWellKnown>> {
     Ok(Json(NodeInfoWellKnown {
         links: vec![NodeInfoWellKnownLinks {
             rel: Url::parse("http://nodeinfo.diaspora.software/ns/schema/2.1")?,
@@ -29,7 +31,7 @@ async fn node_info_well_known(context: Data<IbisContext>) -> MyResult<Json<NodeI
     }))
 }
 
-async fn node_info(context: Data<IbisContext>) -> MyResult<Json<NodeInfo>> {
+async fn node_info(context: Data<IbisContext>) -> BackendResult<Json<NodeInfo>> {
     let stats = InstanceStats::read(&context)?;
     Ok(Json(NodeInfo {
         version: "2.1".to_string(),

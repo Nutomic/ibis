@@ -54,7 +54,7 @@ async fn test_create_read_and_edit_local_article() -> Result<()> {
 
     // error on article which wasnt federated
     let not_found = beta.get_article(get_article_data.clone()).await;
-    assert!(not_found.is_none());
+    assert!(not_found.is_err());
 
     // edit article
     let edit_params = EditArticleParams {
@@ -185,7 +185,7 @@ async fn test_synchronize_articles() -> Result<()> {
 
     // try to read remote article by name, fails without domain
     let get_res = beta.get_article(get_article_data.clone()).await;
-    assert!(get_res.is_none());
+    assert!(get_res.is_err());
 
     // get the article with instance id and compare
     let get_res = RetryFuture::new(
@@ -197,11 +197,11 @@ async fn test_synchronize_articles() -> Result<()> {
             };
             let res = beta.get_article(get_article_data).await;
             match res {
-                None => Err(RetryPolicy::<String>::Retry(None)),
-                Some(a) if a.latest_version != edit_res.latest_version => {
+                Err(_) => Err(RetryPolicy::<String>::Retry(None)),
+                Ok(a) if a.latest_version != edit_res.latest_version => {
                     Err(RetryPolicy::Retry(None))
                 }
-                Some(a) => Ok(a),
+                Ok(a) => Ok(a),
             }
         },
         LinearRetryStrategy::new(),
@@ -805,9 +805,9 @@ async fn test_synchronize_instances() -> Result<()> {
         || async {
             let res = gamma.list_instances().await;
             match res {
-                None => Err(RetryPolicy::<String>::Retry(None)),
-                Some(i) if i.len() < 3 => Err(RetryPolicy::Retry(None)),
-                Some(i) => Ok(i),
+                Err(_) => Err(RetryPolicy::<String>::Retry(None)),
+                Ok(i) if i.len() < 3 => Err(RetryPolicy::Retry(None)),
+                Ok(i) => Ok(i),
             }
         },
         LinearRetryStrategy::new(),

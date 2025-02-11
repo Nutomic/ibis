@@ -1,6 +1,6 @@
+use crate::frontend::utils::errors::{FrontendError, FrontendResult};
 use http::{Method, StatusCode};
-use leptos::{prelude::ServerFnError, server_fn::error::NoCustomError};
-use log::{error, info};
+use log::info;
 use serde::{Deserialize, Serialize};
 use std::{fmt::Debug, sync::LazyLock};
 
@@ -9,58 +9,45 @@ pub mod comment;
 pub mod instance;
 pub mod user;
 
-pub static CLIENT: LazyLock<ApiClient> = LazyLock::new(|| {
-    #[cfg(feature = "ssr")]
-    {
-        ApiClient::new(reqwest::Client::new(), None)
-    }
-    #[cfg(not(feature = "ssr"))]
-    {
-        ApiClient::new()
-    }
-});
+pub static CLIENT: LazyLock<ApiClient> = LazyLock::new(|| ApiClient::new(None));
 
 #[derive(Clone, Debug)]
 pub struct ApiClient {
     #[cfg(feature = "ssr")]
     client: reqwest::Client,
-    pub hostname: String,
-    ssl: bool,
+    #[cfg(feature = "ssr")]
+    test_hostname: Option<String>,
 }
 
 impl ApiClient {
-    #[cfg(feature = "ssr")]
-    pub fn new(client: reqwest::Client, hostname_: Option<String>) -> Self {
-        use leptos::config::get_config_from_str;
-        let leptos_options = get_config_from_str(include_str!("../../../Cargo.toml")).unwrap();
-        let mut hostname = leptos_options.site_addr.to_string();
-        // required for tests
-        if let Some(hostname_) = hostname_ {
-            hostname = hostname_;
+    pub fn new(#[allow(unused)] test_hostname: Option<String>) -> Self {
+        #[cfg(feature = "ssr")]
+        {
+            // need cookie store for auth in tests
+            let client = reqwest::ClientBuilder::new()
+                .cookie_store(true)
+                .build()
+                .expect("init reqwest");
+            Self {
+                client,
+                test_hostname,
+            }
         }
-        Self {
-            client,
-            hostname,
-            ssl: false,
+        #[cfg(not(feature = "ssr"))]
+        {
+            Self {}
         }
-    }
-    #[cfg(not(feature = "ssr"))]
-    pub fn new() -> Self {
-        use leptos_use::use_document;
-        let hostname = use_document().location().unwrap().host().unwrap();
-        let ssl = !cfg!(debug_assertions);
-        Self { hostname, ssl }
     }
 
-    async fn get<T, R>(&self, endpoint: &str, query: Option<R>) -> Option<T>
+    async fn get<T, R>(&self, endpoint: &str, query: Option<R>) -> FrontendResult<T>
     where
         T: for<'de> Deserialize<'de>,
         R: Serialize + Debug,
     {
-        result_to_option(self.send(Method::GET, endpoint, query).await)
+        self.send(Method::GET, endpoint, query).await
     }
 
-    async fn post<T, R>(&self, endpoint: &str, query: Option<R>) -> Result<T, ServerFnError>
+    async fn post<T, R>(&self, endpoint: &str, query: Option<R>) -> FrontendResult<T>
     where
         T: for<'de> Deserialize<'de>,
         R: Serialize + Debug,
@@ -68,7 +55,7 @@ impl ApiClient {
         self.send(Method::POST, endpoint, query).await
     }
 
-    async fn patch<T, R>(&self, endpoint: &str, query: Option<R>) -> Result<T, ServerFnError>
+    async fn patch<T, R>(&self, endpoint: &str, query: Option<R>) -> FrontendResult<T>
     where
         T: for<'de> Deserialize<'de>,
         R: Serialize + Debug,
@@ -77,12 +64,7 @@ impl ApiClient {
     }
 
     #[cfg(feature = "ssr")]
-    async fn send<P, T>(
-        &self,
-        method: Method,
-        path: &str,
-        params: Option<P>,
-    ) -> Result<T, ServerFnError>
+    async fn send<P, T>(&self, method: Method, path: &str, params: Option<P>) -> FrontendResult<T>
     where
         P: Serialize + Debug,
         T: for<'de> Deserialize<'de>,
@@ -90,9 +72,10 @@ impl ApiClient {
         use crate::common::{Auth, AUTH_COOKIE};
         use leptos::prelude::use_context;
         use reqwest::header::HeaderName;
+
         let mut req = self
             .client
-            .request(method.clone(), self.request_endpoint(path));
+            .request(method.clone(), self.request_endpoint(path)?);
         req = if method == Method::GET {
             req.query(&params)
         } else {
@@ -115,7 +98,7 @@ impl ApiClient {
         method: Method,
         path: &'a str,
         params: Option<P>,
-    ) -> impl std::future::Future<Output = Result<T, ServerFnError>> + Send + 'a
+    ) -> impl std::future::Future<Output = FrontendResult<T>> + Send + 'a
     where
         P: Serialize + Debug + 'a,
         T: for<'de> Deserialize<'de>,
@@ -136,8 +119,8 @@ impl ApiClient {
                 }
             });
 
-            let path_with_endpoint = self.request_endpoint(path);
-            let params_encoded = serde_urlencoded::to_string(&params).unwrap();
+            let path_with_endpoint = self.request_endpoint(path)?;
+            let params_encoded = serde_urlencoded::to_string(&params)?;
             let path = if method == Method::GET {
                 // Cannot pass the form data directly but need to convert it manually
                 // https://github.com/rustwasm/gloo/issues/378
@@ -156,8 +139,7 @@ impl ApiClient {
                     .body(params_encoded)
             } else {
                 builder.build()
-            }
-            .unwrap();
+            }?;
             let res = req.send().await?;
             let status = res.status();
             let text = res.text().await?;
@@ -165,34 +147,53 @@ impl ApiClient {
         })
     }
 
-    fn response<T>(status: u16, text: String, url: &str) -> Result<T, ServerFnError>
+    fn response<T>(status: u16, text: String, url: &str) -> FrontendResult<T>
     where
         T: for<'de> Deserialize<'de>,
     {
         let json = serde_json::from_str(&text).map_err(|e| {
             info!("Failed to deserialize api response: {e} from {text} on {url}");
-            ServerFnError::<NoCustomError>::Deserialization(text.clone())
+            FrontendError::new(&text)
         })?;
         if status == StatusCode::OK {
             Ok(json)
         } else {
             info!("API error: {text} on {url} status {status}");
-            Err(ServerFnError::Response(text))
+            Err(FrontendError::new(text))
         }
     }
 
-    fn request_endpoint(&self, path: &str) -> String {
-        let protocol = if self.ssl { "https" } else { "http" };
-        format!("{protocol}://{}{path}", &self.hostname)
-    }
-}
+    fn request_endpoint(&self, path: &str) -> FrontendResult<String> {
+        let protocol = if cfg!(debug_assertions) {
+            "http"
+        } else {
+            "https"
+        };
 
-fn result_to_option<T>(val: Result<T, ServerFnError>) -> Option<T> {
-    match val {
-        Ok(v) => Some(v),
-        Err(e) => {
-            error!("API error: {e}");
-            None
+        let hostname: String;
+
+        #[cfg(feature = "ssr")]
+        {
+            use leptos::{config::LeptosOptions, prelude::use_context};
+            hostname = self
+                .test_hostname
+                .clone()
+                .or_else(|| use_context::<LeptosOptions>().map(|o| o.site_addr.to_string()))
+                // Needed because during tests App() gets initialized from backend
+                // generate_route_list() which attempts to load some resources without providing
+                // LeptosOptions. Returning an error results in hydration errors, but an invalid
+                // host seems fine.
+                // TODO: maybe can change this to Err after unwraps are all removed
+                .unwrap_or_else(|| "localhost".to_string());
         }
+        #[cfg(not(feature = "ssr"))]
+        {
+            use leptos::prelude::location;
+            hostname = location()
+                .host()
+                .map_err(|e| FrontendError::new(format!("Failed to get hostname: {:?}", e)))?;
+        }
+
+        Ok(format!("{protocol}://{}{path}", hostname))
     }
 }

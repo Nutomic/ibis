@@ -3,7 +3,7 @@ use crate::{
     backend::{
         database::{instance::DbInstanceUpdateForm, IbisContext},
         federation::activities::follow::Follow,
-        utils::error::MyResult,
+        utils::error::BackendResult,
     },
     common::{
         instance::{
@@ -28,7 +28,7 @@ use axum_macros::debug_handler;
 pub(in crate::backend::api) async fn get_instance(
     context: Data<IbisContext>,
     Form(params): Form<GetInstanceParams>,
-) -> MyResult<Json<InstanceView2>> {
+) -> BackendResult<Json<InstanceView2>> {
     let local_instance = DbInstance::read_view(params.id, &context)?;
     Ok(Json(local_instance))
 }
@@ -36,7 +36,7 @@ pub(in crate::backend::api) async fn get_instance(
 pub(in crate::backend::api) async fn update_instance(
     context: Data<IbisContext>,
     Form(mut params): Form<UpdateInstanceParams>,
-) -> MyResult<Json<DbInstance>> {
+) -> BackendResult<Json<DbInstance>> {
     empty_to_none(&mut params.name);
     empty_to_none(&mut params.topic);
     let form = DbInstanceUpdateForm {
@@ -53,7 +53,7 @@ pub(in crate::backend::api) async fn follow_instance(
     Extension(user): Extension<LocalUserView>,
     context: Data<IbisContext>,
     Form(params): Form<FollowInstanceParams>,
-) -> MyResult<Json<SuccessResponse>> {
+) -> BackendResult<Json<SuccessResponse>> {
     let target = DbInstance::read(params.id, &context)?;
     let pending = !target.local;
     DbInstance::follow(&user.person, &target, pending, &context)?;
@@ -68,7 +68,7 @@ pub(in crate::backend::api) async fn follow_instance(
 pub(super) async fn resolve_instance(
     Query(params): Query<ResolveObjectParams>,
     context: Data<IbisContext>,
-) -> MyResult<Json<DbInstance>> {
+) -> BackendResult<Json<DbInstance>> {
     let instance: DbInstance = ObjectId::from(params.id).dereference(&context).await?;
     Ok(Json(instance))
 }
@@ -76,7 +76,7 @@ pub(super) async fn resolve_instance(
 #[debug_handler]
 pub(in crate::backend::api) async fn list_instances(
     context: Data<IbisContext>,
-) -> MyResult<Json<Vec<InstanceView>>> {
-    let instances = DbInstance::list(&context)?;
+) -> BackendResult<Json<Vec<InstanceView>>> {
+    let instances = DbInstance::list(false, &context)?;
     Ok(Json(instances))
 }

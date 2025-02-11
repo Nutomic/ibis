@@ -2,7 +2,11 @@ use crate::{
     common::Notification,
     frontend::{
         api::CLIENT,
-        utils::formatting::{article_path, article_title},
+        components::suspense_error::SuspenseError,
+        utils::{
+            errors::FrontendResultExt,
+            formatting::{article_path, article_title},
+        },
     },
 };
 use leptos::prelude::*;
@@ -12,17 +16,17 @@ use leptos_meta::Title;
 pub fn Notifications() -> impl IntoView {
     let notifications = Resource::new(
         move || {},
-        |_| async move { CLIENT.notifications_list().await.unwrap_or_default() },
+        |_| async move { CLIENT.notifications_list().await },
     );
 
     view! {
         <Title text="Notifications" />
         <h1 class="flex-auto my-6 font-serif text-4xl font-bold grow">Notifications</h1>
-        <Suspense fallback=|| view! { "Loading..." }>
+        <SuspenseError result=notifications>
             <ul class="divide-y divide-solid">
-                {move || {
+                {move || Suspend::new(async move {
                     notifications
-                        .get()
+                        .await
                         .map(|n| {
                             n.into_iter()
                                 .map(|ref notif| {
@@ -31,7 +35,11 @@ pub fn Notifications() -> impl IntoView {
                                         EditConflict(c) => {
                                             (
                                                 "visibility: hidden",
-                                                format!("{}/edit/{}", article_path(&c.article), c.id.0),
+                                                format!(
+                                                    "{}/edit?conflict_id={}",
+                                                    article_path(&c.article),
+                                                    c.id.0,
+                                                ),
                                                 format!(
                                                     "Conflict: {} - {}",
                                                     article_title(&c.article),
@@ -52,9 +60,11 @@ pub fn Notifications() -> impl IntoView {
                                         let notif_ = notif_.clone();
                                         async move {
                                             if let ArticleApprovalRequired(a) = notif_ {
-                                                CLIENT.approve_article(a.id, true).await.unwrap();
+                                                CLIENT
+                                                    .approve_article(a.id, true)
+                                                    .await
+                                                    .error_popup(|_| notifications.refetch());
                                             }
-                                            notifications.refetch();
                                         }
                                     });
                                     let notif_ = notif.clone();
@@ -63,10 +73,13 @@ pub fn Notifications() -> impl IntoView {
                                         async move {
                                             match notif_ {
                                                 EditConflict(c) => {
-                                                    CLIENT.delete_conflict(c.id).await.unwrap();
+                                                    CLIENT.delete_conflict(c.id).await.error_popup(|_| {});
                                                 }
                                                 ArticleApprovalRequired(a) => {
-                                                    CLIENT.approve_article(a.id, false).await.unwrap();
+                                                    CLIENT
+                                                        .approve_article(a.id, false)
+                                                        .await
+                                                        .error_popup(|_| {});
                                                 }
                                             }
                                             notifications.refetch();
@@ -101,9 +114,9 @@ pub fn Notifications() -> impl IntoView {
                                 })
                                 .collect::<Vec<_>>()
                         })
-                }}
+                })}
 
             </ul>
-        </Suspense>
+        </SuspenseError>
     }
 }

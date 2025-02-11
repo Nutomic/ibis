@@ -2,7 +2,7 @@ use super::instance::ApubInstance;
 use crate::{
     backend::{
         database::IbisContext,
-        utils::error::{Error, MyResult},
+        utils::error::{BackendError, BackendResult},
     },
     common::{instance::DbInstance, utils::http_protocol_str},
 };
@@ -30,7 +30,7 @@ pub struct InstanceCollection {
 #[derive(Clone, Debug)]
 pub struct DbInstanceCollection(());
 
-pub fn linked_instances_url(domain: &str) -> MyResult<CollectionId<DbInstanceCollection>> {
+pub fn linked_instances_url(domain: &str) -> BackendResult<CollectionId<DbInstanceCollection>> {
     Ok(CollectionId::parse(&format!(
         "{}://{domain}/linked_instances",
         http_protocol_str()
@@ -42,13 +42,13 @@ impl Collection for DbInstanceCollection {
     type Owner = ();
     type DataType = IbisContext;
     type Kind = InstanceCollection;
-    type Error = Error;
+    type Error = BackendError;
 
     async fn read_local(
         _owner: &Self::Owner,
         context: &Data<Self::DataType>,
     ) -> Result<Self::Kind, Self::Error> {
-        let instances = DbInstance::list(context)?;
+        let instances = DbInstance::list(true, context)?;
         let instances = future::try_join_all(
             instances
                 .into_iter()

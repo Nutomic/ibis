@@ -9,7 +9,6 @@ use diesel::QueryableByName;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use uuid::Uuid;
-
 #[cfg(feature = "ssr")]
 use {
     crate::backend::database::schema::{article, edit},
@@ -42,10 +41,7 @@ pub struct DbArticleView {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, QueryableByName)]
-#[cfg_attr(
-    feature = "ssr",
-    derive(Queryable, Selectable, Identifiable)
-)]
+#[cfg_attr(feature = "ssr", derive(Queryable, Selectable, Identifiable))]
 #[cfg_attr(feature = "ssr", diesel(table_name = article, check_for_backend(diesel::pg::Pg), belongs_to(DbInstance, foreign_key = instance_id)))]
 pub struct DbArticle {
     #[diesel(column_name = "id")]
@@ -198,6 +194,11 @@ pub struct ApiConflict {
     pub article: DbArticle,
     pub previous_version_id: EditVersion,
     pub published: DateTime<Utc>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct GetConflictParams {
+    pub conflict_id: ConflictId,
 }
 
 #[test]

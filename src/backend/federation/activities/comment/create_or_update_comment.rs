@@ -8,7 +8,7 @@ use crate::{
             send_activity_to_instance,
         },
         generate_activity_id,
-        utils::error::{Error, MyResult},
+        utils::error::{BackendError, BackendResult},
     },
     common::{comment::DbComment, instance::DbInstance, user::DbPerson},
 };
@@ -40,7 +40,7 @@ pub struct CreateOrUpdateComment {
 }
 
 impl CreateOrUpdateComment {
-    pub async fn send(comment: &DbComment, context: &Data<IbisContext>) -> MyResult<()> {
+    pub async fn send(comment: &DbComment, context: &Data<IbisContext>) -> BackendResult<()> {
         let instance = DbInstance::read_for_comment(comment.id, context)?;
 
         let kind = if comment.updated.is_none() {
@@ -67,7 +67,7 @@ impl CreateOrUpdateComment {
 #[async_trait::async_trait]
 impl ActivityHandler for CreateOrUpdateComment {
     type DataType = IbisContext;
-    type Error = Error;
+    type Error = BackendError;
 
     fn id(&self) -> &Url {
         &self.id

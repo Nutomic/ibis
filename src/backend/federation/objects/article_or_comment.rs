@@ -2,7 +2,7 @@ use super::{article::ApubArticle, comment::ApubComment};
 use crate::{
     backend::{
         database::IbisContext,
-        utils::error::{Error, MyResult},
+        utils::error::{BackendError, BackendResult},
     },
     common::{article::DbArticle, comment::DbComment},
 };
@@ -28,7 +28,7 @@ pub enum ApubArticleOrComment {
 impl Object for DbArticleOrComment {
     type DataType = IbisContext;
     type Kind = ApubArticleOrComment;
-    type Error = Error;
+    type Error = BackendError;
 
     fn last_refreshed_at(&self) -> Option<DateTime<Utc>> {
         None
@@ -37,7 +37,7 @@ impl Object for DbArticleOrComment {
     async fn read_from_id(
         object_id: Url,
         context: &Data<Self::DataType>,
-    ) -> MyResult<Option<Self>> {
+    ) -> BackendResult<Option<Self>> {
         let post = DbArticle::read_from_id(object_id.clone(), context).await?;
         Ok(match post {
             Some(o) => Some(Self::Article(o)),
@@ -47,14 +47,14 @@ impl Object for DbArticleOrComment {
         })
     }
 
-    async fn delete(self, context: &Data<Self::DataType>) -> MyResult<()> {
+    async fn delete(self, context: &Data<Self::DataType>) -> BackendResult<()> {
         match self {
             Self::Article(p) => p.delete(context).await,
             Self::Comment(c) => c.delete(context).await,
         }
     }
 
-    async fn into_json(self, context: &Data<Self::DataType>) -> MyResult<Self::Kind> {
+    async fn into_json(self, context: &Data<Self::DataType>) -> BackendResult<Self::Kind> {
         Ok(match self {
             Self::Article(p) => Self::Kind::Article(Box::new(p.into_json(context).await?)),
             Self::Comment(c) => Self::Kind::Comment(Box::new(c.into_json(context).await?)),
@@ -65,14 +65,14 @@ impl Object for DbArticleOrComment {
         apub: &Self::Kind,
         expected_domain: &Url,
         context: &Data<Self::DataType>,
-    ) -> MyResult<()> {
+    ) -> BackendResult<()> {
         match apub {
             Self::Kind::Article(a) => DbArticle::verify(a, expected_domain, context).await,
             Self::Kind::Comment(a) => DbComment::verify(a, expected_domain, context).await,
         }
     }
 
-    async fn from_json(apub: Self::Kind, context: &Data<Self::DataType>) -> MyResult<Self> {
+    async fn from_json(apub: Self::Kind, context: &Data<Self::DataType>) -> BackendResult<Self> {
         Ok(match apub {
             Self::Kind::Article(p) => Self::Article(DbArticle::from_json(*p, context).await?),
             Self::Kind::Comment(n) => Self::Comment(DbComment::from_json(*n, context).await?),

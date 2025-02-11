@@ -1,4 +1,4 @@
-use super::{database::IbisContext, utils::error::MyResult};
+use super::{database::IbisContext, utils::error::BackendResult};
 use crate::{
     backend::{api::api_routes, federation::routes::federation_routes},
     common::Auth,
@@ -29,12 +29,13 @@ use tower_layer::Layer;
 mod assets;
 mod middleware;
 mod nodeinfo;
+pub(super) mod setup;
 
 pub(super) async fn start_server(
     context: FederationConfig<IbisContext>,
     override_hostname: Option<SocketAddr>,
     notify_start: Option<oneshot::Sender<()>>,
-) -> MyResult<()> {
+) -> BackendResult<()> {
     let leptos_options = get_config_from_str(include_str!("../../../Cargo.toml"))?;
     let mut addr = leptos_options.site_addr;
     if let Some(override_hostname) = override_hostname {
@@ -75,8 +76,10 @@ async fn leptos_routes_handler(
     State(leptos_options): State<LeptosOptions>,
     request: Request<Body>,
 ) -> Response {
+    let leptos_options_ = leptos_options.clone();
     let handler = leptos_axum::render_app_async_with_context(
         move || {
+            provide_context(leptos_options_.clone());
             if let Some(auth) = &auth {
                 provide_context(auth.0.clone());
             }

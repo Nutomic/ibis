@@ -1,4 +1,4 @@
-use crate::{backend::utils::error::MyResult, common::instance::Options};
+use crate::{backend::utils::error::BackendResult, common::instance::Options};
 use config::Config;
 use doku::Document;
 use serde::Deserialize;
@@ -17,7 +17,7 @@ pub struct IbisConfig {
 }
 
 impl IbisConfig {
-    pub fn read() -> MyResult<Self> {
+    pub fn read() -> BackendResult<Self> {
         let config = Config::builder()
             .add_source(config::File::with_name("config.toml"))
             // Cant use _ as separator due to https://github.com/mehcode/config-rs/issues/391
