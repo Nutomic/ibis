@@ -1,6 +1,6 @@
 use super::{
     conflict::DbConflict,
-    schema::{article, comment, conflict},
+    schema::{article, comment, conflict, person},
     IbisContext,
 };
 use crate::{
@@ -40,6 +40,7 @@ impl Notification {
         // comment replies
         let comment_replies = comment::table
             .inner_join(article::table)
+            .inner_join(person::table.on(person::id.eq(comment::creator_id)))
             .inner_join(
                 parent_comment.on(parent_comment
                     .field(comment::id)
@@ -51,7 +52,11 @@ impl Notification {
             .filter(not(comment::deleted))
             .filter(not(comment::read_by_parent_creator))
             .order_by(comment::published.desc())
-            .select((comment::all_columns, article::all_columns))
+            .select((
+                comment::all_columns,
+                person::all_columns,
+                article::all_columns,
+            ))
             .get_results::<CommentViewWithArticle>(conn.deref_mut())?
             .into_iter();
         notifications.extend(comment_replies.map(Notification::Reply));
@@ -93,7 +98,6 @@ impl Notification {
             .filter(comment::creator_id.ne(user.person.id))
             .filter(not(comment::deleted))
             .filter(not(comment::read_by_parent_creator))
-            .order_by(comment::published.desc())
             .select(count(comment::id))
             .first::<i64>(conn.deref_mut())?;
         num += comment_replies;

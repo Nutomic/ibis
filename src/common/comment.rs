@@ -44,6 +44,7 @@ pub struct DbCommentView {
 #[cfg_attr(feature = "ssr", derive(Queryable))]
 pub struct CommentViewWithArticle {
     pub comment: DbComment,
+    pub creator: DbPerson,
     pub article: DbArticle,
 }
 
