@@ -76,7 +76,15 @@ pub(super) async fn resolve_instance(
 #[debug_handler]
 pub(in crate::backend::api) async fn list_instances(
     context: Data<IbisContext>,
+) -> BackendResult<Json<Vec<DbInstance>>> {
+    let instances = DbInstance::list(&context)?;
+    Ok(Json(instances))
+}
+
+#[debug_handler]
+pub(in crate::backend::api) async fn list_instance_views(
+    context: Data<IbisContext>,
 ) -> BackendResult<Json<Vec<InstanceView>>> {
-    let instances = DbInstance::list(false, &context)?;
+    let instances = DbInstance::list_views(&context)?;
     Ok(Json(instances))
 }

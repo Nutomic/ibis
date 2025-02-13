@@ -137,17 +137,16 @@ impl DbInstance {
             .select(person::all_columns)
             .get_results(conn.deref_mut())?)
     }
-
-    pub fn list(
-        only_remote: bool,
-        context: &Data<IbisContext>,
-    ) -> BackendResult<Vec<InstanceView>> {
+    pub fn list(context: &Data<IbisContext>) -> BackendResult<Vec<DbInstance>> {
         let mut conn = context.db_pool.get()?;
-        let mut query = instance::table.into_boxed();
-        if only_remote {
-            query = query.filter(instance::local.eq(false));
-        }
-        let instances = query.get_results::<DbInstance>(conn.deref_mut())?;
+        Ok(instance::table
+            .filter(instance::local.eq(false))
+            .get_results(conn.deref_mut())?)
+    }
+
+    pub fn list_views(context: &Data<IbisContext>) -> BackendResult<Vec<InstanceView>> {
+        let mut conn = context.db_pool.get()?;
+        let instances = instance::table.get_results::<DbInstance>(conn.deref_mut())?;
         let mut res = vec![];
         // Get the last edited articles for each instance.
         // TODO: This is very inefficient, should use single query with lateral join

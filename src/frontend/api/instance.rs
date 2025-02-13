@@ -30,7 +30,7 @@ impl ApiClient {
     }
 
     pub async fn list_instances(&self) -> FrontendResult<Vec<InstanceView>> {
-        self.get("/api/v1/instance/list", None::<i32>).await
+        self.get("/api/v1/instance/list_views", None::<i32>).await
     }
 
     pub async fn update_local_instance(
