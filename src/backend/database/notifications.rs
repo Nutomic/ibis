@@ -10,7 +10,11 @@ use crate::{
 use activitypub_federation::config::Data;
 use diesel::{
     dsl::{count, not},
-    ExpressionMethods, JoinOnDsl, NullableExpressionMethods, QueryDsl, RunQueryDsl,
+    ExpressionMethods,
+    JoinOnDsl,
+    NullableExpressionMethods,
+    QueryDsl,
+    RunQueryDsl,
 };
 use futures::future::try_join_all;
 use std::ops::DerefMut;

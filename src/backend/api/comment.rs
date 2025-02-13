@@ -15,9 +15,16 @@ use crate::{
         },
     },
     common::{
-        comment::{CreateCommentParams, DbComment, DbCommentView, EditCommentParams},
+        comment::{
+            CreateCommentParams,
+            DbComment,
+            DbCommentView,
+            EditCommentParams,
+            MarkAsReadParams,
+        },
         user::LocalUserView,
         utils::http_protocol_str,
+        SuccessResponse,
     },
 };
 use activitypub_federation::config::Data;
@@ -109,4 +116,14 @@ pub(in crate::backend::api) async fn edit_comment(
     }
 
     Ok(Json(comment))
+}
+
+#[debug_handler]
+pub(in crate::backend::api) async fn mark_as_read(
+    user: Extension<LocalUserView>,
+    context: Data<IbisContext>,
+    Form(params): Form<MarkAsReadParams>,
+) -> BackendResult<Json<SuccessResponse>> {
+    DbComment::mark_as_read(params.id, user.person.id, &context)?;
+    Ok(Json(SuccessResponse::default()))
 }

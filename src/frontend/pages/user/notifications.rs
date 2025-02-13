@@ -10,7 +10,12 @@ use crate::{
         utils::{
             errors::FrontendResultExt,
             formatting::{
-                article_link, article_path, article_title, comment_path, time_ago, user_link,
+                article_link,
+                article_path,
+                article_title,
+                comment_path,
+                time_ago,
+                user_link,
             },
         },
     },
@@ -128,8 +133,10 @@ fn article_approval_view(a: &DbArticle) -> impl IntoView {
 fn reply_view(c: &CommentViewWithArticle) -> impl IntoView {
     let id = c.comment.id;
     let click_mark_as_read = Action::new(move |_: &()| async move {
-        //CLIENT.delete_conflict(id).await.error_popup(|_| reload());
-        todo!()
+        CLIENT
+            .mark_comment_as_read(id)
+            .await
+            .error_popup(|_| reload());
     });
     view! {
         <li class="py-2">
