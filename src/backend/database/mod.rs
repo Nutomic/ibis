@@ -16,6 +16,7 @@ pub mod conflict;
 pub mod edit;
 pub mod instance;
 pub mod instance_stats;
+pub mod notifications;
 pub(crate) mod schema;
 pub mod user;
 

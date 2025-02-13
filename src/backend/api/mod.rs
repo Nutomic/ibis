@@ -79,7 +79,7 @@ pub fn api_routes() -> Router<()> {
         .route("/site", get(site_view))
 }
 
-fn check_is_admin(user: &LocalUserView) -> BackendResult<()> {
+pub fn check_is_admin(user: &LocalUserView) -> BackendResult<()> {
     if !user.local_user.admin {
         return Err(anyhow!("Only admin can perform this action").into());
     }

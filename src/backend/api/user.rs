@@ -1,15 +1,13 @@
-use super::{check_is_admin, empty_to_none};
+use super::empty_to_none;
 use crate::{
     backend::{
-        database::{conflict::DbConflict, read_jwt_secret, IbisContext},
+        database::{read_jwt_secret, IbisContext},
         utils::{
             error::BackendResult,
             validate::{validate_display_name, validate_user_name},
         },
     },
     common::{
-        article::DbArticle,
-        comment::DbComment,
         user::{
             DbPerson, GetUserParams, LocalUserView, LoginUserParams, RegisterUserParams,
             UpdateUserParams,
@@ -24,7 +22,6 @@ use axum_extra::extract::cookie::{Cookie, CookieJar, Expiration, SameSite};
 use axum_macros::debug_handler;
 use bcrypt::verify;
 use chrono::Utc;
-use futures::future::try_join_all;
 use jsonwebtoken::{
     decode, encode, get_current_timestamp, DecodingKey, EncodingKey, Header, Validation,
 };
@@ -156,55 +153,16 @@ pub(crate) async fn list_notifications(
     Extension(user): Extension<LocalUserView>,
     context: Data<IbisContext>,
 ) -> BackendResult<Json<Vec<Notification>>> {
-    let conflicts = DbConflict::list(user.person.id, &context)?;
-    let conflicts: Vec<_> = try_join_all(conflicts.into_iter().map(|c| {
-        let data = context.reset_request_count();
-        async move { c.to_api_conflict(&data).await }
-    }))
-    .await?;
-    let mut notifications: Vec<_> = conflicts
-        .into_iter()
-        .flatten()
-        .map(Notification::EditConflict)
-        .collect();
-
-    notifications.extend(
-        DbComment::list_unread_replies(user.person.id, &context)?
-            .into_iter()
-            .map(Notification::Reply),
-    );
-
-    if check_is_admin(&user).is_ok() {
-        let articles = DbArticle::list_approval_required(&context)?;
-        notifications.extend(
-            articles
-                .into_iter()
-                .map(Notification::ArticleApprovalRequired),
-        )
-    }
-    notifications.sort_by(|a, b| a.published().cmp(b.published()));
-
-    Ok(Json(notifications))
+    Ok(Json(Notification::list(&user, &context).await?))
 }
 
 #[debug_handler]
 pub(crate) async fn count_notifications(
     user: Option<Extension<LocalUserView>>,
     context: Data<IbisContext>,
-) -> BackendResult<Json<usize>> {
+) -> BackendResult<Json<i64>> {
     if let Some(user) = user {
-        // TODO: very inefficient
-        let mut count = 0;
-        let conflicts = DbConflict::list(user.person.id, &context)?;
-        count += conflicts.len();
-        let comments = DbComment::list_unread_replies(user.person.id, &context)?;
-        count += comments.len();
-        if check_is_admin(&user).is_ok() {
-            let articles = DbArticle::list_approval_required(&context)?;
-            count += articles.len();
-        }
-
-        Ok(Json(count))
+        Ok(Json(Notification::count(&user, &context)?))
     } else {
         Ok(Json(0))
     }

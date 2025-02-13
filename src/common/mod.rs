@@ -37,6 +37,7 @@ pub struct ResolveObjectParams {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum Notification {
+    // TODO: this should only return conflict id and article name
     EditConflict(ApiConflict),
     ArticleApprovalRequired(DbArticle),
     Reply(CommentViewWithArticle),

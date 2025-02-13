@@ -1,5 +1,8 @@
 use crate::common::{
-    article::DbArticle, comment::CommentViewWithArticle, instance::DbInstance, user::DbPerson,
+    article::DbArticle,
+    comment::CommentViewWithArticle,
+    instance::DbInstance,
+    user::DbPerson,
     utils::extract_domain,
 };
 use chrono::{DateTime, Local, Utc};

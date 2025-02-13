@@ -216,15 +216,4 @@ impl DbArticle {
             None => Ok(EditVersion::default()),
         }
     }
-
-    pub fn list_approval_required(context: &IbisContext) -> BackendResult<Vec<Self>> {
-        let mut conn = context.db_pool.get()?;
-        let query = article::table
-            .group_by(article::dsl::id)
-            .filter(article::dsl::approved.eq(false))
-            .select(article::all_columns)
-            .into_boxed();
-
-        Ok(query.get_results(&mut conn)?)
-    }
 }

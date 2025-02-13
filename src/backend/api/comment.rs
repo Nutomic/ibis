@@ -5,7 +5,8 @@ use crate::{
             IbisContext,
         },
         federation::activities::comment::{
-            create_or_update_comment::CreateOrUpdateComment, delete_comment::DeleteComment,
+            create_or_update_comment::CreateOrUpdateComment,
+            delete_comment::DeleteComment,
             undo_delete_comment::UndoDeleteComment,
         },
         utils::{

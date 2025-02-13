@@ -1,5 +1,7 @@
 use super::{
-    article::DbArticle, newtypes::{ArticleId, CommentId, PersonId}, user::DbPerson
+    article::DbArticle,
+    newtypes::{ArticleId, CommentId, PersonId},
+    user::DbPerson,
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
