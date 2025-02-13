@@ -9,17 +9,12 @@ use crate::{
     },
     common::{
         article::DbArticle,
+        comment::DbComment,
         user::{
-            DbPerson,
-            GetUserParams,
-            LocalUserView,
-            LoginUserParams,
-            RegisterUserParams,
+            DbPerson, GetUserParams, LocalUserView, LoginUserParams, RegisterUserParams,
             UpdateUserParams,
         },
-        Notification,
-        SuccessResponse,
-        AUTH_COOKIE,
+        Notification, SuccessResponse, AUTH_COOKIE,
     },
 };
 use activitypub_federation::config::Data;
@@ -31,13 +26,7 @@ use bcrypt::verify;
 use chrono::Utc;
 use futures::future::try_join_all;
 use jsonwebtoken::{
-    decode,
-    encode,
-    get_current_timestamp,
-    DecodingKey,
-    EncodingKey,
-    Header,
-    Validation,
+    decode, encode, get_current_timestamp, DecodingKey, EncodingKey, Header, Validation,
 };
 use serde::{Deserialize, Serialize};
 use time::{Duration, OffsetDateTime};
@@ -179,6 +168,12 @@ pub(crate) async fn list_notifications(
         .map(Notification::EditConflict)
         .collect();
 
+    notifications.extend(
+        DbComment::list_unread_replies(user.person.id, &context)?
+            .into_iter()
+            .map(Notification::Reply),
+    );
+
     if check_is_admin(&user).is_ok() {
         let articles = DbArticle::list_approval_required(&context)?;
         notifications.extend(
@@ -198,9 +193,12 @@ pub(crate) async fn count_notifications(
     context: Data<IbisContext>,
 ) -> BackendResult<Json<usize>> {
     if let Some(user) = user {
+        // TODO: very inefficient
         let mut count = 0;
         let conflicts = DbConflict::list(user.person.id, &context)?;
         count += conflicts.len();
+        let comments = DbComment::list_unread_replies(user.person.id, &context)?;
+        count += comments.len();
         if check_is_admin(&user).is_ok() {
             let articles = DbArticle::list_approval_required(&context)?;
             count += articles.len();

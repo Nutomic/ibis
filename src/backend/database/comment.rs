@@ -1,11 +1,11 @@
 use super::{
-    schema::{comment, person},
+    schema::{article, comment, person},
     IbisContext,
 };
 use crate::{
     backend::utils::error::BackendResult,
     common::{
-        comment::{DbComment, DbCommentView},
+        comment::{CommentViewWithArticle, DbComment, DbCommentView},
         newtypes::{ArticleId, CommentId, PersonId},
         user::DbPerson,
     },
@@ -13,13 +13,9 @@ use crate::{
 use activitypub_federation::fetch::object_id::ObjectId;
 use chrono::{DateTime, Utc};
 use diesel::{
-    dsl::insert_into,
-    update,
-    AsChangeset,
-    ExpressionMethods,
-    Insertable,
-    QueryDsl,
-    RunQueryDsl,
+    dsl::{insert_into, not},
+    update, AsChangeset, ExpressionMethods, Insertable, JoinOnDsl, NullableExpressionMethods,
+    QueryDsl, RunQueryDsl,
 };
 use std::ops::DerefMut;
 
@@ -116,18 +112,41 @@ impl DbComment {
             .inner_join(person::table)
             .filter(comment::article_id.eq(article_id))
             .order_by(comment::published.desc())
-            .get_results::<(DbComment, DbPerson)>(conn.deref_mut())?;
+            .get_results::<DbCommentView>(conn.deref_mut())?;
 
         // Clear content of deleted comments. comments themselves are returned
         // so that tree can be rendered.
         Ok(comments
             .into_iter()
-            .map(|(mut comment, creator)| {
-                if comment.deleted {
-                    comment.content = String::new()
+            .map(|mut view| {
+                if view.comment.deleted {
+                    view.comment.content = String::new()
                 };
-                DbCommentView { comment, creator }
+                view
             })
             .collect())
+    }
+
+    pub fn list_unread_replies(
+        person_id: PersonId,
+        context: &IbisContext,
+    ) -> BackendResult<Vec<CommentViewWithArticle>> {
+        let mut conn = context.db_pool.get()?;
+        let parent_comment = diesel::alias!(comment as parent_comment);
+        Ok(comment::table
+            .inner_join(article::table)
+            .inner_join(
+                parent_comment.on(parent_comment
+                    .field(comment::id)
+                    .nullable()
+                    .eq(comment::parent_id)),
+            )
+            .filter(parent_comment.field(comment::creator_id).eq(person_id))
+            .filter(comment::creator_id.ne(person_id))
+            .filter(not(comment::deleted))
+            .filter(not(comment::read_by_parent_creator))
+            .order_by(comment::published.desc())
+            .select((comment::all_columns, article::all_columns))
+            .get_results::<CommentViewWithArticle>(conn.deref_mut())?)
     }
 }

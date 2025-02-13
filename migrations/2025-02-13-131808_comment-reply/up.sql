@@ -1,0 +1,1 @@
+alter table comment add column read_by_parent_creator boolean default false;

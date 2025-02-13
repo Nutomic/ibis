@@ -1,6 +1,5 @@
 use super::{
-    newtypes::{ArticleId, CommentId, PersonId},
-    user::DbPerson,
+    article::DbArticle, newtypes::{ArticleId, CommentId, PersonId}, user::DbPerson
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -29,12 +28,21 @@ pub struct DbComment {
     pub deleted: bool,
     pub published: DateTime<Utc>,
     pub updated: Option<DateTime<Utc>>,
+    pub read_by_parent_creator: bool,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "ssr", derive(Queryable))]
 pub struct DbCommentView {
     pub comment: DbComment,
     pub creator: DbPerson,
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "ssr", derive(Queryable))]
+pub struct CommentViewWithArticle {
+    pub comment: DbComment,
+    pub article: DbArticle,
 }
 
 #[derive(Deserialize, Serialize, Debug)]

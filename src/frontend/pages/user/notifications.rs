@@ -5,7 +5,7 @@ use crate::{
         components::suspense_error::SuspenseError,
         utils::{
             errors::FrontendResultExt,
-            formatting::{article_path, article_title},
+            formatting::{article_path, article_title, comment_path},
         },
     },
 };
@@ -54,6 +54,9 @@ pub fn Notifications() -> impl IntoView {
                                                 format!("Approval required: {}", a.title),
                                             )
                                         }
+                                        Reply(c) => {
+                                            ("", comment_path(&c), c.comment.content.clone())
+                                        }
                                     };
                                     let notif_ = notif.clone();
                                     let click_approve = Action::new(move |_: &()| {
@@ -81,6 +84,7 @@ pub fn Notifications() -> impl IntoView {
                                                         .await
                                                         .error_popup(|_| {});
                                                 }
+                                                Reply(c) => todo!(),
                                             }
                                             notifications.refetch();
                                         }

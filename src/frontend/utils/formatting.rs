@@ -1,7 +1,5 @@
 use crate::common::{
-    article::DbArticle,
-    instance::DbInstance,
-    user::DbPerson,
+    article::DbArticle, comment::CommentViewWithArticle, instance::DbInstance, user::DbPerson,
     utils::extract_domain,
 };
 use chrono::{DateTime, Local, Utc};
@@ -102,4 +100,12 @@ pub fn instance_updated(instance: &DbInstance) -> String {
     } else {
         format!("Updated {}", time_ago(instance.last_refreshed_at))
     }
+}
+
+pub fn comment_path(comment: &CommentViewWithArticle) -> String {
+    let article_path = article_path(&comment.article);
+    format!(
+        "{}/discussion#comment-{}",
+        article_path, comment.comment.id.0
+    )
 }
