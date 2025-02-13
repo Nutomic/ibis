@@ -5,7 +5,6 @@ use super::{
     user::DbPerson,
 };
 use chrono::{DateTime, Utc};
-use diesel::QueryableByName;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use uuid::Uuid;
@@ -40,30 +39,21 @@ pub struct DbArticleView {
     pub latest_version: EditVersion,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, QueryableByName)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[cfg_attr(feature = "ssr", derive(Queryable, Selectable, Identifiable))]
 #[cfg_attr(feature = "ssr", diesel(table_name = article, check_for_backend(diesel::pg::Pg), belongs_to(DbInstance, foreign_key = instance_id)))]
 pub struct DbArticle {
-    #[diesel(column_name = "id")]
     pub id: ArticleId,
-    #[diesel(column_name = "title")]
     pub title: String,
-    #[diesel(column_name = "text")]
     pub text: String,
     #[cfg(feature = "ssr")]
-    #[diesel(column_name = "ap_id")]
     pub ap_id: ObjectId<DbArticle>,
     #[cfg(not(feature = "ssr"))]
     pub ap_id: String,
-    #[diesel(column_name = "instance_id")]
     pub instance_id: InstanceId,
-    #[diesel(column_name = "local")]
     pub local: bool,
-    #[diesel(column_name = "protected")]
     pub protected: bool,
-    #[diesel(column_name = "approved")]
     pub approved: bool,
-    #[diesel(column_name = "published")]
     pub published: DateTime<Utc>,
 }
 

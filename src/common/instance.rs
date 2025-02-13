@@ -4,24 +4,22 @@ use super::{
     user::{DbPerson, LocalUserView},
 };
 use chrono::{DateTime, Utc};
-use diesel::{pg::sql_types::Record, QueryableByName};
 use serde::{Deserialize, Serialize};
 use smart_default::SmartDefault;
 use url::Url;
 #[cfg(feature = "ssr")]
 use {
     crate::backend::{
-        database::schema::{article, instance},
+        database::schema::instance,
         federation::objects::articles_collection::DbArticleCollection,
         federation::objects::instance_collection::DbInstanceCollection,
     },
     activitypub_federation::fetch::{collection_id::CollectionId, object_id::ObjectId},
-    diesel::sql_types::Array,
     diesel::{Identifiable, Queryable, Selectable},
     doku::Document,
 };
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, QueryableByName)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[cfg_attr(feature = "ssr", derive(Queryable, Selectable, Identifiable))]
 #[cfg_attr(feature = "ssr", diesel(table_name = instance, check_for_backend(diesel::pg::Pg)))]
 pub struct DbInstance {
@@ -55,12 +53,8 @@ impl DbInstance {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
-#[cfg_attr(feature = "ssr", derive(Queryable, Selectable))]
-#[cfg_attr(feature = "ssr", diesel(check_for_backend(diesel::pg::Pg)))]
 pub struct InstanceView {
-    #[diesel(embed)]
     pub instance: DbInstance,
-    #[diesel(sql_type = Array<Record<article::SqlType>>)]
     pub articles: Vec<DbArticle>,
 }
 

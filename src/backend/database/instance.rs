@@ -1,7 +1,7 @@
 use crate::{
     backend::{
         database::{
-            schema::{article, comment, instance, instance_follow},
+            schema::{article, comment, edit, instance, instance_follow},
             IbisContext,
         },
         federation::objects::{
@@ -11,9 +11,8 @@ use crate::{
         utils::error::BackendResult,
     },
     common::{
-        article::DbArticle,
         instance::{DbInstance, InstanceView, InstanceView2},
-        newtypes::{ArticleId, CommentId, InstanceId},
+        newtypes::{CommentId, InstanceId},
         user::DbPerson,
     },
 };
@@ -22,8 +21,7 @@ use activitypub_federation::{
     fetch::{collection_id::CollectionId, object_id::ObjectId},
 };
 use chrono::{DateTime, Utc};
-use diesel::{deserialize::FromSql, dsl::array, *};
-use pg::{sql_types::Record, Pg, PgValue};
+use diesel::{dsl::max, *};
 use std::{fmt::Debug, ops::DerefMut};
 
 #[derive(Debug, Clone, Insertable, AsChangeset)]
@@ -144,32 +142,28 @@ impl DbInstance {
         only_remote: bool,
         context: &Data<IbisContext>,
     ) -> BackendResult<Vec<InstanceView>> {
-        // Lateral join is not supported in diesel so we need to implement it manually
-        // https://github.com/diesel-rs/diesel/discussions/4450
-        // Raw sql queries don't use prepared statement cache and are ~2.5 times slower than normal
-        // https://github.com/diesel-rs/diesel/discussions/4084
         let mut conn = context.db_pool.get()?;
-        let res: Vec<_> = sql_query(
-            "SELECT
-                    instance,
-                    array_agg(a) as articles
-                FROM
-                    instance
-                    CROSS JOIN LATERAL (
-                        SELECT
-                            *
-                        FROM
-                            article
-                        WHERE
-                            instance.id = article.instance_id
-                        GROUP BY
-                            article.id
-                        LIMIT 5) a
-                GROUP BY
-                    instance.id;",
-        )
-        .select(InstanceView::as_select())
-        .get_results::<InstanceView>(conn.deref_mut())?;
+        let mut query = instance::table.into_boxed();
+        if only_remote {
+            query = query.filter(instance::local.eq(false));
+        }
+        let instances = query.get_results::<DbInstance>(conn.deref_mut())?;
+        let mut res = vec![];
+        // Get the last edited articles for each instance.
+        // TODO: This is very inefficient, should use single query with lateral join
+        // https://github.com/diesel-rs/diesel/discussions/4450
+        for instance in instances {
+            let articles = article::table
+                .filter(article::instance_id.eq(instance.id))
+                .inner_join(edit::table)
+                .group_by(article::id)
+                .order_by((article::local.desc(), max(edit::published).desc()))
+                .limit(5)
+                .select(article::all_columns)
+                .get_results(conn.deref_mut())?;
+            res.push(InstanceView { instance, articles });
+        }
+
         Ok(res)
     }
 
@@ -186,33 +180,5 @@ impl DbInstance {
             .filter(comment::id.eq(comment_id))
             .select(instance::all_columns)
             .get_result(conn.deref_mut())?)
-    }
-}
-
-impl FromSql<Record<article::SqlType>, Pg> for DbArticle {
-    fn from_sql(bytes: PgValue<'_>) -> deserialize::Result<Self> {
-        let res: (
-            ArticleId,
-            String,
-            String,
-            ObjectId<DbArticle>,
-            InstanceId,
-            bool,
-            bool,
-            bool,
-            DateTime<Utc>,
-        ) = FromSql::<Record<article::SqlType>, Pg>::from_sql(bytes)?;
-
-        Ok(DbArticle {
-            id: res.0,
-            title: res.1,
-            text: res.2,
-            ap_id: res.3,
-            instance_id: res.4,
-            local: res.5,
-            protected: res.6,
-            approved: res.7,
-            published: res.8,
-        })
     }
 }
