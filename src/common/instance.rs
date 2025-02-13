@@ -1,4 +1,5 @@
 use super::{
+    article::DbArticle,
     newtypes::InstanceId,
     user::{DbPerson, LocalUserView},
 };
@@ -52,9 +53,15 @@ impl DbInstance {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct InstanceView {
+    pub instance: DbInstance,
+    pub articles: Vec<DbArticle>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[cfg_attr(feature = "ssr", derive(Queryable))]
 #[cfg_attr(feature = "ssr", diesel(table_name = article, check_for_backend(diesel::pg::Pg)))]
-pub struct InstanceView {
+pub struct InstanceView2 {
     pub instance: DbInstance,
     pub followers: Vec<DbPerson>,
 }

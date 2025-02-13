@@ -1,11 +1,11 @@
 use crate::{
-    common::instance::DbInstance,
+    common::{article::DbArticle, instance::InstanceView},
     frontend::{
         api::CLIENT,
         components::suspense_error::SuspenseError,
         utils::{
             errors::{FrontendResult, FrontendResultExt},
-            formatting::{instance_title_with_domain, instance_updated},
+            formatting::{article_link, instance_title_with_domain, instance_updated},
         },
     },
 };
@@ -34,7 +34,7 @@ pub fn Explore() -> impl IntoView {
                             {instances_
                                 .clone()
                                 .ok()
-                                .iter()
+                                .into_iter()
                                 .flatten()
                                 .map(instance_card)
                                 .collect::<Vec<_>>()}
@@ -46,18 +46,27 @@ pub fn Explore() -> impl IntoView {
     }
 }
 
-pub fn instance_card(i: &DbInstance) -> impl IntoView {
+pub fn instance_card(i: InstanceView) -> impl IntoView {
     view! {
         <li>
             <div class="m-4 shadow card bg-base-100">
                 <div class="p-4 card-body">
                     <div class="flex">
-                        <a class="card-title grow" href=format!("/instance/{}", i.domain)>
-                            {instance_title_with_domain(i)}
+                        <a class="card-title grow" href=format!("/instance/{}", i.instance.domain)>
+                            {instance_title_with_domain(&i.instance)}
                         </a>
-                        {instance_updated(i)}
+                        {instance_updated(&i.instance)}
                     </div>
-                    <p>{i.topic.clone()}</p>
+                    <p>{i.instance.topic.clone()}</p>
+                    <div class="flex flex-col text-base/5">
+                        <For
+                            each=move || i.articles.clone()
+                            key=|article| article.id
+                            children=move |article: DbArticle| {
+                                view! { {article_link(&article)} }
+                            }
+                        />
+                    </div>
                 </div>
             </div>
         </li>
@@ -65,7 +74,7 @@ pub fn instance_card(i: &DbInstance) -> impl IntoView {
 }
 
 #[component]
-fn ConnectView(res: Resource<FrontendResult<Vec<DbInstance>>, JsonSerdeCodec>) -> impl IntoView {
+fn ConnectView(res: Resource<FrontendResult<Vec<InstanceView>>, JsonSerdeCodec>) -> impl IntoView {
     let connect_ibis_wiki = Action::new(move |_: &()| async move {
         CLIENT
             .resolve_instance(Url::parse("https://ibis.wiki").expect("parse ibis.wiki url"))

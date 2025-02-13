@@ -7,6 +7,7 @@ use crate::{
             FollowInstanceParams,
             GetInstanceParams,
             InstanceView,
+            InstanceView2,
             SiteView,
             UpdateInstanceParams,
         },
@@ -20,7 +21,7 @@ use http::Method;
 use url::Url;
 
 impl ApiClient {
-    pub async fn get_local_instance(&self) -> FrontendResult<InstanceView> {
+    pub async fn get_local_instance(&self) -> FrontendResult<InstanceView2> {
         self.get("/api/v1/instance", None::<i32>).await
     }
 
@@ -28,8 +29,8 @@ impl ApiClient {
         self.get("/api/v1/instance", Some(&params)).await
     }
 
-    pub async fn list_instances(&self) -> FrontendResult<Vec<DbInstance>> {
-        self.get("/api/v1/instance/list", None::<i32>).await
+    pub async fn list_instances(&self) -> FrontendResult<Vec<InstanceView>> {
+        self.get("/api/v1/instance/list_views", None::<i32>).await
     }
 
     pub async fn update_local_instance(

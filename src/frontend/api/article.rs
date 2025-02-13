@@ -2,9 +2,20 @@ use super::ApiClient;
 use crate::{
     common::{
         article::{
-            ApiConflict, ApproveArticleParams, CreateArticleParams, DbArticle, DbArticleView,
-            DeleteConflictParams, EditArticleParams, EditView, ForkArticleParams, GetArticleParams,
-            GetConflictParams, GetEditList, ListArticlesParams, ProtectArticleParams,
+            ApiConflict,
+            ApproveArticleParams,
+            CreateArticleParams,
+            DbArticle,
+            DbArticleView,
+            DeleteConflictParams,
+            EditArticleParams,
+            EditView,
+            ForkArticleParams,
+            GetArticleParams,
+            GetConflictParams,
+            GetEditList,
+            ListArticlesParams,
+            ProtectArticleParams,
         },
         newtypes::{ArticleId, ConflictId},
         ResolveObjectParams,

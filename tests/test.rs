@@ -816,7 +816,9 @@ async fn test_synchronize_instances() -> Result<()> {
 
     // now gamma also knows about alpha
     assert_eq!(3, gamma_instances.len());
-    assert!(gamma_instances.iter().any(|i| i.domain == alpha.hostname));
+    assert!(gamma_instances
+        .iter()
+        .any(|i| i.instance.domain == alpha.hostname));
 
     TestData::stop(alpha, beta, gamma)
 }

@@ -37,7 +37,7 @@ use axum::{
     Router,
 };
 use axum_macros::debug_handler;
-use instance::{list_instances, update_instance};
+use instance::{list_instance_views, list_instances, update_instance};
 use user::{count_notifications, list_notifications, update_user_profile};
 
 mod article;
@@ -65,7 +65,9 @@ pub fn api_routes() -> Router<()> {
         .route("/instance", patch(update_instance))
         .route("/instance/follow", post(follow_instance))
         .route("/instance/resolve", get(resolve_instance))
+        // TODO: deprecated, remove in 0.3
         .route("/instance/list", get(list_instances))
+        .route("/instance/list_views", get(list_instance_views))
         .route("/search", get(search_article))
         .route("/user", get(get_user))
         .route("/user/notifications/list", get(list_notifications))

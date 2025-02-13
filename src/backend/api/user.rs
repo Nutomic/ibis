@@ -10,10 +10,16 @@ use crate::{
     common::{
         article::DbArticle,
         user::{
-            DbPerson, GetUserParams, LocalUserView, LoginUserParams, RegisterUserParams,
+            DbPerson,
+            GetUserParams,
+            LocalUserView,
+            LoginUserParams,
+            RegisterUserParams,
             UpdateUserParams,
         },
-        Notification, SuccessResponse, AUTH_COOKIE,
+        Notification,
+        SuccessResponse,
+        AUTH_COOKIE,
     },
 };
 use activitypub_federation::config::Data;
@@ -25,7 +31,13 @@ use bcrypt::verify;
 use chrono::Utc;
 use futures::future::try_join_all;
 use jsonwebtoken::{
-    decode, encode, get_current_timestamp, DecodingKey, EncodingKey, Header, Validation,
+    decode,
+    encode,
+    get_current_timestamp,
+    DecodingKey,
+    EncodingKey,
+    Header,
+    Validation,
 };
 use serde::{Deserialize, Serialize};
 use time::{Duration, OffsetDateTime};

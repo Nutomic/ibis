@@ -1,7 +1,7 @@
 use crate::{
     backend::{
         database::{
-            schema::{article, comment, instance, instance_follow},
+            schema::{article, comment, edit, instance, instance_follow},
             IbisContext,
         },
         federation::objects::{
@@ -11,7 +11,7 @@ use crate::{
         utils::error::BackendResult,
     },
     common::{
-        instance::{DbInstance, InstanceView},
+        instance::{DbInstance, InstanceView, InstanceView2},
         newtypes::{CommentId, InstanceId},
         user::DbPerson,
     },
@@ -21,16 +21,7 @@ use activitypub_federation::{
     fetch::{collection_id::CollectionId, object_id::ObjectId},
 };
 use chrono::{DateTime, Utc};
-use diesel::{
-    insert_into,
-    update,
-    AsChangeset,
-    ExpressionMethods,
-    Insertable,
-    JoinOnDsl,
-    QueryDsl,
-    RunQueryDsl,
-};
+use diesel::{dsl::max, *};
 use std::{fmt::Debug, ops::DerefMut};
 
 #[derive(Debug, Clone, Insertable, AsChangeset)]
@@ -100,14 +91,14 @@ impl DbInstance {
     pub fn read_view(
         id: Option<InstanceId>,
         context: &Data<IbisContext>,
-    ) -> BackendResult<InstanceView> {
+    ) -> BackendResult<InstanceView2> {
         let instance = match id {
             Some(id) => DbInstance::read(id, context),
             None => DbInstance::read_local(context),
         }?;
         let followers = DbInstance::read_followers(instance.id, context)?;
 
-        Ok(InstanceView {
+        Ok(InstanceView2 {
             instance,
             followers,
         })
@@ -146,14 +137,33 @@ impl DbInstance {
             .select(person::all_columns)
             .get_results(conn.deref_mut())?)
     }
-
-    pub fn list(only_remote: bool, context: &Data<IbisContext>) -> BackendResult<Vec<DbInstance>> {
+    pub fn list(context: &Data<IbisContext>) -> BackendResult<Vec<DbInstance>> {
         let mut conn = context.db_pool.get()?;
-        let mut query = instance::table.into_boxed();
-        if only_remote {
-            query = query.filter(instance::local.eq(false));
+        Ok(instance::table
+            .filter(instance::local.eq(false))
+            .get_results(conn.deref_mut())?)
+    }
+
+    pub fn list_views(context: &Data<IbisContext>) -> BackendResult<Vec<InstanceView>> {
+        let mut conn = context.db_pool.get()?;
+        let instances = instance::table.get_results::<DbInstance>(conn.deref_mut())?;
+        let mut res = vec![];
+        // Get the last edited articles for each instance.
+        // TODO: This is very inefficient, should use single query with lateral join
+        // https://github.com/diesel-rs/diesel/discussions/4450
+        for instance in instances {
+            let articles = article::table
+                .filter(article::instance_id.eq(instance.id))
+                .inner_join(edit::table)
+                .group_by(article::id)
+                .order_by((article::local.desc(), max(edit::published).desc()))
+                .limit(5)
+                .select(article::all_columns)
+                .get_results(conn.deref_mut())?;
+            res.push(InstanceView { instance, articles });
         }
-        Ok(query.get_results(conn.deref_mut())?)
+
+        Ok(res)
     }
 
     /// Read the instance where an article is hosted, based on a comment id.
