@@ -8,7 +8,7 @@ use crate::{
         api::CLIENT,
         components::suspense_error::SuspenseError,
         utils::{
-            errors::FrontendResultExt,
+            errors::{FrontendError, FrontendResultExt},
             formatting::{
                 article_link,
                 article_path,
@@ -22,6 +22,8 @@ use crate::{
 };
 use leptos::{either::EitherOf3, prelude::*};
 use leptos_meta::Title;
+
+type NotificationsResource = Resource<Result<Vec<Notification>, FrontendError>>;
 
 #[component]
 pub fn Notifications() -> impl IntoView {
@@ -43,11 +45,13 @@ pub fn Notifications() -> impl IntoView {
                                 .map(|ref notif| {
                                     use Notification::*;
                                     match notif {
-                                        EditConflict(c) => EitherOf3::A(edit_conflict_view(c)),
-                                        ArticleApprovalRequired(a) => {
-                                            EitherOf3::B(article_approval_view(a))
+                                        EditConflict(c) => {
+                                            EitherOf3::A(edit_conflict_view(c, notifications))
                                         }
-                                        Reply(c) => EitherOf3::C(reply_view(c)),
+                                        ArticleApprovalRequired(a) => {
+                                            EitherOf3::B(article_approval_view(a, notifications))
+                                        }
+                                        Reply(c) => EitherOf3::C(reply_view(c, notifications)),
                                     }
                                 })
                                 .collect::<Vec<_>>()
@@ -59,16 +63,14 @@ pub fn Notifications() -> impl IntoView {
     }
 }
 
-fn reload() {
-    //notifications.refetch();
-    todo!()
-}
-
-fn edit_conflict_view(c: &ApiConflict) -> impl IntoView {
+fn edit_conflict_view(c: &ApiConflict, notifications: NotificationsResource) -> impl IntoView {
     let link = format!("{}/edit?conflict_id={}", article_path(&c.article), c.id.0,);
     let id = c.id;
     let click_dismiss = Action::new(move |_: &()| async move {
-        CLIENT.delete_conflict(id).await.error_popup(|_| reload());
+        CLIENT
+            .delete_conflict(id)
+            .await
+            .error_popup(|_| notifications.refetch());
     });
     view! {
         <li class="py-2">
@@ -89,19 +91,19 @@ fn edit_conflict_view(c: &ApiConflict) -> impl IntoView {
     }
 }
 
-fn article_approval_view(a: &DbArticle) -> impl IntoView {
+fn article_approval_view(a: &DbArticle, notifications: NotificationsResource) -> impl IntoView {
     let id = a.id;
     let click_approve = Action::new(move |_: &()| async move {
         CLIENT
             .approve_article(id, true)
             .await
-            .error_popup(|_| reload());
+            .error_popup(|_| notifications.refetch());
     });
     let click_reject = Action::new(move |_: &()| async move {
         CLIENT
             .approve_article(id, false)
             .await
-            .error_popup(|_| reload());
+            .error_popup(|_| notifications.refetch());
     });
     view! {
         <li class="py-2">
@@ -130,13 +132,13 @@ fn article_approval_view(a: &DbArticle) -> impl IntoView {
     }
 }
 
-fn reply_view(c: &CommentViewWithArticle) -> impl IntoView {
+fn reply_view(c: &CommentViewWithArticle, notifications: NotificationsResource) -> impl IntoView {
     let id = c.comment.id;
     let click_mark_as_read = Action::new(move |_: &()| async move {
         CLIENT
             .mark_comment_as_read(id)
             .await
-            .error_popup(|_| reload());
+            .error_popup(|_| notifications.refetch());
     });
     view! {
         <li class="py-2">

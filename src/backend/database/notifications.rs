@@ -87,7 +87,8 @@ impl Notification {
         let conflicts = conflict::table
             .filter(conflict::dsl::creator_id.eq(user.person.id))
             .select(count(conflict::id))
-            .first::<i64>(conn.deref_mut())?;
+            .first::<i64>(conn.deref_mut())
+            .unwrap_or(0);
         num += conflicts;
 
         // comment replies
@@ -103,7 +104,8 @@ impl Notification {
             .filter(not(comment::deleted))
             .filter(not(comment::read_by_parent_creator))
             .select(count(comment::id))
-            .first::<i64>(conn.deref_mut())?;
+            .first::<i64>(conn.deref_mut())
+            .unwrap_or(0);
         num += comment_replies;
 
         // new articles requiring approval
@@ -112,7 +114,8 @@ impl Notification {
                 .group_by(article::dsl::id)
                 .filter(article::dsl::approved.eq(false))
                 .select(count(article::id))
-                .first::<i64>(conn.deref_mut())?;
+                .first::<i64>(conn.deref_mut())
+                .unwrap_or(0);
             num += articles;
         }
 
