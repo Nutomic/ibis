@@ -29,6 +29,7 @@ diesel::table! {
         deleted -> Bool,
         published -> Timestamptz,
         updated -> Nullable<Timestamptz>,
+        read_by_parent_creator -> Bool,
     }
 }
 

@@ -78,8 +78,8 @@ impl ActivityHandler for RejectEdit {
     }
 
     async fn receive(self, context: &Data<Self::DataType>) -> Result<(), Self::Error> {
-        // cant convert this to DbEdit as it tries to apply patch and fails
-        let article = self.object.object.dereference(context).await?;
+        // Force fetch the article to ensure we have the latest edit that it conflicted with
+        let article = self.object.object.dereference_forced(context).await?;
         let creator = self.object.attributed_to.dereference(context).await?;
         let form = DbConflictForm {
             hash: EditVersion::new(&self.object.content),

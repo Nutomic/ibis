@@ -1,4 +1,5 @@
 use super::{
+    article::DbArticle,
     newtypes::{ArticleId, CommentId, PersonId},
     user::DbPerson,
 };
@@ -29,12 +30,24 @@ pub struct DbComment {
     pub deleted: bool,
     pub published: DateTime<Utc>,
     pub updated: Option<DateTime<Utc>>,
+    pub read_by_parent_creator: bool,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "ssr", derive(Queryable))]
+#[cfg_attr(feature = "ssr", diesel(check_for_backend(diesel::pg::Pg)))]
 pub struct DbCommentView {
     pub comment: DbComment,
     pub creator: DbPerson,
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "ssr", derive(Queryable))]
+#[cfg_attr(feature = "ssr", diesel(check_for_backend(diesel::pg::Pg)))]
+pub struct CommentViewWithArticle {
+    pub comment: DbComment,
+    pub creator: DbPerson,
+    pub article: DbArticle,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -49,6 +62,11 @@ pub struct EditCommentParams {
     pub id: CommentId,
     pub content: Option<String>,
     pub deleted: Option<bool>,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct MarkAsReadParams {
+    pub id: CommentId,
 }
 
 #[derive(Deserialize, Serialize, Debug)]

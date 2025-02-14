@@ -1,5 +1,6 @@
 use crate::common::{
     article::DbArticle,
+    comment::DbComment,
     instance::DbInstance,
     user::DbPerson,
     utils::extract_domain,
@@ -102,4 +103,9 @@ pub fn instance_updated(instance: &DbInstance) -> String {
     } else {
         format!("Updated {}", time_ago(instance.last_refreshed_at))
     }
+}
+
+pub fn comment_path(comment: &DbComment, article: &DbArticle) -> String {
+    let article_path = article_path(article);
+    format!("{}/discussion#comment-{}", article_path, comment.id.0)
 }

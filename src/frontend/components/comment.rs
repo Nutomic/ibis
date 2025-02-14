@@ -10,7 +10,7 @@ use crate::{
         markdown::render_comment_markdown,
         utils::{
             errors::{FrontendResult, FrontendResultExt},
-            formatting::{time_ago, user_link},
+            formatting::{comment_path, time_ago, user_link},
             resources::my_profile,
         },
     },
@@ -38,7 +38,7 @@ pub fn CommentView(
         article
             .get()
             .and_then(|a| a.ok())
-            .map(|a| a.article.title.clone())
+            .map(|a| comment_path(&comment.comment, &a.article))
             .unwrap_or_default(),
     );
 

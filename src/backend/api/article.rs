@@ -161,7 +161,7 @@ pub(in crate::backend::api) async fn edit_article(
             previous_version_id: previous_version.hash,
         };
         let conflict = DbConflict::create(&form, &context)?;
-        Ok(Json(conflict.to_api_conflict(&context).await?))
+        Ok(Json(conflict.to_api_conflict(true, &context).await?))
     }
 }
 
@@ -321,7 +321,7 @@ pub async fn get_conflict(
 ) -> BackendResult<Json<ApiConflict>> {
     let conflict = DbConflict::read(params.conflict_id, user.person.id, &context)?;
     let conflict = conflict
-        .to_api_conflict(&context)
+        .to_api_conflict(true, &context)
         .await?
         .ok_or(anyhow!("Patch was applied cleanly"))?;
     Ok(Json(conflict))

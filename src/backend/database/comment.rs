@@ -1,4 +1,5 @@
 use super::{
+    notifications::parent_comment,
     schema::{comment, person},
     IbisContext,
 };
@@ -18,6 +19,8 @@ use diesel::{
     AsChangeset,
     ExpressionMethods,
     Insertable,
+    JoinOnDsl,
+    NullableExpressionMethods,
     QueryDsl,
     RunQueryDsl,
 };
@@ -116,18 +119,43 @@ impl DbComment {
             .inner_join(person::table)
             .filter(comment::article_id.eq(article_id))
             .order_by(comment::published.desc())
-            .get_results::<(DbComment, DbPerson)>(conn.deref_mut())?;
+            .get_results::<DbCommentView>(conn.deref_mut())?;
 
         // Clear content of deleted comments. comments themselves are returned
         // so that tree can be rendered.
         Ok(comments
             .into_iter()
-            .map(|(mut comment, creator)| {
-                if comment.deleted {
-                    comment.content = String::new()
+            .map(|mut view| {
+                if view.comment.deleted {
+                    view.comment.content = String::new()
                 };
-                DbCommentView { comment, creator }
+                view
             })
             .collect())
+    }
+
+    pub fn mark_as_read(
+        comment_id: CommentId,
+        person_id: PersonId,
+        context: &IbisContext,
+    ) -> BackendResult<()> {
+        let mut conn = context.db_pool.get()?;
+        // check that person_id matches the parent comment's creator_id
+        let comment_id: CommentId = comment::table
+            .find(comment_id)
+            .inner_join(
+                parent_comment.on(parent_comment
+                    .field(comment::id)
+                    .nullable()
+                    .eq(comment::parent_id)),
+            )
+            .filter(parent_comment.field(comment::creator_id).eq(person_id))
+            .select(comment::id)
+            .get_result(conn.deref_mut())?;
+
+        update(comment::table.find(comment_id))
+            .set(comment::read_by_parent_creator.eq(true))
+            .execute(conn.deref_mut())?;
+        Ok(())
     }
 }

@@ -75,13 +75,6 @@ impl DbConflict {
             .get_result(conn.deref_mut())?)
     }
 
-    pub fn list(person_id: PersonId, context: &IbisContext) -> BackendResult<Vec<Self>> {
-        let mut conn = context.db_pool.get()?;
-        Ok(conflict::table
-            .filter(conflict::dsl::creator_id.eq(person_id))
-            .get_results(conn.deref_mut())?)
-    }
-
     /// Delete merge conflict which was created by specific user
     pub fn delete(
         id: ConflictId,
@@ -106,11 +99,16 @@ impl DbConflict {
 
     pub async fn to_api_conflict(
         &self,
+        force_dereference: bool,
         context: &Data<IbisContext>,
     ) -> BackendResult<Option<ApiConflict>> {
         let article = DbArticle::read_view(self.article_id, context)?;
-        // Make sure to get latest version from origin so that all conflicts can be resolved
-        let original_article = article.article.ap_id.dereference_forced(context).await?;
+        let original_article = if force_dereference {
+            // Make sure to get latest version from origin so that all conflicts can be resolved
+            article.article.ap_id.dereference_forced(context).await?
+        } else {
+            article.article.ap_id.dereference(context).await?
+        };
 
         // create common ancestor version
         let edits = DbEdit::list_for_article(original_article.id, context)?;
@@ -121,8 +119,7 @@ impl DbConflict {
         let ours = apply(&ancestor, &patch)?;
         match merge(&ancestor, &ours, &original_article.text) {
             Ok(new_text) => {
-                // patch applies cleanly so we are done
-                // federate the change
+                // patch applies cleanly so we are done, federate the change
                 submit_article_update(
                     new_text,
                     self.summary.clone(),

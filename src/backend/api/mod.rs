@@ -37,6 +37,7 @@ use axum::{
     Router,
 };
 use axum_macros::debug_handler;
+use comment::mark_as_read;
 use instance::{list_instance_views, list_instances, update_instance};
 use user::{count_notifications, list_notifications, update_user_profile};
 
@@ -61,6 +62,7 @@ pub fn api_routes() -> Router<()> {
         .route("/conflict", delete(delete_conflict))
         .route("/comment", post(create_comment))
         .route("/comment", patch(edit_comment))
+        .route("/comment/mark_as_read", post(mark_as_read))
         .route("/instance", get(get_instance))
         .route("/instance", patch(update_instance))
         .route("/instance/follow", post(follow_instance))
@@ -79,7 +81,7 @@ pub fn api_routes() -> Router<()> {
         .route("/site", get(site_view))
 }
 
-fn check_is_admin(user: &LocalUserView) -> BackendResult<()> {
+pub fn check_is_admin(user: &LocalUserView) -> BackendResult<()> {
     if !user.local_user.admin {
         return Err(anyhow!("Only admin can perform this action").into());
     }

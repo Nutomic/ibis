@@ -8,6 +8,7 @@ pub mod validation;
 
 use article::{ApiConflict, DbArticle};
 use chrono::{DateTime, Utc};
+use comment::CommentViewWithArticle;
 use serde::{Deserialize, Serialize};
 use url::Url;
 
@@ -36,15 +37,19 @@ pub struct ResolveObjectParams {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum Notification {
+    // TODO: this should only return conflict id and article name
     EditConflict(ApiConflict),
     ArticleApprovalRequired(DbArticle),
+    Reply(CommentViewWithArticle),
 }
 
 impl Notification {
     pub fn published(&self) -> &DateTime<Utc> {
+        use Notification::*;
         match self {
-            Notification::EditConflict(api_conflict) => &api_conflict.published,
-            Notification::ArticleApprovalRequired(db_article) => &db_article.published,
+            EditConflict(api_conflict) => &api_conflict.published,
+            ArticleApprovalRequired(db_article) => &db_article.published,
+            Reply(comment) => &comment.comment.published,
         }
     }
 }

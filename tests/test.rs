@@ -472,7 +472,7 @@ async fn test_federated_edit_conflict() -> Result<()> {
     assert_eq!(&beta_edits[0].edit.hash, &alpha_edits[0].edit.hash);
     let edit_params = EditArticleParams {
         article_id: get_res.article.id,
-        new_text: "Lorem Ipsum\n".to_string(),
+        new_text: "first edit\n".to_string(),
         summary: "first edit".to_string(),
         previous_version_id: create_res.latest_version.clone(),
         resolve_conflict_id: None,
@@ -495,7 +495,7 @@ async fn test_federated_edit_conflict() -> Result<()> {
     // not be updated with this conflicting version, instead user needs to handle the conflict
     let edit_params = EditArticleParams {
         article_id: resolve_res.article.id,
-        new_text: "aaaa\n".to_string(),
+        new_text: "second edit\n".to_string(),
         summary: "second edit".to_string(),
         previous_version_id: create_res.latest_version,
         resolve_conflict_id: None,
@@ -506,8 +506,8 @@ async fn test_federated_edit_conflict() -> Result<()> {
         .unwrap();
     let gamma_edits = gamma.get_article_edits(edit_res.article.id).await.unwrap();
     assert_ne!(edit_params.new_text, edit_res.article.text);
-    assert_eq!(2, gamma_edits.len());
-    assert!(gamma_edits[1].edit.pending);
+    assert_eq!(3, gamma_edits.len());
+    assert!(gamma_edits[2].edit.pending);
     assert!(!edit_res.article.local);
 
     assert_eq!(1, gamma.notifications_count().await.unwrap());
@@ -520,7 +520,7 @@ async fn test_federated_edit_conflict() -> Result<()> {
     // resolve the conflict
     let edit_params = EditArticleParams {
         article_id: resolve_res.article.id,
-        new_text: "aaaa\n".to_string(),
+        new_text: "second edit\n".to_string(),
         summary: "resolve conflict".to_string(),
         previous_version_id: conflict.previous_version_id.clone(),
         resolve_conflict_id: Some(conflict.id),

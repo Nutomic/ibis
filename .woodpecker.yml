@@ -44,9 +44,7 @@ steps:
     environment:
       DATABASE_URL: postgres://ibis:password@database:5432/ibis
     commands:
-      - diesel migration run
-      - diesel print-schema --config-file=diesel.toml > tmp.schema
-      - diff tmp.schema src/backend/database/schema.rs
+      - diesel migration run --locked-schema
 
   cargo_clippy:
     image: *rust_image
