@@ -106,6 +106,6 @@ pub fn instance_updated(instance: &DbInstance) -> String {
 }
 
 pub fn comment_path(comment: &DbComment, article: &DbArticle) -> String {
-    let article_path = article_path(&article);
+    let article_path = article_path(article);
     format!("{}/discussion#comment-{}", article_path, comment.id.0)
 }

@@ -66,7 +66,7 @@ impl Notification {
         notifications.extend(comment_replies.map(Notification::Reply));
 
         // new articles requiring approval
-        if check_is_admin(&user).is_ok() {
+        if check_is_admin(user).is_ok() {
             let articles = article::table
                 .group_by(article::dsl::id)
                 .filter(article::dsl::approved.eq(false))
@@ -109,7 +109,7 @@ impl Notification {
         num += comment_replies;
 
         // new articles requiring approval
-        if check_is_admin(&user).is_ok() {
+        if check_is_admin(user).is_ok() {
             let articles = article::table
                 .group_by(article::dsl::id)
                 .filter(article::dsl::approved.eq(false))
