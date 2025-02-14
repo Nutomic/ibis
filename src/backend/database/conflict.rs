@@ -119,8 +119,7 @@ impl DbConflict {
         let ours = apply(&ancestor, &patch)?;
         match merge(&ancestor, &ours, &original_article.text) {
             Ok(new_text) => {
-                // patch applies cleanly so we are done
-                // federate the change
+                // patch applies cleanly so we are done, federate the change
                 submit_article_update(
                     new_text,
                     self.summary.clone(),
