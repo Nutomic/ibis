@@ -48,14 +48,6 @@ steps:
       - diesel print-schema --config-file=diesel.toml > tmp.schema
       - diff tmp.schema src/backend/database/schema.rs
 
-  cargo_clippy:
-    image: *rust_image
-    environment:
-      CARGO_HOME: .cargo_home
-    commands:
-      - rustup component add clippy
-      - cargo clippy --tests --all-targets --all-features
-
   check_config_defaults_updated:
     image: *rust_image
     environment:
@@ -78,6 +70,14 @@ steps:
       - chown testuser:testuser /home/testuser -R
       - export PATH="/usr/lib/postgresql/15/bin:/usr/local/cargo/bin:$PATH"
       - sudo -u testuser env "PATH=$PATH" "CARGO_HOME=$CARGO_HOME" cargo test --no-fail-fast
+
+  cargo_clippy:
+    image: *rust_image
+    environment:
+      CARGO_HOME: .cargo_home
+    commands:
+      - rustup component add clippy
+      - cargo clippy --tests --all-targets --all-features
 
   build_release:
     image: *rust_image

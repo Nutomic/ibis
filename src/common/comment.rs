@@ -35,6 +35,7 @@ pub struct DbComment {
 
 #[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "ssr", derive(Queryable))]
+#[cfg_attr(feature = "ssr", diesel(check_for_backend(diesel::pg::Pg)))]
 pub struct DbCommentView {
     pub comment: DbComment,
     pub creator: DbPerson,
@@ -42,6 +43,7 @@ pub struct DbCommentView {
 
 #[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "ssr", derive(Queryable))]
+#[cfg_attr(feature = "ssr", diesel(check_for_backend(diesel::pg::Pg)))]
 pub struct CommentViewWithArticle {
     pub comment: DbComment,
     pub creator: DbPerson,
