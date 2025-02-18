@@ -47,14 +47,14 @@ pub enum ArticleViewQuery<'a> {
     Name(&'a str, Option<String>),
 }
 
-impl Into<ArticleViewQuery<'_>> for ArticleId {
-    fn into(self) -> ArticleViewQuery<'static> {
-        ArticleViewQuery::Id(self)
+impl From<ArticleId> for ArticleViewQuery<'_> {
+    fn from(val: ArticleId) -> Self {
+        ArticleViewQuery::Id(val)
     }
 }
-impl<'a> Into<ArticleViewQuery<'a>> for (&'a String, Option<String>) {
-    fn into(self) -> ArticleViewQuery<'a> {
-        ArticleViewQuery::Name(self.0, self.1)
+impl<'a> From<(&'a String, Option<String>)> for ArticleViewQuery<'a> {
+    fn from(val: (&'a String, Option<String>)) -> Self {
+        ArticleViewQuery::Name(val.0, val.1)
     }
 }
 

@@ -1,3 +1,4 @@
+use super::UserExt;
 use crate::{
     backend::{
         database::{
@@ -22,20 +23,19 @@ use crate::{
             EditCommentParams,
             MarkAsReadParams,
         },
-        user::LocalUserView,
         utils::http_protocol_str,
         SuccessResponse,
     },
 };
 use activitypub_federation::config::Data;
 use anyhow::anyhow;
-use axum::{Extension, Form, Json};
+use axum::{Form, Json};
 use axum_macros::debug_handler;
 use chrono::Utc;
 
 #[debug_handler]
 pub(in crate::backend::api) async fn create_comment(
-    user: Extension<LocalUserView>,
+    user: UserExt,
     context: Data<IbisContext>,
     Form(params): Form<CreateCommentParams>,
 ) -> BackendResult<Json<DbCommentView>> {
@@ -82,7 +82,7 @@ pub(in crate::backend::api) async fn create_comment(
 
 #[debug_handler]
 pub(in crate::backend::api) async fn edit_comment(
-    user: Extension<LocalUserView>,
+    user: UserExt,
     context: Data<IbisContext>,
     Form(params): Form<EditCommentParams>,
 ) -> BackendResult<Json<DbCommentView>> {
@@ -120,7 +120,7 @@ pub(in crate::backend::api) async fn edit_comment(
 
 #[debug_handler]
 pub(in crate::backend::api) async fn mark_as_read(
-    user: Extension<LocalUserView>,
+    user: UserExt,
     context: Data<IbisContext>,
     Form(params): Form<MarkAsReadParams>,
 ) -> BackendResult<Json<SuccessResponse>> {

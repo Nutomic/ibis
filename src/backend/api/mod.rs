@@ -30,15 +30,18 @@ use activitypub_federation::config::Data;
 use anyhow::anyhow;
 use article::{approve_article, delete_conflict, follow_article};
 use axum::{
-    extract::Query,
+    extract::{rejection::ExtensionRejection, Query},
+    response::IntoResponse,
     routing::{delete, get, patch, post},
     Extension,
     Json,
     Router,
 };
-use axum_macros::debug_handler;
+use axum_macros::{debug_handler, FromRequestParts};
 use comment::mark_as_read;
+use http::StatusCode;
 use instance::{list_instance_views, list_instances, update_instance};
+use std::ops::Deref;
 use user::{count_notifications, list_notifications, update_user_profile};
 
 mod article;
@@ -92,10 +95,10 @@ pub fn check_is_admin(user: &LocalUserView) -> BackendResult<()> {
 #[debug_handler]
 pub(in crate::backend::api) async fn site_view(
     context: Data<IbisContext>,
-    user: Option<Extension<LocalUserView>>,
+    user: Option<UserExt>,
 ) -> BackendResult<Json<SiteView>> {
     Ok(Json(SiteView {
-        my_profile: user.map(|u| u.0),
+        my_profile: user.map(|u| u.inner()),
         config: context.config.options.clone(),
     }))
 }
@@ -104,7 +107,7 @@ pub(in crate::backend::api) async fn site_view(
 #[debug_handler]
 pub async fn edit_list(
     Query(query): Query<GetEditList>,
-    user: Option<Extension<LocalUserView>>,
+    user: Option<UserExt>,
     context: Data<IbisContext>,
 ) -> BackendResult<Json<Vec<EditView>>> {
     let params = if let Some(article_id) = query.article_id {
@@ -114,10 +117,46 @@ pub async fn edit_list(
     } else {
         return Err(anyhow!("Must provide article_id or person_id").into());
     };
-    Ok(Json(DbEdit::view(params, &user.map(|u| u.0), &context)?))
+    Ok(Json(DbEdit::view(
+        params,
+        &user.map(|u| u.inner()),
+        &context,
+    )?))
 }
 
 /// Trims the string param, and converts to None if it is empty
 fn empty_to_none(val: &mut Option<String>) {
     (*val) = val.as_ref().map(|s| s.trim().to_owned());
+}
+
+#[derive(FromRequestParts)]
+#[from_request(rejection(NotLoggedInError))]
+pub struct UserExt {
+    #[from_request(via(Extension))]
+    local_user_view: LocalUserView,
+}
+
+impl UserExt {
+    pub fn inner(self) -> LocalUserView {
+        self.local_user_view
+    }
+}
+impl Deref for UserExt {
+    type Target = LocalUserView;
+
+    fn deref(&self) -> &Self::Target {
+        &self.local_user_view
+    }
+}
+impl From<ExtensionRejection> for NotLoggedInError {
+    fn from(_: ExtensionRejection) -> Self {
+        NotLoggedInError
+    }
+}
+pub struct NotLoggedInError;
+
+impl IntoResponse for NotLoggedInError {
+    fn into_response(self) -> axum::response::Response {
+        (StatusCode::FORBIDDEN, "Login required").into_response()
+    }
 }

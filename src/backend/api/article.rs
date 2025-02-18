@@ -1,4 +1,4 @@
-use super::check_is_admin;
+use super::{check_is_admin, UserExt};
 use crate::{
     backend::{
         database::{
@@ -34,7 +34,6 @@ use crate::{
             SearchArticleParams,
         },
         instance::DbInstance,
-        user::LocalUserView,
         utils::{extract_domain, http_protocol_str},
         validation::can_edit_article,
         ResolveObjectParams,
@@ -43,7 +42,7 @@ use crate::{
 };
 use activitypub_federation::{config::Data, fetch::object_id::ObjectId};
 use anyhow::anyhow;
-use axum::{extract::Query, Extension, Form, Json};
+use axum::{extract::Query, Form, Json};
 use axum_macros::debug_handler;
 use chrono::Utc;
 use diffy::create_patch;
@@ -51,7 +50,7 @@ use diffy::create_patch;
 /// Create a new article with empty text, and federate it to followers.
 #[debug_handler]
 pub(in crate::backend::api) async fn create_article(
-    user: Extension<LocalUserView>,
+    user: UserExt,
     context: Data<IbisContext>,
     Form(mut params): Form<CreateArticleParams>,
 ) -> BackendResult<Json<DbArticleView>> {
@@ -104,7 +103,7 @@ pub(in crate::backend::api) async fn create_article(
 /// Conflicts are stored in the database so they can be retrieved later from `/api/v3/edit_conflicts`.
 #[debug_handler]
 pub(in crate::backend::api) async fn edit_article(
-    Extension(user): Extension<LocalUserView>,
+    user: UserExt,
     context: Data<IbisContext>,
     Form(mut params): Form<EditArticleParams>,
 ) -> BackendResult<Json<Option<ApiConflict>>> {
@@ -204,7 +203,7 @@ pub(in crate::backend::api) async fn list_articles(
 /// how an article should be edited.
 #[debug_handler]
 pub(in crate::backend::api) async fn fork_article(
-    Extension(_user): Extension<LocalUserView>,
+    _user: UserExt,
     context: Data<IbisContext>,
     Form(mut params): Form<ForkArticleParams>,
 ) -> BackendResult<Json<DbArticleView>> {
@@ -281,7 +280,7 @@ pub(super) async fn search_article(
 
 #[debug_handler]
 pub(in crate::backend::api) async fn protect_article(
-    Extension(user): Extension<LocalUserView>,
+    user: UserExt,
     context: Data<IbisContext>,
     Form(params): Form<ProtectArticleParams>,
 ) -> BackendResult<Json<DbArticle>> {
@@ -292,7 +291,7 @@ pub(in crate::backend::api) async fn protect_article(
 
 #[debug_handler]
 pub async fn approve_article(
-    Extension(user): Extension<LocalUserView>,
+    user: UserExt,
     context: Data<IbisContext>,
     Form(params): Form<ApproveArticleParams>,
 ) -> BackendResult<Json<()>> {
@@ -307,7 +306,7 @@ pub async fn approve_article(
 
 #[debug_handler]
 pub async fn get_conflict(
-    Extension(user): Extension<LocalUserView>,
+    user: UserExt,
     context: Data<IbisContext>,
     Form(params): Form<GetConflictParams>,
 ) -> BackendResult<Json<ApiConflict>> {
@@ -321,7 +320,7 @@ pub async fn get_conflict(
 
 #[debug_handler]
 pub async fn delete_conflict(
-    Extension(user): Extension<LocalUserView>,
+    user: UserExt,
     context: Data<IbisContext>,
     Form(params): Form<DeleteConflictParams>,
 ) -> BackendResult<Json<()>> {
@@ -331,7 +330,7 @@ pub async fn delete_conflict(
 
 #[debug_handler]
 pub(in crate::backend::api) async fn follow_article(
-    Extension(user): Extension<LocalUserView>,
+    user: UserExt,
     context: Data<IbisContext>,
     Form(params): Form<FollowArticleParams>,
 ) -> BackendResult<Json<SuccessResponse>> {

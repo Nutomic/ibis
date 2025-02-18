@@ -1,4 +1,4 @@
-use super::empty_to_none;
+use super::{empty_to_none, UserExt};
 use crate::{
     backend::{
         database::{read_jwt_secret, IbisContext},
@@ -23,7 +23,7 @@ use crate::{
 };
 use activitypub_federation::config::Data;
 use anyhow::anyhow;
-use axum::{extract::Query, Extension, Form, Json};
+use axum::{extract::Query, Form, Json};
 use axum_extra::extract::cookie::{Cookie, CookieJar, Expiration, SameSite};
 use axum_macros::debug_handler;
 use bcrypt::verify;
@@ -162,7 +162,7 @@ pub(in crate::backend::api) async fn update_user_profile(
 
 #[debug_handler]
 pub(crate) async fn list_notifications(
-    Extension(user): Extension<LocalUserView>,
+    user: UserExt,
     context: Data<IbisContext>,
 ) -> BackendResult<Json<Vec<Notification>>> {
     Ok(Json(Notification::list(&user, &context).await?))
@@ -170,7 +170,7 @@ pub(crate) async fn list_notifications(
 
 #[debug_handler]
 pub(crate) async fn count_notifications(
-    user: Option<Extension<LocalUserView>>,
+    user: Option<UserExt>,
     context: Data<IbisContext>,
 ) -> BackendResult<Json<i64>> {
     if let Some(user) = user {

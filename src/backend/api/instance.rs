@@ -1,4 +1,4 @@
-use super::empty_to_none;
+use super::{empty_to_none, UserExt};
 use crate::{
     backend::{
         database::{instance::DbInstanceUpdateForm, IbisContext},
@@ -14,13 +14,12 @@ use crate::{
             InstanceView2,
             UpdateInstanceParams,
         },
-        user::LocalUserView,
         ResolveObjectParams,
         SuccessResponse,
     },
 };
 use activitypub_federation::{config::Data, fetch::object_id::ObjectId};
-use axum::{extract::Query, Extension, Form, Json};
+use axum::{extract::Query, Form, Json};
 use axum_macros::debug_handler;
 
 /// Retrieve details about an instance. If no id is provided, return local instance.
@@ -50,7 +49,7 @@ pub(in crate::backend::api) async fn update_instance(
 /// updated articles.
 #[debug_handler]
 pub(in crate::backend::api) async fn follow_instance(
-    Extension(user): Extension<LocalUserView>,
+    user: UserExt,
     context: Data<IbisContext>,
     Form(params): Form<FollowInstanceParams>,
 ) -> BackendResult<Json<SuccessResponse>> {
@@ -58,7 +57,7 @@ pub(in crate::backend::api) async fn follow_instance(
     let pending = !target.local;
     DbInstance::follow(&user.person, &target, pending, &context)?;
     let instance = DbInstance::read(params.id, &context)?;
-    Follow::send(user.person, &instance, &context).await?;
+    Follow::send(user.inner().person, &instance, &context).await?;
     Ok(Json(SuccessResponse::default()))
 }
 
