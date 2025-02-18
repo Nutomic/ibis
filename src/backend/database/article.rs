@@ -1,7 +1,7 @@
 use crate::{
     backend::{
         database::{
-            schema::{article, edit, instance},
+            schema::{article, article_follow, edit, instance},
             IbisContext,
         },
         federation::objects::edits_collection::DbEditCollection,
@@ -12,19 +12,13 @@ use crate::{
         comment::DbComment,
         instance::DbInstance,
         newtypes::{ArticleId, InstanceId},
+        user::DbPerson,
     },
 };
 use activitypub_federation::fetch::{collection_id::CollectionId, object_id::ObjectId};
 use diesel::{
-    dsl::max,
-    insert_into,
-    AsChangeset,
-    BoolExpressionMethods,
-    ExpressionMethods,
-    Insertable,
-    PgTextExpressionMethods,
-    QueryDsl,
-    RunQueryDsl,
+    dsl::max, insert_into, AsChangeset, BoolExpressionMethods, ExpressionMethods, Insertable,
+    PgTextExpressionMethods, QueryDsl, RunQueryDsl,
 };
 use std::ops::DerefMut;
 
@@ -215,5 +209,20 @@ impl DbArticle {
             Some(latest_version) => Ok(latest_version),
             None => Ok(EditVersion::default()),
         }
+    }
+
+    pub fn follow(
+        article_id_: ArticleId,
+        follower: &DbPerson,
+        context: &IbisContext,
+    ) -> BackendResult<()> {
+        use article_follow::dsl::{article_id, person_id};
+        let mut conn = context.db_pool.get()?;
+        let form = (article_id.eq(article_id_), person_id.eq(follower.id));
+        let rows = insert_into(article_follow::table)
+            .values(form)
+            .execute(conn.deref_mut())?;
+        debug_assert_eq!(1, rows);
+        Ok(())
     }
 }

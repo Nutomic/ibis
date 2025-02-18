@@ -16,6 +16,13 @@ diesel::table! {
 }
 
 diesel::table! {
+    article_follow (person_id, article_id) {
+        person_id -> Int4,
+        article_id -> Int4,
+    }
+}
+
+diesel::table! {
     comment (id) {
         id -> Int4,
         creator_id -> Int4,
@@ -151,6 +158,7 @@ diesel::joinable!(local_user -> person (person_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     article,
+    article_follow,
     comment,
     conflict,
     edit,

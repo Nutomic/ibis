@@ -16,28 +16,17 @@ use crate::{
     },
     common::{
         article::{
-            ApiConflict,
-            ApproveArticleParams,
-            CreateArticleParams,
-            DbArticle,
-            DbArticleView,
-            DbEdit,
-            DeleteConflictParams,
-            EditArticleParams,
-            EditVersion,
-            ForkArticleParams,
-            GetArticleParams,
-            GetConflictParams,
-            ListArticlesParams,
-            ProtectArticleParams,
-            SearchArticleParams,
+            ApiConflict, ApproveArticleParams, CreateArticleParams, DbArticle, DbArticleView,
+            DbEdit, DeleteConflictParams, EditArticleParams, EditVersion, FollowArticleParams,
+            ForkArticleParams, GetArticleParams, GetConflictParams, ListArticlesParams,
+            ProtectArticleParams, SearchArticleParams,
         },
         comment::DbComment,
         instance::DbInstance,
         user::LocalUserView,
         utils::{extract_domain, http_protocol_str},
         validation::can_edit_article,
-        ResolveObjectParams,
+        ResolveObjectParams, SuccessResponse,
     },
 };
 use activitypub_federation::{config::Data, fetch::object_id::ObjectId};
@@ -335,4 +324,14 @@ pub async fn delete_conflict(
 ) -> BackendResult<Json<()>> {
     DbConflict::delete(params.conflict_id, user.person.id, &context)?;
     Ok(Json(()))
+}
+
+#[debug_handler]
+pub(in crate::backend::api) async fn follow_article(
+    Extension(user): Extension<LocalUserView>,
+    context: Data<IbisContext>,
+    Form(params): Form<FollowArticleParams>,
+) -> BackendResult<Json<SuccessResponse>> {
+    DbArticle::follow(params.id, &user.person, &context)?;
+    Ok(Json(SuccessResponse::default()))
 }

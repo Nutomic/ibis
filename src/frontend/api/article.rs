@@ -2,20 +2,10 @@ use super::ApiClient;
 use crate::{
     common::{
         article::{
-            ApiConflict,
-            ApproveArticleParams,
-            CreateArticleParams,
-            DbArticle,
-            DbArticleView,
-            DeleteConflictParams,
-            EditArticleParams,
-            EditView,
-            ForkArticleParams,
-            GetArticleParams,
-            GetConflictParams,
-            GetEditList,
-            ListArticlesParams,
-            ProtectArticleParams,
+            ApiConflict, ApproveArticleParams, CreateArticleParams, DbArticle, DbArticleView,
+            DeleteConflictParams, EditArticleParams, EditView, FollowArticleParams,
+            ForkArticleParams, GetArticleParams, GetConflictParams, GetEditList,
+            ListArticlesParams, ProtectArticleParams,
         },
         newtypes::{ArticleId, ConflictId},
         ResolveObjectParams,
@@ -96,6 +86,11 @@ impl ApiClient {
         let params = DeleteConflictParams { conflict_id };
         self.send(Method::DELETE, "/api/v1/conflict", Some(params))
             .await
+    }
+
+    pub async fn follow_article(&self, id: ArticleId) -> FrontendResult<()> {
+        let params = FollowArticleParams { id };
+        self.post("/api/v1/article/follow", Some(params)).await
     }
 
     #[cfg(debug_assertions)]

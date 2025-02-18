@@ -191,6 +191,11 @@ pub struct GetConflictParams {
     pub conflict_id: ConflictId,
 }
 
+#[derive(Deserialize, Serialize, Debug)]
+pub struct FollowArticleParams {
+    pub id: ArticleId,
+}
+
 #[test]
 fn test_edit_versions() {
     let default = EditVersion::default();
