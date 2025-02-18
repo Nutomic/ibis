@@ -20,6 +20,7 @@ use crate::{
         },
         newtypes::{ArticleId, ConflictId},
         ResolveObjectParams,
+        SuccessResponse,
     },
     frontend::utils::errors::FrontendResult,
 };
@@ -99,7 +100,11 @@ impl ApiClient {
             .await
     }
 
-    pub async fn follow_article(&self, id: ArticleId, follow: bool) -> FrontendResult<()> {
+    pub async fn follow_article(
+        &self,
+        id: ArticleId,
+        follow: bool,
+    ) -> FrontendResult<SuccessResponse> {
         let params = FollowArticleParams { id, follow };
         self.post("/api/v1/article/follow", Some(params)).await
     }

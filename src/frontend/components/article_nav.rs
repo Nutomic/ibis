@@ -12,7 +12,7 @@ use crate::{
 use leptos::prelude::*;
 use leptos_meta::Title;
 use leptos_router::components::A;
-use phosphor_leptos::{Icon, BELL, LOCK_SIMPLE};
+use phosphor_leptos::{Icon, BELL, BELL_SLASH, LOCK_SIMPLE};
 
 #[derive(Clone, Copy)]
 pub enum ActiveTab {
@@ -42,10 +42,15 @@ pub fn ArticleNav(
                         let protected = article_.article.protected;
                         let follow_article_action = Action::new(move |_: &()| async move {
                             CLIENT
-                                .follow_article(article_.article.id, true)
+                                .follow_article(article_.article.id, !article_.following)
                                 .await
-                                .error_popup(|_| {});
+                                .error_popup(|_| article.refetch());
                         });
+                        let follow_title = if article_.following {
+                            "Stop notifications"
+                        } else {
+                            "Get notified about new article edits and comments"
+                        };
                         view! {
                             <Title text=page_title(active_tab, &title) />
                             <div role="tablist" class="tabs tabs-lifted">
@@ -107,8 +112,16 @@ pub fn ArticleNav(
                                     on:click=move |_| {
                                         follow_article_action.dispatch(());
                                     }
+                                    title=follow_title
                                 >
-                                    <Icon icon=BELL size="24px" />
+                                    <Show
+                                        when=move || article_.following
+                                        fallback=move || {
+                                            view! { <Icon icon=BELL size="24px" /> }
+                                        }
+                                    >
+                                        <Icon icon=BELL_SLASH size="24px" />
+                                    </Show>
                                 </button>
                             </div>
                         }

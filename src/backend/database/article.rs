@@ -16,7 +16,7 @@ use crate::{
 };
 use activitypub_federation::fetch::{collection_id::CollectionId, object_id::ObjectId};
 use diesel::{
-    dsl::max,
+    dsl::{delete, max},
     insert_into,
     AsChangeset,
     BoolExpressionMethods,
@@ -131,7 +131,7 @@ impl DbArticle {
             .inner_join(instance::table)
             .left_join(article_follow::table)
             .into_boxed();
-        query = match dbg!(params.into()) {
+        query = match params.into() {
             ArticleViewQuery::Id(id) => query.filter(article::id.eq(id)),
             ArticleViewQuery::Name(title, domain) => {
                 query = query.filter(article::dsl::title.eq(title));
@@ -236,10 +236,23 @@ impl DbArticle {
         use article_follow::dsl::{article_id, person_id};
         let mut conn = context.db_pool.get()?;
         let form = (article_id.eq(article_id_), person_id.eq(follower.id));
-        let rows = insert_into(article_follow::table)
+        insert_into(article_follow::table)
             .values(form)
             .execute(conn.deref_mut())?;
-        debug_assert_eq!(1, rows);
+        Ok(())
+    }
+
+    pub fn unfollow(
+        article_id_: ArticleId,
+        follower: &DbPerson,
+        context: &IbisContext,
+    ) -> BackendResult<()> {
+        use article_follow::dsl::{article_id, person_id};
+        let mut conn = context.db_pool.get()?;
+        delete(
+            article_follow::table.filter(article_id.eq(article_id_).and(person_id.eq(follower.id))),
+        )
+        .execute(conn.deref_mut())?;
         Ok(())
     }
 }

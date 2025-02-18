@@ -335,6 +335,10 @@ pub(in crate::backend::api) async fn follow_article(
     context: Data<IbisContext>,
     Form(params): Form<FollowArticleParams>,
 ) -> BackendResult<Json<SuccessResponse>> {
-    DbArticle::follow(params.id, &user.person, &context)?;
+    if params.follow {
+        DbArticle::follow(params.id, &user.person, &context)?;
+    } else {
+        DbArticle::unfollow(params.id, &user.person, &context)?;
+    }
     Ok(Json(SuccessResponse::default()))
 }
