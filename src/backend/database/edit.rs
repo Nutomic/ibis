@@ -79,12 +79,14 @@ impl DbEditForm {
 impl DbEdit {
     pub fn create(form: &DbEditForm, context: &IbisContext) -> BackendResult<Self> {
         let mut conn = context.db_pool.get()?;
-        Ok(insert_into(edit::table)
+        let edit = insert_into(edit::table)
             .values(form)
             .on_conflict(edit::dsl::ap_id)
             .do_update()
             .set(form)
-            .get_result(conn.deref_mut())?)
+            .get_result(conn.deref_mut())?;
+
+        Ok(edit)
     }
 
     pub fn read(version: &EditVersion, context: &IbisContext) -> BackendResult<Self> {

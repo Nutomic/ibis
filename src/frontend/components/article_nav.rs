@@ -12,7 +12,17 @@ use crate::{
 use leptos::prelude::*;
 use leptos_meta::Title;
 use leptos_router::components::A;
-use phosphor_leptos::{Icon, BELL, BELL_SLASH, LOCK_SIMPLE};
+use phosphor_leptos::{
+    Icon,
+    BELL,
+    BELL_SLASH,
+    BOOK,
+    CHATS_CIRCLE,
+    GEAR_SIX,
+    LIST,
+    LOCK_SIMPLE,
+    PENCIL,
+};
 
 #[derive(Clone, Copy)]
 pub enum ActiveTab {
@@ -55,6 +65,7 @@ pub fn ArticleNav(
                             <Title text=page_title(active_tab, &title) />
                             <div role="tablist" class="tabs tabs-lifted">
                                 <A href=article_link.clone() {..} class=tab_classes.read>
+                                    <Icon icon=BOOK />
                                     "Read"
                                 </A>
                                 <A
@@ -62,6 +73,7 @@ pub fn ArticleNav(
                                     {..}
                                     class=tab_classes.discussion
                                 >
+                                    <Icon icon=CHATS_CIRCLE />
                                     "Discussion"
                                 </A>
                                 <A
@@ -69,6 +81,7 @@ pub fn ArticleNav(
                                     {..}
                                     class=tab_classes.history
                                 >
+                                    <Icon icon=LIST />
                                     "History"
                                 </A>
                                 <Show when=move || {
@@ -80,6 +93,7 @@ pub fn ArticleNav(
                                         {..}
                                         class=tab_classes.edit
                                     >
+                                        <Icon icon=PENCIL />
                                         "Edit"
                                     </A>
                                 </Show>
@@ -90,6 +104,7 @@ pub fn ArticleNav(
                                             {..}
                                             class=tab_classes.actions
                                         >
+                                            <Icon icon=GEAR_SIX />
                                             "Actions"
                                         </A>
                                     </Show>

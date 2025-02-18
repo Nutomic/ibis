@@ -58,7 +58,6 @@ impl<'a> From<(&'a String, Option<String>)> for ArticleViewQuery<'a> {
     }
 }
 
-// TODO: get rid of unnecessary methods
 impl DbArticle {
     pub fn edits_id(&self) -> BackendResult<CollectionId<DbEditCollection>> {
         Ok(CollectionId::parse(&format!("{}/edits", self.ap_id))?)

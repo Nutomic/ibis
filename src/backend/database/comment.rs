@@ -53,9 +53,14 @@ pub struct DbCommentUpdateForm {
 impl DbComment {
     pub fn create(form: DbCommentInsertForm, context: &IbisContext) -> BackendResult<Self> {
         let mut conn = context.db_pool.get()?;
-        Ok(insert_into(comment::table)
-            .values(form)
-            .get_result(conn.deref_mut())?)
+        let comment = insert_into(comment::table)
+            .values(&form)
+            .on_conflict(comment::dsl::ap_id)
+            .do_update()
+            .set(&form)
+            .get_result(conn.deref_mut())?;
+
+        Ok(comment)
     }
 
     pub fn update(
@@ -69,19 +74,6 @@ impl DbComment {
             .get_result(conn.deref_mut())?;
         let creator = DbPerson::read(comment.creator_id, context)?;
         Ok(DbCommentView { comment, creator })
-    }
-
-    pub fn create_or_update(
-        form: DbCommentInsertForm,
-        context: &IbisContext,
-    ) -> BackendResult<Self> {
-        let mut conn = context.db_pool.get()?;
-        Ok(insert_into(comment::table)
-            .values(&form)
-            .on_conflict(comment::dsl::ap_id)
-            .do_update()
-            .set(&form)
-            .get_result(conn.deref_mut())?)
     }
 
     pub fn read(id: CommentId, context: &IbisContext) -> BackendResult<Self> {

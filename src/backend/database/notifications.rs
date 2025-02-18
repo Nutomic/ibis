@@ -75,8 +75,11 @@ impl Notification {
                 .into_iter();
             notifications.extend(articles.map(Notification::ArticleApprovalRequired))
         }
-        notifications.sort_by(|a, b| a.published().cmp(b.published()));
 
+        // TODO: new edits and comments for followed articles
+        // TODO: also count
+
+        notifications.sort_by(|a, b| a.published().cmp(b.published()));
         Ok(notifications)
     }
 

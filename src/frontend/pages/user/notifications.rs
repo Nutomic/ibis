@@ -22,6 +22,7 @@ use crate::{
 };
 use leptos::{either::EitherOf3, prelude::*};
 use leptos_meta::Title;
+use phosphor_leptos::{Icon, CHECK, LINK};
 
 type NotificationsResource = Resource<Result<Vec<Notification>, FrontendError>>;
 
@@ -150,16 +151,21 @@ fn reply_view(c: &CommentViewWithArticle, notifications: NotificationsResource) 
             </div>
             <div>{c.comment.content.clone()}</div>
             <div class="mt-2 card-actions">
-                <a class="btn btn-sm btn-outline" href=comment_path(&c.comment, &c.article)>
-                    View
+                <a
+                    class="btn btn-sm btn-outline"
+                    href=comment_path(&c.comment, &c.article)
+                    title="View"
+                >
+                    <Icon icon=LINK />
                 </a>
                 <button
                     class="btn btn-sm btn-outline"
                     on:click=move |_| {
                         click_mark_as_read.dispatch(());
                     }
+                    title="Mark as read"
                 >
-                    Mark as read
+                    <Icon icon=CHECK />
                 </button>
             </div>
         </li>

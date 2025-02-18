@@ -9,6 +9,7 @@ use crate::frontend::{
 };
 use leptos::{component, prelude::*, view, IntoView, *};
 use leptos_router::hooks::use_navigate;
+use phosphor_leptos::{Icon, BELL_RINGING, CARDS, GEAR, HOUSE, MAGNIFYING_GLASS, PLUS};
 
 #[component]
 pub fn Nav() -> impl IntoView {
@@ -44,17 +45,27 @@ pub fn Nav() -> impl IntoView {
                         </h2>
                         <ul>
                             <li>
-                                <a href="/">"Main Page"</a>
+                                <a href="/">
+                                    <Icon icon=HOUSE />
+                                    "Main Page"
+                                </a>
                             </li>
                             <li>
-                                <a href="/explore">"Explore"</a>
+                                <a href="/explore">
+                                    <Icon icon=CARDS />
+                                    "Explore"
+                                </a>
                             </li>
                             <Show when=is_logged_in>
                                 <li>
-                                    <a href="/create-article">"Create Article"</a>
+                                    <a href="/create-article">
+                                        <Icon icon=PLUS />
+                                        "Create Article"
+                                    </a>
                                 </li>
                                 <li>
                                     <a href="/notifications">
+                                        <Icon icon=BELL_RINGING />
                                         "Notifications "
                                         <span class="indicator-item indicator-end badge badge-neutral">
                                             {notification_count}
@@ -64,7 +75,10 @@ pub fn Nav() -> impl IntoView {
                             </Show>
                             <Show when=is_admin>
                                 <li>
-                                    <a href="/settings">"Settings"</a>
+                                    <a href="/settings">
+                                        <Icon icon=GEAR />
+                                        "Settings"
+                                    </a>
                                 </li>
                             </Show>
                             <li>
@@ -93,7 +107,9 @@ pub fn Nav() -> impl IntoView {
                                         }
                                     />
 
-                                    <button class="btn btn-xs btn-secondary">Go</button>
+                                    <button class="btn btn-xs btn-secondary">
+                                        <Icon icon=MAGNIFYING_GLASS size="18px" />
+                                    </button>
                                 </form>
                             </li>
                         </ul>
