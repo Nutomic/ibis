@@ -194,6 +194,7 @@ pub struct GetConflictParams {
 #[derive(Deserialize, Serialize, Debug)]
 pub struct FollowArticleParams {
     pub id: ArticleId,
+    pub follow: bool,
 }
 
 #[test]

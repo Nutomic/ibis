@@ -70,6 +70,10 @@ http = "1.2.0"
 serde_urlencoded = "0.7.1"
 github-slugger = "0.1.0"
 timeago = "0.4.2"
+phosphor-leptos = { version = "0.7.0", features = ["system"], default-features = false }
+
+# frontend-only deps
+[target.'cfg(target_family = "wasm")'.dependencies]
 
 # backend-only deps
 [target.'cfg(not(target_family = "wasm"))'.dependencies]

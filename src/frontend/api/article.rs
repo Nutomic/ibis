@@ -88,8 +88,8 @@ impl ApiClient {
             .await
     }
 
-    pub async fn follow_article(&self, id: ArticleId) -> FrontendResult<()> {
-        let params = FollowArticleParams { id };
+    pub async fn follow_article(&self, id: ArticleId, follow: bool) -> FrontendResult<()> {
+        let params = FollowArticleParams { id, follow };
         self.post("/api/v1/article/follow", Some(params)).await
     }
 

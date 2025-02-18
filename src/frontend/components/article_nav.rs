@@ -1,14 +1,18 @@
 use crate::{
     common::{article::DbArticleView, validation::can_edit_article},
-    frontend::utils::{
-        errors::FrontendResult,
-        formatting::{article_path, article_title},
-        resources::{is_admin, is_logged_in},
+    frontend::{
+        api::CLIENT,
+        utils::{
+            errors::{FrontendResult, FrontendResultExt},
+            formatting::{article_path, article_title},
+            resources::{is_admin, is_logged_in},
+        },
     },
 };
 use leptos::prelude::*;
 use leptos_meta::Title;
 use leptos_router::components::A;
+use phosphor_leptos::{Icon, BELL, LOCK_SIMPLE};
 
 #[derive(Clone, Copy)]
 pub enum ActiveTab {
@@ -36,6 +40,12 @@ pub fn ArticleNav(
                         let article_link = article_path(&article_.article);
                         let article_link_ = article_link.clone();
                         let protected = article_.article.protected;
+                        let follow_article_action = Action::new(move |_: &()| async move {
+                            CLIENT
+                                .follow_article(article_.article.id, true)
+                                .await
+                                .error_popup(|_| {});
+                        });
                         view! {
                             <Title text=page_title(active_tab, &title) />
                             <div role="tablist" class="tabs tabs-lifted">
@@ -80,18 +90,26 @@ pub fn ArticleNav(
                                     </Show>
                                 </Suspense>
                             </div>
-                            <div class="flex flex-row">
+                            <div class="flex flex-row place-items-center">
                                 <h1 class="flex-auto my-6 font-serif text-4xl font-bold grow">
                                     {title}
                                 </h1>
                                 <Show when=move || protected>
                                     <span
-                                        class="place-self-center"
+                                        class="mr-2"
                                         title="Article can only be edited by local admins"
                                     >
-                                        "Protected"
+                                        <Icon icon=LOCK_SIMPLE size="24px" />
                                     </span>
                                 </Show>
+                                <button
+                                    class="btn btn-sm btn-outline"
+                                    on:click=move |_| {
+                                        follow_article_action.dispatch(());
+                                    }
+                                >
+                                    <Icon icon=BELL size="24px" />
+                                </button>
                             </div>
                         }
                     })
