@@ -16,17 +16,29 @@ use crate::{
     },
     common::{
         article::{
-            ApiConflict, ApproveArticleParams, CreateArticleParams, DbArticle, DbArticleView,
-            DbEdit, DeleteConflictParams, EditArticleParams, EditVersion, FollowArticleParams,
-            ForkArticleParams, GetArticleParams, GetConflictParams, ListArticlesParams,
-            ProtectArticleParams, SearchArticleParams,
+            ApiConflict,
+            ApproveArticleParams,
+            CreateArticleParams,
+            DbArticle,
+            DbArticleView,
+            DbEdit,
+            DeleteConflictParams,
+            EditArticleParams,
+            EditVersion,
+            FollowArticleParams,
+            ForkArticleParams,
+            GetArticleParams,
+            GetConflictParams,
+            ListArticlesParams,
+            ProtectArticleParams,
+            SearchArticleParams,
         },
-        comment::DbComment,
         instance::DbInstance,
         user::LocalUserView,
         utils::{extract_domain, http_protocol_str},
         validation::can_edit_article,
-        ResolveObjectParams, SuccessResponse,
+        ResolveObjectParams,
+        SuccessResponse,
     },
 };
 use activitypub_federation::{config::Data, fetch::object_id::ObjectId};
@@ -161,9 +173,8 @@ pub(in crate::backend::api) async fn get_article(
     context: Data<IbisContext>,
 ) -> BackendResult<Json<DbArticleView>> {
     match (query.title, query.id) {
-        (Some(title), None) => Ok(Json(DbArticle::read_view_title(
-            &title,
-            query.domain,
+        (Some(title), None) => Ok(Json(DbArticle::read_view(
+            (&title, query.domain),
             &context,
         )?)),
         (None, Some(id)) => {
@@ -252,15 +263,7 @@ pub(super) async fn resolve_article(
     context: Data<IbisContext>,
 ) -> BackendResult<Json<DbArticleView>> {
     let article: DbArticle = ObjectId::from(query.id).dereference(&context).await?;
-    let instance = DbInstance::read(article.instance_id, &context)?;
-    let comments = DbComment::read_for_article(article.id, &context)?;
-    let latest_version = article.latest_edit_version(&context)?;
-    Ok(Json(DbArticleView {
-        article,
-        instance,
-        comments,
-        latest_version,
-    }))
+    Ok(Json(DbArticle::read_view(article.id, &context)?))
 }
 
 /// Search articles for matching title or body text.

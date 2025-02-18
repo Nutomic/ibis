@@ -37,6 +37,7 @@ pub struct DbArticleView {
     pub instance: DbInstance,
     pub comments: Vec<DbCommentView>,
     pub latest_version: EditVersion,
+    pub following: bool,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]

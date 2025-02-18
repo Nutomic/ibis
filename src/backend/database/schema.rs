@@ -146,6 +146,8 @@ diesel::table! {
 }
 
 diesel::joinable!(article -> instance (instance_id));
+diesel::joinable!(article_follow -> article (article_id));
+diesel::joinable!(article_follow -> person (person_id));
 diesel::joinable!(comment -> article (article_id));
 diesel::joinable!(comment -> person (creator_id));
 diesel::joinable!(conflict -> article (article_id));

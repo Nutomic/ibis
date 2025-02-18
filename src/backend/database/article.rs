@@ -10,15 +10,22 @@ use crate::{
     common::{
         article::{DbArticle, DbArticleView, EditVersion},
         comment::DbComment,
-        instance::DbInstance,
         newtypes::{ArticleId, InstanceId},
         user::DbPerson,
     },
 };
 use activitypub_federation::fetch::{collection_id::CollectionId, object_id::ObjectId};
 use diesel::{
-    dsl::max, insert_into, AsChangeset, BoolExpressionMethods, ExpressionMethods, Insertable,
-    PgTextExpressionMethods, QueryDsl, RunQueryDsl,
+    dsl::max,
+    insert_into,
+    AsChangeset,
+    BoolExpressionMethods,
+    ExpressionMethods,
+    Insertable,
+    NullableExpressionMethods,
+    PgTextExpressionMethods,
+    QueryDsl,
+    RunQueryDsl,
 };
 use std::ops::DerefMut;
 
@@ -32,6 +39,23 @@ pub struct DbArticleForm {
     pub local: bool,
     pub protected: bool,
     pub approved: bool,
+}
+
+#[derive(Debug)]
+pub enum ArticleViewQuery<'a> {
+    Id(ArticleId),
+    Name(&'a str, Option<String>),
+}
+
+impl Into<ArticleViewQuery<'_>> for ArticleId {
+    fn into(self) -> ArticleViewQuery<'static> {
+        ArticleViewQuery::Id(self)
+    }
+}
+impl<'a> Into<ArticleViewQuery<'a>> for (&'a String, Option<String>) {
+    fn into(self) -> ArticleViewQuery<'a> {
+        ArticleViewQuery::Name(self.0, self.1)
+    }
 }
 
 // TODO: get rid of unnecessary methods
@@ -98,41 +122,33 @@ impl DbArticle {
             .get_result::<Self>(conn.deref_mut())?)
     }
 
-    pub fn read_view(id: ArticleId, context: &IbisContext) -> BackendResult<DbArticleView> {
-        let mut conn = context.db_pool.get()?;
-        let query = article::table
-            .find(id)
-            .inner_join(instance::table)
-            .into_boxed();
-        let (article, instance): (DbArticle, DbInstance) = query.get_result(conn.deref_mut())?;
-        let comments = DbComment::read_for_article(article.id, context)?;
-        let latest_version = article.latest_edit_version(context)?;
-        Ok(DbArticleView {
-            article,
-            instance,
-            comments,
-            latest_version,
-        })
-    }
-
-    pub fn read_view_title(
-        title: &str,
-        domain: Option<String>,
+    pub fn read_view<'a>(
+        params: impl Into<ArticleViewQuery<'a>>,
         context: &IbisContext,
     ) -> BackendResult<DbArticleView> {
         let mut conn = context.db_pool.get()?;
-        let (article, instance): (DbArticle, DbInstance) = {
-            let query = article::table
-                .inner_join(instance::table)
-                .filter(article::dsl::title.eq(title))
-                .into_boxed();
-            let query = if let Some(domain) = domain {
-                query.filter(instance::dsl::domain.eq(domain))
-            } else {
-                query.filter(article::dsl::local.eq(true))
-            };
-            query.get_result(conn.deref_mut())?
+        let mut query = article::table
+            .inner_join(instance::table)
+            .left_join(article_follow::table)
+            .into_boxed();
+        query = match dbg!(params.into()) {
+            ArticleViewQuery::Id(id) => query.filter(article::id.eq(id)),
+            ArticleViewQuery::Name(title, domain) => {
+                query = query.filter(article::dsl::title.eq(title));
+                if let Some(domain) = domain {
+                    query.filter(instance::dsl::domain.eq(domain))
+                } else {
+                    query.filter(article::dsl::local.eq(true))
+                }
+            }
         };
+        let (article, instance, following): (DbArticle, _, _) = query
+            .select((
+                article::all_columns,
+                instance::all_columns,
+                article_follow::person_id.nullable().is_not_null(),
+            ))
+            .get_result(conn.deref_mut())?;
         let comments = DbComment::read_for_article(article.id, context)?;
         let latest_version = article.latest_edit_version(context)?;
         Ok(DbArticleView {
@@ -140,6 +156,7 @@ impl DbArticle {
             instance,
             comments,
             latest_version,
+            following,
         })
     }
 

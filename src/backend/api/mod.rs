@@ -3,8 +3,15 @@ use crate::{
     backend::{
         api::{
             article::{
-                create_article, edit_article, fork_article, get_article, get_conflict,
-                list_articles, protect_article, resolve_article, search_article,
+                create_article,
+                edit_article,
+                fork_article,
+                get_article,
+                get_conflict,
+                list_articles,
+                protect_article,
+                resolve_article,
+                search_article,
             },
             comment::{create_comment, edit_comment},
             instance::{follow_instance, get_instance, resolve_instance},
@@ -25,7 +32,9 @@ use article::{approve_article, delete_conflict, follow_article};
 use axum::{
     extract::Query,
     routing::{delete, get, patch, post},
-    Extension, Json, Router,
+    Extension,
+    Json,
+    Router,
 };
 use axum_macros::debug_handler;
 use comment::mark_as_read;
