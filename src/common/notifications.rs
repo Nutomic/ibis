@@ -1,11 +1,10 @@
-use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
-
 use super::{
     article::{ApiConflict, DbArticle},
     comment::CommentViewWithArticle,
     newtypes::{ArticleNotifId, CommentId},
 };
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum Notification {

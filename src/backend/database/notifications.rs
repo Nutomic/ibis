@@ -6,14 +6,25 @@ use super::{
 use crate::{
     backend::{api::check_is_admin, utils::error::BackendResult},
     common::{
-        article::DbArticle, comment::CommentViewWithArticle, newtypes::{ArticleId, ArticleNotifId, LocalUserId}, notifications::{ArticleNotificationKind, ArticleNotificationView, Notification}, user::LocalUserView
+        article::DbArticle,
+        comment::CommentViewWithArticle,
+        newtypes::{ArticleId, ArticleNotifId, LocalUserId},
+        notifications::{ArticleNotificationKind, ArticleNotificationView, Notification},
+        user::LocalUserView,
     },
 };
 use activitypub_federation::config::Data;
 use chrono::{DateTime, Utc};
 use diesel::{
-    dsl::*, ExpressionMethods, Insertable, JoinOnDsl, NullableExpressionMethods, QueryDsl,
-    Queryable, RunQueryDsl, Selectable,
+    dsl::*,
+    ExpressionMethods,
+    Insertable,
+    JoinOnDsl,
+    NullableExpressionMethods,
+    QueryDsl,
+    Queryable,
+    RunQueryDsl,
+    Selectable,
 };
 use futures::future::try_join_all;
 use std::ops::DerefMut;
@@ -87,10 +98,11 @@ impl Notification {
                 .map(|(article, notif)| ArticleNotificationView {
                     article,
                     id: notif.id,
-                    kind: notif
-                        .new_comments
-                        .then_some(ArticleNotificationKind::Comment)
-                        .unwrap_or(ArticleNotificationKind::Edit),
+                    kind: if notif.new_comments {
+                        ArticleNotificationKind::Comment
+                    } else {
+                        ArticleNotificationKind::Edit
+                    },
                     published: notif.published,
                 })
                 .map(Notification::ArticleNotification),

@@ -2,9 +2,10 @@ pub mod article;
 pub mod comment;
 pub mod instance;
 pub mod newtypes;
+pub mod notifications;
 pub mod user;
 pub mod utils;
-pub mod validation;pub mod notifications;
+pub mod validation;
 
 use serde::{Deserialize, Serialize};
 use url::Url;

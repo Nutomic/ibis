@@ -10,7 +10,12 @@ use crate::{
         utils::{
             errors::{FrontendError, FrontendResultExt},
             formatting::{
-                article_link, article_path, article_title, comment_path, time_ago, user_link,
+                article_link,
+                article_path,
+                article_title,
+                comment_path,
+                time_ago,
+                user_link,
             },
         },
     },

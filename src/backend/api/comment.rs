@@ -16,12 +16,10 @@ use crate::{
         },
     },
     common::{
-        comment::{
-            CreateCommentParams,
-            DbComment,
-            DbCommentView,
-            EditCommentParams,
-        }, notifications::MarkAsReadParams, utils::http_protocol_str, SuccessResponse
+        comment::{CreateCommentParams, DbComment, DbCommentView, EditCommentParams},
+        notifications::MarkAsReadParams,
+        utils::http_protocol_str,
+        SuccessResponse,
     },
 };
 use activitypub_federation::config::Data;

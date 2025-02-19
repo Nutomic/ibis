@@ -1,3 +1,4 @@
+use super::ApiClient;
 use crate::{
     common::{
         newtypes::{ArticleNotifId, CommentId},
@@ -6,8 +7,6 @@ use crate::{
     },
     frontend::utils::errors::FrontendResult,
 };
-
-use super::ApiClient;
 
 impl ApiClient {
     pub async fn notifications_list(&self) -> FrontendResult<Vec<Notification>> {

@@ -3,10 +3,16 @@ use crate::{
     common::{
         article::{DbArticle, SearchArticleParams},
         instance::{
-            DbInstance, FollowInstanceParams, GetInstanceParams, InstanceView, InstanceView2,
-            SiteView, UpdateInstanceParams,
+            DbInstance,
+            FollowInstanceParams,
+            GetInstanceParams,
+            InstanceView,
+            InstanceView2,
+            SiteView,
+            UpdateInstanceParams,
         },
-        ResolveObjectParams, SuccessResponse,
+        ResolveObjectParams,
+        SuccessResponse,
     },
     frontend::utils::errors::FrontendResult,
 };
