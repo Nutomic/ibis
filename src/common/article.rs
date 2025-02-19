@@ -198,6 +198,19 @@ pub struct FollowArticleParams {
     pub follow: bool,
 }
 
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct ArticleNotificationView {
+    pub article: DbArticle,
+    pub kind: ArticleNotificationKind,
+    pub published: DateTime<Utc>,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub enum ArticleNotificationKind {
+    Comment,
+    Edit,
+}
+
 #[test]
 fn test_edit_versions() {
     let default = EditVersion::default();

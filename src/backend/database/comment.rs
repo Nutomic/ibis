@@ -1,15 +1,11 @@
 use super::{
-    article::{ArticleNotification},
-    notifications::parent_comment,
+    notifications::{parent_comment, ArticleNotification},
     schema::{comment, person},
     IbisContext,
 };
 use crate::{
     backend::utils::error::BackendResult,
-    common::{
-        comment::{DbComment, DbCommentView},
-        newtypes::{ArticleId, CommentId, PersonId},
-        user::DbPerson,
+    common::{ comment::{DbComment, DbCommentView}, newtypes::{ArticleId, CommentId, PersonId}, user::DbPerson
     },
 };
 use activitypub_federation::fetch::object_id::ObjectId;
@@ -54,7 +50,7 @@ impl DbComment {
             .set(&form)
             .get_result(conn.deref_mut())?;
 
-        ArticleNotification::new_comment(comment.article_id, comment.id, context)?;
+        ArticleNotification::notify_comment(comment.article_id, comment.id, context)?;
         Ok(comment)
     }
 

@@ -13,17 +13,13 @@ use crate::{
 use activitypub_federation::fetch::object_id::ObjectId;
 use chrono::{DateTime, Utc};
 use diesel::{
-    dsl::not,
-    insert_into,
-    AsChangeset,
-    BoolExpressionMethods,
-    ExpressionMethods,
-    Insertable,
-    QueryDsl,
-    RunQueryDsl,
+    dsl::not, insert_into, AsChangeset, BoolExpressionMethods, ExpressionMethods, Insertable,
+    QueryDsl, RunQueryDsl,
 };
 use diffy::create_patch;
 use std::ops::DerefMut;
+
+use super::notifications::ArticleNotification;
 
 #[derive(Debug, Clone, Insertable, AsChangeset)]
 #[diesel(table_name = edit, check_for_backend(diesel::pg::Pg))]
@@ -79,13 +75,14 @@ impl DbEditForm {
 impl DbEdit {
     pub fn create(form: &DbEditForm, context: &IbisContext) -> BackendResult<Self> {
         let mut conn = context.db_pool.get()?;
-        let edit = insert_into(edit::table)
+        let edit: DbEdit = insert_into(edit::table)
             .values(form)
             .on_conflict(edit::dsl::ap_id)
             .do_update()
             .set(form)
             .get_result(conn.deref_mut())?;
 
+        ArticleNotification::notify_edit(edit.article_id, edit.id, context)?;
         Ok(edit)
     }
 

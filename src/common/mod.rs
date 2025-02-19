@@ -6,7 +6,7 @@ pub mod user;
 pub mod utils;
 pub mod validation;
 
-use article::{ApiConflict, DbArticle};
+use article::{ApiConflict, ArticleNotificationView, DbArticle};
 use chrono::{DateTime, Utc};
 use comment::CommentViewWithArticle;
 use serde::{Deserialize, Serialize};
@@ -41,15 +41,17 @@ pub enum Notification {
     EditConflict(ApiConflict),
     ArticleApprovalRequired(DbArticle),
     Reply(CommentViewWithArticle),
+    ArticleNotification(ArticleNotificationView),
 }
 
 impl Notification {
     pub fn published(&self) -> &DateTime<Utc> {
         use Notification::*;
         match self {
-            EditConflict(api_conflict) => &api_conflict.published,
-            ArticleApprovalRequired(db_article) => &db_article.published,
-            Reply(comment) => &comment.comment.published,
+            EditConflict(c) => &c.published,
+            ArticleApprovalRequired(a) => &a.published,
+            Reply(c) => &c.comment.published,
+            ArticleNotification(n) => &n.published,
         }
     }
 }

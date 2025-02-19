@@ -1,6 +1,6 @@
 use crate::{
     common::{
-        article::{ApiConflict, DbArticle},
+        article::{ApiConflict, ArticleNotificationKind, ArticleNotificationView, DbArticle},
         comment::CommentViewWithArticle,
         Notification,
     },
@@ -10,17 +10,15 @@ use crate::{
         utils::{
             errors::{FrontendError, FrontendResultExt},
             formatting::{
-                article_link,
-                article_path,
-                article_title,
-                comment_path,
-                time_ago,
-                user_link,
+                article_link, article_path, article_title, comment_path, time_ago, user_link,
             },
         },
     },
 };
-use leptos::{either::EitherOf3, prelude::*};
+use leptos::{
+    either::{Either, EitherOf4},
+    prelude::*,
+};
 use leptos_meta::Title;
 use phosphor_leptos::{Icon, CHECK, LINK};
 
@@ -47,12 +45,15 @@ pub fn Notifications() -> impl IntoView {
                                     use Notification::*;
                                     match notif {
                                         EditConflict(c) => {
-                                            EitherOf3::A(edit_conflict_view(c, notifications))
+                                            EitherOf4::A(edit_conflict_view(c, notifications))
                                         }
                                         ArticleApprovalRequired(a) => {
-                                            EitherOf3::B(article_approval_view(a, notifications))
+                                            EitherOf4::B(article_approval_view(a, notifications))
                                         }
-                                        Reply(c) => EitherOf3::C(reply_view(c, notifications)),
+                                        Reply(c) => EitherOf4::C(reply_view(c, notifications)),
+                                        ArticleNotification(n) => {
+                                            EitherOf4::D(article_notification_view(n, notifications))
+                                        }
                                     }
                                 })
                                 .collect::<Vec<_>>()
@@ -169,5 +170,28 @@ fn reply_view(c: &CommentViewWithArticle, notifications: NotificationsResource) 
                 </button>
             </div>
         </li>
+    }
+}
+
+fn article_notification_view(
+    n: &ArticleNotificationView,
+    notifications: NotificationsResource,
+) -> impl IntoView {
+    use ArticleNotificationKind::*;
+    let article_path = article_path(&n.article);
+    let article_title = n.article.title.clone();
+    match n.kind {
+        Comment => Either::Left(view! {
+            <a class="link" href=format!("{article_path}/discussion")>
+                "New comment on article "
+                {article_title}
+            </a>
+        }),
+        Edit => Either::Right(view! {
+            <a class="link" href=format!("{article_path}/history")>
+                "New edit on article "
+                {article_title}
+            </a>
+        }),
     }
 }

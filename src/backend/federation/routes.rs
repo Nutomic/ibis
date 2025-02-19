@@ -1,7 +1,6 @@
 use super::{
     activities::comment::{
-        create_or_update_comment::CreateOrUpdateComment,
-        delete_comment::DeleteComment,
+        create_or_update_comment::CreateOrUpdateComment, delete_comment::DeleteComment,
         undo_delete_comment::UndoDeleteComment,
     },
     objects::{
@@ -14,12 +13,8 @@ use crate::{
         database::IbisContext,
         federation::{
             activities::{
-                accept::Accept,
-                announce::AnnounceActivity,
-                create_article::CreateArticle,
-                follow::Follow,
-                reject::RejectEdit,
-                update_local_article::UpdateLocalArticle,
+                accept::Accept, announce::AnnounceActivity, create_article::CreateArticle,
+                follow::Follow, reject::RejectEdit, update_local_article::UpdateLocalArticle,
                 update_remote_article::UpdateRemoteArticle,
             },
             objects::{
@@ -33,10 +28,7 @@ use crate::{
         utils::error::{BackendError, BackendResult},
     },
     common::{
-        article::DbArticle,
-        comment::DbComment,
-        instance::DbInstance,
-        newtypes::CommentId,
+        article::DbArticle, comment::DbComment, instance::DbInstance, newtypes::CommentId,
         user::DbPerson,
     },
 };
@@ -112,7 +104,7 @@ async fn http_get_article(
     Path(title): Path<String>,
     context: Data<IbisContext>,
 ) -> BackendResult<FederationJson<WithContext<ApubArticle>>> {
-    let article = DbArticle::read_view((&title, None), &context)?;
+    let article = DbArticle::read_view((&title, None), None, &context)?;
     let json = article.article.into_json(&context).await?;
     Ok(FederationJson(WithContext::new_default(json)))
 }
@@ -122,7 +114,7 @@ async fn http_get_article_edits(
     Path(title): Path<String>,
     context: Data<IbisContext>,
 ) -> BackendResult<FederationJson<WithContext<ApubEditCollection>>> {
-    let article = DbArticle::read_view((&title, None), &context)?;
+    let article = DbArticle::read_view((&title, None), None, &context)?;
     let json = DbEditCollection::read_local(&article.article, &context).await?;
     Ok(FederationJson(WithContext::new_default(json)))
 }
