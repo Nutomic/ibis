@@ -3,16 +3,10 @@ use crate::{
     common::{
         article::{DbArticle, SearchArticleParams},
         instance::{
-            DbInstance,
-            FollowInstanceParams,
-            GetInstanceParams,
-            InstanceView,
-            InstanceView2,
-            SiteView,
-            UpdateInstanceParams,
+            DbInstance, FollowInstanceParams, GetInstanceParams, InstanceView, InstanceView2,
+            SiteView, UpdateInstanceParams,
         },
-        ResolveObjectParams,
-        SuccessResponse,
+        ResolveObjectParams, SuccessResponse,
     },
     frontend::utils::errors::FrontendResult,
 };
@@ -24,7 +18,7 @@ impl ApiClient {
         self.get("/api/v1/instance", None::<i32>).await
     }
 
-    pub async fn get_instance(&self, params: &GetInstanceParams) -> FrontendResult<InstanceView> {
+    pub async fn get_instance(&self, params: &GetInstanceParams) -> FrontendResult<InstanceView2> {
         self.get("/api/v1/instance", Some(&params)).await
     }
 

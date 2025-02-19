@@ -10,8 +10,7 @@ use url::Url;
 #[cfg(feature = "ssr")]
 use {
     crate::backend::{
-        database::schema::instance,
-        federation::objects::articles_collection::DbArticleCollection,
+        database::schema::instance, federation::objects::articles_collection::DbArticleCollection,
         federation::objects::instance_collection::DbInstanceCollection,
     },
     activitypub_federation::fetch::{collection_id::CollectionId, object_id::ObjectId},
@@ -82,12 +81,13 @@ pub struct Options {
     pub article_approval: bool,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Default)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[cfg_attr(feature = "ssr", derive(Queryable))]
 #[cfg_attr(feature = "ssr", diesel(check_for_backend(diesel::pg::Pg)))]
 pub struct SiteView {
     pub my_profile: Option<LocalUserView>,
     pub config: Options,
+    pub admin: DbPerson,
 }
 
 #[derive(Deserialize, Serialize, Debug)]

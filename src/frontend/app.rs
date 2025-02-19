@@ -3,26 +3,16 @@ use crate::frontend::{
     components::{nav::Nav, protected_route::IbisProtectedRoute},
     pages::{
         article::{
-            actions::ArticleActions,
-            create::CreateArticle,
-            diff::EditDiff,
-            discussion::ArticleDiscussion,
-            edit::EditArticle,
-            history::ArticleHistory,
+            actions::ArticleActions, create::CreateArticle, diff::EditDiff,
+            discussion::ArticleDiscussion, edit::EditArticle, history::ArticleHistory,
             read::ReadArticle,
         },
         instance::{
-            details::InstanceDetails,
-            explore::Explore,
-            search::Search,
-            settings::InstanceSettings,
+            about::About, details::InstanceDetails, explore::Explore, search::Search, settings::InstanceSettings
         },
         user::{
-            edit_profile::UserEditProfile,
-            login::Login,
-            notifications::Notifications,
-            profile::UserProfile,
-            register::Register,
+            edit_profile::UserEditProfile, login::Login, notifications::Notifications,
+            profile::UserProfile, register::Register,
         },
     },
     utils::{dark_mode::DarkMode, errors::ErrorPopup, formatting::instance_title},
@@ -108,6 +98,7 @@ pub fn App() -> impl IntoView {
                         <IbisProtectedRoute path=path!("/create-article") view=CreateArticle />
                         <Route path=path!("/explore") view=Explore />
                         <Route path=path!("/instance/:hostname") view=InstanceDetails />
+                        <Route path=path!("/about") view=About />
                         <Route path=path!("/user/:name") view=UserProfile />
                         <Route path=path!("/login") view=Login />
                         <Route path=path!("/register") view=Register />

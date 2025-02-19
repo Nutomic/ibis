@@ -9,7 +9,9 @@ use crate::frontend::{
 };
 use leptos::{component, prelude::*, view, IntoView, *};
 use leptos_router::hooks::use_navigate;
-use phosphor_leptos::{Icon, BELL_RINGING, CARDS, GEAR, HOUSE, MAGNIFYING_GLASS, PLUS};
+use phosphor_leptos::{
+    Icon, BELL_RINGING, CARDS, EXCLAMATION_MARK, GEAR, HOUSE, MAGNIFYING_GLASS, PLUS,
+};
 
 #[component]
 pub fn Nav() -> impl IntoView {
@@ -54,6 +56,12 @@ pub fn Nav() -> impl IntoView {
                                 <a href="/explore">
                                     <Icon icon=CARDS />
                                     "Explore"
+                                </a>
+                            </li>
+                            <li>
+                                <a href="/about">
+                                    <Icon icon=EXCLAMATION_MARK />
+                                    "About"
                                 </a>
                             </li>
                             <Show when=is_logged_in>

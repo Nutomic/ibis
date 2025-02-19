@@ -17,14 +17,8 @@ use activitypub_federation::{config::Data, fetch::object_id::ObjectId};
 use bcrypt::{hash, DEFAULT_COST};
 use chrono::{DateTime, Utc};
 use diesel::{
-    insert_into,
-    AsChangeset,
-    ExpressionMethods,
-    Insertable,
-    JoinOnDsl,
-    PgTextExpressionMethods,
-    QueryDsl,
-    RunQueryDsl,
+    insert_into, AsChangeset, ExpressionMethods, Insertable, JoinOnDsl, PgTextExpressionMethods,
+    QueryDsl, RunQueryDsl,
 };
 use std::ops::DerefMut;
 
@@ -64,6 +58,15 @@ impl DbPerson {
     pub fn read(id: PersonId, context: &IbisContext) -> BackendResult<DbPerson> {
         let mut conn = context.db_pool.get()?;
         Ok(person::table.find(id).get_result(conn.deref_mut())?)
+    }
+
+    pub fn read_admin(context: &IbisContext) -> BackendResult<DbPerson> {
+        let mut conn = context.db_pool.get()?;
+        Ok(person::table
+            .inner_join(local_user::table)
+            .filter(local_user::admin)
+            .select(person::all_columns)
+            .get_result(conn.deref_mut())?)
     }
 
     pub fn create_local(
