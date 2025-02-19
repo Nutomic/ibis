@@ -11,12 +11,12 @@ use leptos::prelude::*;
 #[component]
 pub fn ArticleHistory() -> impl IntoView {
     let article = article_resource();
-    let edits = article_edits_resource(article);
 
     view! {
         <ArticleNav article=article active_tab=ActiveTab::History />
         <SuspenseError result=article>
             {move || Suspend::new(async move {
+                let edits = article_edits_resource(article).await;
                 edits
                     .await
                     .map(|edits| {

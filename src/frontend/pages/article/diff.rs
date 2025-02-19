@@ -14,12 +14,12 @@ use leptos_router::hooks::use_params_map;
 pub fn EditDiff() -> impl IntoView {
     let params = use_params_map();
     let article = article_resource();
-    let edits = article_edits_resource(article);
 
     view! {
         <ArticleNav article=article active_tab=ActiveTab::History />
         <SuspenseError result=article>
             {move || Suspend::new(async move {
+                let edits = article_edits_resource(article).await;
                 let article_title = article
                     .await
                     .map(|a| article_title(&a.article))
