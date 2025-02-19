@@ -1,7 +1,7 @@
 use crate::{
     backend::{
         database::{
-            schema::{article, article_follow, edit, instance},
+            schema::{article, article_follow, article_notification, edit, instance},
             IbisContext,
         },
         federation::objects::edits_collection::DbEditCollection,
@@ -10,22 +10,16 @@ use crate::{
     common::{
         article::{DbArticle, DbArticleView, EditVersion},
         comment::DbComment,
-        newtypes::{ArticleId, InstanceId},
+        newtypes::{ArticleId, CommentId, EditId, InstanceId, PersonId},
         user::DbPerson,
     },
 };
 use activitypub_federation::fetch::{collection_id::CollectionId, object_id::ObjectId};
 use diesel::{
     dsl::{delete, max},
-    insert_into,
-    AsChangeset,
-    BoolExpressionMethods,
-    ExpressionMethods,
-    Insertable,
-    NullableExpressionMethods,
-    PgTextExpressionMethods,
-    QueryDsl,
-    RunQueryDsl,
+    insert_into, AsChangeset, BoolExpressionMethods, ExpressionMethods, Insertable,
+    NullableExpressionMethods, PgTextExpressionMethods, QueryDsl, Queryable, RunQueryDsl,
+    Selectable,
 };
 use std::ops::DerefMut;
 
@@ -252,6 +246,83 @@ impl DbArticle {
             article_follow::table.filter(article_id.eq(article_id_).and(person_id.eq(follower.id))),
         )
         .execute(conn.deref_mut())?;
+        Ok(())
+    }
+}
+
+#[cfg_attr(feature = "ssr", derive(Queryable, Selectable))]
+#[cfg_attr(feature = "ssr", diesel(table_name = article_notification, check_for_backend(diesel::pg::Pg), belongs_to(DbInstance, foreign_key = instance_id)))]
+pub struct ArticleNotification {
+    id: i32,
+    person_id: PersonId,
+    comment_id: Option<CommentId>,
+    edit_id: Option<EditId>,
+}
+
+#[derive(Debug, Insertable)]
+#[diesel(table_name = article_notification, check_for_backend(diesel::pg::Pg))]
+struct ArticleNotificationInsertForm {
+    person_id: PersonId,
+    comment_id: Option<CommentId>,
+    edit_id: Option<EditId>,
+}
+
+impl ArticleNotification {
+    pub(super) fn new_comment(
+        article_id: ArticleId,
+        comment_id: CommentId,
+        context: &IbisContext,
+    ) -> BackendResult<()> {
+        let followers = ArticleNotification::article_followers(article_id, context)?;
+        let notifications = followers
+            .into_iter()
+            .map(|f| ArticleNotificationInsertForm {
+                person_id: f,
+                comment_id: Some(comment_id),
+                edit_id: None,
+            })
+            .collect();
+        ArticleNotification::insert(notifications, context)?;
+        Ok(())
+    }
+
+    pub(super) fn new_edit(
+        article_id: ArticleId,
+        edit_id: EditId,
+        context: &IbisContext,
+    ) -> BackendResult<()> {
+        let followers = ArticleNotification::article_followers(article_id, context)?;
+        let notifications = followers
+            .into_iter()
+            .map(|f| ArticleNotificationInsertForm {
+                person_id: f,
+                comment_id: None,
+                edit_id: Some(edit_id),
+            })
+            .collect();
+        ArticleNotification::insert(notifications, context)?;
+        Ok(())
+    }
+
+    fn article_followers(
+        article_id: ArticleId,
+        context: &IbisContext,
+    ) -> BackendResult<Vec<PersonId>> {
+        let mut conn = context.db_pool.get()?;
+        Ok(article_follow::table
+            .filter(article_follow::article_id.eq(article_id))
+            .select(article_follow::person_id)
+            .get_results(&mut conn)?)
+    }
+
+    fn insert(
+        notifications: Vec<ArticleNotificationInsertForm>,
+        context: &IbisContext,
+    ) -> BackendResult<()> {
+        let mut conn = context.db_pool.get()?;
+        insert_into(article_notification::table)
+            .values(notifications)
+            .execute(&mut conn)?;
         Ok(())
     }
 }

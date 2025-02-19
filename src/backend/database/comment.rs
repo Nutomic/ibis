@@ -1,4 +1,5 @@
 use super::{
+    article::{ArticleNotification},
     notifications::parent_comment,
     schema::{comment, person},
     IbisContext,
@@ -14,15 +15,8 @@ use crate::{
 use activitypub_federation::fetch::object_id::ObjectId;
 use chrono::{DateTime, Utc};
 use diesel::{
-    dsl::insert_into,
-    update,
-    AsChangeset,
-    ExpressionMethods,
-    Insertable,
-    JoinOnDsl,
-    NullableExpressionMethods,
-    QueryDsl,
-    RunQueryDsl,
+    dsl::insert_into, update, AsChangeset, ExpressionMethods, Insertable, JoinOnDsl,
+    NullableExpressionMethods, QueryDsl, RunQueryDsl,
 };
 use std::ops::DerefMut;
 
@@ -53,13 +47,14 @@ pub struct DbCommentUpdateForm {
 impl DbComment {
     pub fn create(form: DbCommentInsertForm, context: &IbisContext) -> BackendResult<Self> {
         let mut conn = context.db_pool.get()?;
-        let comment = insert_into(comment::table)
+        let comment: DbComment = insert_into(comment::table)
             .values(&form)
             .on_conflict(comment::dsl::ap_id)
             .do_update()
             .set(&form)
             .get_result(conn.deref_mut())?;
 
+        ArticleNotification::new_comment(comment.article_id, comment.id, context)?;
         Ok(comment)
     }
 

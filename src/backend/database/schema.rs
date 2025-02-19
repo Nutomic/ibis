@@ -23,6 +23,15 @@ diesel::table! {
 }
 
 diesel::table! {
+    article_notification (id) {
+        id -> Int4,
+        person_id -> Int4,
+        comment_id -> Nullable<Int4>,
+        edit_id -> Nullable<Int4>,
+    }
+}
+
+diesel::table! {
     comment (id) {
         id -> Int4,
         creator_id -> Int4,
@@ -161,6 +170,7 @@ diesel::joinable!(local_user -> person (person_id));
 diesel::allow_tables_to_appear_in_same_query!(
     article,
     article_follow,
+    article_notification,
     comment,
     conflict,
     edit,
