@@ -29,38 +29,40 @@ impl SearchResults {
 #[component]
 pub fn Search() -> impl IntoView {
     let params = use_query_map();
-    let query = move || params.get().get("query").clone().unwrap_or_default();
     let (error, set_error) = signal(None::<String>);
-    let search_results = Resource::new(query, move |query| async move {
-        set_error.set(None);
-        let mut search_results = SearchResults::default();
-        let url = Url::parse(&query);
-        let search_data = SearchArticleParams { query };
-        let search = CLIENT.search(&search_data);
+    let search_results = Resource::new(
+        move || params.get().get("query").unwrap_or_default(),
+        move |query| async move {
+            set_error.set(None);
+            let mut search_results = SearchResults::default();
+            let url = Url::parse(&query);
+            let search_data = SearchArticleParams { query };
+            let search = CLIENT.search(&search_data);
 
-        match search.await {
-            Ok(mut a) => search_results.articles.append(&mut a),
-            Err(e) => set_error.set(Some(e.to_string())),
-        }
-
-        // If its a valid url, also attempt to resolve as federation object
-        if let Ok(url) = url {
-            match CLIENT.resolve_article(url.clone()).await {
-                Ok(a) => search_results.articles.push(a.article),
+            match search.await {
+                Ok(mut a) => search_results.articles.append(&mut a),
                 Err(e) => set_error.set(Some(e.to_string())),
             }
-            match CLIENT.resolve_instance(url).await {
-                Ok(a) => search_results.instance = Some(a),
-                Err(e) => set_error.set(Some(e.to_string())),
+
+            // If its a valid url, also attempt to resolve as federation object
+            if let Ok(url) = url {
+                match CLIENT.resolve_article(url.clone()).await {
+                    Ok(a) => search_results.articles.push(a.article),
+                    Err(e) => set_error.set(Some(e.to_string())),
+                }
+                match CLIENT.resolve_instance(url).await {
+                    Ok(a) => search_results.instance = Some(a),
+                    Err(e) => set_error.set(Some(e.to_string())),
+                }
             }
-        }
-        search_results
-    });
+            search_results
+        },
+    );
 
     view! {
-        <Title text=format!("Search - {}", query()) />
+        <Title text=move || format!("Search - {}", params.get().get("query").unwrap_or_default()) />
         <h1 class="flex-auto my-6 font-serif text-4xl font-bold grow">
-            "Search results for " {query}
+            "Search results for " {move || params.get().get("query").unwrap_or_default()}
         </h1>
         <Suspense fallback=|| {
             view! { "Loading..." }
