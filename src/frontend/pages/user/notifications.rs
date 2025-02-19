@@ -1,8 +1,8 @@
 use crate::{
     common::{
-        article::{ApiConflict, ArticleNotificationKind, ArticleNotificationView, DbArticle},
+        article::{ApiConflict, DbArticle},
         comment::CommentViewWithArticle,
-        Notification,
+        notifications::{ArticleNotificationKind, ArticleNotificationView, Notification},
     },
     frontend::{
         api::CLIENT,
@@ -10,12 +10,7 @@ use crate::{
         utils::{
             errors::{FrontendError, FrontendResultExt},
             formatting::{
-                article_link,
-                article_path,
-                article_title,
-                comment_path,
-                time_ago,
-                user_link,
+                article_link, article_path, article_title, comment_path, time_ago, user_link,
             },
         },
     },

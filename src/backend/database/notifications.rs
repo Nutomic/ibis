@@ -6,25 +6,14 @@ use super::{
 use crate::{
     backend::{api::check_is_admin, utils::error::BackendResult},
     common::{
-        article::{ArticleNotificationKind, ArticleNotificationView, DbArticle},
-        comment::CommentViewWithArticle,
-        newtypes::{ArticleId, ArticleNotifId, LocalUserId},
-        user::LocalUserView,
-        Notification,
+        article::DbArticle, comment::CommentViewWithArticle, newtypes::{ArticleId, ArticleNotifId, LocalUserId}, notifications::{ArticleNotificationKind, ArticleNotificationView, Notification}, user::LocalUserView
     },
 };
 use activitypub_federation::config::Data;
 use chrono::{DateTime, Utc};
 use diesel::{
-    dsl::*,
-    ExpressionMethods,
-    Insertable,
-    JoinOnDsl,
-    NullableExpressionMethods,
-    QueryDsl,
-    Queryable,
-    RunQueryDsl,
-    Selectable,
+    dsl::*, ExpressionMethods, Insertable, JoinOnDsl, NullableExpressionMethods, QueryDsl,
+    Queryable, RunQueryDsl, Selectable,
 };
 use futures::future::try_join_all;
 use std::ops::DerefMut;

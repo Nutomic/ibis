@@ -21,10 +21,7 @@ use crate::{
             DbComment,
             DbCommentView,
             EditCommentParams,
-            MarkAsReadParams,
-        },
-        utils::http_protocol_str,
-        SuccessResponse,
+        }, notifications::MarkAsReadParams, utils::http_protocol_str, SuccessResponse
     },
 };
 use activitypub_federation::config::Data;

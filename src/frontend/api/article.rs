@@ -2,26 +2,13 @@ use super::ApiClient;
 use crate::{
     common::{
         article::{
-            ApiConflict,
-            ApproveArticleParams,
-            ArticleNotifMarkAsReadParams,
-            CreateArticleParams,
-            DbArticle,
-            DbArticleView,
-            DeleteConflictParams,
-            EditArticleParams,
-            EditView,
-            FollowArticleParams,
-            ForkArticleParams,
-            GetArticleParams,
-            GetConflictParams,
-            GetEditList,
-            ListArticlesParams,
-            ProtectArticleParams,
+            ApiConflict, ApproveArticleParams, CreateArticleParams, DbArticle, DbArticleView,
+            DeleteConflictParams, EditArticleParams, EditView, FollowArticleParams,
+            ForkArticleParams, GetArticleParams, GetConflictParams, GetEditList,
+            ListArticlesParams, ProtectArticleParams,
         },
-        newtypes::{ArticleId, ArticleNotifId, ConflictId},
-        ResolveObjectParams,
-        SuccessResponse,
+        newtypes::{ArticleId, ConflictId},
+        ResolveObjectParams, SuccessResponse,
     },
     frontend::utils::errors::FrontendResult,
 };
@@ -108,15 +95,6 @@ impl ApiClient {
     ) -> FrontendResult<SuccessResponse> {
         let params = FollowArticleParams { id, follow };
         self.post("/api/v1/article/follow", Some(params)).await
-    }
-
-    pub async fn article_notif_mark_as_read(
-        &self,
-        id: ArticleNotifId,
-    ) -> FrontendResult<SuccessResponse> {
-        let params = ArticleNotifMarkAsReadParams { id };
-        self.post("/api/v1/user/notifications/mark_as_read", Some(params))
-            .await
     }
 
     #[cfg(debug_assertions)]

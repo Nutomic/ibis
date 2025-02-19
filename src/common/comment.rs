@@ -65,11 +65,6 @@ pub struct EditCommentParams {
 }
 
 #[derive(Deserialize, Serialize, Debug)]
-pub struct MarkAsReadParams {
-    pub id: CommentId,
-}
-
-#[derive(Deserialize, Serialize, Debug)]
 pub struct DeleteCommentParams {
     pub id: CommentId,
 }
