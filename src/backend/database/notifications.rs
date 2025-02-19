@@ -8,7 +8,7 @@ use crate::{
     common::{
         article::{ArticleNotificationKind, ArticleNotificationView, DbArticle},
         comment::CommentViewWithArticle,
-        newtypes::{ArticleId, LocalUserId},
+        newtypes::{ArticleId, ArticleNotifId, LocalUserId},
         user::LocalUserView,
         Notification,
     },
@@ -16,9 +16,15 @@ use crate::{
 use activitypub_federation::config::Data;
 use chrono::{DateTime, Utc};
 use diesel::{
-    dsl::{count, insert_into, not},
-    ExpressionMethods, Insertable, JoinOnDsl, NullableExpressionMethods, QueryDsl, Queryable,
-    RunQueryDsl, Selectable,
+    dsl::*,
+    ExpressionMethods,
+    Insertable,
+    JoinOnDsl,
+    NullableExpressionMethods,
+    QueryDsl,
+    Queryable,
+    RunQueryDsl,
+    Selectable,
 };
 use futures::future::try_join_all;
 use std::ops::DerefMut;
@@ -91,6 +97,7 @@ impl Notification {
                 .into_iter()
                 .map(|(article, notif)| ArticleNotificationView {
                     article,
+                    id: notif.id,
                     kind: notif
                         .new_comments
                         .then_some(ArticleNotificationKind::Comment)
@@ -158,8 +165,8 @@ impl Notification {
 #[derive(Queryable, Selectable, Debug)]
 #[diesel(table_name = article_notification, check_for_backend(diesel::pg::Pg))]
 #[allow(dead_code)]
-pub(super) struct ArticleNotification {
-    id: i32,
+pub struct ArticleNotification {
+    id: ArticleNotifId,
     local_user_id: LocalUserId,
     article_id: ArticleId,
     new_comments: bool,
@@ -177,7 +184,24 @@ struct ArticleNotificationInsertForm {
 }
 
 impl ArticleNotification {
-    pub fn notify_comment(article_id: ArticleId, context: &IbisContext) -> BackendResult<()> {
+    pub fn mark_as_read(
+        id: ArticleNotifId,
+        user: &LocalUserView,
+        context: &IbisContext,
+    ) -> BackendResult<()> {
+        let mut conn = context.db_pool.get()?;
+        delete(
+            article_notification::table
+                .filter(article_notification::id.eq(id))
+                .filter(article_notification::local_user_id.eq(user.local_user.id)),
+        )
+        .execute(&mut conn)?;
+        Ok(())
+    }
+    pub(super) fn notify_comment(
+        article_id: ArticleId,
+        context: &IbisContext,
+    ) -> BackendResult<()> {
         Self::notify(
             article_id,
             |local_user_id| ArticleNotificationInsertForm {
@@ -190,7 +214,7 @@ impl ArticleNotification {
         )
     }
 
-    pub fn notify_edit(article_id: ArticleId, context: &IbisContext) -> BackendResult<()> {
+    pub(super) fn notify_edit(article_id: ArticleId, context: &IbisContext) -> BackendResult<()> {
         Self::notify(
             article_id,
             |local_user_id| ArticleNotificationInsertForm {

@@ -1,3 +1,4 @@
+use super::notifications::ArticleNotification;
 use crate::{
     backend::{
         database::schema::{article, edit, person},
@@ -13,13 +14,17 @@ use crate::{
 use activitypub_federation::fetch::object_id::ObjectId;
 use chrono::{DateTime, Utc};
 use diesel::{
-    dsl::not, insert_into, AsChangeset, BoolExpressionMethods, ExpressionMethods, Insertable,
-    QueryDsl, RunQueryDsl,
+    dsl::not,
+    insert_into,
+    AsChangeset,
+    BoolExpressionMethods,
+    ExpressionMethods,
+    Insertable,
+    QueryDsl,
+    RunQueryDsl,
 };
 use diffy::create_patch;
 use std::ops::DerefMut;
-
-use super::notifications::ArticleNotification;
 
 #[derive(Debug, Clone, Insertable, AsChangeset)]
 #[diesel(table_name = edit, check_for_backend(diesel::pg::Pg))]

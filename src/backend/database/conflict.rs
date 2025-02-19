@@ -15,8 +15,15 @@ use crate::{
 use activitypub_federation::config::Data;
 use chrono::{DateTime, Utc};
 use diesel::{
-    delete, insert_into, ExpressionMethods, Identifiable, Insertable, QueryDsl, Queryable,
-    RunQueryDsl, Selectable,
+    delete,
+    insert_into,
+    ExpressionMethods,
+    Identifiable,
+    Insertable,
+    QueryDsl,
+    Queryable,
+    RunQueryDsl,
+    Selectable,
 };
 use diffy::{apply, merge, Patch};
 use serde::{Deserialize, Serialize};

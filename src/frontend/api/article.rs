@@ -4,6 +4,7 @@ use crate::{
         article::{
             ApiConflict,
             ApproveArticleParams,
+            ArticleNotifMarkAsReadParams,
             CreateArticleParams,
             DbArticle,
             DbArticleView,
@@ -18,7 +19,7 @@ use crate::{
             ListArticlesParams,
             ProtectArticleParams,
         },
-        newtypes::{ArticleId, ConflictId},
+        newtypes::{ArticleId, ArticleNotifId, ConflictId},
         ResolveObjectParams,
         SuccessResponse,
     },
@@ -107,6 +108,15 @@ impl ApiClient {
     ) -> FrontendResult<SuccessResponse> {
         let params = FollowArticleParams { id, follow };
         self.post("/api/v1/article/follow", Some(params)).await
+    }
+
+    pub async fn article_notif_mark_as_read(
+        &self,
+        id: ArticleNotifId,
+    ) -> FrontendResult<SuccessResponse> {
+        let params = ArticleNotifMarkAsReadParams { id };
+        self.post("/api/v1/user/notifications/mark_as_read", Some(params))
+            .await
     }
 
     #[cfg(debug_assertions)]

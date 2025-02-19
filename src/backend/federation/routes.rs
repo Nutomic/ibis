@@ -1,6 +1,7 @@
 use super::{
     activities::comment::{
-        create_or_update_comment::CreateOrUpdateComment, delete_comment::DeleteComment,
+        create_or_update_comment::CreateOrUpdateComment,
+        delete_comment::DeleteComment,
         undo_delete_comment::UndoDeleteComment,
     },
     objects::{
@@ -13,8 +14,12 @@ use crate::{
         database::IbisContext,
         federation::{
             activities::{
-                accept::Accept, announce::AnnounceActivity, create_article::CreateArticle,
-                follow::Follow, reject::RejectEdit, update_local_article::UpdateLocalArticle,
+                accept::Accept,
+                announce::AnnounceActivity,
+                create_article::CreateArticle,
+                follow::Follow,
+                reject::RejectEdit,
+                update_local_article::UpdateLocalArticle,
                 update_remote_article::UpdateRemoteArticle,
             },
             objects::{
@@ -28,7 +33,10 @@ use crate::{
         utils::error::{BackendError, BackendResult},
     },
     common::{
-        article::DbArticle, comment::DbComment, instance::DbInstance, newtypes::CommentId,
+        article::DbArticle,
+        comment::DbComment,
+        instance::DbInstance,
+        newtypes::CommentId,
         user::DbPerson,
     },
 };

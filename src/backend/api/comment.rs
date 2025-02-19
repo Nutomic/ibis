@@ -119,7 +119,7 @@ pub(in crate::backend::api) async fn edit_comment(
 }
 
 #[debug_handler]
-pub(in crate::backend::api) async fn mark_as_read(
+pub(in crate::backend::api) async fn comment_mark_as_read(
     user: UserExt,
     context: Data<IbisContext>,
     Form(params): Form<MarkAsReadParams>,

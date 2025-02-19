@@ -3,8 +3,15 @@ use crate::{
     backend::{
         api::{
             article::{
-                create_article, edit_article, fork_article, get_article, get_conflict,
-                list_articles, protect_article, resolve_article, search_article,
+                create_article,
+                edit_article,
+                fork_article,
+                get_article,
+                get_conflict,
+                list_articles,
+                protect_article,
+                resolve_article,
+                search_article,
             },
             comment::{create_comment, edit_comment},
             instance::{follow_instance, get_instance, resolve_instance},
@@ -26,14 +33,21 @@ use axum::{
     extract::{rejection::ExtensionRejection, Query},
     response::IntoResponse,
     routing::{delete, get, patch, post},
-    Extension, Json, Router,
+    Extension,
+    Json,
+    Router,
 };
 use axum_macros::{debug_handler, FromRequestParts};
-use comment::mark_as_read;
+use comment::comment_mark_as_read;
 use http::StatusCode;
 use instance::{list_instance_views, list_instances, update_instance};
 use std::ops::Deref;
-use user::{count_notifications, list_notifications, update_user_profile};
+use user::{
+    article_notif_mark_as_read,
+    count_notifications,
+    list_notifications,
+    update_user_profile,
+};
 
 mod article;
 mod comment;
@@ -57,7 +71,7 @@ pub fn api_routes() -> Router<()> {
         .route("/conflict", delete(delete_conflict))
         .route("/comment", post(create_comment))
         .route("/comment", patch(edit_comment))
-        .route("/comment/mark_as_read", post(mark_as_read))
+        .route("/comment/mark_as_read", post(comment_mark_as_read))
         .route("/instance", get(get_instance))
         .route("/instance", patch(update_instance))
         .route("/instance/follow", post(follow_instance))
@@ -69,6 +83,10 @@ pub fn api_routes() -> Router<()> {
         .route("/user", get(get_user))
         .route("/user/notifications/list", get(list_notifications))
         .route("/user/notifications/count", get(count_notifications))
+        .route(
+            "/user/notifications/mark_as_read",
+            post(article_notif_mark_as_read),
+        )
         .route("/account/register", post(register_user))
         .route("/account/login", post(login_user))
         .route("/account/logout", post(logout_user))

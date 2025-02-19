@@ -10,7 +10,12 @@ use crate::{
         utils::{
             errors::{FrontendError, FrontendResultExt},
             formatting::{
-                article_link, article_path, article_title, comment_path, time_ago, user_link,
+                article_link,
+                article_path,
+                article_title,
+                comment_path,
+                time_ago,
+                user_link,
             },
         },
     },
@@ -166,6 +171,16 @@ fn article_notification_view(
     use ArticleNotificationKind::*;
     let article_path = article_path(&n.article);
     let article_title = n.article.title.clone();
+    let id = n.id;
+    let click_mark_as_read = Action::new(move |_: &()| async move {
+        CLIENT
+            .article_notif_mark_as_read(id)
+            .await
+            .error_popup(|_| notifications.refetch());
+    });
+    let mark_as_read_action = move || {
+        click_mark_as_read.dispatch(());
+    };
     match n.kind {
         Comment => Either::Left(view! {
             <li class="py-2">
@@ -175,7 +190,7 @@ fn article_notification_view(
                 </div>
                 <div class="mt-2 card-actions">
                     <ButtonLink href=format!("{article_path}/discussion") />
-                    <ButtonMarkAsRead action=move || {} />
+                    <ButtonMarkAsRead action=mark_as_read_action />
                 </div>
             </li>
         }),
@@ -187,7 +202,7 @@ fn article_notification_view(
                 </div>
                 <div class="mt-2 card-actions">
                     <ButtonLink href=format!("{article_path}/history") />
-                    <ButtonMarkAsRead action=move || {} />
+                    <ButtonMarkAsRead action=mark_as_read_action />
                 </div>
             </li>
         }),

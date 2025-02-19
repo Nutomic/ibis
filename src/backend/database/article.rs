@@ -17,8 +17,16 @@ use crate::{
 use activitypub_federation::fetch::{collection_id::CollectionId, object_id::ObjectId};
 use diesel::{
     dsl::{delete, max},
-    insert_into, AsChangeset, BoolExpressionMethods, ExpressionMethods, Insertable, JoinOnDsl,
-    NullableExpressionMethods, PgTextExpressionMethods, QueryDsl, RunQueryDsl,
+    insert_into,
+    AsChangeset,
+    BoolExpressionMethods,
+    ExpressionMethods,
+    Insertable,
+    JoinOnDsl,
+    NullableExpressionMethods,
+    PgTextExpressionMethods,
+    QueryDsl,
+    RunQueryDsl,
 };
 use std::ops::DerefMut;
 

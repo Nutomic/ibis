@@ -1,7 +1,7 @@
 use super::{
     comment::DbCommentView,
     instance::DbInstance,
-    newtypes::{ArticleId, ConflictId, EditId, InstanceId, PersonId},
+    newtypes::{ArticleId, ArticleNotifId, ConflictId, EditId, InstanceId, PersonId},
     user::DbPerson,
 };
 use chrono::{DateTime, Utc};
@@ -201,6 +201,7 @@ pub struct FollowArticleParams {
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct ArticleNotificationView {
     pub article: DbArticle,
+    pub id: ArticleNotifId,
     pub kind: ArticleNotificationKind,
     pub published: DateTime<Utc>,
 }
@@ -209,6 +210,11 @@ pub struct ArticleNotificationView {
 pub enum ArticleNotificationKind {
     Comment,
     Edit,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct ArticleNotifMarkAsReadParams {
+    pub id: ArticleNotifId,
 }
 
 #[test]

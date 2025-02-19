@@ -1,13 +1,14 @@
 use super::{empty_to_none, UserExt};
 use crate::{
     backend::{
-        database::{read_jwt_secret, IbisContext},
+        database::{notifications::ArticleNotification, read_jwt_secret, IbisContext},
         utils::{
             error::BackendResult,
             validate::{validate_display_name, validate_user_name},
         },
     },
     common::{
+        article::ArticleNotifMarkAsReadParams,
         user::{
             DbPerson,
             GetUserParams,
@@ -178,4 +179,14 @@ pub(crate) async fn count_notifications(
     } else {
         Ok(Json(0))
     }
+}
+
+#[debug_handler]
+pub(crate) async fn article_notif_mark_as_read(
+    user: UserExt,
+    context: Data<IbisContext>,
+    Form(params): Form<ArticleNotifMarkAsReadParams>,
+) -> BackendResult<Json<SuccessResponse>> {
+    ArticleNotification::mark_as_read(params.id, &user, &context)?;
+    Ok(Json(SuccessResponse::default()))
 }
