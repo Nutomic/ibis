@@ -146,28 +146,14 @@ fn reply_view(c: &CommentViewWithArticle, notifications: NotificationsResource) 
         <li class="py-2">
             <div class="flex text-s">
                 <span class="grow">{user_link(&c.creator)}" - "{article_link(&c.article)}</span>
-                <a href=comment_path(&c.comment, &c.article) class="link">
-                    {time_ago(c.comment.published)}
-                </a>
+                {time_ago(c.comment.published)}
             </div>
             <div>{c.comment.content.clone()}</div>
             <div class="mt-2 card-actions">
-                <a
-                    class="btn btn-sm btn-outline"
-                    href=comment_path(&c.comment, &c.article)
-                    title="View"
-                >
-                    <Icon icon=LINK />
-                </a>
-                <button
-                    class="btn btn-sm btn-outline"
-                    on:click=move |_| {
-                        click_mark_as_read.dispatch(());
-                    }
-                    title="Mark as read"
-                >
-                    <Icon icon=CHECK />
-                </button>
+                <ButtonLink href=comment_path(&c.comment, &c.article) />
+                <ButtonMarkAsRead action=move || {
+                    click_mark_as_read.dispatch(());
+                } />
             </div>
         </li>
     }
@@ -182,16 +168,49 @@ fn article_notification_view(
     let article_title = n.article.title.clone();
     match n.kind {
         Comment => Either::Left(view! {
-            <a class="link" href=format!("{article_path}/discussion")>
-                "New comment on article "
-                {article_title}
-            </a>
+            <li class="py-2">
+                <div class="flex text-s">
+                    <span class="grow">"New comment on article " {article_title}</span>
+                    {time_ago(n.published)}
+                </div>
+                <div class="mt-2 card-actions">
+                    <ButtonLink href=format!("{article_path}/discussion") />
+                    <ButtonMarkAsRead action=move || {} />
+                </div>
+            </li>
         }),
         Edit => Either::Right(view! {
-            <a class="link" href=format!("{article_path}/history")>
-                "New edit on article "
-                {article_title}
-            </a>
+            <li class="py-2">
+                <div class="flex text-s">
+                    <span class="grow">"New edit on article " {article_title}</span>
+                    {time_ago(n.published)}
+                </div>
+                <div class="mt-2 card-actions">
+                    <ButtonLink href=format!("{article_path}/history") />
+                    <ButtonMarkAsRead action=move || {} />
+                </div>
+            </li>
         }),
+    }
+}
+
+#[component]
+fn ButtonLink(href: String) -> impl IntoView {
+    view! {
+        <a class="btn btn-sm btn-outline" href=href title="View">
+            <Icon icon=LINK />
+        </a>
+    }
+}
+
+#[component]
+fn ButtonMarkAsRead<F>(action: F) -> impl IntoView
+where
+    F: Fn() + 'static,
+{
+    view! {
+        <button class="btn btn-sm btn-outline" on:click=move |_| action() title="Mark as read">
+            <Icon icon=CHECK />
+        </button>
     }
 }

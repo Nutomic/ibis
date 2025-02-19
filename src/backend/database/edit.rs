@@ -82,7 +82,7 @@ impl DbEdit {
             .set(form)
             .get_result(conn.deref_mut())?;
 
-        ArticleNotification::notify_edit(edit.article_id, edit.id, context)?;
+        ArticleNotification::notify_edit(edit.article_id, context)?;
         Ok(edit)
     }
 

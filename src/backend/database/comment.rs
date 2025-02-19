@@ -5,7 +5,10 @@ use super::{
 };
 use crate::{
     backend::utils::error::BackendResult,
-    common::{ comment::{DbComment, DbCommentView}, newtypes::{ArticleId, CommentId, PersonId}, user::DbPerson
+    common::{
+        comment::{DbComment, DbCommentView},
+        newtypes::{ArticleId, CommentId, PersonId},
+        user::DbPerson,
     },
 };
 use activitypub_federation::fetch::object_id::ObjectId;
@@ -50,7 +53,7 @@ impl DbComment {
             .set(&form)
             .get_result(conn.deref_mut())?;
 
-        ArticleNotification::notify_comment(comment.article_id, comment.id, context)?;
+        ArticleNotification::notify_comment(comment.article_id, context)?;
         Ok(comment)
     }
 
