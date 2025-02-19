@@ -124,7 +124,12 @@ pub async fn edit_list(
 
 /// Trims the string param, and converts to None if it is empty
 fn empty_to_none(val: &mut Option<String>) {
-    (*val) = val.as_ref().map(|s| s.trim().to_owned());
+    if let Some(val_) = val {
+        *val_ = val_.trim().to_string();
+        if val_.is_empty() {
+            *val = None
+        }
+    }
 }
 
 #[derive(FromRequestParts)]
