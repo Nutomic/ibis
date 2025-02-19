@@ -1,4 +1,4 @@
-use super::check_is_admin;
+use super::{check_is_admin, UserExt};
 use crate::{
     backend::{
         database::{
@@ -25,6 +25,7 @@ use crate::{
             DeleteConflictParams,
             EditArticleParams,
             EditVersion,
+            FollowArticleParams,
             ForkArticleParams,
             GetArticleParams,
             GetConflictParams,
@@ -32,17 +33,16 @@ use crate::{
             ProtectArticleParams,
             SearchArticleParams,
         },
-        comment::DbComment,
         instance::DbInstance,
-        user::LocalUserView,
         utils::{extract_domain, http_protocol_str},
         validation::can_edit_article,
         ResolveObjectParams,
+        SuccessResponse,
     },
 };
 use activitypub_federation::{config::Data, fetch::object_id::ObjectId};
 use anyhow::anyhow;
-use axum::{extract::Query, Extension, Form, Json};
+use axum::{extract::Query, Form, Json};
 use axum_macros::debug_handler;
 use chrono::Utc;
 use diffy::create_patch;
@@ -50,7 +50,7 @@ use diffy::create_patch;
 /// Create a new article with empty text, and federate it to followers.
 #[debug_handler]
 pub(in crate::backend::api) async fn create_article(
-    user: Extension<LocalUserView>,
+    user: UserExt,
     context: Data<IbisContext>,
     Form(mut params): Form<CreateArticleParams>,
 ) -> BackendResult<Json<DbArticleView>> {
@@ -83,10 +83,17 @@ pub(in crate::backend::api) async fn create_article(
         resolve_conflict_id: None,
     };
 
-    let _ = edit_article(user, context.reset_request_count(), Form(edit_data)).await?;
+    let _ = edit_article(
+        UserExt {
+            local_user_view: user.clone(),
+        },
+        context.reset_request_count(),
+        Form(edit_data),
+    )
+    .await?;
 
     // allow reading unapproved article here
-    let article_view = DbArticle::read_view(article.id, &context)?;
+    let article_view = DbArticle::read_view(article.id, Some(&user), &context)?;
     CreateArticle::send_to_followers(article_view.article.clone(), &context).await?;
 
     Ok(Json(article_view))
@@ -103,7 +110,7 @@ pub(in crate::backend::api) async fn create_article(
 /// Conflicts are stored in the database so they can be retrieved later from `/api/v3/edit_conflicts`.
 #[debug_handler]
 pub(in crate::backend::api) async fn edit_article(
-    Extension(user): Extension<LocalUserView>,
+    user: UserExt,
     context: Data<IbisContext>,
     Form(mut params): Form<EditArticleParams>,
 ) -> BackendResult<Json<Option<ApiConflict>>> {
@@ -112,7 +119,7 @@ pub(in crate::backend::api) async fn edit_article(
     if let Some(resolve_conflict_id) = params.resolve_conflict_id {
         DbConflict::delete(resolve_conflict_id, user.person.id, &context)?;
     }
-    let original_article = DbArticle::read_view(params.article_id, &context)?;
+    let original_article = DbArticle::read_view(params.article_id, Some(&user), &context)?;
     if params.new_text == original_article.article.text {
         return Err(anyhow!("Edit contains no changes").into());
     }
@@ -168,20 +175,22 @@ pub(in crate::backend::api) async fn edit_article(
 /// Retrieve an article by ID. It must already be stored in the local database.
 #[debug_handler]
 pub(in crate::backend::api) async fn get_article(
+    user: Option<UserExt>,
     Query(query): Query<GetArticleParams>,
     context: Data<IbisContext>,
 ) -> BackendResult<Json<DbArticleView>> {
+    let user = user.map(|u| u.inner());
     match (query.title, query.id) {
-        (Some(title), None) => Ok(Json(DbArticle::read_view_title(
-            &title,
-            query.domain,
+        (Some(title), None) => Ok(Json(DbArticle::read_view(
+            (&title, query.domain),
+            user.as_ref(),
             &context,
         )?)),
         (None, Some(id)) => {
             if query.domain.is_some() {
                 return Err(anyhow!("Cant combine id and instance_domain").into());
             }
-            let article = DbArticle::read_view(id, &context)?;
+            let article = DbArticle::read_view(id, user.as_ref(), &context)?;
             Ok(Json(article))
         }
         _ => Err(anyhow!("Must pass exactly one of title, id").into()),
@@ -204,12 +213,12 @@ pub(in crate::backend::api) async fn list_articles(
 /// how an article should be edited.
 #[debug_handler]
 pub(in crate::backend::api) async fn fork_article(
-    Extension(_user): Extension<LocalUserView>,
+    user: UserExt,
     context: Data<IbisContext>,
     Form(mut params): Form<ForkArticleParams>,
 ) -> BackendResult<Json<DbArticleView>> {
     // TODO: lots of code duplicated from create_article(), can move it into helper
-    let original_article = DbArticle::read_view(params.article_id, &context)?;
+    let original_article = DbArticle::read_view(params.article_id, Some(&user), &context)?;
     params.new_title = validate_article_title(&params.new_title)?;
 
     let local_instance = DbInstance::read_local(&context)?;
@@ -252,26 +261,27 @@ pub(in crate::backend::api) async fn fork_article(
 
     CreateArticle::send_to_followers(article.clone(), &context).await?;
 
-    Ok(Json(DbArticle::read_view(article.id, &context)?))
+    Ok(Json(DbArticle::read_view(
+        article.id,
+        Some(&user),
+        &context,
+    )?))
 }
 
 /// Fetch a remote article, including edits collection. Allows viewing and editing. Note that new
 /// article changes can only be received if we follow the instance, or if it is refetched manually.
 #[debug_handler]
 pub(super) async fn resolve_article(
+    user: UserExt,
     Query(query): Query<ResolveObjectParams>,
     context: Data<IbisContext>,
 ) -> BackendResult<Json<DbArticleView>> {
     let article: DbArticle = ObjectId::from(query.id).dereference(&context).await?;
-    let instance = DbInstance::read(article.instance_id, &context)?;
-    let comments = DbComment::read_for_article(article.id, &context)?;
-    let latest_version = article.latest_edit_version(&context)?;
-    Ok(Json(DbArticleView {
-        article,
-        instance,
-        comments,
-        latest_version,
-    }))
+    Ok(Json(DbArticle::read_view(
+        article.id,
+        Some(&user),
+        &context,
+    )?))
 }
 
 /// Search articles for matching title or body text.
@@ -289,7 +299,7 @@ pub(super) async fn search_article(
 
 #[debug_handler]
 pub(in crate::backend::api) async fn protect_article(
-    Extension(user): Extension<LocalUserView>,
+    user: UserExt,
     context: Data<IbisContext>,
     Form(params): Form<ProtectArticleParams>,
 ) -> BackendResult<Json<DbArticle>> {
@@ -300,7 +310,7 @@ pub(in crate::backend::api) async fn protect_article(
 
 #[debug_handler]
 pub async fn approve_article(
-    Extension(user): Extension<LocalUserView>,
+    user: UserExt,
     context: Data<IbisContext>,
     Form(params): Form<ApproveArticleParams>,
 ) -> BackendResult<Json<()>> {
@@ -315,7 +325,7 @@ pub async fn approve_article(
 
 #[debug_handler]
 pub async fn get_conflict(
-    Extension(user): Extension<LocalUserView>,
+    user: UserExt,
     context: Data<IbisContext>,
     Form(params): Form<GetConflictParams>,
 ) -> BackendResult<Json<ApiConflict>> {
@@ -329,10 +339,24 @@ pub async fn get_conflict(
 
 #[debug_handler]
 pub async fn delete_conflict(
-    Extension(user): Extension<LocalUserView>,
+    user: UserExt,
     context: Data<IbisContext>,
     Form(params): Form<DeleteConflictParams>,
 ) -> BackendResult<Json<()>> {
     DbConflict::delete(params.conflict_id, user.person.id, &context)?;
     Ok(Json(()))
+}
+
+#[debug_handler]
+pub(in crate::backend::api) async fn follow_article(
+    user: UserExt,
+    context: Data<IbisContext>,
+    Form(params): Form<FollowArticleParams>,
+) -> BackendResult<Json<SuccessResponse>> {
+    if params.follow {
+        DbArticle::follow(params.id, &user, &context)?;
+    } else {
+        DbArticle::unfollow(params.id, &user, &context)?;
+    }
+    Ok(Json(SuccessResponse::default()))
 }

@@ -1,20 +1,30 @@
 use super::{
     conflict::DbConflict,
-    schema::{article, comment, conflict, person},
+    schema::{article, article_follow, article_notification, comment, conflict, person},
     IbisContext,
 };
 use crate::{
     backend::{api::check_is_admin, utils::error::BackendResult},
-    common::{comment::CommentViewWithArticle, user::LocalUserView, Notification},
+    common::{
+        article::DbArticle,
+        comment::CommentViewWithArticle,
+        newtypes::{ArticleId, ArticleNotifId, LocalUserId},
+        notifications::{ArticleNotificationKind, ArticleNotificationView, Notification},
+        user::LocalUserView,
+    },
 };
 use activitypub_federation::config::Data;
+use chrono::{DateTime, Utc};
 use diesel::{
-    dsl::{count, not},
+    dsl::*,
     ExpressionMethods,
+    Insertable,
     JoinOnDsl,
     NullableExpressionMethods,
     QueryDsl,
+    Queryable,
     RunQueryDsl,
+    Selectable,
 };
 use futures::future::try_join_all;
 use std::ops::DerefMut;
@@ -75,8 +85,30 @@ impl Notification {
                 .into_iter();
             notifications.extend(articles.map(Notification::ArticleApprovalRequired))
         }
-        notifications.sort_by(|a, b| a.published().cmp(b.published()));
 
+        // new edits and comments for followed articles
+        let article_notifications = article_notification::table
+            .inner_join(article::table)
+            .filter(article_notification::local_user_id.eq(user.local_user.id))
+            .select((article::all_columns, article_notification::all_columns))
+            .get_results::<(DbArticle, ArticleNotification)>(&mut conn)?;
+        notifications.extend(
+            article_notifications
+                .into_iter()
+                .map(|(article, notif)| ArticleNotificationView {
+                    article,
+                    id: notif.id,
+                    kind: if notif.new_comments {
+                        ArticleNotificationKind::Comment
+                    } else {
+                        ArticleNotificationKind::Edit
+                    },
+                    published: notif.published,
+                })
+                .map(Notification::ArticleNotification),
+        );
+
+        notifications.sort_by(|a, b| b.published().cmp(a.published()));
         Ok(notifications)
     }
 
@@ -119,6 +151,101 @@ impl Notification {
             num += articles;
         }
 
+        // new edits and comments for followed articles
+        let article_notifications = article_notification::table
+            .filter(article_notification::local_user_id.eq(user.local_user.id))
+            .select(count(article_notification::id))
+            .first::<i64>(conn.deref_mut())
+            .unwrap_or(0);
+        num += article_notifications;
+
         Ok(num)
+    }
+}
+
+#[derive(Queryable, Selectable, Debug)]
+#[diesel(table_name = article_notification, check_for_backend(diesel::pg::Pg))]
+#[allow(dead_code)]
+pub struct ArticleNotification {
+    id: ArticleNotifId,
+    local_user_id: LocalUserId,
+    article_id: ArticleId,
+    new_comments: bool,
+    new_edits: bool,
+    pub published: DateTime<Utc>,
+}
+
+#[derive(Debug, Insertable)]
+#[diesel(table_name = article_notification, check_for_backend(diesel::pg::Pg))]
+struct ArticleNotificationInsertForm {
+    local_user_id: LocalUserId,
+    article_id: ArticleId,
+    new_comments: Option<bool>,
+    new_edits: Option<bool>,
+}
+
+impl ArticleNotification {
+    pub fn mark_as_read(
+        id: ArticleNotifId,
+        user: &LocalUserView,
+        context: &IbisContext,
+    ) -> BackendResult<()> {
+        let mut conn = context.db_pool.get()?;
+        delete(
+            article_notification::table
+                .filter(article_notification::id.eq(id))
+                .filter(article_notification::local_user_id.eq(user.local_user.id)),
+        )
+        .execute(&mut conn)?;
+        Ok(())
+    }
+    pub(super) fn notify_comment(
+        article_id: ArticleId,
+        context: &IbisContext,
+    ) -> BackendResult<()> {
+        Self::notify(
+            article_id,
+            |local_user_id| ArticleNotificationInsertForm {
+                local_user_id,
+                article_id,
+                new_comments: Some(true),
+                new_edits: None,
+            },
+            context,
+        )
+    }
+
+    pub(super) fn notify_edit(article_id: ArticleId, context: &IbisContext) -> BackendResult<()> {
+        Self::notify(
+            article_id,
+            |local_user_id| ArticleNotificationInsertForm {
+                local_user_id,
+                article_id,
+                new_comments: None,
+                new_edits: Some(true),
+            },
+            context,
+        )
+    }
+
+    fn notify<F>(article_id: ArticleId, map_fn: F, context: &IbisContext) -> BackendResult<()>
+    where
+        F: FnMut(LocalUserId) -> ArticleNotificationInsertForm,
+    {
+        let mut conn = context.db_pool.get()?;
+        // get followers for this article
+        let followers = article_follow::table
+            .filter(article_follow::article_id.eq(article_id))
+            .select(article_follow::local_user_id)
+            .get_results(&mut conn)?;
+        // create insert form with edit/comment it
+        let notifications: Vec<_> = followers.into_iter().map(map_fn).collect();
+        // insert all of them, generating at most one edit notification per user and article
+        // (as well as a separate comment notification)
+        insert_into(article_notification::table)
+            .values(&notifications)
+            .on_conflict_do_nothing()
+            .execute(&mut conn)?;
+        Ok(())
     }
 }

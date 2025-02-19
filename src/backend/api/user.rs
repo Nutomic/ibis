@@ -1,13 +1,14 @@
-use super::empty_to_none;
+use super::{empty_to_none, UserExt};
 use crate::{
     backend::{
-        database::{read_jwt_secret, IbisContext},
+        database::{notifications::ArticleNotification, read_jwt_secret, IbisContext},
         utils::{
             error::BackendResult,
             validate::{validate_display_name, validate_user_name},
         },
     },
     common::{
+        notifications::{ArticleNotifMarkAsReadParams, Notification},
         user::{
             DbPerson,
             GetUserParams,
@@ -16,14 +17,13 @@ use crate::{
             RegisterUserParams,
             UpdateUserParams,
         },
-        Notification,
         SuccessResponse,
         AUTH_COOKIE,
     },
 };
 use activitypub_federation::config::Data;
 use anyhow::anyhow;
-use axum::{extract::Query, Extension, Form, Json};
+use axum::{extract::Query, Form, Json};
 use axum_extra::extract::cookie::{Cookie, CookieJar, Expiration, SameSite};
 use axum_macros::debug_handler;
 use bcrypt::verify;
@@ -162,7 +162,7 @@ pub(in crate::backend::api) async fn update_user_profile(
 
 #[debug_handler]
 pub(crate) async fn list_notifications(
-    Extension(user): Extension<LocalUserView>,
+    user: UserExt,
     context: Data<IbisContext>,
 ) -> BackendResult<Json<Vec<Notification>>> {
     Ok(Json(Notification::list(&user, &context).await?))
@@ -170,7 +170,7 @@ pub(crate) async fn list_notifications(
 
 #[debug_handler]
 pub(crate) async fn count_notifications(
-    user: Option<Extension<LocalUserView>>,
+    user: Option<UserExt>,
     context: Data<IbisContext>,
 ) -> BackendResult<Json<i64>> {
     if let Some(user) = user {
@@ -178,4 +178,14 @@ pub(crate) async fn count_notifications(
     } else {
         Ok(Json(0))
     }
+}
+
+#[debug_handler]
+pub(crate) async fn article_notif_mark_as_read(
+    user: UserExt,
+    context: Data<IbisContext>,
+    Form(params): Form<ArticleNotifMarkAsReadParams>,
+) -> BackendResult<Json<SuccessResponse>> {
+    ArticleNotification::mark_as_read(params.id, &user, &context)?;
+    Ok(Json(SuccessResponse::default()))
 }

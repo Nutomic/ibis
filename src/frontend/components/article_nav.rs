@@ -1,14 +1,28 @@
 use crate::{
     common::{article::DbArticleView, validation::can_edit_article},
-    frontend::utils::{
-        errors::FrontendResult,
-        formatting::{article_path, article_title},
-        resources::{is_admin, is_logged_in},
+    frontend::{
+        api::CLIENT,
+        utils::{
+            errors::{FrontendResult, FrontendResultExt},
+            formatting::{article_path, article_title},
+            resources::{is_admin, is_logged_in},
+        },
     },
 };
 use leptos::prelude::*;
 use leptos_meta::Title;
 use leptos_router::components::A;
+use phosphor_leptos::{
+    Icon,
+    BELL,
+    BELL_SLASH,
+    BOOK,
+    CHATS_CIRCLE,
+    GEAR_SIX,
+    LIST,
+    LOCK_SIMPLE,
+    PENCIL,
+};
 
 #[derive(Clone, Copy)]
 pub enum ActiveTab {
@@ -36,10 +50,22 @@ pub fn ArticleNav(
                         let article_link = article_path(&article_.article);
                         let article_link_ = article_link.clone();
                         let protected = article_.article.protected;
+                        let follow_article_action = Action::new(move |_: &()| async move {
+                            CLIENT
+                                .follow_article(article_.article.id, !article_.following)
+                                .await
+                                .error_popup(|_| article.refetch());
+                        });
+                        let follow_title = if article_.following {
+                            "Stop notifications"
+                        } else {
+                            "Get notified about new article edits and comments"
+                        };
                         view! {
                             <Title text=page_title(active_tab, &title) />
                             <div role="tablist" class="tabs tabs-lifted">
                                 <A href=article_link.clone() {..} class=tab_classes.read>
+                                    <Icon icon=BOOK />
                                     "Read"
                                 </A>
                                 <A
@@ -47,6 +73,7 @@ pub fn ArticleNav(
                                     {..}
                                     class=tab_classes.discussion
                                 >
+                                    <Icon icon=CHATS_CIRCLE />
                                     "Discussion"
                                 </A>
                                 <A
@@ -54,6 +81,7 @@ pub fn ArticleNav(
                                     {..}
                                     class=tab_classes.history
                                 >
+                                    <Icon icon=LIST />
                                     "History"
                                 </A>
                                 <Show when=move || {
@@ -65,6 +93,7 @@ pub fn ArticleNav(
                                         {..}
                                         class=tab_classes.edit
                                     >
+                                        <Icon icon=PENCIL />
                                         "Edit"
                                     </A>
                                 </Show>
@@ -75,23 +104,40 @@ pub fn ArticleNav(
                                             {..}
                                             class=tab_classes.actions
                                         >
+                                            <Icon icon=GEAR_SIX />
                                             "Actions"
                                         </A>
                                     </Show>
                                 </Suspense>
                             </div>
-                            <div class="flex flex-row">
+                            <div class="flex flex-row place-items-center">
                                 <h1 class="flex-auto my-6 font-serif text-4xl font-bold grow">
                                     {title}
                                 </h1>
                                 <Show when=move || protected>
                                     <span
-                                        class="place-self-center"
+                                        class="mr-2"
                                         title="Article can only be edited by local admins"
                                     >
-                                        "Protected"
+                                        <Icon icon=LOCK_SIMPLE size="24px" />
                                     </span>
                                 </Show>
+                                <button
+                                    class="btn btn-sm btn-outline"
+                                    on:click=move |_| {
+                                        follow_article_action.dispatch(());
+                                    }
+                                    title=follow_title
+                                >
+                                    <Show
+                                        when=move || article_.following
+                                        fallback=move || {
+                                            view! { <Icon icon=BELL size="24px" /> }
+                                        }
+                                    >
+                                        <Icon icon=BELL_SLASH size="24px" />
+                                    </Show>
+                                </button>
                             </div>
                         }
                     })

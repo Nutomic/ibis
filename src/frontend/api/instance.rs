@@ -11,7 +11,6 @@ use crate::{
             SiteView,
             UpdateInstanceParams,
         },
-        Notification,
         ResolveObjectParams,
         SuccessResponse,
     },
@@ -40,15 +39,6 @@ impl ApiClient {
         self.patch("/api/v1/instance", Some(params)).await
     }
 
-    pub async fn notifications_list(&self) -> FrontendResult<Vec<Notification>> {
-        self.get("/api/v1/user/notifications/list", None::<()>)
-            .await
-    }
-
-    pub async fn notifications_count(&self) -> FrontendResult<usize> {
-        self.get("/api/v1/user/notifications/count", None::<()>)
-            .await
-    }
     pub async fn search(&self, params: &SearchArticleParams) -> FrontendResult<Vec<DbArticle>> {
         self.send(Method::GET, "/api/v1/search", Some(params)).await
     }

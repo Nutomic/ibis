@@ -16,6 +16,24 @@ diesel::table! {
 }
 
 diesel::table! {
+    article_follow (local_user_id, article_id) {
+        local_user_id -> Int4,
+        article_id -> Int4,
+    }
+}
+
+diesel::table! {
+    article_notification (id) {
+        id -> Int4,
+        local_user_id -> Int4,
+        article_id -> Int4,
+        new_comments -> Bool,
+        new_edits -> Bool,
+        published -> Timestamptz,
+    }
+}
+
+diesel::table! {
     comment (id) {
         id -> Int4,
         creator_id -> Int4,
@@ -139,6 +157,10 @@ diesel::table! {
 }
 
 diesel::joinable!(article -> instance (instance_id));
+diesel::joinable!(article_follow -> article (article_id));
+diesel::joinable!(article_follow -> local_user (local_user_id));
+diesel::joinable!(article_notification -> article (article_id));
+diesel::joinable!(article_notification -> local_user (local_user_id));
 diesel::joinable!(comment -> article (article_id));
 diesel::joinable!(comment -> person (creator_id));
 diesel::joinable!(conflict -> article (article_id));
@@ -151,6 +173,8 @@ diesel::joinable!(local_user -> person (person_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     article,
+    article_follow,
+    article_notification,
     comment,
     conflict,
     edit,

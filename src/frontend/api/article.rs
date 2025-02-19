@@ -10,6 +10,7 @@ use crate::{
             DeleteConflictParams,
             EditArticleParams,
             EditView,
+            FollowArticleParams,
             ForkArticleParams,
             GetArticleParams,
             GetConflictParams,
@@ -19,6 +20,7 @@ use crate::{
         },
         newtypes::{ArticleId, ConflictId},
         ResolveObjectParams,
+        SuccessResponse,
     },
     frontend::utils::errors::FrontendResult,
 };
@@ -96,6 +98,15 @@ impl ApiClient {
         let params = DeleteConflictParams { conflict_id };
         self.send(Method::DELETE, "/api/v1/conflict", Some(params))
             .await
+    }
+
+    pub async fn follow_article(
+        &self,
+        id: ArticleId,
+        follow: bool,
+    ) -> FrontendResult<SuccessResponse> {
+        let params = FollowArticleParams { id, follow };
+        self.post("/api/v1/article/follow", Some(params)).await
     }
 
     #[cfg(debug_assertions)]

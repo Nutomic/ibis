@@ -102,7 +102,7 @@ impl DbConflict {
         force_dereference: bool,
         context: &Data<IbisContext>,
     ) -> BackendResult<Option<ApiConflict>> {
-        let article = DbArticle::read_view(self.article_id, context)?;
+        let article = DbArticle::read_view(self.article_id, None, context)?;
         let original_article = if force_dereference {
             // Make sure to get latest version from origin so that all conflicts can be resolved
             article.article.ap_id.dereference_forced(context).await?

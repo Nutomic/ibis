@@ -16,9 +16,9 @@ use ibis::common::{
         SearchArticleParams,
     },
     comment::{CreateCommentParams, EditCommentParams},
+    notifications::Notification,
     user::{GetUserParams, LoginUserParams, RegisterUserParams},
     utils::extract_domain,
-    Notification,
 };
 use pretty_assertions::{assert_eq, assert_ne};
 use retry_future::{LinearRetryStrategy, RetryFuture, RetryPolicy};

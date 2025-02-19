@@ -123,7 +123,7 @@ impl DbInstance {
             .do_update()
             .set(form)
             .execute(conn.deref_mut())?;
-        assert_eq!(1, rows);
+        debug_assert_eq!(1, rows);
         Ok(())
     }
 

@@ -112,7 +112,7 @@ async fn http_get_article(
     Path(title): Path<String>,
     context: Data<IbisContext>,
 ) -> BackendResult<FederationJson<WithContext<ApubArticle>>> {
-    let article = DbArticle::read_view_title(&title, None, &context)?;
+    let article = DbArticle::read_view((&title, None), None, &context)?;
     let json = article.article.into_json(&context).await?;
     Ok(FederationJson(WithContext::new_default(json)))
 }
@@ -122,7 +122,7 @@ async fn http_get_article_edits(
     Path(title): Path<String>,
     context: Data<IbisContext>,
 ) -> BackendResult<FederationJson<WithContext<ApubEditCollection>>> {
-    let article = DbArticle::read_view_title(&title, None, &context)?;
+    let article = DbArticle::read_view((&title, None), None, &context)?;
     let json = DbEditCollection::read_local(&article.article, &context).await?;
     Ok(FederationJson(WithContext::new_default(json)))
 }

@@ -16,6 +16,7 @@ use crate::{
     },
 };
 use leptos::prelude::*;
+use phosphor_leptos::{Icon, ARROW_BEND_UP_LEFT, FEDIVERSE_LOGO, LINK, PENCIL, TRASH};
 
 #[component]
 pub fn CommentView(
@@ -68,7 +69,8 @@ pub fn CommentView(
                 <div class="flex text-xs">
                     <span class="grow">{user_link(&comment.creator)}</span>
                     <a href=comment_link class="link">
-                        {time_ago(comment.comment.published)}
+                        <Icon icon=LINK />
+                        <span class="ml-2">{time_ago(comment.comment.published)}</span>
                     </a>
                 </div>
                 <Show
@@ -84,28 +86,30 @@ pub fn CommentView(
                         }
                     }
                 >
-                    <div class="my-2 prose prose-slate" inner_html=render_comment></div>
-                    <div class="text-xs">
+                    <div class="mt-2 prose prose-slate" inner_html=render_comment></div>
+                    <div class="grid grid-cols-5 grid-rows-1 gap-2 w-fit text-s">
                         <Show when=move || !comment.comment.deleted>
-                            <a class="link" on:click=move |_| show_editor.1.set(comment.comment.id)>
-                                Reply
+                            <a
+                                class="link"
+                                on:click=move |_| show_editor.1.set(comment.comment.id)
+                                title="Reply"
+                            >
+                                <Icon icon=ARROW_BEND_UP_LEFT />
                             </a>
-                            " | "
                         </Show>
-                        <a class="link" href=comment.comment.ap_id.to_string()>
-                            Fedilink
+                        <a class="link" href=comment.comment.ap_id.to_string() title="Fedilink">
+                            <Icon icon=FEDIVERSE_LOGO />
                         </a>
-                        " | "
                         <Show when=move || is_creator && !comment_change_signal.0.get().deleted>
                             <a
                                 class="link"
+                                title="Edit"
                                 on:click=move |_| {
                                     is_editing.1.set(true);
                                 }
                             >
-                                Edit
+                                <Icon icon=PENCIL />
                             </a>
-                            " | "
                         </Show>
                         <Show when=move || is_creator>
                             <a
@@ -113,8 +117,9 @@ pub fn CommentView(
                                 on:click=move |_| {
                                     delete_restore_comment_action.dispatch(());
                                 }
+                                title=delete_restore_label
                             >
-                                {delete_restore_label}
+                                <Icon icon=TRASH />
                             </a>
                         </Show>
                         <Show when=move || show_editor.0.get() == comment.comment.id>

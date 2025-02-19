@@ -7,6 +7,7 @@ use std::{fmt::Debug, sync::LazyLock};
 pub mod article;
 pub mod comment;
 pub mod instance;
+pub mod notifications;
 pub mod user;
 
 pub static CLIENT: LazyLock<ApiClient> = LazyLock::new(|| ApiClient::new(None));

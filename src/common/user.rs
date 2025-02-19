@@ -1,6 +1,6 @@
 use super::{
     instance::DbInstance,
-    newtypes::{InstanceId, PersonId},
+    newtypes::{LocalUserId, PersonId},
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -38,7 +38,7 @@ pub struct LocalUserView {
 #[cfg_attr(feature = "ssr", derive(Queryable, Selectable, Identifiable))]
 #[cfg_attr(feature = "ssr", diesel(table_name = local_user, check_for_backend(diesel::pg::Pg)))]
 pub struct DbLocalUser {
-    pub id: InstanceId,
+    pub id: LocalUserId,
     #[serde(skip)]
     pub password_encrypted: String,
     pub person_id: PersonId,

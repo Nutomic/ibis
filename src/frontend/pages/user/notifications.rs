@@ -2,7 +2,7 @@ use crate::{
     common::{
         article::{ApiConflict, DbArticle},
         comment::CommentViewWithArticle,
-        Notification,
+        notifications::{ArticleNotificationKind, ArticleNotificationView, Notification},
     },
     frontend::{
         api::CLIENT,
@@ -20,8 +20,12 @@ use crate::{
         },
     },
 };
-use leptos::{either::EitherOf3, prelude::*};
+use leptos::{
+    either::{Either, EitherOf4},
+    prelude::*,
+};
 use leptos_meta::Title;
+use phosphor_leptos::{Icon, CHECK, LINK};
 
 type NotificationsResource = Resource<Result<Vec<Notification>, FrontendError>>;
 
@@ -46,12 +50,15 @@ pub fn Notifications() -> impl IntoView {
                                     use Notification::*;
                                     match notif {
                                         EditConflict(c) => {
-                                            EitherOf3::A(edit_conflict_view(c, notifications))
+                                            EitherOf4::A(edit_conflict_view(c, notifications))
                                         }
                                         ArticleApprovalRequired(a) => {
-                                            EitherOf3::B(article_approval_view(a, notifications))
+                                            EitherOf4::B(article_approval_view(a, notifications))
                                         }
-                                        Reply(c) => EitherOf3::C(reply_view(c, notifications)),
+                                        Reply(c) => EitherOf4::C(reply_view(c, notifications)),
+                                        ArticleNotification(n) => {
+                                            EitherOf4::D(article_notification_view(n, notifications))
+                                        }
                                     }
                                 })
                                 .collect::<Vec<_>>()
@@ -144,24 +151,81 @@ fn reply_view(c: &CommentViewWithArticle, notifications: NotificationsResource) 
         <li class="py-2">
             <div class="flex text-s">
                 <span class="grow">{user_link(&c.creator)}" - "{article_link(&c.article)}</span>
-                <a href=comment_path(&c.comment, &c.article) class="link">
-                    {time_ago(c.comment.published)}
-                </a>
+                {time_ago(c.comment.published)}
             </div>
             <div>{c.comment.content.clone()}</div>
             <div class="mt-2 card-actions">
-                <a class="btn btn-sm btn-outline" href=comment_path(&c.comment, &c.article)>
-                    View
-                </a>
-                <button
-                    class="btn btn-sm btn-outline"
-                    on:click=move |_| {
-                        click_mark_as_read.dispatch(());
-                    }
-                >
-                    Mark as read
-                </button>
+                <ButtonLink href=comment_path(&c.comment, &c.article) />
+                <ButtonMarkAsRead action=move || {
+                    click_mark_as_read.dispatch(());
+                } />
             </div>
         </li>
+    }
+}
+
+fn article_notification_view(
+    n: &ArticleNotificationView,
+    notifications: NotificationsResource,
+) -> impl IntoView {
+    use ArticleNotificationKind::*;
+    let article_path = article_path(&n.article);
+    let article_title = n.article.title.clone();
+    let id = n.id;
+    let click_mark_as_read = Action::new(move |_: &()| async move {
+        CLIENT
+            .article_notif_mark_as_read(id)
+            .await
+            .error_popup(|_| notifications.refetch());
+    });
+    let mark_as_read_action = move || {
+        click_mark_as_read.dispatch(());
+    };
+    match n.kind {
+        Comment => Either::Left(view! {
+            <li class="py-2">
+                <div class="flex text-s">
+                    <span class="grow">"New comment on article " {article_title}</span>
+                    {time_ago(n.published)}
+                </div>
+                <div class="mt-2 card-actions">
+                    <ButtonLink href=format!("{article_path}/discussion") />
+                    <ButtonMarkAsRead action=mark_as_read_action />
+                </div>
+            </li>
+        }),
+        Edit => Either::Right(view! {
+            <li class="py-2">
+                <div class="flex text-s">
+                    <span class="grow">"New edit on article " {article_title}</span>
+                    {time_ago(n.published)}
+                </div>
+                <div class="mt-2 card-actions">
+                    <ButtonLink href=format!("{article_path}/history") />
+                    <ButtonMarkAsRead action=mark_as_read_action />
+                </div>
+            </li>
+        }),
+    }
+}
+
+#[component]
+fn ButtonLink(href: String) -> impl IntoView {
+    view! {
+        <a class="btn btn-sm btn-outline" href=href title="View">
+            <Icon icon=LINK />
+        </a>
+    }
+}
+
+#[component]
+fn ButtonMarkAsRead<F>(action: F) -> impl IntoView
+where
+    F: Fn() + 'static,
+{
+    view! {
+        <button class="btn btn-sm btn-outline" on:click=move |_| action() title="Mark as read">
+            <Icon icon=CHECK />
+        </button>
     }
 }

@@ -1,7 +1,12 @@
 use leptos::prelude::*;
 use log::warn;
 use serde::{Deserialize, Serialize};
-use std::{error::Error, fmt::Display, num::ParseIntError, time::Duration};
+use std::{
+    error::Error,
+    fmt::{Debug, Display},
+    num::ParseIntError,
+    time::Duration,
+};
 
 pub type FrontendResult<T> = Result<T, FrontendError>;
 

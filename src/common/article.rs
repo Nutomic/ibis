@@ -37,6 +37,7 @@ pub struct DbArticleView {
     pub instance: DbInstance,
     pub comments: Vec<DbCommentView>,
     pub latest_version: EditVersion,
+    pub following: bool,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
@@ -189,6 +190,12 @@ pub struct ApiConflict {
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct GetConflictParams {
     pub conflict_id: ConflictId,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct FollowArticleParams {
+    pub id: ArticleId,
+    pub follow: bool,
 }
 
 #[test]

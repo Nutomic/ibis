@@ -108,6 +108,6 @@ impl Object for DbComment {
             depth,
         };
 
-        Ok(DbComment::create_or_update(form, context)?)
+        Ok(DbComment::create(form, context)?)
     }
 }

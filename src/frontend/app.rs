@@ -11,8 +11,12 @@ use crate::frontend::{
             history::ArticleHistory,
             read::ReadArticle,
         },
-        explore::Explore,
-        instance::{details::InstanceDetails, search::Search, settings::InstanceSettings},
+        instance::{
+            details::InstanceDetails,
+            explore::Explore,
+            search::Search,
+            settings::InstanceSettings,
+        },
         user::{
             edit_profile::UserEditProfile,
             login::Login,

@@ -6,3 +6,13 @@
 .anchor svg {
     display: inline;
 }
+
+/* comment actions */
+.link svg {
+    display: inline;
+}
+
+/* article nav */
+.tab svg {
+    margin-right: 6px;
+}
