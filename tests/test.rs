@@ -27,7 +27,7 @@ use tokio::time::sleep;
 use url::Url;
 
 #[tokio::test]
-async fn test_create_read_and_edit_local_article() -> Result<()> {
+async fn api_test_create_read_and_edit_local_article() -> Result<()> {
     let TestData(alpha, beta, gamma) = TestData::start(false).await;
 
     // create article
@@ -94,7 +94,7 @@ async fn test_create_read_and_edit_local_article() -> Result<()> {
 }
 
 #[tokio::test]
-async fn test_create_duplicate_article() -> Result<()> {
+async fn api_test_create_duplicate_article() -> Result<()> {
     let TestData(alpha, beta, gamma) = TestData::start(false).await;
 
     // create article
@@ -114,7 +114,7 @@ async fn test_create_duplicate_article() -> Result<()> {
 }
 
 #[tokio::test]
-async fn test_follow_instance() -> Result<()> {
+async fn api_test_follow_instance() -> Result<()> {
     let TestData(alpha, beta, gamma) = TestData::start(false).await;
 
     // check initial state
@@ -141,7 +141,7 @@ async fn test_follow_instance() -> Result<()> {
 }
 
 #[tokio::test]
-async fn test_synchronize_articles() -> Result<()> {
+async fn api_test_synchronize_articles() -> Result<()> {
     let TestData(alpha, beta, gamma) = TestData::start(false).await;
 
     // create article on alpha
@@ -218,7 +218,7 @@ async fn test_synchronize_articles() -> Result<()> {
 }
 
 #[tokio::test]
-async fn test_edit_local_article() -> Result<()> {
+async fn api_test_edit_local_article() -> Result<()> {
     let TestData(alpha, beta, gamma) = TestData::start(false).await;
 
     let beta_instance = alpha
@@ -281,7 +281,7 @@ async fn test_edit_local_article() -> Result<()> {
 }
 
 #[tokio::test]
-async fn test_edit_remote_article() -> Result<()> {
+async fn api_test_edit_remote_article() -> Result<()> {
     let TestData(alpha, beta, gamma) = TestData::start(false).await;
 
     let beta_id_on_alpha = alpha
@@ -368,7 +368,7 @@ async fn test_edit_remote_article() -> Result<()> {
 }
 
 #[tokio::test]
-async fn test_local_edit_conflict() -> Result<()> {
+async fn api_test_local_edit_conflict() -> Result<()> {
     let TestData(alpha, beta, gamma) = TestData::start(false).await;
 
     // create new article
@@ -434,7 +434,7 @@ async fn test_local_edit_conflict() -> Result<()> {
 }
 
 #[tokio::test]
-async fn test_federated_edit_conflict() -> Result<()> {
+async fn api_test_federated_edit_conflict() -> Result<()> {
     let TestData(alpha, beta, gamma) = TestData::start(false).await;
 
     let beta_id_on_alpha = alpha
@@ -542,7 +542,7 @@ async fn test_federated_edit_conflict() -> Result<()> {
 }
 
 #[tokio::test]
-async fn test_overlapping_edits_no_conflict() -> Result<()> {
+async fn api_test_overlapping_edits_no_conflict() -> Result<()> {
     let TestData(alpha, beta, gamma) = TestData::start(false).await;
 
     // Create new article
@@ -616,7 +616,7 @@ async fn test_overlapping_edits_no_conflict() -> Result<()> {
 }
 
 #[tokio::test]
-async fn test_fork_article() -> Result<()> {
+async fn api_test_fork_article() -> Result<()> {
     let TestData(alpha, beta, gamma) = TestData::start(false).await;
 
     // create article
@@ -674,7 +674,7 @@ async fn test_fork_article() -> Result<()> {
 }
 
 #[tokio::test]
-async fn test_user_registration_login() -> Result<()> {
+async fn api_test_user_registration_login() -> Result<()> {
     let TestData(alpha, beta, gamma) = TestData::start(false).await;
     let username = "my_user";
     let password = "hunter2";
@@ -709,7 +709,7 @@ async fn test_user_registration_login() -> Result<()> {
 }
 
 #[tokio::test]
-async fn test_user_profile() -> Result<()> {
+async fn api_test_user_profile() -> Result<()> {
     let TestData(alpha, beta, gamma) = TestData::start(false).await;
 
     // Create an article and federate it, in order to federate the user who created it
@@ -737,7 +737,7 @@ async fn test_user_profile() -> Result<()> {
 }
 
 #[tokio::test]
-async fn test_lock_article() -> Result<()> {
+async fn api_test_lock_article() -> Result<()> {
     let TestData(alpha, beta, gamma) = TestData::start(false).await;
 
     // create article
@@ -784,7 +784,7 @@ async fn test_lock_article() -> Result<()> {
 }
 
 #[tokio::test]
-async fn test_synchronize_instances() -> Result<()> {
+async fn api_test_synchronize_instances() -> Result<()> {
     let TestData(alpha, beta, gamma) = TestData::start(false).await;
 
     // fetch alpha instance on beta
@@ -824,7 +824,7 @@ async fn test_synchronize_instances() -> Result<()> {
 }
 
 #[tokio::test]
-async fn test_article_approval_required() -> Result<()> {
+async fn api_test_article_approval_required() -> Result<()> {
     let TestData(alpha, beta, gamma) = TestData::start(true).await;
 
     // create article
@@ -872,7 +872,7 @@ async fn test_article_approval_required() -> Result<()> {
 }
 
 #[tokio::test]
-async fn test_comment_create_edit() -> Result<()> {
+async fn api_test_comment_create_edit() -> Result<()> {
     let TestData(alpha, beta, gamma) = TestData::start(true).await;
 
     beta.follow_instance_with_resolve(&alpha.hostname)
@@ -954,7 +954,7 @@ async fn test_comment_create_edit() -> Result<()> {
 }
 
 #[tokio::test]
-async fn test_comment_delete_restore() -> Result<()> {
+async fn api_test_comment_delete_restore() -> Result<()> {
     let TestData(alpha, beta, gamma) = TestData::start(true).await;
 
     beta.follow_instance_with_resolve(&alpha.hostname)
