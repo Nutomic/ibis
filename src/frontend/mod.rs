@@ -1,4 +1,4 @@
-use crate::common::article::DbArticle;
+use crate::common::article::Article;
 
 pub mod api;
 pub mod app;

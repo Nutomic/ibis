@@ -11,7 +11,7 @@ use crate::{
         },
         pages::article_resource,
         utils::{formatting::article_path, resources::is_admin},
-        DbArticle,
+        Article,
     },
 };
 use leptos::{ev::KeyboardEvent, prelude::*};
@@ -21,7 +21,7 @@ use leptos_router::components::Redirect;
 pub fn ArticleActions() -> impl IntoView {
     let article = article_resource();
     let (new_title, set_new_title) = signal(String::new());
-    let (fork_response, set_fork_response) = signal(Option::<DbArticle>::None);
+    let (fork_response, set_fork_response) = signal(Option::<Article>::None);
     let (error, set_error) = signal(None::<String>);
     let fork_action = Action::new(move |(article_id, new_title): &(ArticleId, String)| {
         let params = ForkArticleParams {

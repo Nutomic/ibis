@@ -6,7 +6,7 @@ use crate::{
         IbisContext,
     },
     common::{
-        article::{DbArticle, DbEdit, EditVersion, EditView},
+        article::{Article, Edit, EditVersion, EditView},
         newtypes::{ArticleId, PersonId},
         user::LocalUserView,
     },
@@ -31,7 +31,7 @@ use std::ops::DerefMut;
 pub struct DbEditForm {
     pub creator_id: PersonId,
     pub hash: EditVersion,
-    pub ap_id: ObjectId<DbEdit>,
+    pub ap_id: ObjectId<Edit>,
     pub diff: String,
     pub summary: String,
     pub article_id: ArticleId,
@@ -42,7 +42,7 @@ pub struct DbEditForm {
 
 impl DbEditForm {
     pub fn new(
-        original_article: &DbArticle,
+        original_article: &Article,
         creator_id: PersonId,
         updated_text: &str,
         summary: String,
@@ -66,9 +66,9 @@ impl DbEditForm {
     }
 
     pub fn generate_ap_id(
-        article: &DbArticle,
+        article: &Article,
         version: &EditVersion,
-    ) -> BackendResult<ObjectId<DbEdit>> {
+    ) -> BackendResult<ObjectId<Edit>> {
         Ok(ObjectId::parse(&format!(
             "{}/{}",
             article.ap_id,
@@ -77,10 +77,10 @@ impl DbEditForm {
     }
 }
 
-impl DbEdit {
+impl Edit {
     pub fn create(form: &DbEditForm, context: &IbisContext) -> BackendResult<Self> {
         let mut conn = context.db_pool.get()?;
-        let edit: DbEdit = insert_into(edit::table)
+        let edit: Edit = insert_into(edit::table)
             .values(form)
             .on_conflict(edit::dsl::ap_id)
             .do_update()
@@ -98,7 +98,7 @@ impl DbEdit {
             .get_result(conn.deref_mut())?)
     }
 
-    pub fn read_from_ap_id(ap_id: &ObjectId<DbEdit>, context: &IbisContext) -> BackendResult<Self> {
+    pub fn read_from_ap_id(ap_id: &ObjectId<Edit>, context: &IbisContext) -> BackendResult<Self> {
         let mut conn = context.db_pool.get()?;
         Ok(edit::table
             .filter(edit::dsl::ap_id.eq(ap_id))

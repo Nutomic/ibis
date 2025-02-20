@@ -1,8 +1,8 @@
 use crate::common::{
-    article::{DbArticle, DbEdit},
-    comment::DbComment,
-    instance::DbInstance,
-    user::DbPerson,
+    article::{Article, Edit},
+    comment::Comment,
+    instance::Instance,
+    user::Person,
     utils::extract_domain,
 };
 use chrono::{DateTime, Local, Utc};
@@ -10,7 +10,7 @@ use leptos::prelude::*;
 use std::sync::OnceLock;
 use timeago::Formatter;
 
-pub fn article_path(article: &DbArticle) -> String {
+pub fn article_path(article: &Article) -> String {
     if article.local {
         format!("/article/{}", article.title)
     } else {
@@ -22,7 +22,7 @@ pub fn article_path(article: &DbArticle) -> String {
     }
 }
 
-pub fn article_link(article: &DbArticle) -> impl IntoView {
+pub fn article_link(article: &Article) -> impl IntoView {
     let article_path = article_path(article);
     view! {
         <a class="link" href=article_path>
@@ -31,7 +31,7 @@ pub fn article_link(article: &DbArticle) -> impl IntoView {
     }
 }
 
-pub fn article_title(article: &DbArticle) -> String {
+pub fn article_title(article: &Article) -> String {
     let title = article.title.replace('_', " ");
     if article.local {
         title
@@ -40,7 +40,7 @@ pub fn article_title(article: &DbArticle) -> String {
     }
 }
 
-pub fn user_title(person: &DbPerson) -> String {
+pub fn user_title(person: &Person) -> String {
     let name = person
         .display_name
         .clone()
@@ -52,7 +52,7 @@ pub fn user_title(person: &DbPerson) -> String {
     }
 }
 
-pub fn user_link(person: &DbPerson) -> impl IntoView {
+pub fn user_link(person: &Person) -> impl IntoView {
     let creator_path = if person.local {
         format!("/user/{}", person.username)
     } else {
@@ -83,7 +83,7 @@ pub fn time_ago(time: DateTime<Utc>) -> String {
     INSTANCE.get_or_init(Formatter::new).convert(duration)
 }
 
-pub fn instance_title_with_domain(instance: &DbInstance) -> String {
+pub fn instance_title_with_domain(instance: &Instance) -> String {
     let name = instance.name.clone();
     let domain = instance.domain.clone();
     if let Some(name) = name {
@@ -93,11 +93,11 @@ pub fn instance_title_with_domain(instance: &DbInstance) -> String {
     }
 }
 
-pub fn instance_title(instance: &DbInstance) -> String {
+pub fn instance_title(instance: &Instance) -> String {
     instance.name.clone().unwrap_or(instance.domain.clone())
 }
 
-pub fn instance_updated(instance: &DbInstance) -> String {
+pub fn instance_updated(instance: &Instance) -> String {
     if instance.local {
         "Local".to_string()
     } else {
@@ -105,12 +105,12 @@ pub fn instance_updated(instance: &DbInstance) -> String {
     }
 }
 
-pub fn comment_path(comment: &DbComment, article: &DbArticle) -> String {
+pub fn comment_path(comment: &Comment, article: &Article) -> String {
     let article_path = article_path(article);
     format!("{}/discussion#comment-{}", article_path, comment.id.0)
 }
 
-pub fn edit_path(edit: &DbEdit, article: &DbArticle) -> String {
+pub fn edit_path(edit: &Edit, article: &Article) -> String {
     format!(
         "/article/{}@{}/diff/{}",
         article.title,

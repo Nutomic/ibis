@@ -5,7 +5,7 @@ use crate::{
         generate_activity_id,
         utils::error::{BackendError, BackendResult},
     },
-    common::{instance::DbInstance, user::DbPerson},
+    common::{instance::Instance, user::Person},
 };
 use activitypub_federation::{
     config::Data,
@@ -20,8 +20,8 @@ use url::Url;
 #[derive(Deserialize, Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Follow {
-    pub actor: ObjectId<DbPerson>,
-    pub object: ObjectId<DbInstance>,
+    pub actor: ObjectId<Person>,
+    pub object: ObjectId<Instance>,
     #[serde(rename = "type")]
     kind: FollowType,
     id: Url,
@@ -29,8 +29,8 @@ pub struct Follow {
 
 impl Follow {
     pub async fn send(
-        actor: DbPerson,
-        to: &DbInstance,
+        actor: Person,
+        to: &Instance,
         context: &Data<IbisContext>,
     ) -> BackendResult<()> {
         let id = generate_activity_id(context)?;
@@ -64,9 +64,9 @@ impl ActivityHandler for Follow {
 
     async fn receive(self, context: &Data<Self::DataType>) -> Result<(), Self::Error> {
         let actor = self.actor.dereference(context).await?;
-        let local_instance = DbInstance::read_local(context)?;
+        let local_instance = Instance::read_local(context)?;
         verify_urls_match(self.object.inner(), local_instance.ap_id.inner())?;
-        DbInstance::follow(&actor, &local_instance, false, context)?;
+        Instance::follow(&actor, &local_instance, false, context)?;
 
         // send back an accept
         Accept::send(local_instance, self, context).await?;

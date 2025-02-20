@@ -8,8 +8,8 @@ use crate::{
         utils::error::BackendError,
     },
     common::{
-        article::{DbArticle, DbEdit, EditVersion},
-        instance::DbInstance,
+        article::{Article, Edit, EditVersion},
+        instance::Instance,
         newtypes::PersonId,
     },
 };
@@ -28,7 +28,7 @@ pub async fn submit_article_update(
     new_text: String,
     summary: String,
     previous_version: EditVersion,
-    original_article: &DbArticle,
+    original_article: &Article,
     creator_id: PersonId,
     context: &Data<IbisContext>,
 ) -> Result<(), BackendError> {
@@ -41,15 +41,15 @@ pub async fn submit_article_update(
         false,
     )?;
     if original_article.local {
-        let edit = DbEdit::create(&form, context)?;
-        let updated_article = DbArticle::update_text(edit.article_id, &new_text, context)?;
+        let edit = Edit::create(&form, context)?;
+        let updated_article = Article::update_text(edit.article_id, &new_text, context)?;
 
         UpdateLocalArticle::send(updated_article, vec![], context).await?;
     } else {
         // insert edit as pending, so only the creator can see it
         form.pending = true;
-        let edit = DbEdit::create(&form, context)?;
-        let instance = DbInstance::read(original_article.instance_id, context)?;
+        let edit = Edit::create(&form, context)?;
+        let instance = Instance::read(original_article.instance_id, context)?;
         UpdateRemoteArticle::send(edit, instance, context).await?;
     }
     Ok(())

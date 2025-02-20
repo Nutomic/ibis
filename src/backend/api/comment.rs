@@ -16,7 +16,7 @@ use crate::{
         },
     },
     common::{
-        comment::{CreateCommentParams, DbComment, DbCommentView, EditCommentParams},
+        comment::{Comment, CommentView, CreateCommentParams, EditCommentParams},
         utils::http_protocol_str,
     },
 };
@@ -31,11 +31,11 @@ pub(in crate::backend::api) async fn create_comment(
     user: UserExt,
     context: Data<IbisContext>,
     Form(params): Form<CreateCommentParams>,
-) -> BackendResult<Json<DbCommentView>> {
+) -> BackendResult<Json<CommentView>> {
     validate_not_empty(&params.content)?;
     let mut depth = 0;
     if let Some(parent_id) = params.parent_id {
-        let parent = DbComment::read(parent_id, &context)?;
+        let parent = Comment::read(parent_id, &context)?;
         if parent.deleted {
             return Err(anyhow!("Cant reply to deleted comment").into());
         }
@@ -57,7 +57,7 @@ pub(in crate::backend::api) async fn create_comment(
         published: Utc::now(),
         updated: None,
     };
-    let comment = DbComment::create(form, &context)?;
+    let comment = Comment::create(form, &context)?;
 
     // Set the ap_id which contains db id (so it is not know before inserting)
     let proto = http_protocol_str();
@@ -66,7 +66,7 @@ pub(in crate::backend::api) async fn create_comment(
         ap_id: Some(ap_id),
         ..Default::default()
     };
-    let comment = DbComment::update(form, comment.id, &context)?;
+    let comment = Comment::update(form, comment.id, &context)?;
 
     CreateOrUpdateComment::send(&comment.comment, &context).await?;
 
@@ -78,14 +78,14 @@ pub(in crate::backend::api) async fn edit_comment(
     user: UserExt,
     context: Data<IbisContext>,
     Form(params): Form<EditCommentParams>,
-) -> BackendResult<Json<DbCommentView>> {
+) -> BackendResult<Json<CommentView>> {
     if let Some(content) = &params.content {
         validate_not_empty(content)?;
     }
     if params.content.is_none() && params.deleted.is_none() {
         return Err(anyhow!("Edit has no parameters").into());
     }
-    let orig_comment = DbComment::read(params.id, &context)?;
+    let orig_comment = Comment::read(params.id, &context)?;
     if orig_comment.creator_id != user.person.id {
         return Err(anyhow!("Cannot edit comment created by another user").into());
     }
@@ -95,7 +95,7 @@ pub(in crate::backend::api) async fn edit_comment(
         updated: Some(Utc::now()),
         ..Default::default()
     };
-    let comment = DbComment::update(form, params.id, &context)?;
+    let comment = Comment::update(form, params.id, &context)?;
 
     // federate
     if orig_comment.content != comment.comment.content {

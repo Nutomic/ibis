@@ -1,8 +1,8 @@
 use super::{
-    article::{ApiConflict, DbArticle, DbEdit},
-    comment::DbComment,
+    article::{ApiConflict, Article, Edit},
+    comment::Comment,
     newtypes::{ArticleNotifId, CommentId},
-    user::DbPerson,
+    user::Person,
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -11,9 +11,9 @@ use serde::{Deserialize, Serialize};
 pub enum ApiNotification {
     // TODO: this should only return conflict id and article name
     EditConflict(ApiConflict),
-    ArticleApprovalRequired(DbArticle),
-    Comment(ArticleNotifId, DbComment, DbPerson, DbArticle),
-    Edit(ArticleNotifId, DbEdit, DbPerson, DbArticle),
+    ArticleApprovalRequired(Article),
+    Comment(ArticleNotifId, Comment, Person, Article),
+    Edit(ArticleNotifId, Edit, Person, Article),
 }
 
 impl ApiNotification {

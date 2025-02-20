@@ -5,8 +5,8 @@ use crate::{
         utils::{error::BackendError, validate::validate_article_title},
     },
     common::{
-        article::{DbArticle, EditVersion},
-        instance::DbInstance,
+        article::{Article, EditVersion},
+        instance::Instance,
     },
 };
 use activitypub_federation::{
@@ -27,8 +27,8 @@ use url::Url;
 pub struct ApubArticle {
     #[serde(rename = "type")]
     pub kind: ArticleType,
-    pub id: ObjectId<DbArticle>,
-    pub attributed_to: ObjectId<DbInstance>,
+    pub id: ObjectId<Article>,
+    pub attributed_to: ObjectId<Instance>,
     #[serde(deserialize_with = "deserialize_one_or_many")]
     pub to: Vec<Url>,
     pub edits: CollectionId<DbEditCollection>,
@@ -39,7 +39,7 @@ pub struct ApubArticle {
 }
 
 #[async_trait::async_trait]
-impl Object for DbArticle {
+impl Object for Article {
     type DataType = IbisContext;
     type Kind = ApubArticle;
     type Error = BackendError;
@@ -48,12 +48,12 @@ impl Object for DbArticle {
         object_id: Url,
         context: &Data<Self::DataType>,
     ) -> Result<Option<Self>, Self::Error> {
-        let article = DbArticle::read_from_ap_id(&object_id.into(), context).ok();
+        let article = Article::read_from_ap_id(&object_id.into(), context).ok();
         Ok(article)
     }
 
     async fn into_json(self, context: &Data<Self::DataType>) -> Result<Self::Kind, Self::Error> {
-        let local_instance = DbInstance::read_local(context)?;
+        let local_instance = Instance::read_local(context)?;
         Ok(ApubArticle {
             kind: Default::default(),
             id: self.ap_id.clone(),
@@ -92,7 +92,7 @@ impl Object for DbArticle {
             approved: true,
         };
         form.title = validate_article_title(&form.title)?;
-        let article = DbArticle::create_or_update(form, context)?;
+        let article = Article::create_or_update(form, context)?;
 
         json.edits.dereference(&article, context).await?;
 

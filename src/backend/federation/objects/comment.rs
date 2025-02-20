@@ -4,7 +4,7 @@ use crate::{
         database::{comment::DbCommentInsertForm, IbisContext},
         utils::{error::BackendError, validate::validate_comment_max_depth},
     },
-    common::{article::DbArticle, comment::DbComment, user::DbPerson},
+    common::{article::Article, comment::Comment, user::Person},
 };
 use activitypub_federation::{
     config::Data,
@@ -25,8 +25,8 @@ use url::Url;
 pub struct ApubComment {
     #[serde(rename = "type")]
     pub kind: NoteType,
-    pub id: ObjectId<DbComment>,
-    pub attributed_to: ObjectId<DbPerson>,
+    pub id: ObjectId<Comment>,
+    pub attributed_to: ObjectId<Person>,
     #[serde(deserialize_with = "deserialize_one_or_many")]
     pub to: Vec<Url>,
     content: String,
@@ -36,7 +36,7 @@ pub struct ApubComment {
 }
 
 #[async_trait::async_trait]
-impl Object for DbComment {
+impl Object for Comment {
     type DataType = IbisContext;
     type Kind = ApubComment;
     type Error = BackendError;
@@ -45,16 +45,16 @@ impl Object for DbComment {
         object_id: Url,
         context: &Data<Self::DataType>,
     ) -> Result<Option<Self>, Self::Error> {
-        Ok(DbComment::read_from_ap_id(&object_id.into(), context).ok())
+        Ok(Comment::read_from_ap_id(&object_id.into(), context).ok())
     }
 
     async fn into_json(self, context: &Data<Self::DataType>) -> Result<Self::Kind, Self::Error> {
-        let creator = DbPerson::read(self.creator_id, context)?;
+        let creator = Person::read(self.creator_id, context)?;
         let in_reply_to = if let Some(parent_comment_id) = self.parent_id {
-            let comment = DbComment::read(parent_comment_id, context)?;
+            let comment = Comment::read(parent_comment_id, context)?;
             comment.ap_id.into_inner().into()
         } else {
-            let article = DbArticle::read(self.article_id, context)?;
+            let article = Article::read(self.article_id, context)?;
             article.ap_id.into_inner().into()
         };
         Ok(ApubComment {
@@ -108,6 +108,6 @@ impl Object for DbComment {
             depth,
         };
 
-        Ok(DbComment::create(form, context)?)
+        Ok(Comment::create(form, context)?)
     }
 }

@@ -1,7 +1,7 @@
 use super::{
-    article::DbArticle,
+    article::Article,
     newtypes::InstanceId,
-    user::{DbPerson, LocalUserView},
+    user::{LocalUserView, Person},
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -22,11 +22,11 @@ use {
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[cfg_attr(feature = "ssr", derive(Queryable, Selectable, Identifiable))]
 #[cfg_attr(feature = "ssr", diesel(table_name = instance, check_for_backend(diesel::pg::Pg)))]
-pub struct DbInstance {
+pub struct Instance {
     pub id: InstanceId,
     pub domain: String,
     #[cfg(feature = "ssr")]
-    pub ap_id: ObjectId<DbInstance>,
+    pub ap_id: ObjectId<Instance>,
     #[cfg(not(feature = "ssr"))]
     pub ap_id: String,
     pub topic: Option<String>,
@@ -46,7 +46,7 @@ pub struct DbInstance {
     pub name: Option<String>,
 }
 
-impl DbInstance {
+impl Instance {
     pub fn inbox_url(&self) -> Url {
         Url::parse(&self.inbox_url).expect("can parse inbox url")
     }
@@ -54,16 +54,16 @@ impl DbInstance {
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct InstanceView {
-    pub instance: DbInstance,
-    pub articles: Vec<DbArticle>,
+    pub instance: Instance,
+    pub articles: Vec<Article>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[cfg_attr(feature = "ssr", derive(Queryable))]
 #[cfg_attr(feature = "ssr", diesel(table_name = article, check_for_backend(diesel::pg::Pg)))]
 pub struct InstanceView2 {
-    pub instance: DbInstance,
-    pub followers: Vec<DbPerson>,
+    pub instance: Instance,
+    pub followers: Vec<Person>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, SmartDefault)]
@@ -88,7 +88,7 @@ pub struct Options {
 pub struct SiteView {
     pub my_profile: Option<LocalUserView>,
     pub config: Options,
-    pub admin: DbPerson,
+    pub admin: Person,
 }
 
 #[derive(Deserialize, Serialize, Debug)]

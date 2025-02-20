@@ -7,7 +7,7 @@ use crate::{
             generate_activity_id,
         },
     },
-    common::instance::DbInstance,
+    common::instance::Instance,
 };
 use activitypub_federation::{
     config::Data,
@@ -22,7 +22,7 @@ use url::Url;
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AnnounceActivity {
-    pub(crate) actor: ObjectId<DbInstance>,
+    pub(crate) actor: ObjectId<Instance>,
     #[serde(deserialize_with = "deserialize_one_or_many")]
     pub(crate) to: Vec<Url>,
     pub(crate) object: AnnouncableActivities,
@@ -37,7 +37,7 @@ impl AnnounceActivity {
         context: &Data<IbisContext>,
     ) -> BackendResult<()> {
         let id = generate_activity_id(context)?;
-        let instance = DbInstance::read_local(context)?;
+        let instance = Instance::read_local(context)?;
         let announce = AnnounceActivity {
             actor: instance.id().into(),
             to: vec![public()],
@@ -47,7 +47,7 @@ impl AnnounceActivity {
         };
 
         // Send to followers of instance
-        let follower_inboxes = DbInstance::read_followers(instance.id, context)?
+        let follower_inboxes = Instance::read_followers(instance.id, context)?
             .into_iter()
             .map(|f| f.inbox_url())
             .collect();

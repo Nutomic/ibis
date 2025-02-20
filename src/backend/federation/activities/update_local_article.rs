@@ -7,7 +7,7 @@ use crate::{
             generate_activity_id,
         },
     },
-    common::{article::DbArticle, instance::DbInstance},
+    common::{article::Article, instance::Instance},
 };
 use activitypub_federation::{
     config::Data,
@@ -22,7 +22,7 @@ use url::Url;
 #[derive(Deserialize, Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateLocalArticle {
-    pub actor: ObjectId<DbInstance>,
+    pub actor: ObjectId<Instance>,
     #[serde(deserialize_with = "deserialize_one_or_many")]
     pub to: Vec<Url>,
     pub object: ApubArticle,
@@ -34,12 +34,12 @@ pub struct UpdateLocalArticle {
 impl UpdateLocalArticle {
     /// Sent from article origin instance
     pub async fn send(
-        article: DbArticle,
-        extra_recipients: Vec<DbInstance>,
+        article: Article,
+        extra_recipients: Vec<Instance>,
         context: &Data<IbisContext>,
     ) -> BackendResult<()> {
         debug_assert!(article.local);
-        let local_instance = DbInstance::read_local(context)?;
+        let local_instance = Instance::read_local(context)?;
         let id = generate_activity_id(context)?;
         let mut to = local_instance.follower_ids(context)?;
         to.extend(extra_recipients.iter().map(|i| i.ap_id.inner().clone()));
@@ -76,7 +76,7 @@ impl ActivityHandler for UpdateLocalArticle {
 
     /// Received on article follower instances (where article is always remote)
     async fn receive(self, context: &Data<Self::DataType>) -> Result<(), Self::Error> {
-        DbArticle::from_json(self.object, context).await?;
+        Article::from_json(self.object, context).await?;
 
         Ok(())
     }

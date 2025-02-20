@@ -10,7 +10,7 @@ use crate::{
             generate_activity_id,
         },
     },
-    common::{article::EditVersion, instance::DbInstance},
+    common::{article::EditVersion, instance::Instance},
 };
 use activitypub_federation::{
     config::Data,
@@ -25,7 +25,7 @@ use url::Url;
 #[derive(Deserialize, Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct RejectEdit {
-    pub actor: ObjectId<DbInstance>,
+    pub actor: ObjectId<Instance>,
     #[serde(deserialize_with = "deserialize_one_or_many")]
     pub to: Vec<Url>,
     pub object: ApubEdit,
@@ -37,10 +37,10 @@ pub struct RejectEdit {
 impl RejectEdit {
     pub async fn send(
         edit: ApubEdit,
-        user_instance: DbInstance,
+        user_instance: Instance,
         context: &Data<IbisContext>,
     ) -> BackendResult<()> {
-        let local_instance = DbInstance::read_local(context)?;
+        let local_instance = Instance::read_local(context)?;
         let id = generate_activity_id(context)?;
         let reject = RejectEdit {
             actor: local_instance.ap_id.clone(),

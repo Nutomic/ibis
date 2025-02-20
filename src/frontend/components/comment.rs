@@ -1,7 +1,7 @@
 use crate::{
     common::{
-        article::DbArticleView,
-        comment::{DbComment, DbCommentView, EditCommentParams},
+        article::ArticleView,
+        comment::{Comment, CommentView, EditCommentParams},
         newtypes::CommentId,
     },
     frontend::{
@@ -20,8 +20,8 @@ use phosphor_leptos::{Icon, ARROW_BEND_UP_LEFT, FEDIVERSE_LOGO, LINK, PENCIL, TR
 
 #[component]
 pub fn CommentView(
-    article: Resource<FrontendResult<DbArticleView>>,
-    comment: DbCommentView,
+    article: Resource<FrontendResult<ArticleView>>,
+    comment: CommentView,
     show_editor: (ReadSignal<CommentId>, WriteSignal<CommentId>),
 ) -> impl IntoView {
     let is_editing = signal(false);
@@ -137,7 +137,7 @@ pub fn CommentView(
     }
 }
 
-fn render_content(comment: DbComment) -> String {
+fn render_content(comment: Comment) -> String {
     let content = if comment.deleted {
         "*deleted*"
     } else {
@@ -146,7 +146,7 @@ fn render_content(comment: DbComment) -> String {
     render_comment_markdown(content)
 }
 
-fn delete_restore_label(comment: DbComment) -> &'static str {
+fn delete_restore_label(comment: Comment) -> &'static str {
     if comment.deleted {
         "Restore"
     } else {

@@ -33,11 +33,11 @@ use crate::{
         utils::error::{BackendError, BackendResult},
     },
     common::{
-        article::DbArticle,
-        comment::DbComment,
-        instance::DbInstance,
+        article::Article,
+        comment::Comment,
+        instance::Instance,
         newtypes::CommentId,
-        user::DbPerson,
+        user::Person,
     },
 };
 use activitypub_federation::{
@@ -76,7 +76,7 @@ pub fn federation_routes() -> Router<()> {
 async fn http_get_instance(
     context: Data<IbisContext>,
 ) -> BackendResult<FederationJson<WithContext<ApubInstance>>> {
-    let local_instance = DbInstance::read_local(&context)?;
+    let local_instance = Instance::read_local(&context)?;
     let json_instance = local_instance.into_json(&context).await?;
     Ok(FederationJson(WithContext::new_default(json_instance)))
 }
@@ -86,7 +86,7 @@ async fn http_get_person(
     Path(name): Path<String>,
     context: Data<IbisContext>,
 ) -> BackendResult<FederationJson<WithContext<ApubUser>>> {
-    let person = DbPerson::read_local_from_name(&name, &context)?.person;
+    let person = Person::read_local_from_name(&name, &context)?.person;
     let json_person = person.into_json(&context).await?;
     Ok(FederationJson(WithContext::new_default(json_person)))
 }
@@ -112,7 +112,7 @@ async fn http_get_article(
     Path(title): Path<String>,
     context: Data<IbisContext>,
 ) -> BackendResult<FederationJson<WithContext<ApubArticle>>> {
-    let article = DbArticle::read_view((&title, None), None, &context)?;
+    let article = Article::read_view((&title, None), None, &context)?;
     let json = article.article.into_json(&context).await?;
     Ok(FederationJson(WithContext::new_default(json)))
 }
@@ -122,7 +122,7 @@ async fn http_get_article_edits(
     Path(title): Path<String>,
     context: Data<IbisContext>,
 ) -> BackendResult<FederationJson<WithContext<ApubEditCollection>>> {
-    let article = DbArticle::read_view((&title, None), None, &context)?;
+    let article = Article::read_view((&title, None), None, &context)?;
     let json = DbEditCollection::read_local(&article.article, &context).await?;
     Ok(FederationJson(WithContext::new_default(json)))
 }
@@ -132,7 +132,7 @@ async fn http_get_comment(
     Path(id): Path<i32>,
     context: Data<IbisContext>,
 ) -> BackendResult<FederationJson<WithContext<ApubComment>>> {
-    let comment = DbComment::read(CommentId(id), &context)?;
+    let comment = Comment::read(CommentId(id), &context)?;
     let json = comment.into_json(&context).await?;
     Ok(FederationJson(WithContext::new_default(json)))
 }
@@ -172,8 +172,8 @@ pub async fn http_post_inbox(
 
 #[derive(Clone, Debug)]
 pub enum UserOrInstance {
-    User(DbPerson),
-    Instance(DbInstance),
+    User(Person),
+    Instance(Instance),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -206,10 +206,10 @@ impl Object for UserOrInstance {
         object_id: Url,
         data: &Data<Self::DataType>,
     ) -> Result<Option<Self>, BackendError> {
-        let person = DbPerson::read_from_id(object_id.clone(), data).await;
+        let person = Person::read_from_id(object_id.clone(), data).await;
         Ok(match person {
             Ok(Some(o)) => Some(UserOrInstance::User(o)),
-            _ => DbInstance::read_from_id(object_id.clone(), data)
+            _ => Instance::read_from_id(object_id.clone(), data)
                 .await?
                 .map(UserOrInstance::Instance),
         })
@@ -232,8 +232,8 @@ impl Object for UserOrInstance {
         data: &Data<Self::DataType>,
     ) -> Result<(), BackendError> {
         match apub {
-            PersonOrInstance::Person(a) => DbPerson::verify(a, expected_domain, data).await,
-            PersonOrInstance::Instance(a) => DbInstance::verify(a, expected_domain, data).await,
+            PersonOrInstance::Person(a) => Person::verify(a, expected_domain, data).await,
+            PersonOrInstance::Instance(a) => Instance::verify(a, expected_domain, data).await,
         }
     }
 
@@ -242,11 +242,9 @@ impl Object for UserOrInstance {
         data: &Data<Self::DataType>,
     ) -> Result<Self, BackendError> {
         Ok(match apub {
-            PersonOrInstance::Person(p) => {
-                UserOrInstance::User(DbPerson::from_json(p, data).await?)
-            }
+            PersonOrInstance::Person(p) => UserOrInstance::User(Person::from_json(p, data).await?),
             PersonOrInstance::Instance(p) => {
-                UserOrInstance::Instance(DbInstance::from_json(p, data).await?)
+                UserOrInstance::Instance(Instance::from_json(p, data).await?)
             }
         })
     }

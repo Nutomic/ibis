@@ -7,9 +7,9 @@ use crate::{
     },
     common::{
         instance::{
-            DbInstance,
             FollowInstanceParams,
             GetInstanceParams,
+            Instance,
             InstanceView,
             InstanceView2,
             UpdateInstanceParams,
@@ -28,21 +28,21 @@ pub(in crate::backend::api) async fn get_instance(
     context: Data<IbisContext>,
     Form(params): Form<GetInstanceParams>,
 ) -> BackendResult<Json<InstanceView2>> {
-    let local_instance = DbInstance::read_view(params.id, &context)?;
+    let local_instance = Instance::read_view(params.id, &context)?;
     Ok(Json(local_instance))
 }
 
 pub(in crate::backend::api) async fn update_instance(
     context: Data<IbisContext>,
     Form(mut params): Form<UpdateInstanceParams>,
-) -> BackendResult<Json<DbInstance>> {
+) -> BackendResult<Json<Instance>> {
     empty_to_none(&mut params.name);
     empty_to_none(&mut params.topic);
     let form = DbInstanceUpdateForm {
         name: params.name,
         topic: params.topic,
     };
-    Ok(Json(DbInstance::update(form, &context)?))
+    Ok(Json(Instance::update(form, &context)?))
 }
 
 /// Make the local instance follow a given remote instance, to receive activities about new and
@@ -53,10 +53,10 @@ pub(in crate::backend::api) async fn follow_instance(
     context: Data<IbisContext>,
     Form(params): Form<FollowInstanceParams>,
 ) -> BackendResult<Json<SuccessResponse>> {
-    let target = DbInstance::read(params.id, &context)?;
+    let target = Instance::read(params.id, &context)?;
     let pending = !target.local;
-    DbInstance::follow(&user.person, &target, pending, &context)?;
-    let instance = DbInstance::read(params.id, &context)?;
+    Instance::follow(&user.person, &target, pending, &context)?;
+    let instance = Instance::read(params.id, &context)?;
     Follow::send(user.inner().person, &instance, &context).await?;
     Ok(Json(SuccessResponse::default()))
 }
@@ -67,16 +67,16 @@ pub(in crate::backend::api) async fn follow_instance(
 pub(super) async fn resolve_instance(
     Query(params): Query<ResolveObjectParams>,
     context: Data<IbisContext>,
-) -> BackendResult<Json<DbInstance>> {
-    let instance: DbInstance = ObjectId::from(params.id).dereference(&context).await?;
+) -> BackendResult<Json<Instance>> {
+    let instance: Instance = ObjectId::from(params.id).dereference(&context).await?;
     Ok(Json(instance))
 }
 
 #[debug_handler]
 pub(in crate::backend::api) async fn list_instances(
     context: Data<IbisContext>,
-) -> BackendResult<Json<Vec<DbInstance>>> {
-    let instances = DbInstance::list(&context)?;
+) -> BackendResult<Json<Vec<Instance>>> {
+    let instances = Instance::list(&context)?;
     Ok(Json(instances))
 }
 
@@ -84,6 +84,6 @@ pub(in crate::backend::api) async fn list_instances(
 pub(in crate::backend::api) async fn list_instance_views(
     context: Data<IbisContext>,
 ) -> BackendResult<Json<Vec<InstanceView>>> {
-    let instances = DbInstance::list_views(&context)?;
+    let instances = Instance::list_views(&context)?;
     Ok(Json(instances))
 }

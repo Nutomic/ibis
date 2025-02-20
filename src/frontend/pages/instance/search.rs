@@ -1,7 +1,7 @@
 use crate::{
     common::{
-        article::{DbArticle, SearchArticleParams},
-        instance::DbInstance,
+        article::{Article, SearchArticleParams},
+        instance::Instance,
     },
     frontend::{
         api::CLIENT,
@@ -16,8 +16,8 @@ use url::Url;
 
 #[derive(Default, Clone, Deserialize, Serialize, Debug)]
 struct SearchResults {
-    articles: Vec<DbArticle>,
-    instance: Option<DbInstance>,
+    articles: Vec<Article>,
+    instance: Option<Instance>,
 }
 
 impl SearchResults {

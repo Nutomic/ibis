@@ -11,9 +11,9 @@ use crate::{
         utils::error::BackendResult,
     },
     common::{
-        instance::{DbInstance, InstanceView, InstanceView2},
+        instance::{Instance, InstanceView, InstanceView2},
         newtypes::{CommentId, InstanceId},
-        user::DbPerson,
+        user::Person,
     },
 };
 use activitypub_federation::{
@@ -28,7 +28,7 @@ use std::{fmt::Debug, ops::DerefMut};
 #[diesel(table_name = instance, check_for_backend(diesel::pg::Pg))]
 pub struct DbInstanceForm {
     pub domain: String,
-    pub ap_id: ObjectId<DbInstance>,
+    pub ap_id: ObjectId<Instance>,
     pub topic: Option<String>,
     pub articles_url: Option<CollectionId<DbArticleCollection>>,
     pub inbox_url: String,
@@ -47,7 +47,7 @@ pub struct DbInstanceUpdateForm {
     pub name: Option<String>,
 }
 
-impl DbInstance {
+impl Instance {
     pub fn create(form: &DbInstanceForm, context: &IbisContext) -> BackendResult<Self> {
         let mut conn = context.db_pool.get()?;
         Ok(insert_into(instance::table)
@@ -72,9 +72,9 @@ impl DbInstance {
     }
 
     pub fn read_from_ap_id(
-        ap_id: &ObjectId<DbInstance>,
+        ap_id: &ObjectId<Instance>,
         context: &Data<IbisContext>,
-    ) -> BackendResult<DbInstance> {
+    ) -> BackendResult<Instance> {
         let mut conn = context.db_pool.get()?;
         Ok(instance::table
             .filter(instance::ap_id.eq(ap_id))
@@ -93,10 +93,10 @@ impl DbInstance {
         context: &Data<IbisContext>,
     ) -> BackendResult<InstanceView2> {
         let instance = match id {
-            Some(id) => DbInstance::read(id, context),
-            None => DbInstance::read_local(context),
+            Some(id) => Instance::read(id, context),
+            None => Instance::read_local(context),
         }?;
-        let followers = DbInstance::read_followers(instance.id, context)?;
+        let followers = Instance::read_followers(instance.id, context)?;
 
         Ok(InstanceView2 {
             instance,
@@ -105,8 +105,8 @@ impl DbInstance {
     }
 
     pub fn follow(
-        follower: &DbPerson,
-        instance: &DbInstance,
+        follower: &Person,
+        instance: &Instance,
         pending_: bool,
         context: &Data<IbisContext>,
     ) -> BackendResult<()> {
@@ -127,7 +127,7 @@ impl DbInstance {
         Ok(())
     }
 
-    pub fn read_followers(id_: InstanceId, context: &IbisContext) -> BackendResult<Vec<DbPerson>> {
+    pub fn read_followers(id_: InstanceId, context: &IbisContext) -> BackendResult<Vec<Person>> {
         use crate::backend::database::schema::person;
         use instance_follow::dsl::{follower_id, instance_id};
         let mut conn = context.db_pool.get()?;
@@ -137,7 +137,7 @@ impl DbInstance {
             .select(person::all_columns)
             .get_results(conn.deref_mut())?)
     }
-    pub fn list(context: &Data<IbisContext>) -> BackendResult<Vec<DbInstance>> {
+    pub fn list(context: &Data<IbisContext>) -> BackendResult<Vec<Instance>> {
         let mut conn = context.db_pool.get()?;
         Ok(instance::table
             .filter(instance::local.eq(false))
@@ -146,7 +146,7 @@ impl DbInstance {
 
     pub fn list_views(context: &Data<IbisContext>) -> BackendResult<Vec<InstanceView>> {
         let mut conn = context.db_pool.get()?;
-        let instances = instance::table.get_results::<DbInstance>(conn.deref_mut())?;
+        let instances = instance::table.get_results::<Instance>(conn.deref_mut())?;
         let mut res = vec![];
         // Get the last edited articles for each instance.
         // TODO: This is very inefficient, should use single query with lateral join
@@ -171,7 +171,7 @@ impl DbInstance {
     pub fn read_for_comment(
         comment_id: CommentId,
         context: &Data<IbisContext>,
-    ) -> BackendResult<DbInstance> {
+    ) -> BackendResult<Instance> {
         let mut conn = context.db_pool.get()?;
         Ok(instance::table
             .inner_join(article::table)

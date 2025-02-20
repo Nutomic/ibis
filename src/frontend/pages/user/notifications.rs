@@ -1,10 +1,10 @@
 use crate::{
     common::{
-        article::{ApiConflict, DbArticle, DbEdit},
-        comment::DbComment,
+        article::{ApiConflict, Article, Edit},
+        comment::Comment,
         newtypes::ArticleNotifId,
         notifications::ApiNotification,
-        user::DbPerson,
+        user::Person,
     },
     frontend::{
         api::CLIENT,
@@ -101,7 +101,7 @@ fn edit_conflict_view(c: &ApiConflict, notifications: NotificationsResource) -> 
     }
 }
 
-fn article_approval_view(a: &DbArticle, notifications: NotificationsResource) -> impl IntoView {
+fn article_approval_view(a: &Article, notifications: NotificationsResource) -> impl IntoView {
     let id = a.id;
     let click_approve = Action::new(move |_: &()| async move {
         CLIENT
@@ -144,9 +144,9 @@ fn article_approval_view(a: &DbArticle, notifications: NotificationsResource) ->
 
 fn comment_view(
     id: ArticleNotifId,
-    comment: &DbComment,
-    creator: &DbPerson,
-    article: &DbArticle,
+    comment: &Comment,
+    creator: &Person,
+    article: &Article,
     notifications: NotificationsResource,
 ) -> impl IntoView {
     let click_mark_as_read = Action::new(move |_: &()| async move {
@@ -171,9 +171,9 @@ fn comment_view(
 
 fn edit_view(
     id: ArticleNotifId,
-    edit: &DbEdit,
-    creator: &DbPerson,
-    article: &DbArticle,
+    edit: &Edit,
+    creator: &Person,
+    article: &Article,
     notifications: NotificationsResource,
 ) -> impl IntoView {
     let click_mark_as_read = Action::new(move |_: &()| async move {
@@ -195,7 +195,7 @@ fn edit_view(
 }
 
 #[component]
-fn CardTitle(article: DbArticle, creator: DbPerson, time: DateTime<Utc>) -> impl IntoView {
+fn CardTitle(article: Article, creator: Person, time: DateTime<Utc>) -> impl IntoView {
     view! {
         <div class="flex text-s">
             <span class="grow">{user_link(&creator)}" - "{article_link(&article)}</span>

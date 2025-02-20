@@ -6,8 +6,8 @@ use crate::common::{TestData, TEST_ARTICLE_DEFAULT_TEXT};
 use anyhow::Result;
 use ibis::common::{
     article::{
+        ArticleView,
         CreateArticleParams,
-        DbArticleView,
         EditArticleParams,
         ForkArticleParams,
         GetArticleParams,
@@ -454,7 +454,7 @@ async fn test_federated_edit_conflict() -> Result<()> {
     assert!(create_res.article.local);
 
     // fetch article to gamma
-    let resolve_res: DbArticleView = gamma
+    let resolve_res: ArticleView = gamma
         .resolve_article(create_res.article.ap_id.inner().clone())
         .await
         .unwrap();
@@ -766,7 +766,7 @@ async fn test_lock_article() -> Result<()> {
     let lock_res = alpha.protect_article(&lock_params).await.unwrap();
     assert!(lock_res.protected);
 
-    let resolve_res: DbArticleView = gamma
+    let resolve_res: ArticleView = gamma
         .resolve_article(create_res.article.ap_id.inner().clone())
         .await
         .unwrap();

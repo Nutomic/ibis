@@ -4,7 +4,7 @@ use crate::{
         federation::VerifyUrlData,
         utils::{config::IbisConfig, error::BackendResult, generate_activity_id},
     },
-    common::instance::DbInstance,
+    common::instance::Instance,
 };
 use activitypub_federation::config::FederationConfig;
 use diesel::{
@@ -50,7 +50,7 @@ pub async fn start(
         .build()
         .await?;
 
-    if DbInstance::read_local(&data).is_err() {
+    if Instance::read_local(&data).is_err() {
         info!("Running setup for new instance");
         setup(&data.to_request_data()).await?;
     }

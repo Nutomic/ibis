@@ -21,9 +21,9 @@ use crate::{
         utils::error::BackendResult,
     },
     common::{
-        article::{DbEdit, EditView, GetEditList},
+        article::{Edit, EditView, GetEditList},
         instance::SiteView,
-        user::{DbPerson, LocalUserView},
+        user::{LocalUserView, Person},
     },
 };
 use activitypub_federation::config::Data;
@@ -107,7 +107,7 @@ pub(in crate::backend::api) async fn site_view(
     Ok(Json(SiteView {
         my_profile: user.map(|u| u.inner()),
         config: context.config.options.clone(),
-        admin: DbPerson::read_admin(&context)?,
+        admin: Person::read_admin(&context)?,
     }))
 }
 
@@ -125,7 +125,7 @@ pub async fn edit_list(
     } else {
         return Err(anyhow!("Must provide article_id or person_id").into());
     };
-    Ok(Json(DbEdit::view(
+    Ok(Json(Edit::view(
         params,
         &user.map(|u| u.inner()),
         &context,

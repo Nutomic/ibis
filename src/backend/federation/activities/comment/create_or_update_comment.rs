@@ -10,7 +10,7 @@ use crate::{
         generate_activity_id,
         utils::error::{BackendError, BackendResult},
     },
-    common::{comment::DbComment, instance::DbInstance, user::DbPerson},
+    common::{comment::Comment, instance::Instance, user::Person},
 };
 use activitypub_federation::{
     config::Data,
@@ -30,7 +30,7 @@ pub enum CreateOrUpdateType {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateOrUpdateComment {
-    pub(crate) actor: ObjectId<DbPerson>,
+    pub(crate) actor: ObjectId<Person>,
     #[serde(deserialize_with = "deserialize_one_or_many")]
     pub(crate) to: Vec<Url>,
     pub(crate) object: ApubComment,
@@ -40,8 +40,8 @@ pub struct CreateOrUpdateComment {
 }
 
 impl CreateOrUpdateComment {
-    pub async fn send(comment: &DbComment, context: &Data<IbisContext>) -> BackendResult<()> {
-        let instance = DbInstance::read_for_comment(comment.id, context)?;
+    pub async fn send(comment: &Comment, context: &Data<IbisContext>) -> BackendResult<()> {
+        let instance = Instance::read_for_comment(comment.id, context)?;
 
         let kind = if comment.updated.is_none() {
             CreateOrUpdateType::Create
@@ -58,7 +58,7 @@ impl CreateOrUpdateComment {
             id,
         };
         let activity = AnnouncableActivities::CreateOrUpdateComment(activity);
-        let creator = DbPerson::read(comment.creator_id, context)?;
+        let creator = Person::read(comment.creator_id, context)?;
         send_activity_to_instance(&creator, activity, &instance, context).await?;
         Ok(())
     }
@@ -84,9 +84,9 @@ impl ActivityHandler for CreateOrUpdateComment {
     }
 
     async fn receive(self, context: &Data<Self::DataType>) -> Result<(), Self::Error> {
-        let comment = DbComment::from_json(self.object, context).await?;
+        let comment = Comment::from_json(self.object, context).await?;
 
-        let instance = DbInstance::read_for_comment(comment.id, context)?;
+        let instance = Instance::read_for_comment(comment.id, context)?;
         if instance.local {
             Self::send(&comment, context).await?;
         }

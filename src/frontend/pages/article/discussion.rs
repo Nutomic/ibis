@@ -1,5 +1,5 @@
 use crate::{
-    common::{comment::DbCommentView, newtypes::CommentId},
+    common::{comment::CommentView, newtypes::CommentId},
     frontend::{
         components::{
             article_nav::{ActiveTab, ArticleNav},
@@ -35,7 +35,7 @@ pub fn ArticleDiscussion() -> impl IntoView {
                                     .unwrap_or_default()
                             }
                             key=|comment| comment.comment.id
-                            children=move |comment: DbCommentView| {
+                            children=move |comment: CommentView| {
                                 view! { <CommentView article comment show_editor /> }
                             }
                         />
@@ -48,19 +48,19 @@ pub fn ArticleDiscussion() -> impl IntoView {
 
 #[derive(Clone)]
 struct CommentNode {
-    view: DbCommentView,
+    view: CommentView,
     children: Vec<CommentNode>,
 }
 
 impl CommentNode {
-    fn new(view: DbCommentView) -> Self {
+    fn new(view: CommentView) -> Self {
         Self {
             view,
             children: vec![],
         }
     }
     /// Visit the tree depth-first to build flat array from tree.
-    fn flatten(self) -> Vec<DbCommentView> {
+    fn flatten(self) -> Vec<CommentView> {
         let mut res = vec![self.view];
         for c in self.children {
             res.append(&mut c.flatten());
@@ -69,7 +69,7 @@ impl CommentNode {
     }
 }
 
-fn build_comments_tree(comments: Vec<DbCommentView>) -> Vec<DbCommentView> {
+fn build_comments_tree(comments: Vec<CommentView>) -> Vec<CommentView> {
     // First create a map of CommentId -> CommentView
     let mut map: HashMap<CommentId, CommentNode> = comments
         .iter()

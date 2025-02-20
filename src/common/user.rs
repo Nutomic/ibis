@@ -1,5 +1,5 @@
 use super::{
-    instance::DbInstance,
+    instance::Instance,
     newtypes::{LocalUserId, PersonId},
 };
 use chrono::{DateTime, Utc};
@@ -28,16 +28,16 @@ pub struct LoginUserParams {
 #[cfg_attr(feature = "ssr", derive(Queryable))]
 #[cfg_attr(feature = "ssr", diesel(check_for_backend(diesel::pg::Pg)))]
 pub struct LocalUserView {
-    pub person: DbPerson,
-    pub local_user: DbLocalUser,
-    pub following: Vec<DbInstance>,
+    pub person: Person,
+    pub local_user: LocalUser,
+    pub following: Vec<Instance>,
 }
 
 /// A user with account registered on local instance.
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[cfg_attr(feature = "ssr", derive(Queryable, Selectable, Identifiable))]
 #[cfg_attr(feature = "ssr", diesel(table_name = local_user, check_for_backend(diesel::pg::Pg)))]
-pub struct DbLocalUser {
+pub struct LocalUser {
     pub id: LocalUserId,
     #[serde(skip)]
     pub password_encrypted: String,
@@ -49,11 +49,11 @@ pub struct DbLocalUser {
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[cfg_attr(feature = "ssr", derive(Queryable, Selectable, Identifiable))]
 #[cfg_attr(feature = "ssr", diesel(table_name = person, check_for_backend(diesel::pg::Pg)))]
-pub struct DbPerson {
+pub struct Person {
     pub id: PersonId,
     pub username: String,
     #[cfg(feature = "ssr")]
-    pub ap_id: ObjectId<DbPerson>,
+    pub ap_id: ObjectId<Person>,
     #[cfg(not(feature = "ssr"))]
     pub ap_id: String,
     pub inbox_url: String,
@@ -68,7 +68,7 @@ pub struct DbPerson {
     pub bio: Option<String>,
 }
 
-impl DbPerson {
+impl Person {
     pub fn inbox_url(&self) -> Url {
         Url::parse(&self.inbox_url).expect("can parse inbox url")
     }

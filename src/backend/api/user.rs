@@ -10,10 +10,10 @@ use crate::{
     common::{
         notifications::{ApiNotification, ArticleNotifMarkAsReadParams},
         user::{
-            DbPerson,
             GetUserParams,
             LocalUserView,
             LoginUserParams,
+            Person,
             RegisterUserParams,
             UpdateUserParams,
         },
@@ -52,7 +52,7 @@ struct Claims {
     pub exp: u64,
 }
 
-fn generate_login_token(person: &DbPerson, context: &Data<IbisContext>) -> BackendResult<String> {
+fn generate_login_token(person: &Person, context: &Data<IbisContext>) -> BackendResult<String> {
     let hostname = context.domain().to_string();
     let claims = Claims {
         sub: person.username.clone(),
@@ -72,7 +72,7 @@ pub async fn validate(jwt: &str, context: &IbisContext) -> BackendResult<LocalUs
     let secret = read_jwt_secret(context)?;
     let key = DecodingKey::from_secret(secret.as_bytes());
     let claims = decode::<Claims>(jwt, &key, &validation)?;
-    DbPerson::read_local_from_name(&claims.claims.sub, context)
+    Person::read_local_from_name(&claims.claims.sub, context)
 }
 
 #[debug_handler]
@@ -85,7 +85,7 @@ pub(in crate::backend::api) async fn register_user(
         return Err(anyhow!("Registration is closed").into());
     }
     validate_user_name(&params.username)?;
-    let user = DbPerson::create_local(params.username, params.password, false, &context)?;
+    let user = Person::create_local(params.username, params.password, false, &context)?;
     let token = generate_login_token(&user.person, &context)?;
     let jar = jar.add(create_cookie(token, &context));
     Ok((jar, Json(user)))
@@ -97,7 +97,7 @@ pub(in crate::backend::api) async fn login_user(
     jar: CookieJar,
     Form(params): Form<LoginUserParams>,
 ) -> BackendResult<(CookieJar, Json<LocalUserView>)> {
-    let user = DbPerson::read_local_from_name(&params.username, &context)?;
+    let user = Person::read_local_from_name(&params.username, &context)?;
     let valid = verify(&params.password, &user.local_user.password_encrypted)?;
     if !valid {
         return Err(anyhow!("Invalid login").into());
@@ -140,8 +140,8 @@ pub(in crate::backend::api) async fn logout_user(
 pub(in crate::backend::api) async fn get_user(
     params: Query<GetUserParams>,
     context: Data<IbisContext>,
-) -> BackendResult<Json<DbPerson>> {
-    Ok(Json(DbPerson::read_from_name(
+) -> BackendResult<Json<Person>> {
+    Ok(Json(Person::read_from_name(
         &params.name,
         &params.domain,
         &context,
@@ -156,7 +156,7 @@ pub(in crate::backend::api) async fn update_user_profile(
     empty_to_none(&mut params.display_name);
     empty_to_none(&mut params.bio);
     validate_display_name(&params.display_name)?;
-    DbPerson::update_profile(&params, &context)?;
+    Person::update_profile(&params, &context)?;
     Ok(Json(SuccessResponse::default()))
 }
 

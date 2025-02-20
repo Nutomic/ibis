@@ -1,6 +1,6 @@
 use super::{
     newtypes::{ArticleId, CommentId, PersonId},
-    user::DbPerson,
+    user::Person,
 };
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -14,7 +14,7 @@ use {
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[cfg_attr(feature = "ssr", derive(Queryable, Selectable, Identifiable))]
 #[cfg_attr(feature = "ssr", diesel(table_name = comment, check_for_backend(diesel::pg::Pg), belongs_to(DbArticle, foreign_key = instance_id)))]
-pub struct DbComment {
+pub struct Comment {
     pub id: CommentId,
     pub creator_id: PersonId,
     pub article_id: ArticleId,
@@ -22,7 +22,7 @@ pub struct DbComment {
     pub content: String,
     pub depth: i32,
     #[cfg(feature = "ssr")]
-    pub ap_id: ObjectId<DbComment>,
+    pub ap_id: ObjectId<Comment>,
     #[cfg(not(feature = "ssr"))]
     pub ap_id: String,
     pub local: bool,
@@ -34,9 +34,9 @@ pub struct DbComment {
 #[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
 #[cfg_attr(feature = "ssr", derive(Queryable))]
 #[cfg_attr(feature = "ssr", diesel(check_for_backend(diesel::pg::Pg)))]
-pub struct DbCommentView {
-    pub comment: DbComment,
-    pub creator: DbPerson,
+pub struct CommentView {
+    pub comment: Comment,
+    pub creator: Person,
 }
 
 #[derive(Deserialize, Serialize, Debug)]

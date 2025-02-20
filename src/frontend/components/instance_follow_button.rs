@@ -1,6 +1,6 @@
 use crate::{
     common::{
-        instance::{DbInstance, FollowInstanceParams},
+        instance::{FollowInstanceParams, Instance},
         newtypes::InstanceId,
     },
     frontend::{
@@ -14,7 +14,7 @@ use crate::{
 use leptos::prelude::*;
 
 #[component]
-pub fn InstanceFollowButton(instance: DbInstance) -> impl IntoView {
+pub fn InstanceFollowButton(instance: Instance) -> impl IntoView {
     let follow_action = Action::new(move |instance_id: &InstanceId| {
         let instance_id = *instance_id;
         async move {

@@ -12,8 +12,8 @@ use crate::{
         },
     },
     common::{
-        article::{DbArticle, DbEdit},
-        instance::DbInstance,
+        article::{Article, Edit},
+        instance::Instance,
         validation::can_edit_article,
     },
 };
@@ -31,7 +31,7 @@ use url::Url;
 #[derive(Deserialize, Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateRemoteArticle {
-    pub actor: ObjectId<DbInstance>,
+    pub actor: ObjectId<Instance>,
     #[serde(deserialize_with = "deserialize_one_or_many")]
     pub to: Vec<Url>,
     pub object: ApubEdit,
@@ -43,11 +43,11 @@ pub struct UpdateRemoteArticle {
 impl UpdateRemoteArticle {
     /// Sent by a follower instance
     pub async fn send(
-        edit: DbEdit,
-        article_instance: DbInstance,
+        edit: Edit,
+        article_instance: Instance,
         context: &Data<IbisContext>,
     ) -> BackendResult<()> {
-        let local_instance = DbInstance::read_local(context)?;
+        let local_instance = Instance::read_local(context)?;
         let id = generate_activity_id(context)?;
         let update = UpdateRemoteArticle {
             actor: local_instance.ap_id.clone(),
@@ -81,20 +81,20 @@ impl ActivityHandler for UpdateRemoteArticle {
     }
 
     async fn verify(&self, context: &Data<Self::DataType>) -> Result<(), Self::Error> {
-        let article = DbArticle::read_from_ap_id(&self.object.object, context)?;
+        let article = Article::read_from_ap_id(&self.object.object, context)?;
         can_edit_article(&article, false)?;
         Ok(())
     }
 
     /// Received on article origin instance
     async fn receive(self, context: &Data<Self::DataType>) -> Result<(), Self::Error> {
-        let local_article = DbArticle::read_from_ap_id(&self.object.object, context)?;
+        let local_article = Article::read_from_ap_id(&self.object.object, context)?;
         let patch = Patch::from_str(&self.object.content)?;
 
         match apply(&local_article.text, &patch) {
             Ok(applied) => {
-                let edit = DbEdit::from_json(self.object.clone(), context).await?;
-                let article = DbArticle::update_text(edit.article_id, &applied, context)?;
+                let edit = Edit::from_json(self.object.clone(), context).await?;
+                let article = Article::update_text(edit.article_id, &applied, context)?;
                 UpdateLocalArticle::send(
                     article,
                     vec![self.actor.dereference(context).await?],

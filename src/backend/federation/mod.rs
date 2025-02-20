@@ -1,7 +1,7 @@
 use super::utils::error::BackendResult;
 use crate::{
     backend::{database::IbisContext, utils::config::IbisConfig},
-    common::{instance::DbInstance, user::DbPerson},
+    common::{instance::Instance, user::Person},
 };
 use activities::announce::AnnounceActivity;
 use activitypub_federation::{
@@ -37,9 +37,9 @@ where
 }
 
 pub async fn send_activity_to_instance(
-    actor: &DbPerson,
+    actor: &Person,
     activity: AnnouncableActivities,
-    instance: &DbInstance,
+    instance: &Instance,
     context: &Data<IbisContext>,
 ) -> BackendResult<()> {
     if instance.local {

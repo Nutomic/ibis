@@ -4,7 +4,7 @@ use crate::{
         database::IbisContext,
         utils::error::{BackendError, BackendResult},
     },
-    common::{article::DbArticle, comment::DbComment},
+    common::{article::Article, comment::Comment},
 };
 use activitypub_federation::{config::Data, traits::Object};
 use chrono::{DateTime, Utc};
@@ -13,8 +13,8 @@ use url::Url;
 
 #[derive(Clone, Debug)]
 pub enum DbArticleOrComment {
-    Article(DbArticle),
-    Comment(DbComment),
+    Article(Article),
+    Comment(Comment),
 }
 
 #[derive(Deserialize)]
@@ -38,10 +38,10 @@ impl Object for DbArticleOrComment {
         object_id: Url,
         context: &Data<Self::DataType>,
     ) -> BackendResult<Option<Self>> {
-        let post = DbArticle::read_from_id(object_id.clone(), context).await?;
+        let post = Article::read_from_id(object_id.clone(), context).await?;
         Ok(match post {
             Some(o) => Some(Self::Article(o)),
-            None => DbComment::read_from_id(object_id, context)
+            None => Comment::read_from_id(object_id, context)
                 .await?
                 .map(Self::Comment),
         })
@@ -67,15 +67,15 @@ impl Object for DbArticleOrComment {
         context: &Data<Self::DataType>,
     ) -> BackendResult<()> {
         match apub {
-            Self::Kind::Article(a) => DbArticle::verify(a, expected_domain, context).await,
-            Self::Kind::Comment(a) => DbComment::verify(a, expected_domain, context).await,
+            Self::Kind::Article(a) => Article::verify(a, expected_domain, context).await,
+            Self::Kind::Comment(a) => Comment::verify(a, expected_domain, context).await,
         }
     }
 
     async fn from_json(apub: Self::Kind, context: &Data<Self::DataType>) -> BackendResult<Self> {
         Ok(match apub {
-            Self::Kind::Article(p) => Self::Article(DbArticle::from_json(*p, context).await?),
-            Self::Kind::Comment(n) => Self::Comment(DbComment::from_json(*n, context).await?),
+            Self::Kind::Article(p) => Self::Article(Article::from_json(*p, context).await?),
+            Self::Kind::Comment(n) => Self::Comment(Comment::from_json(*n, context).await?),
         })
     }
 }

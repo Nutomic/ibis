@@ -4,8 +4,8 @@ use crate::{
         utils::error::BackendError,
     },
     common::{
-        article::{DbArticle, DbEdit, EditVersion},
-        user::DbPerson,
+        article::{Article, Edit, EditVersion},
+        user::Person,
     },
 };
 use activitypub_federation::{
@@ -31,18 +31,18 @@ pub enum PatchType {
 pub struct ApubEdit {
     #[serde(rename = "type")]
     kind: PatchType,
-    pub id: ObjectId<DbEdit>,
+    pub id: ObjectId<Edit>,
     pub content: String,
     pub summary: String,
     pub version: EditVersion,
     pub previous_version: EditVersion,
-    pub object: ObjectId<DbArticle>,
-    pub attributed_to: ObjectId<DbPerson>,
+    pub object: ObjectId<Article>,
+    pub attributed_to: ObjectId<Person>,
     pub published: DateTime<Utc>,
 }
 
 #[async_trait::async_trait]
-impl Object for DbEdit {
+impl Object for Edit {
     type DataType = IbisContext;
     type Kind = ApubEdit;
     type Error = BackendError;
@@ -51,12 +51,12 @@ impl Object for DbEdit {
         object_id: Url,
         context: &Data<Self::DataType>,
     ) -> Result<Option<Self>, Self::Error> {
-        Ok(DbEdit::read_from_ap_id(&object_id.into(), context).ok())
+        Ok(Edit::read_from_ap_id(&object_id.into(), context).ok())
     }
 
     async fn into_json(self, context: &Data<Self::DataType>) -> Result<Self::Kind, Self::Error> {
-        let article = DbArticle::read_view(self.article_id, None, context)?;
-        let creator = DbPerson::read(self.creator_id, context)?;
+        let article = Article::read_view(self.article_id, None, context)?;
+        let creator = Person::read(self.creator_id, context)?;
         Ok(ApubEdit {
             kind: PatchType::Patch,
             id: self.ap_id,
@@ -90,7 +90,7 @@ impl Object for DbEdit {
             Err(e) => {
                 // If actor couldnt be fetched, use ghost as placeholder
                 warn!("Failed to fetch user {}: {e}", json.attributed_to);
-                DbPerson::ghost(context)?
+                Person::ghost(context)?
             }
         };
         let form = DbEditForm {
@@ -104,7 +104,7 @@ impl Object for DbEdit {
             published: json.published,
             pending: false,
         };
-        let edit = DbEdit::create(&form, context)?;
+        let edit = Edit::create(&form, context)?;
         Ok(edit)
     }
 }

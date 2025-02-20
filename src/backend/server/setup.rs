@@ -11,9 +11,9 @@ use crate::{
         utils::{error::BackendError, generate_keypair},
     },
     common::{
-        article::{DbArticle, EditVersion},
-        instance::DbInstance,
-        user::DbPerson,
+        article::{Article, EditVersion},
+        instance::Instance,
+        user::Person,
         utils::http_protocol_str,
         MAIN_PAGE_NAME,
     },
@@ -45,9 +45,9 @@ pub async fn setup(context: &Data<IbisContext>) -> Result<(), BackendError> {
         topic: None,
         name: None,
     };
-    let instance = DbInstance::create(&form, context)?;
+    let instance = Instance::create(&form, context)?;
 
-    let person = DbPerson::create_local(
+    let person = Person::create_local(
         context.config.setup.admin_username.clone(),
         context.config.setup.admin_password.clone(),
         true,
@@ -67,7 +67,7 @@ pub async fn setup(context: &Data<IbisContext>) -> Result<(), BackendError> {
         protected: true,
         approved: true,
     };
-    let article = DbArticle::create(form, context)?;
+    let article = Article::create(form, context)?;
     // also create an article so its included in most recently edited list
     submit_article_update(
         MAIN_PAGE_DEFAULT_TEXT.to_string(),
@@ -80,7 +80,7 @@ pub async fn setup(context: &Data<IbisContext>) -> Result<(), BackendError> {
     .await?;
 
     // create ghost user
-    DbPerson::ghost(context)?;
+    Person::ghost(context)?;
 
     Ok(())
 }

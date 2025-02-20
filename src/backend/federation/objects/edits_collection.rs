@@ -4,7 +4,7 @@ use crate::{
         federation::objects::edit::ApubEdit,
         utils::error::BackendError,
     },
-    common::article::{DbArticle, DbEdit},
+    common::article::{Article, Edit},
 };
 use activitypub_federation::{
     config::Data,
@@ -31,7 +31,7 @@ pub struct DbEditCollection();
 
 #[async_trait::async_trait]
 impl Collection for DbEditCollection {
-    type Owner = DbArticle;
+    type Owner = Article;
     type DataType = IbisContext;
     type Kind = ApubEditCollection;
     type Error = BackendError;
@@ -40,8 +40,8 @@ impl Collection for DbEditCollection {
         article: &Self::Owner,
         context: &Data<Self::DataType>,
     ) -> Result<Self::Kind, Self::Error> {
-        let article = DbArticle::read(article.id, context)?;
-        let edits = DbEdit::list_for_article(article.id, context)?;
+        let article = Article::read(article.id, context)?;
+        let edits = Edit::list_for_article(article.id, context)?;
         let edits = future::try_join_all(
             edits
                 .into_iter()
@@ -72,14 +72,10 @@ impl Collection for DbEditCollection {
         owner: &Self::Owner,
         context: &Data<Self::DataType>,
     ) -> Result<Self, Self::Error> {
-        try_join_all(
-            apub.items
-                .into_iter()
-                .map(|i| DbEdit::from_json(i, context)),
-        )
-        .await
-        .map_err(|e| warn!("Failed to synchronize edits for {}: {e}", owner.ap_id))
-        .ok();
+        try_join_all(apub.items.into_iter().map(|i| Edit::from_json(i, context)))
+            .await
+            .map_err(|e| warn!("Failed to synchronize edits for {}: {e}", owner.ap_id))
+            .ok();
         Ok(DbEditCollection())
     }
 }

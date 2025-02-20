@@ -1,5 +1,5 @@
 use crate::{
-    common::{article::ListArticlesParams, instance::DbInstance, utils::http_protocol_str},
+    common::{article::ListArticlesParams, instance::Instance, utils::http_protocol_str},
     frontend::{
         api::CLIENT,
         components::{instance_follow_button::InstanceFollowButton, suspense_error::SuspenseError},
@@ -34,7 +34,7 @@ pub fn InstanceDetails() -> impl IntoView {
             {move || Suspend::new(async move {
                 instance_profile
                     .await
-                    .map(|instance: DbInstance| {
+                    .map(|instance: Instance| {
                         let articles = Resource::new(
                             move || instance.id,
                             |instance_id| async move {

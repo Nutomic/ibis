@@ -4,7 +4,7 @@ use crate::{
         federation::objects::article::ApubArticle,
         utils::error::{BackendError, BackendResult},
     },
-    common::{article::DbArticle, utils::http_protocol_str},
+    common::{article::Article, utils::http_protocol_str},
 };
 use activitypub_federation::{
     config::Data,
@@ -48,7 +48,7 @@ impl Collection for DbArticleCollection {
         _owner: &Self::Owner,
         context: &Data<Self::DataType>,
     ) -> Result<Self::Kind, Self::Error> {
-        let local_articles = DbArticle::read_all(Some(true), None, context)?;
+        let local_articles = Article::read_all(Some(true), None, context)?;
         let articles = try_join_all(
             local_articles
                 .into_iter()
@@ -85,7 +85,7 @@ impl Collection for DbArticleCollection {
             .filter(|i| !i.id.is_local(context))
             .map(|article| async {
                 let id = article.id.clone();
-                let res = DbArticle::from_json(article, context).await;
+                let res = Article::from_json(article, context).await;
                 if let Err(e) = &res {
                     warn!("Failed to synchronize article {id}: {e}");
                 }

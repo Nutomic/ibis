@@ -7,7 +7,7 @@ use crate::{
             generate_activity_id,
         },
     },
-    common::instance::DbInstance,
+    common::instance::Instance,
 };
 use activitypub_federation::{
     config::Data,
@@ -21,7 +21,7 @@ use url::Url;
 #[derive(Deserialize, Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Accept {
-    actor: ObjectId<DbInstance>,
+    actor: ObjectId<Instance>,
     object: Follow,
     #[serde(rename = "type")]
     kind: AcceptType,
@@ -30,7 +30,7 @@ pub struct Accept {
 
 impl Accept {
     pub async fn send(
-        local_instance: DbInstance,
+        local_instance: Instance,
         object: Follow,
         context: &Data<IbisContext>,
     ) -> BackendResult<()> {
@@ -74,7 +74,7 @@ impl ActivityHandler for Accept {
         // add to follows
         let person = self.object.actor.dereference_local(context).await?;
         let instance = self.actor.dereference(context).await?;
-        DbInstance::follow(&person, &instance, false, context)?;
+        Instance::follow(&person, &instance, false, context)?;
         Ok(())
     }
 }

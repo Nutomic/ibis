@@ -7,9 +7,9 @@ use crate::{
         utils::{error::BackendResult, generate_keypair},
     },
     common::{
-        instance::DbInstance,
+        instance::Instance,
         newtypes::PersonId,
-        user::{DbLocalUser, DbPerson, LocalUserView, UpdateUserParams},
+        user::{LocalUser, LocalUserView, Person, UpdateUserParams},
         utils::http_protocol_str,
     },
 };
@@ -40,7 +40,7 @@ pub struct DbLocalUserForm {
 #[diesel(table_name = person, check_for_backend(diesel::pg::Pg))]
 pub struct DbPersonForm {
     pub username: String,
-    pub ap_id: ObjectId<DbPerson>,
+    pub ap_id: ObjectId<Person>,
     pub inbox_url: String,
     pub public_key: String,
     pub private_key: Option<String>,
@@ -50,7 +50,7 @@ pub struct DbPersonForm {
     pub bio: Option<String>,
 }
 
-impl DbPerson {
+impl Person {
     pub fn create(person_form: &DbPersonForm, context: &Data<IbisContext>) -> BackendResult<Self> {
         let mut conn = context.db_pool.get()?;
         Ok(insert_into(person::table)
@@ -58,15 +58,15 @@ impl DbPerson {
             .on_conflict(person::dsl::ap_id)
             .do_update()
             .set(person_form)
-            .get_result::<DbPerson>(conn.deref_mut())?)
+            .get_result::<Person>(conn.deref_mut())?)
     }
 
-    pub fn read(id: PersonId, context: &IbisContext) -> BackendResult<DbPerson> {
+    pub fn read(id: PersonId, context: &IbisContext) -> BackendResult<Person> {
         let mut conn = context.db_pool.get()?;
         Ok(person::table.find(id).get_result(conn.deref_mut())?)
     }
 
-    pub fn read_admin(context: &IbisContext) -> BackendResult<DbPerson> {
+    pub fn read_admin(context: &IbisContext) -> BackendResult<Person> {
         let mut conn = context.db_pool.get()?;
         Ok(person::table
             .inner_join(local_user::table)
@@ -103,7 +103,7 @@ impl DbPerson {
 
         let person = insert_into(person::table)
             .values(person_form)
-            .get_result::<DbPerson>(conn.deref_mut())?;
+            .get_result::<Person>(conn.deref_mut())?;
 
         let local_user_form = DbLocalUserForm {
             password_encrypted: hash(password, DEFAULT_COST)?,
@@ -113,7 +113,7 @@ impl DbPerson {
 
         let local_user = insert_into(local_user::table)
             .values(local_user_form)
-            .get_result::<DbLocalUser>(conn.deref_mut())?;
+            .get_result::<LocalUser>(conn.deref_mut())?;
 
         Ok(LocalUserView {
             local_user,
@@ -123,9 +123,9 @@ impl DbPerson {
     }
 
     pub fn read_from_ap_id(
-        ap_id: &ObjectId<DbPerson>,
+        ap_id: &ObjectId<Person>,
         context: &Data<IbisContext>,
-    ) -> BackendResult<DbPerson> {
+    ) -> BackendResult<Person> {
         let mut conn = context.db_pool.get()?;
         Ok(person::table
             .filter(person::dsl::ap_id.eq(ap_id))
@@ -136,7 +136,7 @@ impl DbPerson {
         username: &str,
         domain: &Option<String>,
         context: &Data<IbisContext>,
-    ) -> BackendResult<DbPerson> {
+    ) -> BackendResult<Person> {
         let mut conn = context.db_pool.get()?;
         let mut query = person::table
             .filter(person::username.eq(username))
@@ -176,7 +176,7 @@ impl DbPerson {
             .inner_join(local_user::table)
             .filter(person::dsl::local)
             .filter(person::dsl::username.eq(username))
-            .get_result::<(DbPerson, DbLocalUser)>(conn.deref_mut())?;
+            .get_result::<(Person, LocalUser)>(conn.deref_mut())?;
         // TODO: handle this in single query
         let following = Self::read_following(person.id, context)?;
         Ok(LocalUserView {
@@ -186,7 +186,7 @@ impl DbPerson {
         })
     }
 
-    fn read_following(id_: PersonId, context: &IbisContext) -> BackendResult<Vec<DbInstance>> {
+    fn read_following(id_: PersonId, context: &IbisContext) -> BackendResult<Vec<Instance>> {
         use instance_follow::dsl::{follower_id, instance_id};
         let mut conn = context.db_pool.get()?;
         Ok(instance_follow::table
@@ -197,9 +197,9 @@ impl DbPerson {
     }
 
     /// Ghost user serves as placeholder for deleted accounts
-    pub fn ghost(context: &Data<IbisContext>) -> BackendResult<DbPerson> {
+    pub fn ghost(context: &Data<IbisContext>) -> BackendResult<Person> {
         let username = "ghost";
-        let read = DbPerson::read_from_name(username, &None, context);
+        let read = Person::read_from_name(username, &None, context);
         if read.is_ok() {
             read
         } else {
@@ -221,7 +221,7 @@ impl DbPerson {
                 display_name: None,
                 bio: None,
             };
-            DbPerson::create(&person_form, context)
+            Person::create(&person_form, context)
         }
     }
 }

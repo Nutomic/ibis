@@ -7,7 +7,7 @@ use crate::{
             generate_activity_id,
         },
     },
-    common::{article::DbArticle, instance::DbInstance},
+    common::{article::Article, instance::Instance},
 };
 use activitypub_federation::{
     config::Data,
@@ -22,7 +22,7 @@ use url::Url;
 #[derive(Deserialize, Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateArticle {
-    pub actor: ObjectId<DbInstance>,
+    pub actor: ObjectId<Instance>,
     #[serde(deserialize_with = "deserialize_one_or_many")]
     pub to: Vec<Url>,
     pub object: ApubArticle,
@@ -33,10 +33,10 @@ pub struct CreateArticle {
 
 impl CreateArticle {
     pub async fn send_to_followers(
-        article: DbArticle,
+        article: Article,
         context: &Data<IbisContext>,
     ) -> BackendResult<()> {
-        let local_instance = DbInstance::read_local(context)?;
+        let local_instance = Instance::read_local(context)?;
         let object = article.clone().into_json(context).await?;
         let id = generate_activity_id(context)?;
         let to = local_instance.follower_ids(context)?;
@@ -71,9 +71,9 @@ impl ActivityHandler for CreateArticle {
     }
 
     async fn receive(self, context: &Data<Self::DataType>) -> Result<(), Self::Error> {
-        let article = DbArticle::from_json(self.object.clone(), context).await?;
+        let article = Article::from_json(self.object.clone(), context).await?;
         if article.local {
-            let local_instance = DbInstance::read_local(context)?;
+            let local_instance = Instance::read_local(context)?;
             local_instance
                 .send_to_followers(self, vec![], context)
                 .await?;

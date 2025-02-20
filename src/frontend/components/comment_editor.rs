@@ -1,7 +1,7 @@
 use crate::{
     common::{
-        article::DbArticleView,
-        comment::{CreateCommentParams, DbComment, EditCommentParams},
+        article::ArticleView,
+        comment::{Comment, CreateCommentParams, EditCommentParams},
         newtypes::CommentId,
     },
     frontend::{
@@ -14,14 +14,14 @@ use leptos_use::{use_textarea_autosize, UseTextareaAutosizeReturn};
 
 #[derive(Clone)]
 pub struct EditParams {
-    pub comment: DbComment,
-    pub set_comment: WriteSignal<DbComment>,
+    pub comment: Comment,
+    pub set_comment: WriteSignal<Comment>,
     pub set_is_editing: WriteSignal<bool>,
 }
 
 #[component]
 pub fn CommentEditorView(
-    article: Resource<FrontendResult<DbArticleView>>,
+    article: Resource<FrontendResult<ArticleView>>,
     #[prop(optional)] parent_id: Option<CommentId>,
     /// Set this to CommentId(-1) to hide all editors
     #[prop(optional)]

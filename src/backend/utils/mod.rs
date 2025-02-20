@@ -1,7 +1,7 @@
 use crate::{
     backend::{database::IbisContext, utils::error::BackendResult},
     common::{
-        article::{DbEdit, EditVersion},
+        article::{Edit, EditVersion},
         utils,
     },
 };
@@ -41,7 +41,7 @@ pub(super) fn generate_activity_id(context: &Data<IbisContext>) -> Result<Url, P
 /// TODO: testing
 /// TODO: should cache all these generated versions
 pub(super) fn generate_article_version(
-    edits: &Vec<DbEdit>,
+    edits: &Vec<Edit>,
     version: &EditVersion,
 ) -> BackendResult<String> {
     let mut generated = String::new();
@@ -74,17 +74,17 @@ pub fn generate_keypair() -> BackendResult<Keypair> {
 mod test {
     use super::*;
     use crate::common::{
-        article::DbEdit,
+        article::Edit,
         newtypes::{ArticleId, EditId, PersonId},
     };
     use activitypub_federation::fetch::object_id::ObjectId;
     use chrono::Utc;
     use diffy::create_patch;
 
-    fn create_edits() -> BackendResult<Vec<DbEdit>> {
-        let generate_edit = |a, b| -> BackendResult<DbEdit> {
+    fn create_edits() -> BackendResult<Vec<Edit>> {
+        let generate_edit = |a, b| -> BackendResult<Edit> {
             let diff = create_patch(a, b).to_string();
-            Ok(DbEdit {
+            Ok(Edit {
                 id: EditId(0),
                 creator_id: PersonId(0),
                 hash: EditVersion::new(&diff),

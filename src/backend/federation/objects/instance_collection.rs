@@ -4,7 +4,7 @@ use crate::{
         database::IbisContext,
         utils::error::{BackendError, BackendResult},
     },
-    common::{instance::DbInstance, utils::http_protocol_str},
+    common::{instance::Instance, utils::http_protocol_str},
 };
 use activitypub_federation::{
     config::Data,
@@ -48,7 +48,7 @@ impl Collection for DbInstanceCollection {
         _owner: &Self::Owner,
         context: &Data<Self::DataType>,
     ) -> Result<Self::Kind, Self::Error> {
-        let instances = DbInstance::list(context)?;
+        let instances = Instance::list(context)?;
         let instances = future::try_join_all(
             instances
                 .into_iter()
@@ -86,7 +86,7 @@ impl Collection for DbInstanceCollection {
             .filter(|i| !i.id.is_local(context))
             .map(|instance| async {
                 let id = instance.id.clone();
-                let res = DbInstance::from_json(instance, context).await;
+                let res = Instance::from_json(instance, context).await;
                 if let Err(e) = &res {
                     warn!("Failed to synchronize article {id}: {e}");
                 }

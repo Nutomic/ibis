@@ -6,11 +6,11 @@ use super::{
 use crate::{
     backend::{api::check_is_admin, database::schema::local_user, utils::error::BackendResult},
     common::{
-        article::{DbArticle, DbEdit},
-        comment::DbComment,
+        article::{Article, Edit},
+        comment::Comment,
         newtypes::{ArticleId, ArticleNotifId, CommentId, EditId, LocalUserId, PersonId},
         notifications::ApiNotification,
-        user::{DbPerson, LocalUserView},
+        user::{LocalUserView, Person},
     },
 };
 use activitypub_federation::config::Data;
@@ -97,13 +97,9 @@ impl Notification {
                 comment::all_columns.nullable(),
                 edit::all_columns.nullable(),
             ))
-            .get_results::<(
-                Notification,
-                DbArticle,
-                DbPerson,
-                Option<DbComment>,
-                Option<DbEdit>,
-            )>(&mut conn)?;
+            .get_results::<(Notification, Article, Person, Option<Comment>, Option<Edit>)>(
+                &mut conn,
+            )?;
         notifications.extend(article_notifications.into_iter().flat_map(
             |(notif, article, creator, comment, edit)| {
                 if let Some(c) = comment {
@@ -166,7 +162,7 @@ impl Notification {
         Ok(())
     }
 
-    pub(super) fn notify_comment(comment: &DbComment, context: &IbisContext) -> BackendResult<()> {
+    pub(super) fn notify_comment(comment: &Comment, context: &IbisContext) -> BackendResult<()> {
         let mut conn = context.db_pool.get()?;
 
         // notify author of parent comment
@@ -218,7 +214,7 @@ impl Notification {
         Ok(())
     }
 
-    pub(super) fn notify_edit(edit: &DbEdit, context: &IbisContext) -> BackendResult<()> {
+    pub(super) fn notify_edit(edit: &Edit, context: &IbisContext) -> BackendResult<()> {
         Self::notify(
             edit.article_id,
             |local_user_id| NotificationInsertForm {

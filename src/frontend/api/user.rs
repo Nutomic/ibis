@@ -4,10 +4,10 @@ use crate::{
         article::{EditView, GetEditList},
         newtypes::PersonId,
         user::{
-            DbPerson,
             GetUserParams,
             LocalUserView,
             LoginUserParams,
+            Person,
             RegisterUserParams,
             UpdateUserParams,
         },
@@ -29,7 +29,7 @@ impl ApiClient {
         self.post("/api/v1/account/logout", None::<()>).await
     }
 
-    pub async fn get_user(&self, data: GetUserParams) -> FrontendResult<DbPerson> {
+    pub async fn get_user(&self, data: GetUserParams) -> FrontendResult<Person> {
         self.get("/api/v1/user", Some(data)).await
     }
 

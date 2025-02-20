@@ -8,7 +8,7 @@ use crate::{
             generate_activity_id,
         },
     },
-    common::{comment::DbComment, instance::DbInstance, user::DbPerson},
+    common::{comment::Comment, instance::Instance, user::Person},
 };
 use activitypub_federation::{
     config::Data,
@@ -24,10 +24,10 @@ use url::Url;
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DeleteComment {
-    pub(crate) actor: ObjectId<DbPerson>,
+    pub(crate) actor: ObjectId<Person>,
     #[serde(deserialize_with = "deserialize_one_or_many")]
     pub(crate) to: Vec<Url>,
-    pub(crate) object: ObjectId<DbComment>,
+    pub(crate) object: ObjectId<Comment>,
     #[serde(rename = "type")]
     pub(crate) kind: DeleteType,
     pub(crate) id: Url,
@@ -35,9 +35,9 @@ pub struct DeleteComment {
 
 impl DeleteComment {
     pub fn new(
-        comment: &DbComment,
-        creator: &DbPerson,
-        instance: &DbInstance,
+        comment: &Comment,
+        creator: &Person,
+        instance: &Instance,
         context: &Data<IbisContext>,
     ) -> BackendResult<Self> {
         let id = generate_activity_id(context)?;
@@ -49,9 +49,9 @@ impl DeleteComment {
             id,
         })
     }
-    pub async fn send(comment: &DbComment, context: &Data<IbisContext>) -> BackendResult<()> {
-        let instance = DbInstance::read_for_comment(comment.id, context)?;
-        let creator = DbPerson::read(comment.creator_id, context)?;
+    pub async fn send(comment: &Comment, context: &Data<IbisContext>) -> BackendResult<()> {
+        let instance = Instance::read_for_comment(comment.id, context)?;
+        let creator = Person::read(comment.creator_id, context)?;
         let activity = Self::new(comment, &creator, &instance, context)?;
         let activity = AnnouncableActivities::DeleteComment(activity);
         send_activity_to_instance(&creator, activity, &instance, context).await?;
@@ -85,9 +85,9 @@ impl ActivityHandler for DeleteComment {
             ..Default::default()
         };
         let comment = self.object.dereference(context).await?;
-        DbComment::update(form, comment.id, context)?;
+        Comment::update(form, comment.id, context)?;
 
-        let instance = DbInstance::read_for_comment(comment.id, context)?;
+        let instance = Instance::read_for_comment(comment.id, context)?;
         if instance.local {
             Self::send(&comment, context).await?;
         }

@@ -3,7 +3,7 @@ use crate::{
         database::{user::DbPersonForm, IbisContext},
         utils::error::BackendError,
     },
-    common::user::DbPerson,
+    common::user::Person,
 };
 use activitypub_federation::{
     config::Data,
@@ -22,7 +22,7 @@ use url::Url;
 pub struct ApubUser {
     #[serde(rename = "type")]
     kind: PersonType,
-    id: ObjectId<DbPerson>,
+    id: ObjectId<Person>,
     preferred_username: String,
     /// displayname
     name: Option<String>,
@@ -32,7 +32,7 @@ pub struct ApubUser {
 }
 
 #[async_trait::async_trait]
-impl Object for DbPerson {
+impl Object for Person {
     type DataType = IbisContext;
     type Kind = ApubUser;
     type Error = BackendError;
@@ -45,7 +45,7 @@ impl Object for DbPerson {
         object_id: Url,
         context: &Data<Self::DataType>,
     ) -> Result<Option<Self>, Self::Error> {
-        Ok(DbPerson::read_from_ap_id(&object_id.into(), context).ok())
+        Ok(Person::read_from_ap_id(&object_id.into(), context).ok())
     }
 
     async fn into_json(self, _context: &Data<Self::DataType>) -> Result<Self::Kind, Self::Error> {
@@ -84,11 +84,11 @@ impl Object for DbPerson {
             display_name: json.name,
             bio: json.summary,
         };
-        DbPerson::create(&form, context)
+        Person::create(&form, context)
     }
 }
 
-impl Actor for DbPerson {
+impl Actor for Person {
     fn id(&self) -> Url {
         self.ap_id.inner().clone()
     }

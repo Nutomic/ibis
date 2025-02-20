@@ -1,5 +1,5 @@
 use crate::{
-    common::{article::DbArticle, instance::InstanceView},
+    common::{article::Article, instance::InstanceView},
     frontend::{
         api::CLIENT,
         components::suspense_error::SuspenseError,
@@ -62,7 +62,7 @@ pub fn instance_card(i: InstanceView) -> impl IntoView {
                         <For
                             each=move || i.articles.clone()
                             key=|article| article.id
-                            children=move |article: DbArticle| {
+                            children=move |article: Article| {
                                 view! { {article_link(&article)} }
                             }
                         />

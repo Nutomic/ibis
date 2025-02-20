@@ -8,8 +8,8 @@ use crate::{
         utils::error::BackendResult,
     },
     common::{
-        article::{DbArticle, DbArticleView, EditVersion},
-        comment::DbComment,
+        article::{Article, ArticleView, EditVersion},
+        comment::Comment,
         newtypes::{ArticleId, InstanceId},
         user::LocalUserView,
     },
@@ -35,7 +35,7 @@ use std::ops::DerefMut;
 pub struct DbArticleForm {
     pub title: String,
     pub text: String,
-    pub ap_id: ObjectId<DbArticle>,
+    pub ap_id: ObjectId<Article>,
     pub instance_id: InstanceId,
     pub local: bool,
     pub protected: bool,
@@ -59,7 +59,7 @@ impl<'a> From<(&'a String, Option<String>)> for ArticleViewQuery<'a> {
     }
 }
 
-impl DbArticle {
+impl Article {
     pub fn edits_id(&self) -> BackendResult<CollectionId<DbEditCollection>> {
         Ok(CollectionId::parse(&format!("{}/edits", self.ap_id))?)
     }
@@ -126,7 +126,7 @@ impl DbArticle {
         params: impl Into<ArticleViewQuery<'a>>,
         user: Option<&LocalUserView>,
         context: &IbisContext,
-    ) -> BackendResult<DbArticleView> {
+    ) -> BackendResult<ArticleView> {
         let mut conn = context.db_pool.get()?;
         let local_user_id = user.map(|u| u.local_user.id);
         let mut query = article::table
@@ -151,16 +151,16 @@ impl DbArticle {
         // TODO: need to check for specific follower, not any follower
         //query = query.filter(article_follow::local_user_id.nullable().eq(local_user_id));
 
-        let (article, instance, following): (DbArticle, _, _) = query
+        let (article, instance, following): (Article, _, _) = query
             .select((
                 article::all_columns,
                 instance::all_columns,
                 article_follow::local_user_id.nullable().is_not_null(),
             ))
             .get_result(conn.deref_mut())?;
-        let comments = DbComment::read_for_article(article.id, context)?;
+        let comments = Comment::read_for_article(article.id, context)?;
         let latest_version = article.latest_edit_version(context)?;
-        Ok(DbArticleView {
+        Ok(ArticleView {
             article,
             instance,
             comments,
@@ -170,7 +170,7 @@ impl DbArticle {
     }
 
     pub fn read_from_ap_id(
-        ap_id: &ObjectId<DbArticle>,
+        ap_id: &ObjectId<Article>,
         context: &IbisContext,
     ) -> BackendResult<Self> {
         let mut conn = context.db_pool.get()?;

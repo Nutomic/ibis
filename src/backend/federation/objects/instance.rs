@@ -5,7 +5,7 @@ use crate::{
         federation::{objects::articles_collection::DbArticleCollection, send_activity},
         utils::error::{BackendError, BackendResult},
     },
-    common::{instance::DbInstance, utils::extract_domain},
+    common::{instance::Instance, utils::extract_domain},
 };
 use activitypub_federation::{
     config::Data,
@@ -27,7 +27,7 @@ use url::Url;
 pub struct ApubInstance {
     #[serde(rename = "type")]
     kind: ServiceType,
-    pub id: ObjectId<DbInstance>,
+    pub id: ObjectId<Instance>,
     name: Option<String>,
     summary: Option<String>,
     articles: Option<CollectionId<DbArticleCollection>>,
@@ -36,13 +36,13 @@ pub struct ApubInstance {
     public_key: PublicKey,
 }
 
-impl DbInstance {
+impl Instance {
     pub fn followers_url(&self) -> BackendResult<Url> {
         Ok(Url::parse(&format!("{}/followers", self.ap_id.inner()))?)
     }
 
     pub fn follower_ids(&self, context: &Data<IbisContext>) -> BackendResult<Vec<Url>> {
-        Ok(DbInstance::read_followers(self.id, context)?
+        Ok(Instance::read_followers(self.id, context)?
             .into_iter()
             .map(|f| f.ap_id.into())
             .collect())
@@ -51,7 +51,7 @@ impl DbInstance {
     pub async fn send_to_followers<Activity>(
         &self,
         activity: Activity,
-        extra_recipients: Vec<DbInstance>,
+        extra_recipients: Vec<Instance>,
         context: &Data<IbisContext>,
     ) -> Result<(), <Activity as ActivityHandler>::Error>
     where
@@ -59,7 +59,7 @@ impl DbInstance {
         <Activity as ActivityHandler>::Error: From<activitypub_federation::error::Error>,
         <Activity as ActivityHandler>::Error: From<BackendError>,
     {
-        let mut inboxes: Vec<_> = DbInstance::read_followers(self.id, context)?
+        let mut inboxes: Vec<_> = Instance::read_followers(self.id, context)?
             .iter()
             .map(|f| f.inbox_url())
             .collect();
@@ -70,7 +70,7 @@ impl DbInstance {
 }
 
 #[async_trait::async_trait]
-impl Object for DbInstance {
+impl Object for Instance {
     type DataType = IbisContext;
     type Kind = ApubInstance;
     type Error = BackendError;
@@ -83,7 +83,7 @@ impl Object for DbInstance {
         object_id: Url,
         context: &Data<Self::DataType>,
     ) -> Result<Option<Self>, Self::Error> {
-        Ok(DbInstance::read_from_ap_id(&object_id.into(), context).ok())
+        Ok(Instance::read_from_ap_id(&object_id.into(), context).ok())
     }
 
     async fn into_json(self, _context: &Data<Self::DataType>) -> Result<Self::Kind, Self::Error> {
@@ -127,7 +127,7 @@ impl Object for DbInstance {
             local: false,
             name: json.name,
         };
-        let instance = DbInstance::create(&form, context)?;
+        let instance = Instance::create(&form, context)?;
 
         // TODO: very inefficient to sync all articles every time
         let instance_ = instance.clone();
@@ -151,7 +151,7 @@ impl Object for DbInstance {
     }
 }
 
-impl Actor for DbInstance {
+impl Actor for Instance {
     fn id(&self) -> Url {
         self.ap_id.inner().clone()
     }
