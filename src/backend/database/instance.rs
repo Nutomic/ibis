@@ -21,7 +21,10 @@ use activitypub_federation::{
     fetch::{collection_id::CollectionId, object_id::ObjectId},
 };
 use chrono::{DateTime, Utc};
-use diesel::{dsl::max, *};
+use diesel::{
+    dsl::{max, not},
+    *,
+};
 use std::{fmt::Debug, ops::DerefMut};
 
 #[derive(Debug, Clone, Insertable, AsChangeset)]
@@ -146,7 +149,14 @@ impl Instance {
 
     pub fn list_views(context: &Data<IbisContext>) -> BackendResult<Vec<InstanceView>> {
         let mut conn = context.db_pool.get()?;
-        let instances = instance::table.get_results::<Instance>(conn.deref_mut())?;
+        // select all instances, with most recently edited first
+        let instances = instance::table
+            .inner_join(article::table.inner_join(edit::table))
+            .filter(not(edit::pending))
+            .group_by(instance::id)
+            .order_by(max(edit::published).desc())
+            .select(instance::all_columns)
+            .get_results::<Instance>(conn.deref_mut())?;
         let mut res = vec![];
         // Get the last edited articles for each instance.
         // TODO: This is very inefficient, should use single query with lateral join
