@@ -76,7 +76,7 @@ impl ApiClient {
 
         let mut req = self
             .client
-            .request(method.clone(), self.request_endpoint(path)?);
+            .request(method.clone(), self.request_endpoint(path, true)?);
         req = if method == Method::GET {
             req.query(&params)
         } else {
@@ -120,7 +120,7 @@ impl ApiClient {
                 }
             });
 
-            let path_with_endpoint = self.request_endpoint(path)?;
+            let path_with_endpoint = self.request_endpoint(path, false)?;
             let params_encoded = serde_urlencoded::to_string(&params)?;
             let path = if method == Method::GET {
                 // Cannot pass the form data directly but need to convert it manually
@@ -164,8 +164,8 @@ impl ApiClient {
         }
     }
 
-    fn request_endpoint(&self, path: &str) -> FrontendResult<String> {
-        let protocol = if cfg!(debug_assertions) {
+    fn request_endpoint(&self, path: &str, ssr: bool) -> FrontendResult<String> {
+        let protocol = if ssr || cfg!(debug_assertions) {
             "http"
         } else {
             "https"

@@ -1,8 +1,4 @@
-use super::config::IbisConfig;
-use crate::backend::{
-    database::{DbPool, IbisContext},
-    utils::error::BackendResult,
-};
+use crate::backend::{database::DbPool, utils::error::BackendResult};
 use clokwerk::{Scheduler, TimeUnits};
 use diesel::{sql_query, RunQueryDsl};
 use log::{error, info};
@@ -32,9 +28,15 @@ fn active_counts(pool: &DbPool) -> BackendResult<()> {
     Ok(())
 }
 
-#[test]
-fn test_scheduled_tasks() -> BackendResult<()> {
-    let context = IbisContext::init(IbisConfig::default())?;
-    active_counts(&context.db_pool)?;
-    Ok(())
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::backend::{IbisConfig, IbisContext};
+
+    #[test]
+    fn test_scheduled_tasks() -> BackendResult<()> {
+        let context = IbisContext::init(IbisConfig::default())?;
+        active_counts(&context.db_pool)?;
+        Ok(())
+    }
 }
