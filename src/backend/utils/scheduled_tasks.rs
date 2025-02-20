@@ -37,7 +37,7 @@ mod test {
 
     #[test]
     fn test_scheduled_tasks() -> BackendResult<()> {
-        let context = IbisContext::init(IbisConfig::read()?)?;
+        let context = IbisContext::init(IbisConfig::read()?, false)?;
         active_counts(&context.db_pool)?;
         Ok(())
     }

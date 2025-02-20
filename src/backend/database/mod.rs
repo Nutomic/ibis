@@ -32,8 +32,13 @@ pub struct IbisContext {
 }
 
 impl IbisContext {
-    pub fn init(config: IbisConfig) -> BackendResult<Self> {
-        let database_url = var("DATABASE_URL").unwrap_or(config.database.connection_url.clone());
+    pub fn init(config: IbisConfig, ignore_env: bool) -> BackendResult<Self> {
+        let database_url = config.database.connection_url.clone();
+        let database_url = if ignore_env {
+            database_url
+        } else {
+            var("DATABASE_URL").unwrap_or(database_url)
+        };
         let manager = ConnectionManager::<PgConnection>::new(database_url);
         let db_pool = Pool::builder()
             .max_size(config.database.pool_size)

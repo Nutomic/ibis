@@ -50,6 +50,13 @@ pub struct DbInstanceUpdateForm {
     pub name: Option<String>,
 }
 
+#[derive(Debug)]
+pub enum InstanceViewQuery<'a> {
+    Local,
+    Id(InstanceId),
+    ApId(&'a ObjectId<Instance>),
+}
+
 impl Instance {
     pub fn create(form: &DbInstanceForm, context: &IbisContext) -> BackendResult<Self> {
         let mut conn = context.db_pool.get()?;
@@ -92,12 +99,13 @@ impl Instance {
     }
 
     pub fn read_view(
-        id: Option<InstanceId>,
+        params: InstanceViewQuery,
         context: &Data<IbisContext>,
     ) -> BackendResult<InstanceView2> {
-        let instance = match id {
-            Some(id) => Instance::read(id, context),
-            None => Instance::read_local(context),
+        let instance = match params {
+            InstanceViewQuery::Local => Instance::read_local(context),
+            InstanceViewQuery::Id(id) => Instance::read(id, context),
+            InstanceViewQuery::ApId(url) => Instance::read_from_ap_id(url, context),
         }?;
         let followers = Instance::read_followers(instance.id, context)?;
 
@@ -149,10 +157,13 @@ impl Instance {
 
     pub fn list_views(context: &Data<IbisContext>) -> BackendResult<Vec<InstanceView>> {
         let mut conn = context.db_pool.get()?;
-        // select all instances, with most recently edited first
+        // select all instances, with most recently edited first (pending edits are ignored)
         let instances = instance::table
-            .inner_join(article::table.inner_join(edit::table))
-            .filter(not(edit::pending))
+            .left_join(
+                article::table
+                    .left_join(edit::table)
+                    .on(article::id.eq(edit::article_id).and(not(edit::pending))),
+            )
             .group_by(instance::id)
             .order_by(max(edit::published).desc())
             .select(instance::all_columns)

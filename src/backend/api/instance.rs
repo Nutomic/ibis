@@ -1,7 +1,10 @@
 use super::{empty_to_none, UserExt};
 use crate::{
     backend::{
-        database::{instance::DbInstanceUpdateForm, IbisContext},
+        database::{
+            instance::{DbInstanceUpdateForm, InstanceViewQuery},
+            IbisContext,
+        },
         federation::activities::follow::Follow,
         utils::error::BackendResult,
     },
@@ -14,11 +17,13 @@ use crate::{
             InstanceView2,
             UpdateInstanceParams,
         },
+        utils::http_protocol_str,
         ResolveObjectParams,
         SuccessResponse,
     },
 };
 use activitypub_federation::{config::Data, fetch::object_id::ObjectId};
+use anyhow::anyhow;
 use axum::{extract::Query, Form, Json};
 use axum_macros::debug_handler;
 
@@ -28,7 +33,23 @@ pub(in crate::backend::api) async fn get_instance(
     context: Data<IbisContext>,
     Form(params): Form<GetInstanceParams>,
 ) -> BackendResult<Json<InstanceView2>> {
-    let local_instance = Instance::read_view(params.id, &context)?;
+    use InstanceViewQuery::*;
+    let local_instance = match (params.id, params.hostname) {
+        (Some(id), None) => Instance::read_view(Id(id), &context)?,
+        (None, Some(hostname)) => {
+            let url =
+                ObjectId::<Instance>::parse(&format!("{}://{hostname}", http_protocol_str()))?;
+            if let Ok(i) = Instance::read_view(ApId(&url), &context) {
+                i
+            } else {
+                let id = url.dereference(&context).await?.id;
+                Instance::read_view(Id(id), &context)?
+            }
+        }
+        (None, None) => Instance::read_view(Local, &context)?,
+        _ => return Err(anyhow!("invalid params").into()),
+    };
+
     Ok(Json(local_instance))
 }
 

@@ -1,5 +1,8 @@
 use crate::{
-    common::{article::ListArticlesParams, instance::Instance, utils::http_protocol_str},
+    common::{
+        article::ListArticlesParams,
+        instance::{GetInstanceParams, Instance},
+    },
     frontend::{
         api::CLIENT,
         components::{instance_follow_button::InstanceFollowButton, suspense_error::SuspenseError},
@@ -17,7 +20,6 @@ use crate::{
 use leptos::prelude::*;
 use leptos_meta::Title;
 use leptos_router::hooks::use_params_map;
-use url::Url;
 
 #[component]
 pub fn InstanceDetails() -> impl IntoView {
@@ -25,8 +27,11 @@ pub fn InstanceDetails() -> impl IntoView {
     let hostname = move || params.get().get("hostname").clone();
     let instance_profile = Resource::new(hostname, move |hostname| async move {
         let hostname = hostname.ok_or(FrontendError::new("No instance given"))?;
-        let url = Url::parse(&format!("{}://{hostname}", http_protocol_str()))?;
-        CLIENT.resolve_instance(url).await
+        let params = GetInstanceParams {
+            id: None,
+            hostname: Some(hostname),
+        };
+        CLIENT.get_instance(&params).await
     });
 
     view! {
@@ -34,6 +39,7 @@ pub fn InstanceDetails() -> impl IntoView {
             {move || Suspend::new(async move {
                 instance_profile
                     .await
+                    .map(|i| i.instance)
                     .map(|instance: Instance| {
                         let articles = Resource::new(
                             move || instance.id,

@@ -14,7 +14,14 @@ pub fn About() -> impl IntoView {
     let site = site();
     let instance = Resource::new(
         || (),
-        |_| async move { CLIENT.get_instance(&GetInstanceParams { id: None }).await },
+        |_| async move {
+            CLIENT
+                .get_instance(&GetInstanceParams {
+                    id: None,
+                    hostname: None,
+                })
+                .await
+        },
     );
     view! {
         <Title text="About" />

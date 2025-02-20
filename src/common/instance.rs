@@ -94,6 +94,7 @@ pub struct SiteView {
 #[derive(Deserialize, Serialize, Debug)]
 pub struct GetInstanceParams {
     pub id: Option<InstanceId>,
+    pub hostname: Option<String>,
 }
 
 #[derive(Deserialize, Serialize, Debug)]

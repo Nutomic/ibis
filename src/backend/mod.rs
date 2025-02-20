@@ -24,7 +24,7 @@ pub async fn start(
     override_hostname: Option<SocketAddr>,
     notify_start: Option<oneshot::Sender<()>>,
 ) -> BackendResult<()> {
-    let context = IbisContext::init(config)?;
+    let context = IbisContext::init(config, override_hostname.is_some())?;
     let data = FederationConfig::builder()
         .domain(context.config.federation.domain.clone())
         .url_verifier(Box::new(VerifyUrlData(context.config.clone())))
