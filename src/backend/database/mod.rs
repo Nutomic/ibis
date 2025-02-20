@@ -9,7 +9,7 @@ use diesel::{
     RunQueryDsl,
 };
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
-use std::ops::DerefMut;
+use std::{env::var, ops::DerefMut};
 
 pub mod article;
 pub mod comment;
@@ -33,7 +33,8 @@ pub struct IbisContext {
 
 impl IbisContext {
     pub fn init(config: IbisConfig) -> BackendResult<Self> {
-        let manager = ConnectionManager::<PgConnection>::new(&config.database.connection_url);
+        let database_url = var("DATABASE_URL").unwrap_or(config.database.connection_url.clone());
+        let manager = ConnectionManager::<PgConnection>::new(database_url);
         let db_pool = Pool::builder()
             .max_size(config.database.pool_size)
             .build(manager)?;
