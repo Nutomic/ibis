@@ -25,7 +25,6 @@ use crate::{
     frontend::utils::errors::FrontendResult,
 };
 use http::Method;
-use log::error;
 use url::Url;
 
 impl ApiClient {
@@ -111,7 +110,7 @@ impl ApiClient {
         let edit_res = self
             .edit_article(params)
             .await
-            .map_err(|e| error!("edit failed {e}"))
+            .map_err(|e| log::error!("edit failed {e}"))
             .ok()?;
         assert_eq!(None, edit_res);
 
