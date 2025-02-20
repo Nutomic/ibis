@@ -22,5 +22,5 @@ git commit -m"Version $new_tag"
 git tag $new_tag
 
 # Push
-git push origin $new_tag
 git push
+git push origin $new_tag
