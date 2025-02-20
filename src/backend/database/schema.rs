@@ -100,12 +100,12 @@ diesel::table! {
 
 diesel::table! {
     instance_stats (id) {
-        id -> Int4,
         users -> Int4,
         users_active_month -> Int4,
         users_active_half_year -> Int4,
         articles -> Int4,
         comments -> Int4,
+        id -> Int4,
     }
 }
 
