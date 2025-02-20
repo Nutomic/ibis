@@ -1,4 +1,8 @@
-use crate::backend::{database::DbPool, utils::error::BackendResult};
+use super::config::IbisConfig;
+use crate::backend::{
+    database::{DbPool, IbisContext},
+    utils::error::BackendResult,
+};
 use clokwerk::{Scheduler, TimeUnits};
 use diesel::{sql_query, RunQueryDsl};
 use log::{error, info};
@@ -25,5 +29,12 @@ fn active_counts(pool: &DbPool) -> BackendResult<()> {
         .execute(&mut conn)?;
 
     info!("Done with active user count");
+    Ok(())
+}
+
+#[test]
+fn test_scheduled_tasks() -> BackendResult<()> {
+    let context = IbisContext::init(IbisConfig::default())?;
+    active_counts(&context.db_pool)?;
     Ok(())
 }

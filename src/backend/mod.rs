@@ -7,11 +7,6 @@ use crate::{
     common::instance::Instance,
 };
 use activitypub_federation::config::FederationConfig;
-use diesel::{
-    r2d2::{ConnectionManager, Pool},
-    PgConnection,
-};
-use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 use log::info;
 use server::{setup::setup, start_server};
 use std::{net::SocketAddr, thread};
@@ -24,23 +19,12 @@ pub mod federation;
 mod server;
 pub mod utils;
 
-const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
-
 pub async fn start(
     config: IbisConfig,
     override_hostname: Option<SocketAddr>,
     notify_start: Option<oneshot::Sender<()>>,
 ) -> BackendResult<()> {
-    let manager = ConnectionManager::<PgConnection>::new(&config.database.connection_url);
-    let db_pool = Pool::builder()
-        .max_size(config.database.pool_size)
-        .build(manager)?;
-
-    db_pool
-        .get()?
-        .run_pending_migrations(MIGRATIONS)
-        .expect("run migrations");
-    let context = IbisContext { db_pool, config };
+    let context = IbisContext::init(config)?;
     let data = FederationConfig::builder()
         .domain(context.config.federation.domain.clone())
         .url_verifier(Box::new(VerifyUrlData(context.config.clone())))
