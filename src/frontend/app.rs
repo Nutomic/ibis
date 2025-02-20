@@ -3,16 +3,27 @@ use crate::frontend::{
     components::{nav::Nav, protected_route::IbisProtectedRoute},
     pages::{
         article::{
-            actions::ArticleActions, create::CreateArticle, diff::EditDiff,
-            discussion::ArticleDiscussion, edit::EditArticle, history::ArticleHistory,
+            actions::ArticleActions,
+            create::CreateArticle,
+            diff::EditDiff,
+            discussion::ArticleDiscussion,
+            edit::EditArticle,
+            history::ArticleHistory,
             read::ReadArticle,
         },
         instance::{
-            about::About, details::InstanceDetails, explore::Explore, search::Search, settings::InstanceSettings
+            about::About,
+            details::InstanceDetails,
+            explore::Explore,
+            search::Search,
+            settings::InstanceSettings,
         },
         user::{
-            edit_profile::UserEditProfile, login::Login, notifications::Notifications,
-            profile::UserProfile, register::Register,
+            edit_profile::UserEditProfile,
+            login::Login,
+            notifications::Notifications,
+            profile::UserProfile,
+            register::Register,
         },
     },
     utils::{dark_mode::DarkMode, errors::ErrorPopup, formatting::instance_title},

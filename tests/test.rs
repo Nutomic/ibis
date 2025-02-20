@@ -16,7 +16,7 @@ use ibis::common::{
         SearchArticleParams,
     },
     comment::{CreateCommentParams, EditCommentParams},
-    notifications::Notification,
+    notifications::ApiNotification,
     user::{GetUserParams, LoginUserParams, RegisterUserParams},
     utils::extract_domain,
 };
@@ -410,7 +410,7 @@ async fn test_local_edit_conflict() -> Result<()> {
 
     let notifications = alpha.notifications_list().await.unwrap();
     assert_eq!(1, notifications.len());
-    let Notification::EditConflict(conflict) = &notifications[0] else {
+    let ApiNotification::EditConflict(conflict) = &notifications[0] else {
         panic!()
     };
     assert_eq!(conflict, &edit_res);
@@ -513,7 +513,7 @@ async fn test_federated_edit_conflict() -> Result<()> {
     assert_eq!(1, gamma.notifications_count().await.unwrap());
     let notifications = gamma.notifications_list().await.unwrap();
     assert_eq!(1, notifications.len());
-    let Notification::EditConflict(conflict) = &notifications[0] else {
+    let ApiNotification::EditConflict(conflict) = &notifications[0] else {
         panic!()
     };
 
@@ -850,7 +850,7 @@ async fn test_article_approval_required() -> Result<()> {
     assert_eq!(1, alpha.notifications_count().await.unwrap());
     let notifications = alpha.notifications_list().await.unwrap();
     assert_eq!(1, notifications.len());
-    let Notification::ArticleApprovalRequired(notif) = &notifications[0] else {
+    let ApiNotification::ArticleApprovalRequired(notif) = &notifications[0] else {
         panic!()
     };
     assert_eq!(create_res.article.id, notif.id);

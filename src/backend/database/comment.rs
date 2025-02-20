@@ -1,5 +1,5 @@
 use super::{
-    notifications::{parent_comment, ArticleNotification},
+    notifications::Notification,
     schema::{comment, person},
     IbisContext,
 };
@@ -19,8 +19,6 @@ use diesel::{
     AsChangeset,
     ExpressionMethods,
     Insertable,
-    JoinOnDsl,
-    NullableExpressionMethods,
     QueryDsl,
     RunQueryDsl,
 };
@@ -60,7 +58,7 @@ impl DbComment {
             .set(&form)
             .get_result(conn.deref_mut())?;
 
-        ArticleNotification::notify_comment(comment.article_id, context)?;
+        Notification::notify_comment(&comment, context)?;
         Ok(comment)
     }
 
@@ -125,30 +123,5 @@ impl DbComment {
                 view
             })
             .collect())
-    }
-
-    pub fn mark_as_read(
-        comment_id: CommentId,
-        person_id: PersonId,
-        context: &IbisContext,
-    ) -> BackendResult<()> {
-        let mut conn = context.db_pool.get()?;
-        // check that person_id matches the parent comment's creator_id
-        let comment_id: CommentId = comment::table
-            .find(comment_id)
-            .inner_join(
-                parent_comment.on(parent_comment
-                    .field(comment::id)
-                    .nullable()
-                    .eq(comment::parent_id)),
-            )
-            .filter(parent_comment.field(comment::creator_id).eq(person_id))
-            .select(comment::id)
-            .get_result(conn.deref_mut())?;
-
-        update(comment::table.find(comment_id))
-            .set(comment::read_by_parent_creator.eq(true))
-            .execute(conn.deref_mut())?;
-        Ok(())
     }
 }

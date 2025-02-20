@@ -1,5 +1,5 @@
 use crate::common::{
-    article::DbArticle,
+    article::{DbArticle, DbEdit},
     comment::DbComment,
     instance::DbInstance,
     user::DbPerson,
@@ -108,4 +108,13 @@ pub fn instance_updated(instance: &DbInstance) -> String {
 pub fn comment_path(comment: &DbComment, article: &DbArticle) -> String {
     let article_path = article_path(article);
     format!("{}/discussion#comment-{}", article_path, comment.id.0)
+}
+
+pub fn edit_path(edit: &DbEdit, article: &DbArticle) -> String {
+    format!(
+        "/article/{}@{}/diff/{}",
+        article.title,
+        extract_domain(&article.ap_id),
+        edit.hash.0,
+    )
 }

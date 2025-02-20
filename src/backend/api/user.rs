@@ -1,19 +1,24 @@
 use super::{empty_to_none, UserExt};
 use crate::{
     backend::{
-        database::{notifications::ArticleNotification, read_jwt_secret, IbisContext},
+        database::{notifications::Notification, read_jwt_secret, IbisContext},
         utils::{
             error::BackendResult,
             validate::{validate_display_name, validate_user_name},
         },
     },
     common::{
-        notifications::{ArticleNotifMarkAsReadParams, Notification},
+        notifications::{ApiNotification, ArticleNotifMarkAsReadParams},
         user::{
-            DbPerson, GetUserParams, LocalUserView, LoginUserParams, RegisterUserParams,
+            DbPerson,
+            GetUserParams,
+            LocalUserView,
+            LoginUserParams,
+            RegisterUserParams,
             UpdateUserParams,
         },
-        SuccessResponse, AUTH_COOKIE,
+        SuccessResponse,
+        AUTH_COOKIE,
     },
 };
 use activitypub_federation::config::Data;
@@ -24,7 +29,13 @@ use axum_macros::debug_handler;
 use bcrypt::verify;
 use chrono::Utc;
 use jsonwebtoken::{
-    decode, encode, get_current_timestamp, DecodingKey, EncodingKey, Header, Validation,
+    decode,
+    encode,
+    get_current_timestamp,
+    DecodingKey,
+    EncodingKey,
+    Header,
+    Validation,
 };
 use serde::{Deserialize, Serialize};
 use time::{Duration, OffsetDateTime};
@@ -153,7 +164,7 @@ pub(in crate::backend::api) async fn update_user_profile(
 pub(crate) async fn list_notifications(
     user: UserExt,
     context: Data<IbisContext>,
-) -> BackendResult<Json<Vec<Notification>>> {
+) -> BackendResult<Json<Vec<ApiNotification>>> {
     Ok(Json(Notification::list(&user, &context).await?))
 }
 
@@ -175,6 +186,6 @@ pub(crate) async fn article_notif_mark_as_read(
     context: Data<IbisContext>,
     Form(params): Form<ArticleNotifMarkAsReadParams>,
 ) -> BackendResult<Json<SuccessResponse>> {
-    ArticleNotification::mark_as_read(params.id, &user, &context)?;
+    Notification::mark_as_read(params.id, &user, &context)?;
     Ok(Json(SuccessResponse::default()))
 }

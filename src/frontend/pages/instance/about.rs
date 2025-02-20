@@ -1,6 +1,3 @@
-use leptos::prelude::*;
-use leptos_meta::Title;
-
 use crate::{
     common::instance::GetInstanceParams,
     frontend::{
@@ -9,6 +6,8 @@ use crate::{
         utils::{formatting::user_link, resources::site},
     },
 };
+use leptos::prelude::*;
+use leptos_meta::Title;
 
 #[component]
 pub fn About() -> impl IntoView {

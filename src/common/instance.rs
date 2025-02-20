@@ -10,7 +10,8 @@ use url::Url;
 #[cfg(feature = "ssr")]
 use {
     crate::backend::{
-        database::schema::instance, federation::objects::articles_collection::DbArticleCollection,
+        database::schema::instance,
+        federation::objects::articles_collection::DbArticleCollection,
         federation::objects::instance_collection::DbInstanceCollection,
     },
     activitypub_federation::fetch::{collection_id::CollectionId, object_id::ObjectId},

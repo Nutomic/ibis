@@ -23,17 +23,6 @@ diesel::table! {
 }
 
 diesel::table! {
-    article_notification (id) {
-        id -> Int4,
-        local_user_id -> Int4,
-        article_id -> Int4,
-        new_comments -> Bool,
-        new_edits -> Bool,
-        published -> Timestamptz,
-    }
-}
-
-diesel::table! {
     comment (id) {
         id -> Int4,
         creator_id -> Int4,
@@ -47,7 +36,6 @@ diesel::table! {
         deleted -> Bool,
         published -> Timestamptz,
         updated -> Nullable<Timestamptz>,
-        read_by_parent_creator -> Bool,
     }
 }
 
@@ -138,6 +126,18 @@ diesel::table! {
 }
 
 diesel::table! {
+    notification (id) {
+        id -> Int4,
+        local_user_id -> Int4,
+        article_id -> Int4,
+        creator_id -> Int4,
+        comment_id -> Nullable<Int4>,
+        edit_id -> Nullable<Int4>,
+        published -> Timestamptz,
+    }
+}
+
+diesel::table! {
     person (id) {
         id -> Int4,
         username -> Text,
@@ -159,8 +159,6 @@ diesel::table! {
 diesel::joinable!(article -> instance (instance_id));
 diesel::joinable!(article_follow -> article (article_id));
 diesel::joinable!(article_follow -> local_user (local_user_id));
-diesel::joinable!(article_notification -> article (article_id));
-diesel::joinable!(article_notification -> local_user (local_user_id));
 diesel::joinable!(comment -> article (article_id));
 diesel::joinable!(comment -> person (creator_id));
 diesel::joinable!(conflict -> article (article_id));
@@ -170,11 +168,15 @@ diesel::joinable!(edit -> person (creator_id));
 diesel::joinable!(instance_follow -> instance (instance_id));
 diesel::joinable!(instance_follow -> person (follower_id));
 diesel::joinable!(local_user -> person (person_id));
+diesel::joinable!(notification -> article (article_id));
+diesel::joinable!(notification -> comment (comment_id));
+diesel::joinable!(notification -> edit (edit_id));
+diesel::joinable!(notification -> local_user (local_user_id));
+diesel::joinable!(notification -> person (creator_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     article,
     article_follow,
-    article_notification,
     comment,
     conflict,
     edit,
@@ -183,5 +185,6 @@ diesel::allow_tables_to_appear_in_same_query!(
     instance_stats,
     jwt_secret,
     local_user,
+    notification,
     person,
 );

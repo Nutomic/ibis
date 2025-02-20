@@ -1,16 +1,16 @@
 use super::{
     conflict::DbConflict,
-    schema::{article, article_follow, article_notification, comment, conflict, person},
+    schema::{article, article_follow, comment, conflict, edit, notification, person},
     IbisContext,
 };
 use crate::{
-    backend::{api::check_is_admin, utils::error::BackendResult},
+    backend::{api::check_is_admin, database::schema::local_user, utils::error::BackendResult},
     common::{
-        article::DbArticle,
-        comment::CommentViewWithArticle,
-        newtypes::{ArticleId, ArticleNotifId, LocalUserId},
-        notifications::{ArticleNotificationKind, ArticleNotificationView, Notification},
-        user::LocalUserView,
+        article::{DbArticle, DbEdit},
+        comment::DbComment,
+        newtypes::{ArticleId, ArticleNotifId, CommentId, EditId, LocalUserId, PersonId},
+        notifications::ApiNotification,
+        user::{DbPerson, LocalUserView},
     },
 };
 use activitypub_federation::config::Data;
@@ -29,15 +29,36 @@ use diesel::{
 use futures::future::try_join_all;
 use std::ops::DerefMut;
 
-diesel::alias!(comment as parent_comment: DbComment);
+#[derive(Queryable, Selectable, Debug)]
+#[diesel(table_name = notification, check_for_backend(diesel::pg::Pg))]
+#[allow(dead_code)]
+pub struct Notification {
+    id: ArticleNotifId,
+    local_user_id: LocalUserId,
+    article_id: ArticleId,
+    creator_id: PersonId,
+    comment_id: Option<CommentId>,
+    edit_id: Option<EditId>,
+    pub published: DateTime<Utc>,
+}
+
+#[derive(Debug, Insertable)]
+#[diesel(table_name = notification, check_for_backend(diesel::pg::Pg))]
+struct NotificationInsertForm {
+    local_user_id: LocalUserId,
+    article_id: ArticleId,
+    creator_id: PersonId,
+    comment_id: Option<CommentId>,
+    edit_id: Option<EditId>,
+}
 
 impl Notification {
     pub(crate) async fn list(
         user: &LocalUserView,
         context: &Data<IbisContext>,
-    ) -> BackendResult<Vec<Notification>> {
+    ) -> BackendResult<Vec<ApiNotification>> {
         let mut conn = context.db_pool.get()?;
-        let mut notifications: Vec<Notification> = vec![];
+        let mut notifications: Vec<ApiNotification> = vec![];
 
         // edit conflicts
         let conflicts: Vec<DbConflict> = conflict::table
@@ -49,31 +70,7 @@ impl Notification {
         }))
         .await?
         .into_iter();
-        notifications.extend(conflicts.flatten().map(Notification::EditConflict));
-
-        // comment replies
-        let comment_replies = comment::table
-            .inner_join(article::table)
-            .inner_join(person::table.on(person::id.eq(comment::creator_id)))
-            .inner_join(
-                parent_comment.on(parent_comment
-                    .field(comment::id)
-                    .nullable()
-                    .eq(comment::parent_id)),
-            )
-            .filter(parent_comment.field(comment::creator_id).eq(user.person.id))
-            .filter(comment::creator_id.ne(user.person.id))
-            .filter(not(comment::deleted))
-            .filter(not(comment::read_by_parent_creator))
-            .order_by(comment::published.desc())
-            .select((
-                comment::all_columns,
-                person::all_columns,
-                article::all_columns,
-            ))
-            .get_results::<CommentViewWithArticle>(conn.deref_mut())?
-            .into_iter();
-        notifications.extend(comment_replies.map(Notification::Reply));
+        notifications.extend(conflicts.flatten().map(ApiNotification::EditConflict));
 
         // new articles requiring approval
         if check_is_admin(user).is_ok() {
@@ -83,30 +80,37 @@ impl Notification {
                 .select(article::all_columns)
                 .get_results(&mut conn)?
                 .into_iter();
-            notifications.extend(articles.map(Notification::ArticleApprovalRequired))
+            notifications.extend(articles.map(ApiNotification::ArticleApprovalRequired))
         }
 
         // new edits and comments for followed articles
-        let article_notifications = article_notification::table
+        let article_notifications = notification::table
             .inner_join(article::table)
-            .filter(article_notification::local_user_id.eq(user.local_user.id))
-            .select((article::all_columns, article_notification::all_columns))
-            .get_results::<(DbArticle, ArticleNotification)>(&mut conn)?;
-        notifications.extend(
-            article_notifications
-                .into_iter()
-                .map(|(article, notif)| ArticleNotificationView {
-                    article,
-                    id: notif.id,
-                    kind: if notif.new_comments {
-                        ArticleNotificationKind::Comment
-                    } else {
-                        ArticleNotificationKind::Edit
-                    },
-                    published: notif.published,
-                })
-                .map(Notification::ArticleNotification),
-        );
+            .inner_join(person::table)
+            .left_join(comment::table)
+            .left_join(edit::table)
+            .filter(notification::local_user_id.eq(user.local_user.id))
+            .select((
+                notification::all_columns,
+                article::all_columns,
+                person::all_columns,
+                comment::all_columns.nullable(),
+                edit::all_columns.nullable(),
+            ))
+            .get_results::<(
+                Notification,
+                DbArticle,
+                DbPerson,
+                Option<DbComment>,
+                Option<DbEdit>,
+            )>(&mut conn)?;
+        notifications.extend(article_notifications.into_iter().flat_map(
+            |(notif, article, creator, comment, edit)| {
+                if let Some(c) = comment {
+                    Some(ApiNotification::Comment(notif.id, c, creator, article))
+                } else { edit.map(|e| ApiNotification::Edit(notif.id, e, creator, article)) }
+            },
+        ));
 
         notifications.sort_by(|a, b| b.published().cmp(a.published()));
         Ok(notifications)
@@ -123,23 +127,6 @@ impl Notification {
             .unwrap_or(0);
         num += conflicts;
 
-        // comment replies
-        let comment_replies = comment::table
-            .inner_join(
-                parent_comment.on(parent_comment
-                    .field(comment::id)
-                    .nullable()
-                    .eq(comment::parent_id)),
-            )
-            .filter(parent_comment.field(comment::creator_id).eq(user.person.id))
-            .filter(comment::creator_id.ne(user.person.id))
-            .filter(not(comment::deleted))
-            .filter(not(comment::read_by_parent_creator))
-            .select(count(comment::id))
-            .first::<i64>(conn.deref_mut())
-            .unwrap_or(0);
-        num += comment_replies;
-
         // new articles requiring approval
         if check_is_admin(user).is_ok() {
             let articles = article::table
@@ -152,39 +139,16 @@ impl Notification {
         }
 
         // new edits and comments for followed articles
-        let article_notifications = article_notification::table
-            .filter(article_notification::local_user_id.eq(user.local_user.id))
-            .select(count(article_notification::id))
+        let article_notifications = notification::table
+            .filter(notification::local_user_id.eq(user.local_user.id))
+            .select(count(notification::id))
             .first::<i64>(conn.deref_mut())
             .unwrap_or(0);
         num += article_notifications;
 
         Ok(num)
     }
-}
 
-#[derive(Queryable, Selectable, Debug)]
-#[diesel(table_name = article_notification, check_for_backend(diesel::pg::Pg))]
-#[allow(dead_code)]
-pub struct ArticleNotification {
-    id: ArticleNotifId,
-    local_user_id: LocalUserId,
-    article_id: ArticleId,
-    new_comments: bool,
-    new_edits: bool,
-    pub published: DateTime<Utc>,
-}
-
-#[derive(Debug, Insertable)]
-#[diesel(table_name = article_notification, check_for_backend(diesel::pg::Pg))]
-struct ArticleNotificationInsertForm {
-    local_user_id: LocalUserId,
-    article_id: ArticleId,
-    new_comments: Option<bool>,
-    new_edits: Option<bool>,
-}
-
-impl ArticleNotification {
     pub fn mark_as_read(
         id: ArticleNotifId,
         user: &LocalUserView,
@@ -192,37 +156,75 @@ impl ArticleNotification {
     ) -> BackendResult<()> {
         let mut conn = context.db_pool.get()?;
         delete(
-            article_notification::table
-                .filter(article_notification::id.eq(id))
-                .filter(article_notification::local_user_id.eq(user.local_user.id)),
+            notification::table
+                .filter(notification::id.eq(id))
+                .filter(notification::local_user_id.eq(user.local_user.id)),
         )
         .execute(&mut conn)?;
         Ok(())
     }
-    pub(super) fn notify_comment(
-        article_id: ArticleId,
-        context: &IbisContext,
-    ) -> BackendResult<()> {
+
+    pub(super) fn notify_comment(comment: &DbComment, context: &IbisContext) -> BackendResult<()> {
+        let mut conn = context.db_pool.get()?;
+
+        // notify author of parent comment
+        {
+            diesel::alias!(comment as parent_comment: DbComment);
+            let parent_comment_creator_id: Option<LocalUserId> = comment::table
+                .find(comment.id)
+                .left_join(
+                    parent_comment.on(parent_comment
+                        .field(comment::id)
+                        .nullable()
+                        .eq(comment::parent_id)),
+                )
+                .left_join(
+                    local_user::table.on(parent_comment
+                        .field(comment::creator_id)
+                        .eq(local_user::person_id)),
+                )
+                .select(local_user::id.nullable())
+                .get_result(conn.deref_mut())?;
+            if let Some(local_user_id) = parent_comment_creator_id {
+                let form = NotificationInsertForm {
+                    local_user_id,
+                    article_id: comment.article_id,
+                    creator_id: comment.creator_id,
+                    comment_id: Some(comment.id),
+                    edit_id: None,
+                };
+                insert_into(notification::table)
+                    .values(&form)
+                    .on_conflict_do_nothing()
+                    .execute(&mut conn)?;
+            }
+        }
+
+        // notify users who subscribed to article
         Self::notify(
-            article_id,
-            |local_user_id| ArticleNotificationInsertForm {
+            comment.article_id,
+            |local_user_id| NotificationInsertForm {
                 local_user_id,
-                article_id,
-                new_comments: Some(true),
-                new_edits: None,
+                article_id: comment.article_id,
+                creator_id: comment.creator_id,
+                comment_id: Some(comment.id),
+                edit_id: None,
             },
             context,
-        )
+        )?;
+
+        Ok(())
     }
 
-    pub(super) fn notify_edit(article_id: ArticleId, context: &IbisContext) -> BackendResult<()> {
+    pub(super) fn notify_edit(edit: &DbEdit, context: &IbisContext) -> BackendResult<()> {
         Self::notify(
-            article_id,
-            |local_user_id| ArticleNotificationInsertForm {
+            edit.article_id,
+            |local_user_id| NotificationInsertForm {
                 local_user_id,
-                article_id,
-                new_comments: None,
-                new_edits: Some(true),
+                article_id: edit.article_id,
+                creator_id: edit.creator_id,
+                comment_id: None,
+                edit_id: Some(edit.id),
             },
             context,
         )
@@ -230,7 +232,7 @@ impl ArticleNotification {
 
     fn notify<F>(article_id: ArticleId, map_fn: F, context: &IbisContext) -> BackendResult<()>
     where
-        F: FnMut(LocalUserId) -> ArticleNotificationInsertForm,
+        F: FnMut(LocalUserId) -> NotificationInsertForm,
     {
         let mut conn = context.db_pool.get()?;
         // get followers for this article
@@ -239,11 +241,10 @@ impl ArticleNotification {
             .select(article_follow::local_user_id)
             .get_results(&mut conn)?;
         // create insert form with edit/comment it
-        let notifications: Vec<_> = followers.into_iter().map(map_fn).collect();
-        // insert all of them, generating at most one edit notification per user and article
-        // (as well as a separate comment notification)
-        insert_into(article_notification::table)
-            .values(&notifications)
+        let notifs: Vec<_> = followers.into_iter().map(map_fn).collect();
+        // insert all of them
+        insert_into(notification::table)
+            .values(&notifs)
             .on_conflict_do_nothing()
             .execute(&mut conn)?;
         Ok(())

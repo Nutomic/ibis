@@ -10,7 +10,14 @@ use crate::frontend::{
 use leptos::{component, prelude::*, view, IntoView, *};
 use leptos_router::hooks::use_navigate;
 use phosphor_leptos::{
-    Icon, BELL_RINGING, CARDS, EXCLAMATION_MARK, GEAR, HOUSE, MAGNIFYING_GLASS, PLUS,
+    Icon,
+    BELL_RINGING,
+    CARDS,
+    EXCLAMATION_MARK,
+    GEAR,
+    HOUSE,
+    MAGNIFYING_GLASS,
+    PLUS,
 };
 
 #[component]

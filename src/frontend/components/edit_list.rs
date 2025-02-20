@@ -1,6 +1,6 @@
 use crate::{
-    common::{article::EditView, utils::extract_domain},
-    frontend::utils::formatting::{article_link, render_date_time, user_link},
+    common::article::EditView,
+    frontend::utils::formatting::{article_link, edit_path, render_date_time, user_link},
 };
 use leptos::{either::Either, prelude::*};
 
@@ -15,12 +15,7 @@ pub fn EditList(edits: Vec<EditView>, for_article: bool) -> impl IntoView {
                     .into_iter()
                     .rev()
                     .map(|edit: EditView| {
-                        let path = format!(
-                            "/article/{}@{}/diff/{}",
-                            edit.article.title,
-                            extract_domain(&edit.article.ap_id),
-                            edit.edit.hash.0,
-                        );
+                        let path = edit_path(&edit.edit, &edit.article);
                         let date = render_date_time(edit.edit.published);
                         let second_line = if for_article {
                             Either::Left(
