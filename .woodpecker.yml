@@ -75,8 +75,7 @@ steps:
       - chown testuser:testuser . -R
       - chown testuser:testuser /home/testuser -R
       - export PATH="/usr/lib/postgresql/15/bin:/usr/local/cargo/bin:$PATH"
-      - *install_cargo_leptos
-      - sudo -u testuser env "PATH=$PATH" "CARGO_HOME=$CARGO_HOME" cargo leptos test --no-fail-fast
+      - sudo -u testuser env "PATH=$PATH" "CARGO_HOME=$CARGO_HOME" cargo test --no-fail-fast
 
   build_release:
     image: *rust_image
