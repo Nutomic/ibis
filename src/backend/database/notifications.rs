@@ -108,7 +108,9 @@ impl Notification {
             |(notif, article, creator, comment, edit)| {
                 if let Some(c) = comment {
                     Some(ApiNotification::Comment(notif.id, c, creator, article))
-                } else { edit.map(|e| ApiNotification::Edit(notif.id, e, creator, article)) }
+                } else {
+                    edit.map(|e| ApiNotification::Edit(notif.id, e, creator, article))
+                }
             },
         ));
 

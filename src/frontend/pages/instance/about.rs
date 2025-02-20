@@ -23,10 +23,17 @@ pub fn About() -> impl IntoView {
             {move || Suspend::new(async move {
                 let site = site.await;
                 let instance = instance.await;
-                view! {
-                    <div>"Topic: "{instance.unwrap().instance.topic}</div>
-                    <div>"Administrated by: "{user_link(&site.unwrap().admin)}</div>
-                }
+                instance
+                    .ok()
+                    .and_then(|instance| {
+                        site.ok()
+                            .map(|site| {
+                                view! {
+                                    <div>"Topic: "{instance.instance.topic}</div>
+                                    <div>"Administrated by: "{user_link(&site.admin)}</div>
+                                }
+                            })
+                    })
             })}
         </SuspenseError>
     }
