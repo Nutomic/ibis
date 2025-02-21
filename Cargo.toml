@@ -120,7 +120,7 @@ mime_guess = "2.0.5"
 clokwerk = "0.4.0"
 fmtm = "0.0.3"
 regex = "1.11.1"
-moka = {version="0.12.10", features = ["sync"]}
+moka = { version = "0.12.10", features = ["sync"] }
 
 [dev-dependencies]
 pretty_assertions = "1.4.1"

@@ -132,8 +132,9 @@ impl Article {
         let mut query = article::table
             .inner_join(instance::table)
             .left_join(
-                article_follow::table
-                    .on(article_follow::local_user_id.nullable().eq(local_user_id)),
+                article_follow::table.on(article_follow::article_id
+                    .eq(article::id)
+                    .and(article_follow::local_user_id.nullable().eq(local_user_id))),
             )
             .into_boxed();
         query = match params.into() {
@@ -147,9 +148,6 @@ impl Article {
                 }
             }
         };
-
-        // TODO: need to check for specific follower, not any follower
-        //query = query.filter(article_follow::local_user_id.nullable().eq(local_user_id));
 
         let (article, instance, following): (Article, _, _) = query
             .select((
