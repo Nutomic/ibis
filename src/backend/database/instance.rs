@@ -159,11 +159,9 @@ impl Instance {
         let mut conn = context.db_pool.get()?;
         // select all instances, with most recently edited first (pending edits are ignored)
         let instances = instance::table
-            .left_join(
-                article::table
-                    .left_join(edit::table)
-                    .on(article::id.eq(edit::article_id).and(not(edit::pending))),
-            )
+            // need to join manually, otherwise the order is wrong
+            .left_join(article::table.on(article::instance_id.eq(instance::id)))
+            .left_join(edit::table.on(article::id.eq(edit::article_id).and(not(edit::pending))))
             .group_by(instance::id)
             .order_by(max(edit::published).desc())
             .select(instance::all_columns)

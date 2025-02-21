@@ -107,15 +107,19 @@ pub(in crate::backend::api) async fn list_instances(
 pub(in crate::backend::api) async fn list_instance_views(
     context: Data<IbisContext>,
 ) -> BackendResult<Json<Vec<InstanceView>>> {
-    static CACHE: LazyLock<Cache<(), Vec<InstanceView>>> = LazyLock::new(|| {
-        Cache::builder()
-            .max_capacity(1)
-            .time_to_live(Duration::from_secs(60 * 60))
-            .build()
-    });
-    // Cache result of the db read because it uses a lot of queries and rarely changes
-    let instances = CACHE
-        .try_get_with((), || Instance::list_views(&context))
-        .map_err(|e| anyhow!(e))?;
+    let instances = if cfg!(debug_assertions) {
+        Instance::list_views(&context)?
+    } else {
+        // Cache result of the db read in prod because it uses a lot of queries and rarely changes
+        static CACHE: LazyLock<Cache<(), Vec<InstanceView>>> = LazyLock::new(|| {
+            Cache::builder()
+                .max_capacity(1)
+                .time_to_live(Duration::from_secs(60 * 60))
+                .build()
+        });
+        CACHE
+            .try_get_with((), || Instance::list_views(&context))
+            .map_err(|e| anyhow!(e))?
+    };
     Ok(Json(instances))
 }
