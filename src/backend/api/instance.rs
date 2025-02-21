@@ -26,6 +26,8 @@ use activitypub_federation::{config::Data, fetch::object_id::ObjectId};
 use anyhow::anyhow;
 use axum::{extract::Query, Form, Json};
 use axum_macros::debug_handler;
+use moka::sync::Cache;
+use std::{sync::LazyLock, time::Duration};
 
 /// Retrieve details about an instance. If no id is provided, return local instance.
 #[debug_handler]
@@ -105,6 +107,15 @@ pub(in crate::backend::api) async fn list_instances(
 pub(in crate::backend::api) async fn list_instance_views(
     context: Data<IbisContext>,
 ) -> BackendResult<Json<Vec<InstanceView>>> {
-    let instances = Instance::list_views(&context)?;
+    static CACHE: LazyLock<Cache<(), Vec<InstanceView>>> = LazyLock::new(|| {
+        Cache::builder()
+            .max_capacity(1)
+            .time_to_live(Duration::from_secs(60 * 60))
+            .build()
+    });
+    // Cache result of the db read because it uses a lot of queries and rarely changes
+    let instances = CACHE
+        .try_get_with((), || Instance::list_views(&context))
+        .map_err(|e| anyhow!(e))?;
     Ok(Json(instances))
 }
