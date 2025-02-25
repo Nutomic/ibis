@@ -11,7 +11,9 @@ use axum::{
     middleware::from_fn_with_state,
     response::{IntoResponse, Response},
     routing::get,
-    Extension, Router, ServiceExt,
+    Extension,
+    Router,
+    ServiceExt,
 };
 use ibis_database::{common::Auth, error::BackendResult, impls::IbisContext};
 use leptos::prelude::*;

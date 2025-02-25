@@ -14,7 +14,7 @@ use activitypub_federation::{
     traits::{ActivityHandler, Actor},
 };
 use ibis_database::{
-    common::{instance::Instance, user::Person},
+    common::instance::Instance,
     error::{BackendError, BackendResult},
     impls::IbisContext,
 };

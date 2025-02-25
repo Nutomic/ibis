@@ -1,5 +1,6 @@
 use crate::backend::federation::activities::{
-    update_local_article::UpdateLocalArticle, update_remote_article::UpdateRemoteArticle,
+    update_local_article::UpdateLocalArticle,
+    update_remote_article::UpdateRemoteArticle,
 };
 use activitypub_federation::config::Data;
 use ibis_database::{

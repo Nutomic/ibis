@@ -5,7 +5,6 @@ use super::{
 use activitypub_federation::{config::Data, traits::Object};
 use chrono::{DateTime, Utc};
 use ibis_database::{
-    common::{article::Article, comment::Comment},
     error::{BackendError, BackendResult},
     impls::IbisContext,
 };

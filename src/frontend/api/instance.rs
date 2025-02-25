@@ -4,10 +4,16 @@ use http::Method;
 use ibis_database::common::{
     article::{Article, SearchArticleParams},
     instance::{
-        FollowInstanceParams, GetInstanceParams, Instance, InstanceView, InstanceView2, SiteView,
+        FollowInstanceParams,
+        GetInstanceParams,
+        Instance,
+        InstanceView,
+        InstanceView2,
+        SiteView,
         UpdateInstanceParams,
     },
-    ResolveObjectParams, SuccessResponse,
+    ResolveObjectParams,
+    SuccessResponse,
 };
 use url::Url;
 

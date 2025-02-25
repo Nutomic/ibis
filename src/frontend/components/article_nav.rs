@@ -1,17 +1,29 @@
-use crate::{backend::utils::can_edit_article, frontend::{
-    api::CLIENT,
-    utils::{
-        errors::{FrontendResult, FrontendResultExt},
-        formatting::{article_path, article_title},
-        resources::{is_admin, is_logged_in},
+use crate::{
+    backend::utils::can_edit_article,
+    frontend::{
+        api::CLIENT,
+        utils::{
+            errors::{FrontendResult, FrontendResultExt},
+            formatting::{article_path, article_title},
+            resources::{is_admin, is_logged_in},
+        },
     },
-}};
+};
 use ibis_database::common::article::ArticleView;
 use leptos::prelude::*;
 use leptos_meta::Title;
 use leptos_router::components::A;
 use phosphor_leptos::{
-    Icon, BELL, BELL_SLASH, BOOK, CHATS_CIRCLE, FEDIVERSE_LOGO, GEAR_SIX, LIST, LOCK_SIMPLE, PENCIL,
+    Icon,
+    BELL,
+    BELL_SLASH,
+    BOOK,
+    CHATS_CIRCLE,
+    FEDIVERSE_LOGO,
+    GEAR_SIX,
+    LIST,
+    LOCK_SIMPLE,
+    PENCIL,
 };
 
 #[derive(Clone, Copy)]

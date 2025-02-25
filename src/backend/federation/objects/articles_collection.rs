@@ -1,3 +1,4 @@
+use super::article::ArticleWrapper;
 use crate::backend::federation::objects::article::ApubArticle;
 use activitypub_federation::{
     config::Data,
@@ -15,8 +16,6 @@ use ibis_database::{
 use log::warn;
 use serde::{Deserialize, Serialize};
 use url::Url;
-
-use super::article::ArticleWrapper;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]

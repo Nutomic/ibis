@@ -53,12 +53,10 @@ pub(super) fn generate_article_version(
 }
 
 pub fn can_edit_article(article: &Article, is_admin: bool) -> BackendResult<()> {
-    if article.protected {
-        if !article.local && !is_admin {
-            return Err(BackendError(anyhow!(
-                "Article is protected, only admins on origin instance can edit".to_string()
-            )));
-        }
+    if article.protected && !article.local && !is_admin {
+        return Err(BackendError(anyhow!(
+            "Article is protected, only admins on origin instance can edit".to_string()
+        )));
     }
     Ok(())
 }

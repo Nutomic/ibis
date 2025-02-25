@@ -13,7 +13,7 @@ use activitypub_federation::{
     traits::{ActivityHandler, Object},
 };
 use ibis_database::{
-    common::{article::Article, instance::Instance},
+    common::instance::Instance,
     error::{BackendError, BackendResult},
     impls::IbisContext,
 };

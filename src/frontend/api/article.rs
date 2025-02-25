@@ -3,12 +3,25 @@ use crate::frontend::utils::errors::FrontendResult;
 use http::Method;
 use ibis_database::common::{
     article::{
-        ApiConflict, ApproveArticleParams, Article, ArticleView, CreateArticleParams,
-        DeleteConflictParams, EditArticleParams, EditView, FollowArticleParams, ForkArticleParams,
-        GetArticleParams, GetConflictParams, GetEditList, ListArticlesParams, ProtectArticleParams,
+        ApiConflict,
+        ApproveArticleParams,
+        Article,
+        ArticleView,
+        CreateArticleParams,
+        DeleteConflictParams,
+        EditArticleParams,
+        EditView,
+        FollowArticleParams,
+        ForkArticleParams,
+        GetArticleParams,
+        GetConflictParams,
+        GetEditList,
+        ListArticlesParams,
+        ProtectArticleParams,
     },
     newtypes::{ArticleId, ConflictId},
-    ResolveObjectParams, SuccessResponse,
+    ResolveObjectParams,
+    SuccessResponse,
 };
 use url::Url;
 

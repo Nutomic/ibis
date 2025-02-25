@@ -4,7 +4,12 @@ use ibis_database::common::{
     article::{EditView, GetEditList},
     newtypes::PersonId,
     user::{
-        GetUserParams, LocalUserView, LoginUserParams, Person, RegisterUserParams, UpdateUserParams,
+        GetUserParams,
+        LocalUserView,
+        LoginUserParams,
+        Person,
+        RegisterUserParams,
+        UpdateUserParams,
     },
     SuccessResponse,
 };

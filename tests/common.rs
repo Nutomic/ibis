@@ -1,13 +1,10 @@
 #![expect(clippy::unwrap_used)]
 
 use anyhow::Result;
-use ibis::{
-    backend::{
-        start,
-        utils::config::{IbisConfig, IbisConfigDatabase, IbisConfigFederation},
-    },
+use ibis::{backend::start, frontend::api::ApiClient};
+use ibis_database::{
     common::{instance::Options, user::RegisterUserParams},
-    frontend::api::ApiClient,
+    config::{IbisConfig, IbisConfigDatabase, IbisConfigFederation},
 };
 use std::{
     env::current_dir,

@@ -1,7 +1,10 @@
-
 use activitypub_federation::config::Data;
 use axum::{routing::get, Json, Router};
-use ibis_database::{common::utils::http_protocol_str, error::BackendResult, impls::{instance_stats::InstanceStats, IbisContext}};
+use ibis_database::{
+    common::utils::http_protocol_str,
+    error::BackendResult,
+    impls::{instance_stats::InstanceStats, IbisContext},
+};
 use serde::Serialize;
 use url::Url;
 

@@ -2,7 +2,6 @@ use crate::backend::{
     federation::{
         activities::{reject::RejectEdit, update_local_article::UpdateLocalArticle},
         objects::{
-            article::ArticleWrapper,
             edit::{ApubEdit, EditWrapper},
             instance::InstanceWrapper,
         },
@@ -19,10 +18,7 @@ use activitypub_federation::{
 };
 use diffy::{apply, Patch};
 use ibis_database::{
-    common::{
-        article::{Article, Edit},
-        instance::Instance,
-    },
+    common::{article::Article, instance::Instance},
     error::{BackendError, BackendResult},
     impls::IbisContext,
 };

@@ -1,8 +1,7 @@
+use crate::backend::federation::objects::instance::InstanceWrapper;
 use activitypub_federation::kinds::public;
 use ibis_database::error::BackendResult;
 use url::Url;
-
-use crate::backend::federation::objects::instance::InstanceWrapper;
 
 pub mod create_or_update_comment;
 pub mod delete_comment;

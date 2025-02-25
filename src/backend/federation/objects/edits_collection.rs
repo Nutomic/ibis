@@ -1,3 +1,4 @@
+use super::edit::EditWrapper;
 use crate::backend::federation::objects::edit::ApubEdit;
 use activitypub_federation::{
     config::Data,
@@ -14,8 +15,6 @@ use ibis_database::{
 use log::warn;
 use serde::{Deserialize, Serialize};
 use url::Url;
-
-use super::edit::EditWrapper;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]

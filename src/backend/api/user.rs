@@ -7,20 +7,31 @@ use axum_extra::extract::cookie::{Cookie, CookieJar, Expiration, SameSite};
 use axum_macros::debug_handler;
 use bcrypt::verify;
 use chrono::Utc;
-use ibis_database::impls::{notifications::Notification, read_jwt_secret, IbisContext};
 use ibis_database::{
     common::{
         notifications::{ApiNotification, ArticleNotifMarkAsReadParams},
         user::{
-            GetUserParams, LocalUserView, LoginUserParams, Person, RegisterUserParams,
+            GetUserParams,
+            LocalUserView,
+            LoginUserParams,
+            Person,
+            RegisterUserParams,
             UpdateUserParams,
         },
-        SuccessResponse, AUTH_COOKIE,
+        SuccessResponse,
+        AUTH_COOKIE,
     },
     error::BackendResult,
+    impls::{notifications::Notification, read_jwt_secret, IbisContext},
 };
 use jsonwebtoken::{
-    decode, encode, get_current_timestamp, DecodingKey, EncodingKey, Header, Validation,
+    decode,
+    encode,
+    get_current_timestamp,
+    DecodingKey,
+    EncodingKey,
+    Header,
+    Validation,
 };
 use serde::{Deserialize, Serialize};
 use time::{Duration, OffsetDateTime};

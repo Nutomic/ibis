@@ -4,7 +4,7 @@ mod common;
 
 use crate::common::{TestData, TEST_ARTICLE_DEFAULT_TEXT};
 use anyhow::Result;
-use ibis::common::{
+use ibis_database::common::{
     article::{
         ArticleView,
         CreateArticleParams,
@@ -410,10 +410,13 @@ async fn api_test_local_edit_conflict() -> Result<()> {
 
     let notifications = alpha.notifications_list().await.unwrap();
     assert_eq!(1, notifications.len());
-    let ApiNotification::EditConflict(conflict) = &notifications[0] else {
+    let ApiNotification::EditConflict(conflict, _) = &notifications[0] else {
         panic!()
     };
-    assert_eq!(conflict, &edit_res);
+    assert_eq!(conflict.article_id, edit_res.article.id);
+    assert_eq!(conflict.hash, edit_res.hash);
+    assert_eq!(conflict.id, edit_res.id);
+    assert_eq!(conflict.summary, edit_res.summary);
 
     let edit_params = EditArticleParams {
         article_id: create_res.article.id,
@@ -513,9 +516,11 @@ async fn api_test_federated_edit_conflict() -> Result<()> {
     assert_eq!(1, gamma.notifications_count().await.unwrap());
     let notifications = gamma.notifications_list().await.unwrap();
     assert_eq!(1, notifications.len());
-    let ApiNotification::EditConflict(conflict) = &notifications[0] else {
+    let ApiNotification::EditConflict(conflict, _) = &notifications[0] else {
         panic!()
     };
+
+    let conflict = gamma.get_conflict(conflict.id).await?;
 
     // resolve the conflict
     let edit_params = EditArticleParams {
@@ -635,7 +640,7 @@ async fn api_test_fork_article() -> Result<()> {
 
     // fetch on beta
     let resolve_res = beta
-        .resolve_article(create_res.article.ap_id.into_inner())
+        .resolve_article(create_res.article.ap_id.into())
         .await
         .unwrap();
     let resolved_article = resolve_res.article;
@@ -719,10 +724,20 @@ async fn api_test_user_profile() -> Result<()> {
         summary: "create article".to_string(),
     };
     let create_res = alpha.create_article(&create_params).await.unwrap();
-    beta.resolve_article(create_res.article.ap_id.into_inner())
+    beta.resolve_article(create_res.article.ap_id.into())
         .await
         .unwrap();
-    let domain = extract_domain(&alpha.site().await.unwrap().my_profile.unwrap().person.ap_id);
+    let domain = extract_domain(
+        &alpha
+            .site()
+            .await
+            .unwrap()
+            .my_profile
+            .unwrap()
+            .person
+            .ap_id
+            .into(),
+    );
 
     // Now we can fetch the remote user from local api
     let params = GetUserParams {

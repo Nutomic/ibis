@@ -1,8 +1,5 @@
-use std::ops::Deref;
-
-use crate::backend::utils::validate::validate_comment_max_depth;
-
 use super::{article_or_comment::DbArticleOrComment, user::PersonWrapper};
+use crate::backend::utils::validate::validate_comment_max_depth;
 use activitypub_federation::{
     config::Data,
     fetch::object_id::ObjectId,
@@ -20,6 +17,7 @@ use ibis_database::{
     impls::{comment::DbCommentInsertForm, IbisContext},
 };
 use serde::{Deserialize, Serialize};
+use std::ops::Deref;
 use url::Url;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]

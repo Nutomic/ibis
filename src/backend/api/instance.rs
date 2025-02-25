@@ -4,20 +4,25 @@ use activitypub_federation::{config::Data, fetch::object_id::ObjectId};
 use anyhow::anyhow;
 use axum::{extract::Query, Form, Json};
 use axum_macros::debug_handler;
-use ibis_database::impls::{
-    instance::{DbInstanceUpdateForm, InstanceViewQuery},
-    IbisContext,
-};
 use ibis_database::{
     common::{
         instance::{
-            FollowInstanceParams, GetInstanceParams, Instance, InstanceView, InstanceView2,
+            FollowInstanceParams,
+            GetInstanceParams,
+            Instance,
+            InstanceView,
+            InstanceView2,
             UpdateInstanceParams,
         },
         utils::http_protocol_str,
-        ResolveObjectParams, SuccessResponse,
+        ResolveObjectParams,
+        SuccessResponse,
     },
     error::BackendResult,
+    impls::{
+        instance::{DbInstanceUpdateForm, InstanceViewQuery},
+        IbisContext,
+    },
 };
 use moka::sync::Cache;
 use std::{sync::LazyLock, time::Duration};

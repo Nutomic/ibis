@@ -1,5 +1,7 @@
 use crate::frontend::{
-    api::CLIENT, components::suspense_error::SuspenseError, utils::errors::FrontendResultExt,
+    api::CLIENT,
+    components::suspense_error::SuspenseError,
+    utils::errors::FrontendResultExt,
 };
 use ibis_database::common::instance::UpdateInstanceParams;
 use leptos::prelude::*;

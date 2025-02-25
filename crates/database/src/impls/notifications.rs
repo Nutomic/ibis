@@ -13,8 +13,15 @@ use crate::{
 };
 use chrono::{DateTime, Utc};
 use diesel::{
-    dsl::*, ExpressionMethods, Insertable, JoinOnDsl, NullableExpressionMethods, QueryDsl,
-    Queryable, RunQueryDsl, Selectable,
+    dsl::*,
+    ExpressionMethods,
+    Insertable,
+    JoinOnDsl,
+    NullableExpressionMethods,
+    QueryDsl,
+    Queryable,
+    RunQueryDsl,
+    Selectable,
 };
 use std::ops::DerefMut;
 

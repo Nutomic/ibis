@@ -5,7 +5,8 @@ use crate::backend::{
         objects::article::ArticleWrapper,
     },
     utils::{
-        can_edit_article, generate_article_version,
+        can_edit_article,
+        generate_article_version,
         validate::{validate_article_title, validate_not_empty},
     },
 };
@@ -15,25 +16,38 @@ use axum::{extract::Query, Form, Json};
 use axum_macros::debug_handler;
 use chrono::Utc;
 use diffy::{apply, create_patch, merge, Patch};
-use ibis_database::impls::{
-    article::DbArticleForm,
-    conflict::{Conflict, DbConflictForm},
-    edit::DbEditForm,
-    IbisContext,
-};
 use ibis_database::{
     common::{
         article::{
-            ApiConflict, ApproveArticleParams, Article, ArticleView, CreateArticleParams,
-            DeleteConflictParams, Edit, EditArticleParams, EditVersion, FollowArticleParams,
-            ForkArticleParams, GetArticleParams, GetConflictParams, ListArticlesParams,
-            ProtectArticleParams, SearchArticleParams,
+            ApiConflict,
+            ApproveArticleParams,
+            Article,
+            ArticleView,
+            CreateArticleParams,
+            DeleteConflictParams,
+            Edit,
+            EditArticleParams,
+            EditVersion,
+            FollowArticleParams,
+            ForkArticleParams,
+            GetArticleParams,
+            GetConflictParams,
+            ListArticlesParams,
+            ProtectArticleParams,
+            SearchArticleParams,
         },
         instance::Instance,
         utils::{extract_domain, http_protocol_str},
-        ResolveObjectParams, SuccessResponse,
+        ResolveObjectParams,
+        SuccessResponse,
     },
     error::BackendResult,
+    impls::{
+        article::DbArticleForm,
+        conflict::{Conflict, DbConflictForm},
+        edit::DbEditForm,
+        IbisContext,
+    },
 };
 use url::Url;
 

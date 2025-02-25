@@ -6,8 +6,11 @@ use crate::backend::{
     utils::generate_activity_id,
 };
 use activitypub_federation::{
-    config::Data, fetch::object_id::ObjectId, kinds::activity::RejectType,
-    protocol::helpers::deserialize_one_or_many, traits::ActivityHandler,
+    config::Data,
+    fetch::object_id::ObjectId,
+    kinds::activity::RejectType,
+    protocol::helpers::deserialize_one_or_many,
+    traits::ActivityHandler,
 };
 use ibis_database::{
     common::{article::EditVersion, instance::Instance},

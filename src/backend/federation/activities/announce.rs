@@ -1,5 +1,9 @@
 use crate::backend::{
-    federation::{objects::instance::InstanceWrapper, routes::AnnouncableActivities, send_activity},
+    federation::{
+        objects::instance::InstanceWrapper,
+        routes::AnnouncableActivities,
+        send_activity,
+    },
     utils::generate_activity_id,
 };
 use activitypub_federation::{
@@ -9,7 +13,11 @@ use activitypub_federation::{
     protocol::helpers::deserialize_one_or_many,
     traits::{ActivityHandler, Actor},
 };
-use ibis_database::{common::instance::Instance, error::{BackendError, BackendResult}, impls::IbisContext};
+use ibis_database::{
+    common::instance::Instance,
+    error::{BackendError, BackendResult},
+    impls::IbisContext,
+};
 use serde::{Deserialize, Serialize};
 use url::Url;
 

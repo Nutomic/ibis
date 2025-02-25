@@ -4,14 +4,20 @@ use crate::frontend::{
     utils::{
         errors::{FrontendError, FrontendResultExt},
         formatting::{
-            article_link, article_path, article_title, comment_path, edit_path, time_ago, user_link,
+            article_link,
+            article_path,
+            article_title,
+            comment_path,
+            edit_path,
+            time_ago,
+            user_link,
         },
     },
 };
 use chrono::{DateTime, Utc};
 use ibis_database::{
     common::{
-        article::{ApiConflict, Article, Edit},
+        article::{Article, Edit},
         comment::Comment,
         newtypes::ArticleNotifId,
         notifications::ApiNotification,
@@ -73,7 +79,7 @@ fn edit_conflict_view(
     a: &Article,
     notifications: NotificationsResource,
 ) -> impl IntoView {
-    let link = format!("{}/edit?conflict_id={}", article_path(&a), c.id.0,);
+    let link = format!("{}/edit?conflict_id={}", article_path(a), c.id.0,);
     let id = c.id;
     let click_dismiss = Action::new(move |_: &()| async move {
         CLIENT
@@ -84,7 +90,7 @@ fn edit_conflict_view(
     view! {
         <li class="py-2">
             <a class="text-lg link" href=link>
-                {format!("Conflict: {} - {}", article_title(&a), c.summary)}
+                {format!("Conflict: {} - {}", article_title(a), c.summary)}
             </a>
             <div class="mt-2 card-actions">
                 <button

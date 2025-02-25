@@ -18,7 +18,7 @@ use activitypub_federation::{
     traits::{ActivityHandler, Object},
 };
 use ibis_database::{
-    common::{comment::Comment, instance::Instance, user::Person},
+    common::{instance::Instance, user::Person},
     error::{BackendError, BackendResult},
     impls::IbisContext,
 };
@@ -55,7 +55,7 @@ impl CreateOrUpdateComment {
         let object = comment.clone().into_json(context).await?;
         let id = generate_activity_id(context)?;
         let activity = Self {
-            actor: object.attributed_to.clone().into(),
+            actor: object.attributed_to.clone(),
             object,
             to: generate_comment_activity_to(&instance)?,
             kind,

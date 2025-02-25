@@ -1,6 +1,12 @@
 use crate::backend::{federation::VerifyUrlData, utils::generate_activity_id};
 use activitypub_federation::config::FederationConfig;
-use ibis_database::{common::instance::Instance, config::IbisConfig, error::BackendResult, impls::IbisContext, scheduled_tasks};
+use ibis_database::{
+    common::instance::Instance,
+    config::IbisConfig,
+    error::BackendResult,
+    impls::IbisContext,
+    scheduled_tasks,
+};
 use log::info;
 use server::{setup::setup, start_server};
 use std::{net::SocketAddr, thread};

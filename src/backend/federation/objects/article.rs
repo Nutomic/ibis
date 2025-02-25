@@ -1,3 +1,5 @@
+use super::{edits_collection::EditCollection, instance::InstanceWrapper};
+use crate::backend::utils::validate::validate_article_title;
 use activitypub_federation::{
     config::Data,
     fetch::{collection_id::CollectionId, object_id::ObjectId},
@@ -19,10 +21,6 @@ use ibis_database::{
 use serde::{Deserialize, Serialize};
 use std::ops::Deref;
 use url::Url;
-
-use crate::backend::utils::validate::validate_article_title;
-
-use super::{edits_collection::EditCollection, instance::InstanceWrapper};
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -77,7 +75,7 @@ impl Object for ArticleWrapper {
             kind: Default::default(),
             id: self.ap_id.clone().into(),
             attributed_to: local_instance.ap_id.clone().into(),
-            to: vec![public(), local_instance.followers_url()?.into()],
+            to: vec![public(), local_instance.followers_url()?],
             edits: self.edits_id()?.into(),
             latest_version: self.latest_edit_version(context)?,
             content: self.text.clone(),

@@ -9,8 +9,15 @@ use crate::{
 };
 use chrono::{DateTime, Utc};
 use diesel::{
-    delete, insert_into, ExpressionMethods, Identifiable, Insertable, QueryDsl, Queryable,
-    RunQueryDsl, Selectable,
+    delete,
+    insert_into,
+    ExpressionMethods,
+    Identifiable,
+    Insertable,
+    QueryDsl,
+    Queryable,
+    RunQueryDsl,
+    Selectable,
 };
 use serde::{Deserialize, Serialize};
 use std::ops::DerefMut;

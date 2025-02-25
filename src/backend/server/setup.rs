@@ -2,7 +2,7 @@ use crate::backend::federation::{
     activities::submit_article_update,
     objects::{articles_collection::local_articles_url, instance_collection::linked_instances_url},
 };
-use activitypub_federation::{config::Data, fetch::object_id::ObjectId};
+use activitypub_federation::config::Data;
 use chrono::Utc;
 use ibis_database::{
     common::{

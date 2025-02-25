@@ -1,3 +1,4 @@
+use super::{article::ArticleWrapper, user::PersonWrapper};
 use activitypub_federation::{
     config::Data,
     fetch::object_id::ObjectId,
@@ -17,8 +18,6 @@ use log::warn;
 use serde::{Deserialize, Serialize};
 use std::ops::Deref;
 use url::Url;
-
-use super::{article::ArticleWrapper, user::PersonWrapper};
 
 /// Same type used by Forgefed
 /// https://codeberg.org/ForgeFed/ForgeFed/issues/88
