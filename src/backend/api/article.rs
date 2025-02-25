@@ -92,6 +92,8 @@ pub(in crate::backend::api) async fn create_article(
     )
     .await?;
 
+    Article::follow(article.id, &user, &context)?;
+
     // allow reading unapproved article here
     let article_view = Article::read_view(article.id, Some(&user), &context)?;
     CreateArticle::send_to_followers(article_view.article.clone(), &context).await?;
@@ -258,6 +260,8 @@ pub(in crate::backend::api) async fn fork_article(
         };
         Edit::create(&form, &context)?;
     }
+
+    Article::follow(article.id, &user, &context)?;
 
     CreateArticle::send_to_followers(article.clone(), &context).await?;
 
