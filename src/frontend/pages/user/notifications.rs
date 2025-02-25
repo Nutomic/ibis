@@ -15,15 +15,12 @@ use crate::frontend::{
     },
 };
 use chrono::{DateTime, Utc};
-use ibis_database::{
-    common::{
-        article::{Article, Edit},
-        comment::Comment,
-        newtypes::ArticleNotifId,
-        notifications::ApiNotification,
-        user::Person,
-    },
-    impls::conflict::Conflict,
+use ibis_database::common::{
+    article::{Article, Conflict, Edit},
+    comment::Comment,
+    newtypes::ArticleNotifId,
+    notifications::ApiNotification,
+    user::Person,
 };
 use leptos::{either::EitherOf4, prelude::*};
 use leptos_meta::Title;

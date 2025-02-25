@@ -21,6 +21,7 @@ use std::fmt::Debug;
 use url::Url;
 
 pub mod activities;
+pub mod nodeinfo;
 pub mod objects;
 pub mod routes;
 pub mod validate;

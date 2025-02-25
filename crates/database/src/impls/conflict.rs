@@ -1,41 +1,14 @@
 use crate::{
     common::{
-        article::EditVersion,
+        article::{Conflict, EditVersion},
         newtypes::{ArticleId, ConflictId, PersonId},
     },
     error::BackendResult,
     impls::IbisContext,
     schema::{conflict, edit},
 };
-use chrono::{DateTime, Utc};
-use diesel::{
-    delete,
-    insert_into,
-    ExpressionMethods,
-    Identifiable,
-    Insertable,
-    QueryDsl,
-    Queryable,
-    RunQueryDsl,
-    Selectable,
-};
-use serde::{Deserialize, Serialize};
+use diesel::{delete, insert_into, ExpressionMethods, Insertable, QueryDsl, RunQueryDsl};
 use std::ops::DerefMut;
-
-/// A local only object which represents a merge conflict. It is created
-/// when a local user edit conflicts with another concurrent edit.
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Queryable, Selectable, Identifiable)]
-#[diesel(table_name = conflict, check_for_backend(diesel::pg::Pg), belongs_to(DbArticle, foreign_key = article_id))]
-pub struct Conflict {
-    pub id: ConflictId,
-    pub hash: EditVersion,
-    pub diff: String,
-    pub summary: String,
-    pub creator_id: PersonId,
-    pub article_id: ArticleId,
-    pub previous_version_id: EditVersion,
-    pub published: DateTime<Utc>,
-}
 
 #[derive(Debug, Clone, Insertable)]
 #[diesel(table_name = conflict, check_for_backend(diesel::pg::Pg))]

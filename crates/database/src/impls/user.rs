@@ -6,9 +6,9 @@ use crate::{
         utils::http_protocol_str,
     },
     error::BackendResult,
-    generate_keypair,
     impls::IbisContext,
     schema::{instance, instance_follow, local_user, person},
+    utils::generate_keypair,
     DbUrl,
 };
 use bcrypt::{hash, DEFAULT_COST};

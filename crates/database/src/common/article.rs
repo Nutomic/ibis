@@ -4,16 +4,33 @@ use super::{
     newtypes::{ArticleId, ConflictId, EditId, InstanceId, PersonId},
     user::Person,
 };
-use crate::{
-    schema::{article, edit},
-    DbUrl,
-};
+use crate::DbUrl;
+use anyhow::anyhow;
 use chrono::{DateTime, Utc};
-#[cfg(feature = "ssr")]
-use diesel::{Identifiable, Queryable, Selectable};
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
 use uuid::Uuid;
+#[cfg(feature = "ssr")]
+use {
+    crate::schema::{article, conflict, edit},
+    diesel::{Identifiable, Queryable, Selectable},
+    sha2::{Digest, Sha256},
+};
+
+/// A local only object which represents a merge conflict. It is created
+/// when a local user edit conflicts with another concurrent edit.
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[cfg_attr(feature = "ssr", derive(Queryable, Selectable, Identifiable))]
+#[cfg_attr(feature = "ssr", diesel(table_name = conflict, check_for_backend(diesel::pg::Pg), belongs_to(DbArticle, foreign_key = article_id)))]
+pub struct Conflict {
+    pub id: ConflictId,
+    pub hash: EditVersion,
+    pub diff: String,
+    pub summary: String,
+    pub creator_id: PersonId,
+    pub article_id: ArticleId,
+    pub previous_version_id: EditVersion,
+    pub published: DateTime<Utc>,
+}
 
 /// Should be an enum Title/Id but fails due to https://github.com/nox/serde_urlencoded/issues/66
 #[derive(Deserialize, Serialize, Clone, Debug, Default)]
@@ -47,10 +64,7 @@ pub struct Article {
     pub id: ArticleId,
     pub title: String,
     pub text: String,
-    #[cfg(feature = "ssr")]
     pub ap_id: DbUrl,
-    #[cfg(not(feature = "ssr"))]
-    pub ap_id: String,
     pub instance_id: InstanceId,
     pub local: bool,
     pub protected: bool,
@@ -116,10 +130,7 @@ pub struct Edit {
     pub creator_id: PersonId,
     /// UUID built from sha224 hash of diff
     pub hash: EditVersion,
-    #[cfg(feature = "ssr")]
     pub ap_id: DbUrl,
-    #[cfg(not(feature = "ssr"))]
-    pub ap_id: String,
     pub diff: String,
     pub summary: String,
     pub article_id: ArticleId,
@@ -150,6 +161,7 @@ pub struct EditView {
 #[cfg_attr(feature = "ssr", derive(diesel_derive_newtype::DieselNewType))]
 pub struct EditVersion(pub Uuid);
 
+#[cfg(feature = "ssr")]
 impl EditVersion {
     pub fn new(diff: &str) -> Self {
         let mut sha256 = Sha256::new();
@@ -165,6 +177,7 @@ impl EditVersion {
     }
 }
 
+#[cfg(feature = "ssr")]
 impl Default for EditVersion {
     fn default() -> Self {
         EditVersion::new("")
@@ -196,6 +209,15 @@ pub struct GetConflictParams {
 pub struct FollowArticleParams {
     pub id: ArticleId,
     pub follow: bool,
+}
+
+pub fn can_edit_article(article: &Article, is_admin: bool) -> Result<(), anyhow::Error> {
+    if article.protected && !article.local && !is_admin {
+        return Err(anyhow!(
+            "Article is protected, only admins on origin instance can edit".to_string()
+        ));
+    }
+    Ok(())
 }
 
 #[test]

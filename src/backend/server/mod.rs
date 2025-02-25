@@ -16,7 +16,7 @@ use axum::{
     ServiceExt,
 };
 use ibis_database::{common::Auth, error::BackendResult, impls::IbisContext};
-use ibis_federate::routes::federation_routes;
+use ibis_federate::{nodeinfo, routes::federation_routes};
 use leptos::prelude::*;
 use leptos_axum::{generate_route_list, LeptosRoutes};
 use log::info;
@@ -28,7 +28,6 @@ use tower_layer::Layer;
 
 mod assets;
 mod middleware;
-mod nodeinfo;
 pub(super) mod setup;
 
 pub(super) async fn start_server(

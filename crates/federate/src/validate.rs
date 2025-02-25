@@ -1,8 +1,5 @@
 use anyhow::anyhow;
-use ibis_database::{
-    common::article::Article,
-    error::{BackendError, BackendResult},
-};
+use ibis_database::error::BackendResult;
 use regex::Regex;
 use std::sync::LazyLock;
 
@@ -48,15 +45,6 @@ pub fn validate_comment_max_depth(depth: i32) -> BackendResult<()> {
 pub fn validate_not_empty(text: &str) -> BackendResult<()> {
     if text.trim().len() < 2 {
         return Err(anyhow!("Empty text submitted").into());
-    }
-    Ok(())
-}
-
-pub fn can_edit_article(article: &Article, is_admin: bool) -> BackendResult<()> {
-    if article.protected && !article.local && !is_admin {
-        return Err(BackendError(anyhow!(
-            "Article is protected, only admins on origin instance can edit".to_string()
-        )));
     }
     Ok(())
 }

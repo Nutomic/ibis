@@ -11,12 +11,12 @@ use activitypub_federation::{
     traits::ActivityHandler,
 };
 use ibis_database::{
-    common::{article::EditVersion, instance::Instance},
-    error::{BackendError, BackendResult},
-    impls::{
-        conflict::{Conflict, DbConflictForm},
-        IbisContext,
+    common::{
+        article::{Conflict, EditVersion},
+        instance::Instance,
     },
+    error::{BackendError, BackendResult},
+    impls::{conflict::DbConflictForm, IbisContext},
 };
 use serde::{Deserialize, Serialize};
 use url::Url;

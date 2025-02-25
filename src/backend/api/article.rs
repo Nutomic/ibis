@@ -9,10 +9,12 @@ use diffy::{apply, create_patch, merge, Patch};
 use ibis_database::{
     common::{
         article::{
+            can_edit_article,
             ApiConflict,
             ApproveArticleParams,
             Article,
             ArticleView,
+            Conflict,
             CreateArticleParams,
             DeleteConflictParams,
             Edit,
@@ -32,17 +34,12 @@ use ibis_database::{
         SuccessResponse,
     },
     error::BackendResult,
-    impls::{
-        article::DbArticleForm,
-        conflict::{Conflict, DbConflictForm},
-        edit::DbEditForm,
-        IbisContext,
-    },
+    impls::{article::DbArticleForm, conflict::DbConflictForm, edit::DbEditForm, IbisContext},
 };
 use ibis_federate::{
     activities::{create_article::CreateArticle, submit_article_update},
     objects::article::ArticleWrapper,
-    validate::{can_edit_article, validate_article_title, validate_not_empty},
+    validate::{validate_article_title, validate_not_empty},
 };
 use url::Url;
 

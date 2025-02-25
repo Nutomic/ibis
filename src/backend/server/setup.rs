@@ -9,8 +9,8 @@ use ibis_database::{
         MAIN_PAGE_NAME,
     },
     error::BackendError,
-    generate_keypair,
     impls::{article::DbArticleForm, instance::DbInstanceForm, IbisContext},
+    utils::generate_keypair,
 };
 use ibis_federate::{
     activities::submit_article_update,

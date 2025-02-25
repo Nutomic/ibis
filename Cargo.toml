@@ -61,7 +61,6 @@ tokio = { version = "1.43.0", default-features = false }
 # frontend and shared deps
 [dependencies]
 ibis_database.workspace = true
-ibis_federate.workspace = true
 leptos = "0.7.4"
 leptos_meta = "0.7.4"
 leptos_router = "0.7.4"
@@ -71,7 +70,6 @@ chrono.workspace = true
 sha2.workspace = true
 uuid.workspace = true
 anyhow.workspace = true
-activitypub_federation.workspace = true
 url.workspace = true
 log.workspace = true
 tracing = "0.1.41"
@@ -109,6 +107,7 @@ phosphor-leptos = { version = "0.7.0", features = [
 
 # backend-only deps
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
+ibis_federate.workspace = true
 axum.workspace = true
 axum-macros.workspace = true
 axum-extra = { version = "0.9.6", features = ["cookie"] }

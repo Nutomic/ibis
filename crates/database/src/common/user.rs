@@ -2,15 +2,15 @@ use super::{
     instance::Instance,
     newtypes::{LocalUserId, PersonId},
 };
-use crate::{
-    schema::{local_user, person},
-    DbUrl,
-};
+use crate::DbUrl;
 use chrono::{DateTime, Utc};
-#[cfg(feature = "ssr")]
-use diesel::{Identifiable, Queryable, Selectable};
 use serde::{Deserialize, Serialize};
 use url::Url;
+#[cfg(feature = "ssr")]
+use {
+    crate::schema::{local_user, person},
+    diesel::{Identifiable, Queryable, Selectable},
+};
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct RegisterUserParams {
@@ -52,10 +52,7 @@ pub struct LocalUser {
 pub struct Person {
     pub id: PersonId,
     pub username: String,
-    #[cfg(feature = "ssr")]
     pub ap_id: DbUrl,
-    #[cfg(not(feature = "ssr"))]
-    pub ap_id: String,
     pub inbox_url: String,
     #[serde(skip)]
     pub public_key: String,

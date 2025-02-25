@@ -6,7 +6,6 @@ use crate::{
         instance::InstanceWrapper,
     },
     send_activity,
-    validate::can_edit_article,
 };
 use activitypub_federation::{
     config::Data,
@@ -17,7 +16,10 @@ use activitypub_federation::{
 };
 use diffy::{apply, Patch};
 use ibis_database::{
-    common::{article::Article, instance::Instance},
+    common::{
+        article::{can_edit_article, Article},
+        instance::Instance,
+    },
     error::{BackendError, BackendResult},
     impls::IbisContext,
 };

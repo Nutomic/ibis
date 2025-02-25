@@ -1,7 +1,6 @@
-use super::conflict::Conflict;
 use crate::{
     common::{
-        article::{Article, Edit},
+        article::{Article, Conflict, Edit},
         comment::Comment,
         newtypes::{ArticleId, ArticleNotifId, CommentId, EditId, LocalUserId, PersonId},
         notifications::ApiNotification,

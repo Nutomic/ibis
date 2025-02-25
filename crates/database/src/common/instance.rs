@@ -3,13 +3,14 @@ use super::{
     newtypes::InstanceId,
     user::{LocalUserView, Person},
 };
-use crate::{schema::instance, DbUrl};
+use crate::DbUrl;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use smart_default::SmartDefault;
 use url::Url;
 #[cfg(feature = "ssr")]
 use {
+    crate::schema::instance,
     diesel::{Identifiable, Queryable, Selectable},
     doku::Document,
 };
@@ -20,15 +21,9 @@ use {
 pub struct Instance {
     pub id: InstanceId,
     pub domain: String,
-    #[cfg(feature = "ssr")]
     pub ap_id: DbUrl,
-    #[cfg(not(feature = "ssr"))]
-    pub ap_id: String,
     pub topic: Option<String>,
-    #[cfg(feature = "ssr")]
     pub articles_url: Option<DbUrl>,
-    #[cfg(not(feature = "ssr"))]
-    pub articles_url: String,
     pub inbox_url: String,
     #[serde(skip)]
     pub public_key: String,

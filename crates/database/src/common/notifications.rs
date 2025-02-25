@@ -1,10 +1,9 @@
 use super::{
-    article::{Article, Edit},
+    article::{Article, Conflict, Edit},
     comment::Comment,
     newtypes::{ArticleNotifId, CommentId},
     user::Person,
 };
-use crate::impls::conflict::Conflict;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
