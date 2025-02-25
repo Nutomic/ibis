@@ -18,6 +18,7 @@ use phosphor_leptos::{
     BELL_SLASH,
     BOOK,
     CHATS_CIRCLE,
+    FEDIVERSE_LOGO,
     GEAR_SIX,
     LIST,
     LOCK_SIMPLE,
@@ -49,6 +50,7 @@ pub fn ArticleNav(
                         let title = article_title(&article_.article);
                         let article_link = article_path(&article_.article);
                         let article_link_ = article_link.clone();
+                        let ap_id = article_.article.ap_id.to_string();
                         let protected = article_.article.protected;
                         let follow_article_action = Action::new(move |_: &()| async move {
                             CLIENT
@@ -114,6 +116,9 @@ pub fn ArticleNav(
                                 <h1 class="flex-auto my-6 font-serif text-4xl font-bold grow">
                                     {title}
                                 </h1>
+                                <a href=ap_id class="mr-2">
+                                    <Icon icon=FEDIVERSE_LOGO size="24px" />
+                                </a>
                                 <Show when=move || protected>
                                     <span
                                         class="mr-2"
