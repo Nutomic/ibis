@@ -4,16 +4,16 @@ use super::{
     newtypes::{ArticleId, ConflictId, EditId, InstanceId, PersonId},
     user::Person,
 };
+use crate::{
+    schema::{article, edit},
+    DbUrl,
+};
 use chrono::{DateTime, Utc};
+#[cfg(feature = "ssr")]
+use diesel::{Identifiable, Queryable, Selectable};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use uuid::Uuid;
-#[cfg(feature = "ssr")]
-use {
-    crate::backend::database::schema::{article, edit},
-    activitypub_federation::fetch::object_id::ObjectId,
-    diesel::{Identifiable, Queryable, Selectable},
-};
 
 /// Should be an enum Title/Id but fails due to https://github.com/nox/serde_urlencoded/issues/66
 #[derive(Deserialize, Serialize, Clone, Debug, Default)]
@@ -48,7 +48,7 @@ pub struct Article {
     pub title: String,
     pub text: String,
     #[cfg(feature = "ssr")]
-    pub ap_id: ObjectId<Article>,
+    pub ap_id: DbUrl,
     #[cfg(not(feature = "ssr"))]
     pub ap_id: String,
     pub instance_id: InstanceId,
@@ -117,7 +117,7 @@ pub struct Edit {
     /// UUID built from sha224 hash of diff
     pub hash: EditVersion,
     #[cfg(feature = "ssr")]
-    pub ap_id: ObjectId<Edit>,
+    pub ap_id: DbUrl,
     #[cfg(not(feature = "ssr"))]
     pub ap_id: String,
     pub diff: String,

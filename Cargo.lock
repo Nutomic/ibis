@@ -996,6 +996,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "database"
+version = "0.2.2"
+dependencies = [
+ "activitypub_federation",
+ "chrono",
+ "diesel",
+ "diesel-derive-newtype",
+ "diesel_migrations",
+ "doku",
+ "hex",
+ "serde",
+ "sha2",
+ "smart-default",
+ "url",
+ "uuid",
+]
+
+[[package]]
 name = "default-struct-builder"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1983,11 +2001,7 @@ dependencies = [
  "config 0.15.6",
  "console_error_panic_hook",
  "console_log",
- "diesel",
- "diesel-derive-newtype",
- "diesel_migrations",
  "diffy",
- "doku",
  "enum_delegate",
  "env_logger",
  "fmtm",
@@ -1995,7 +2009,6 @@ dependencies = [
  "getrandom",
  "github-slugger",
  "gloo-net",
- "hex",
  "http",
  "include_dir",
  "jsonwebtoken",
@@ -2025,7 +2038,6 @@ dependencies = [
  "serde_json",
  "serde_urlencoded",
  "sha2",
- "smart-default",
  "time",
  "timeago",
  "tokio",

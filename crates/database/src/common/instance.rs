@@ -3,18 +3,13 @@ use super::{
     newtypes::InstanceId,
     user::{LocalUserView, Person},
 };
+use crate::{schema::instance, DbUrl};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use smart_default::SmartDefault;
 use url::Url;
 #[cfg(feature = "ssr")]
 use {
-    crate::backend::{
-        database::schema::instance,
-        federation::objects::articles_collection::DbArticleCollection,
-        federation::objects::instance_collection::DbInstanceCollection,
-    },
-    activitypub_federation::fetch::{collection_id::CollectionId, object_id::ObjectId},
     diesel::{Identifiable, Queryable, Selectable},
     doku::Document,
 };
@@ -26,12 +21,12 @@ pub struct Instance {
     pub id: InstanceId,
     pub domain: String,
     #[cfg(feature = "ssr")]
-    pub ap_id: ObjectId<Instance>,
+    pub ap_id: DbUrl,
     #[cfg(not(feature = "ssr"))]
     pub ap_id: String,
     pub topic: Option<String>,
     #[cfg(feature = "ssr")]
-    pub articles_url: Option<CollectionId<DbArticleCollection>>,
+    pub articles_url: Option<DbUrl>,
     #[cfg(not(feature = "ssr"))]
     pub articles_url: String,
     pub inbox_url: String,
@@ -42,7 +37,7 @@ pub struct Instance {
     pub last_refreshed_at: DateTime<Utc>,
     pub local: bool,
     #[cfg(feature = "ssr")]
-    pub instances_url: Option<CollectionId<DbInstanceCollection>>,
+    pub instances_url: Option<DbUrl>,
     pub name: Option<String>,
 }
 

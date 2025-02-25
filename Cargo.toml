@@ -3,6 +3,9 @@ name = "ibis"
 version = "0.2.2"
 edition = "2021"
 
+[workspace]
+members = ["crates/database"]
+
 [features]
 default = ["ssr"]
 ssr = ["katex/duktape", "leptos/ssr", "leptos-use/ssr", "leptos-use/axum"]
@@ -33,26 +36,36 @@ perf = { level = "deny", priority = -1 }
 style = { level = "deny", priority = -1 }
 suspicious = { level = "deny", priority = -1 }
 
+[workspace.dependencies]
+serde = { version = "1.0.217", features = ["derive"] }
+chrono = { version = "0.4.39", features = ["serde"] }
+sha2 = "0.10.8"
+uuid = { version = "1.12.0", features = ["serde"] }
+activitypub_federation = { version = "0.6.2", features = [
+  "axum",
+  "diesel",
+], default-features = false }
+url = { version = "2.5.4", features = ["serde"] }
+
 # frontend and shared deps
 [dependencies]
 leptos = "0.7.4"
 leptos_meta = "0.7.4"
 leptos_router = "0.7.4"
-chrono = { version = "0.4.39", features = ["serde"] }
-hex = "0.4.3"
 rand = "0.8.5"
 getrandom = { version = "0.2", features = ["js"] }
 serde_json = "1.0.135"
-sha2 = "0.10.8"
-uuid = { version = "1.12.0", features = ["serde"] }
-serde = { version = "1.0.217", features = ["derive"] }
-url = { version = "2.5.4", features = ["serde"] }
+serde.workspace = true
+chrono.workspace = true
+sha2.workspace = true
+uuid.workspace = true
+activitypub_federation.workspace = true
+url.workspace = true
 log = "0.4"
 tracing = "0.1.41"
 console_error_panic_hook = "0.1.7"
 time = "0.3.37"
 markdown-it = "0.6.1"
-smart-default = "0.7.1"
 katex = { version = "0.4", default-features = false }
 markdown-it-block-spoiler = "1.0.1"
 markdown-it-heading-anchors = "0.3.0"
@@ -93,19 +106,7 @@ tower-http = { version = "0.6.2", features = [
   "fs",
   "compression-full",
 ] }
-activitypub_federation = { version = "0.6.2", features = [
-  "axum",
-  "diesel",
-], default-features = false }
-diesel = { version = "2.2.6", default-features = false, features = [
-  "postgres",
-  "chrono",
-  "uuid",
-  "r2d2",
-] }
-diesel-derive-newtype = "2.1.2"
-diesel_migrations = "2.2.0"
-doku = "0.21.1"
+activitypub_federation.workspace = true
 jsonwebtoken = "9.3.0"
 leptos_axum = "0.7.4"
 bcrypt = "0.16.0"

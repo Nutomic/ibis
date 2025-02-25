@@ -1,4 +1,4 @@
-use crate::common::article::Article;
+/*use crate::common::article::Article;
 use leptos::server_fn::error::ServerFnErrorErr;
 
 pub fn can_edit_article(article: &Article, is_admin: bool) -> Result<(), ServerFnErrorErr> {
@@ -15,3 +15,4 @@ pub fn can_edit_article(article: &Article, is_admin: bool) -> Result<(), ServerF
     }
     Ok(())
 }
+*/

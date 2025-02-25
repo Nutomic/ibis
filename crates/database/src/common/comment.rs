@@ -2,12 +2,11 @@ use super::{
     newtypes::{ArticleId, CommentId, PersonId},
     user::Person,
 };
+use crate::{schema::comment, DbUrl};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "ssr")]
 use {
-    crate::backend::database::schema::comment,
-    activitypub_federation::fetch::object_id::ObjectId,
     diesel::{Identifiable, Queryable, Selectable},
 };
 
@@ -22,7 +21,7 @@ pub struct Comment {
     pub content: String,
     pub depth: i32,
     #[cfg(feature = "ssr")]
-    pub ap_id: ObjectId<Comment>,
+    pub ap_id: DbUrl,
     #[cfg(not(feature = "ssr"))]
     pub ap_id: String,
     pub local: bool,

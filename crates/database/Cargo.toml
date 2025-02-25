@@ -1,0 +1,27 @@
+[package]
+name = "database"
+version = "0.2.2"
+edition = "2021"
+
+[features]
+default = ["ssr"]
+ssr = []
+
+[dependencies]
+diesel = { version = "2.2.6", default-features = false, features = [
+  "postgres",
+  "chrono",
+  "uuid",
+  "r2d2",
+] }
+diesel-derive-newtype = "2.1.2"
+diesel_migrations = "2.2.0"
+smart-default = "0.7.1"
+doku = "0.21.1"
+hex = "0.4.3"
+serde.workspace = true
+chrono.workspace = true
+sha2.workspace = true
+uuid.workspace = true
+activitypub_federation.workspace = true
+url.workspace = true

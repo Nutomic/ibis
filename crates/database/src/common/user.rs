@@ -2,15 +2,15 @@ use super::{
     instance::Instance,
     newtypes::{LocalUserId, PersonId},
 };
+use crate::{
+    schema::{local_user, person},
+    DbUrl,
+};
 use chrono::{DateTime, Utc};
+#[cfg(feature = "ssr")]
+use diesel::{Identifiable, Queryable, Selectable};
 use serde::{Deserialize, Serialize};
 use url::Url;
-#[cfg(feature = "ssr")]
-use {
-    crate::backend::database::schema::{local_user, person},
-    activitypub_federation::fetch::object_id::ObjectId,
-    diesel::{Identifiable, Queryable, Selectable},
-};
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct RegisterUserParams {
@@ -53,7 +53,7 @@ pub struct Person {
     pub id: PersonId,
     pub username: String,
     #[cfg(feature = "ssr")]
-    pub ap_id: ObjectId<Person>,
+    pub ap_id: DbUrl,
     #[cfg(not(feature = "ssr"))]
     pub ap_id: String,
     pub inbox_url: String,
