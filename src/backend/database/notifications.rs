@@ -201,6 +201,7 @@ impl Notification {
         // notify users who subscribed to article
         Self::notify(
             comment.article_id,
+            comment.creator_id,
             |local_user_id| NotificationInsertForm {
                 local_user_id,
                 article_id: comment.article_id,
@@ -217,6 +218,7 @@ impl Notification {
     pub(super) fn notify_edit(edit: &Edit, context: &IbisContext) -> BackendResult<()> {
         Self::notify(
             edit.article_id,
+            edit.creator_id,
             |local_user_id| NotificationInsertForm {
                 local_user_id,
                 article_id: edit.article_id,
@@ -228,18 +230,35 @@ impl Notification {
         )
     }
 
-    fn notify<F>(article_id: ArticleId, map_fn: F, context: &IbisContext) -> BackendResult<()>
+    fn notify<F>(
+        article_id: ArticleId,
+        creator_id: PersonId,
+        map_fn: F,
+        context: &IbisContext,
+    ) -> BackendResult<()>
     where
         F: FnMut(LocalUserId) -> NotificationInsertForm,
     {
         let mut conn = context.db_pool.get()?;
         // get followers for this article
         let followers = article_follow::table
+            .inner_join(local_user::table)
             .filter(article_follow::article_id.eq(article_id))
-            .select(article_follow::local_user_id)
-            .get_results(&mut conn)?;
+            .select((local_user::person_id, local_user::id))
+            .get_results::<(PersonId, LocalUserId)>(&mut conn)?;
         // create insert form with edit/comment it
-        let notifs: Vec<_> = followers.into_iter().map(map_fn).collect();
+        let notifs: Vec<_> = followers
+            .into_iter()
+            // exclude creator so he doesnt get notified about his own edit/comment
+            .flat_map(|(person_id, local_user_id)| {
+                if person_id != creator_id {
+                    Some(local_user_id)
+                } else {
+                    None
+                }
+            })
+            .map(map_fn)
+            .collect();
         // insert all of them
         insert_into(notification::table)
             .values(&notifs)
