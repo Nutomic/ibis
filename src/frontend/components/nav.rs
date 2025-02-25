@@ -39,19 +39,26 @@ pub fn Nav() -> impl IntoView {
                 id="navbar-start"
                 class="md:h-full max-sm:navbar-start max-sm:flex max-sm:dropdown max-sm:dropdown-bottom max-sm:dropdown-end max-sm:w-full"
             >
-                <h1 class="w-min font-serif text-3xl font-bold md:hidden">Ibis</h1>
+                <a href="/" class="flex flex-row md:hidden">
+                    <img src="/logo.png" class="m-auto size-8" />
+                    <h2 class="m-2 font-serif text-xl font-bold">
+                        {move || Suspend::new(async move {
+                            instance.await.map(|i| instance_title(&i.instance))
+                        })}
+                    </h2>
+                </a>
                 <div class="flex-grow md:hidden"></div>
                 <button class="lg:hidden btn btn-outline">Menu</button>
                 <div class="md:h-full menu dropdown-content max-sm:rounded-box max-sm:z-[1] max-sm:shadow">
                     <Transition>
-                        <a href="/">
-                            <img src="/logo.png" class="m-auto max-sm:hidden" />
+                        <a href="/" class="max-sm:hidden">
+                            <img src="/logo.png" class="m-auto" />
+                            <h2 class="m-4 font-serif text-xl font-bold">
+                                {move || Suspend::new(async move {
+                                    instance.await.map(|i| instance_title(&i.instance))
+                                })}
+                            </h2>
                         </a>
-                        <h2 class="m-4 font-serif text-xl font-bold">
-                            {move || Suspend::new(async move {
-                                instance.await.map(|i| instance_title(&i.instance))
-                            })}
-                        </h2>
                         <ul>
                             <li>
                                 <a href="/">
