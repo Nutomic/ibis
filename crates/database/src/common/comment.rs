@@ -4,11 +4,9 @@ use super::{
 };
 use crate::{schema::comment, DbUrl};
 use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
 #[cfg(feature = "ssr")]
-use {
-    diesel::{Identifiable, Queryable, Selectable},
-};
+use diesel::{Identifiable, Queryable, Selectable};
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[cfg_attr(feature = "ssr", derive(Queryable, Selectable, Identifiable))]

@@ -1,20 +1,15 @@
 use crate::{
-    backend::{
-        database::{
-            schema::{article, article_follow, edit, instance},
-            IbisContext,
-        },
-        federation::objects::edits_collection::DbEditCollection,
-        utils::error::BackendResult,
-    },
     common::{
         article::{Article, ArticleView, EditVersion},
         comment::Comment,
         newtypes::{ArticleId, InstanceId},
         user::LocalUserView,
     },
+    error::BackendResult,
+    impls::IbisContext,
+    schema::{article, article_follow, edit, instance},
+    DbUrl,
 };
-use activitypub_federation::fetch::{collection_id::CollectionId, object_id::ObjectId};
 use diesel::{
     dsl::{delete, max},
     insert_into,
@@ -29,13 +24,14 @@ use diesel::{
     RunQueryDsl,
 };
 use std::ops::DerefMut;
+use url::Url;
 
 #[derive(Debug, Clone, Insertable, AsChangeset)]
 #[diesel(table_name = article, check_for_backend(diesel::pg::Pg))]
 pub struct DbArticleForm {
     pub title: String,
     pub text: String,
-    pub ap_id: ObjectId<Article>,
+    pub ap_id: DbUrl,
     pub instance_id: InstanceId,
     pub local: bool,
     pub protected: bool,
@@ -60,8 +56,8 @@ impl<'a> From<(&'a String, Option<String>)> for ArticleViewQuery<'a> {
 }
 
 impl Article {
-    pub fn edits_id(&self) -> BackendResult<CollectionId<DbEditCollection>> {
-        Ok(CollectionId::parse(&format!("{}/edits", self.ap_id))?)
+    pub fn edits_id(&self) -> BackendResult<DbUrl> {
+        Ok(Url::parse(&format!("{}/edits", self.ap_id))?.into())
     }
 
     pub fn create(form: DbArticleForm, context: &IbisContext) -> BackendResult<Self> {
@@ -167,10 +163,7 @@ impl Article {
         })
     }
 
-    pub fn read_from_ap_id(
-        ap_id: &ObjectId<Article>,
-        context: &IbisContext,
-    ) -> BackendResult<Self> {
+    pub fn read_from_ap_id(ap_id: &DbUrl, context: &IbisContext) -> BackendResult<Self> {
         let mut conn = context.db_pool.get()?;
         Ok(article::table
             .filter(article::dsl::ap_id.eq(ap_id))

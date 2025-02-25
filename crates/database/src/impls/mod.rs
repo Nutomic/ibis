@@ -1,7 +1,4 @@
-use crate::backend::{
-    database::schema::jwt_secret,
-    utils::{config::IbisConfig, error::BackendResult},
-};
+use crate::{config::IbisConfig, error::BackendResult, schema::jwt_secret};
 use diesel::{
     r2d2::{ConnectionManager, Pool},
     PgConnection,
@@ -18,12 +15,11 @@ pub mod edit;
 pub mod instance;
 pub mod instance_stats;
 pub mod notifications;
-pub(crate) mod schema;
 pub mod user;
 
 pub type DbPool = Pool<ConnectionManager<PgConnection>>;
 
-const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
+const MIGRATIONS: EmbeddedMigrations = embed_migrations!("../../migrations");
 
 #[derive(Clone)]
 pub struct IbisContext {

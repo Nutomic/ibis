@@ -1,19 +1,16 @@
 use crate::{
-    backend::{
-        database::{
-            schema::{instance, instance_follow, local_user, person},
-            IbisContext,
-        },
-        utils::{error::BackendResult, generate_keypair},
-    },
     common::{
         instance::Instance,
         newtypes::PersonId,
         user::{LocalUser, LocalUserView, Person, UpdateUserParams},
         utils::http_protocol_str,
     },
+    error::BackendResult,
+    generate_keypair,
+    impls::IbisContext,
+    schema::{instance, instance_follow, local_user, person},
+    DbUrl,
 };
-use activitypub_federation::{config::Data, fetch::object_id::ObjectId};
 use bcrypt::{hash, DEFAULT_COST};
 use chrono::{DateTime, Utc};
 use diesel::{
@@ -27,6 +24,7 @@ use diesel::{
     RunQueryDsl,
 };
 use std::ops::DerefMut;
+use url::Url;
 
 #[derive(Debug, Clone, Insertable, AsChangeset)]
 #[diesel(table_name = local_user, check_for_backend(diesel::pg::Pg))]
@@ -40,7 +38,7 @@ pub struct DbLocalUserForm {
 #[diesel(table_name = person, check_for_backend(diesel::pg::Pg))]
 pub struct DbPersonForm {
     pub username: String,
-    pub ap_id: ObjectId<Person>,
+    pub ap_id: DbUrl,
     pub inbox_url: String,
     pub public_key: String,
     pub private_key: Option<String>,
@@ -51,7 +49,7 @@ pub struct DbPersonForm {
 }
 
 impl Person {
-    pub fn create(person_form: &DbPersonForm, context: &Data<IbisContext>) -> BackendResult<Self> {
+    pub fn create(person_form: &DbPersonForm, context: &IbisContext) -> BackendResult<Self> {
         let mut conn = context.db_pool.get()?;
         Ok(insert_into(person::table)
             .values(person_form)
@@ -83,10 +81,11 @@ impl Person {
     ) -> BackendResult<LocalUserView> {
         let mut conn = context.db_pool.get()?;
         let domain = &context.config.federation.domain;
-        let ap_id = ObjectId::parse(&format!(
+        let ap_id = Url::parse(&format!(
             "{}://{domain}/user/{username}",
             http_protocol_str()
-        ))?;
+        ))?
+        .into();
         let inbox_url = format!("{}://{domain}/inbox", http_protocol_str());
         let keypair = generate_keypair()?;
         let person_form = DbPersonForm {
@@ -122,10 +121,7 @@ impl Person {
         })
     }
 
-    pub fn read_from_ap_id(
-        ap_id: &ObjectId<Person>,
-        context: &Data<IbisContext>,
-    ) -> BackendResult<Person> {
+    pub fn read_from_ap_id(ap_id: &DbUrl, context: &IbisContext) -> BackendResult<Person> {
         let mut conn = context.db_pool.get()?;
         Ok(person::table
             .filter(person::dsl::ap_id.eq(ap_id))
@@ -135,7 +131,7 @@ impl Person {
     pub fn read_from_name(
         username: &str,
         domain: &Option<String>,
-        context: &Data<IbisContext>,
+        context: &IbisContext,
     ) -> BackendResult<Person> {
         let mut conn = context.db_pool.get()?;
         let mut query = person::table
@@ -153,10 +149,7 @@ impl Person {
         Ok(query.get_result(conn.deref_mut())?)
     }
 
-    pub fn update_profile(
-        params: &UpdateUserParams,
-        context: &Data<IbisContext>,
-    ) -> BackendResult<()> {
+    pub fn update_profile(params: &UpdateUserParams, context: &IbisContext) -> BackendResult<()> {
         let mut conn = context.db_pool.get()?;
         diesel::update(person::table.find(params.person_id))
             .set((
@@ -197,17 +190,18 @@ impl Person {
     }
 
     /// Ghost user serves as placeholder for deleted accounts
-    pub fn ghost(context: &Data<IbisContext>) -> BackendResult<Person> {
+    pub fn ghost(context: &IbisContext) -> BackendResult<Person> {
         let username = "ghost";
         let read = Person::read_from_name(username, &None, context);
         if read.is_ok() {
             read
         } else {
             let domain = &context.config.federation.domain;
-            let ap_id = ObjectId::parse(&format!(
+            let ap_id = Url::parse(&format!(
                 "{}://{domain}/user/{username}",
                 http_protocol_str()
-            ))?;
+            ))?
+            .into();
             let inbox_url = format!("{}://{domain}/inbox", http_protocol_str());
             let keypair = generate_keypair()?;
             let person_form = DbPersonForm {

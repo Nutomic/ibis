@@ -16,28 +16,15 @@ use crate::{
     },
     common::{
         article::{
-            ApiConflict,
-            ApproveArticleParams,
-            Article,
-            ArticleView,
-            CreateArticleParams,
-            DeleteConflictParams,
-            Edit,
-            EditArticleParams,
-            EditVersion,
-            FollowArticleParams,
-            ForkArticleParams,
-            GetArticleParams,
-            GetConflictParams,
-            ListArticlesParams,
-            ProtectArticleParams,
-            SearchArticleParams,
+            ApiConflict, ApproveArticleParams, Article, ArticleView, CreateArticleParams,
+            DeleteConflictParams, Edit, EditArticleParams, EditVersion, FollowArticleParams,
+            ForkArticleParams, GetArticleParams, GetConflictParams, ListArticlesParams,
+            ProtectArticleParams, SearchArticleParams,
         },
         instance::Instance,
         utils::{extract_domain, http_protocol_str},
         validation::can_edit_article,
-        ResolveObjectParams,
-        SuccessResponse,
+        ResolveObjectParams, SuccessResponse,
     },
 };
 use activitypub_federation::{config::Data, fetch::object_id::ObjectId};
@@ -45,7 +32,7 @@ use anyhow::anyhow;
 use axum::{extract::Query, Form, Json};
 use axum_macros::debug_handler;
 use chrono::Utc;
-use diffy::create_patch;
+use diffy::{apply, create_patch, merge, Patch};
 
 /// Create a new article with empty text, and federate it to followers.
 #[debug_handler]
@@ -355,4 +342,54 @@ pub(in crate::backend::api) async fn follow_article(
         Article::unfollow(params.id, &user, &context)?;
     }
     Ok(Json(SuccessResponse::default()))
+}
+
+pub async fn db_conflict_to_api_conflict(
+    conflict: DbConflict,
+    force_dereference: bool,
+    context: &Data<IbisContext>,
+) -> BackendResult<Option<ApiConflict>> {
+    let article = Article::read_view(conflict.article_id, None, context)?;
+    let original_article = if force_dereference {
+        // Make sure to get latest version from origin so that all conflicts can be resolved
+        article.article.ap_id.dereference_forced(context).await?
+    } else {
+        article.article.ap_id.dereference(context).await?
+    };
+
+    // create common ancestor version
+    let edits = Edit::list_for_article(original_article.id, context)?;
+    let ancestor = generate_article_version(&edits, &conflict.previous_version_id)?;
+
+    let patch = Patch::from_str(&conflict.diff)?;
+    // apply self.diff to ancestor to get `ours`
+    let ours = apply(&ancestor, &patch)?;
+    match merge(&ancestor, &ours, &original_article.text) {
+        Ok(new_text) => {
+            // patch applies cleanly so we are done, federate the change
+            submit_article_update(
+                new_text,
+                conflict.summary.clone(),
+                conflict.previous_version_id.clone(),
+                &original_article,
+                conflict.creator_id,
+                context,
+            )
+            .await?;
+            DbConflict::delete(conflict.id, conflict.creator_id, context)?;
+            Ok(None)
+        }
+        Err(three_way_merge) => {
+            // there is a merge conflict, user needs to do three-way-merge
+            Ok(Some(ApiConflict {
+                id: conflict.id,
+                hash: conflict.hash.clone(),
+                three_way_merge,
+                summary: conflict.summary.clone(),
+                article: original_article.clone(),
+                previous_version_id: original_article.latest_edit_version(context)?,
+                published: conflict.published,
+            }))
+        }
+    }
 }

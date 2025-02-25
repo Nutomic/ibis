@@ -1,4 +1,4 @@
-use crate::{backend::utils::error::BackendResult, common::instance::Options};
+use crate::{common::instance::Options, error::BackendResult};
 use config::Config;
 use doku::Document;
 use serde::Deserialize;

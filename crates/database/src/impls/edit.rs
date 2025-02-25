@@ -1,17 +1,15 @@
 use super::notifications::Notification;
 use crate::{
-    backend::{
-        database::schema::{article, edit, person},
-        utils::error::BackendResult,
-        IbisContext,
-    },
     common::{
         article::{Article, Edit, EditVersion, EditView},
         newtypes::{ArticleId, PersonId},
         user::LocalUserView,
     },
+    error::BackendResult,
+    impls::IbisContext,
+    schema::{article, edit, person},
+    DbUrl,
 };
-use activitypub_federation::fetch::object_id::ObjectId;
 use chrono::{DateTime, Utc};
 use diesel::{
     dsl::not,
@@ -25,13 +23,14 @@ use diesel::{
 };
 use diffy::create_patch;
 use std::ops::DerefMut;
+use url::Url;
 
 #[derive(Debug, Clone, Insertable, AsChangeset)]
 #[diesel(table_name = edit, check_for_backend(diesel::pg::Pg))]
 pub struct DbEditForm {
     pub creator_id: PersonId,
     pub hash: EditVersion,
-    pub ap_id: ObjectId<Edit>,
+    pub ap_id: DbUrl,
     pub diff: String,
     pub summary: String,
     pub article_id: ArticleId,
@@ -65,15 +64,8 @@ impl DbEditForm {
         })
     }
 
-    pub fn generate_ap_id(
-        article: &Article,
-        version: &EditVersion,
-    ) -> BackendResult<ObjectId<Edit>> {
-        Ok(ObjectId::parse(&format!(
-            "{}/{}",
-            article.ap_id,
-            version.hash()
-        ))?)
+    pub fn generate_ap_id(article: &Article, version: &EditVersion) -> BackendResult<DbUrl> {
+        Ok(Url::parse(&format!("{}/{}", article.ap_id, version.hash()))?.into())
     }
 }
 
@@ -98,7 +90,7 @@ impl Edit {
             .get_result(conn.deref_mut())?)
     }
 
-    pub fn read_from_ap_id(ap_id: &ObjectId<Edit>, context: &IbisContext) -> BackendResult<Self> {
+    pub fn read_from_ap_id(ap_id: &DbUrl, context: &IbisContext) -> BackendResult<Self> {
         let mut conn = context.db_pool.get()?;
         Ok(edit::table
             .filter(edit::dsl::ap_id.eq(ap_id))

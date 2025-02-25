@@ -1,17 +1,15 @@
-use super::{
-    notifications::Notification,
-    schema::{comment, person},
-    IbisContext,
-};
+use super::notifications::Notification;
 use crate::{
-    backend::utils::error::BackendResult,
     common::{
         comment::{Comment, CommentView},
         newtypes::{ArticleId, CommentId, PersonId},
         user::Person,
     },
+    error::BackendResult,
+    impls::IbisContext,
+    schema::{comment, person},
+    DbUrl,
 };
-use activitypub_federation::fetch::object_id::ObjectId;
 use chrono::{DateTime, Utc};
 use diesel::{
     dsl::insert_into,
@@ -32,7 +30,7 @@ pub struct DbCommentInsertForm {
     pub parent_id: Option<CommentId>,
     pub content: String,
     pub depth: i32,
-    pub ap_id: Option<ObjectId<Comment>>,
+    pub ap_id: Option<DbUrl>,
     pub local: bool,
     pub deleted: bool,
     pub published: DateTime<Utc>,
@@ -44,7 +42,7 @@ pub struct DbCommentInsertForm {
 pub struct DbCommentUpdateForm {
     pub content: Option<String>,
     pub deleted: Option<bool>,
-    pub ap_id: Option<ObjectId<Comment>>,
+    pub ap_id: Option<DbUrl>,
     pub updated: Option<DateTime<Utc>>,
 }
 
@@ -91,10 +89,7 @@ impl Comment {
         Ok(CommentView { comment, creator })
     }
 
-    pub fn read_from_ap_id(
-        ap_id: &ObjectId<Comment>,
-        context: &IbisContext,
-    ) -> BackendResult<Self> {
+    pub fn read_from_ap_id(ap_id: &DbUrl, context: &IbisContext) -> BackendResult<Self> {
         let mut conn = context.db_pool.get()?;
         Ok(comment::table
             .filter(comment::dsl::ap_id.eq(ap_id))

@@ -1,18 +1,12 @@
 use crate::{
-    backend::{
-        database::{
-            schema::{conflict, edit},
-            IbisContext,
-        },
-        federation::activities::submit_article_update,
-        utils::{error::BackendResult, generate_article_version},
-    },
     common::{
-        article::{ApiConflict, Article, Edit, EditVersion},
+        article::EditVersion,
         newtypes::{ArticleId, ConflictId, PersonId},
     },
+    error::BackendResult,
+    impls::IbisContext,
+    schema::{conflict, edit},
 };
-use activitypub_federation::config::Data;
 use chrono::{DateTime, Utc};
 use diesel::{
     delete,
@@ -25,7 +19,6 @@ use diesel::{
     RunQueryDsl,
     Selectable,
 };
-use diffy::{apply, merge, Patch};
 use serde::{Deserialize, Serialize};
 use std::ops::DerefMut;
 
@@ -95,55 +88,5 @@ impl DbConflict {
         )
         .execute(conn.deref_mut())?;
         Ok(())
-    }
-
-    pub async fn to_api_conflict(
-        &self,
-        force_dereference: bool,
-        context: &Data<IbisContext>,
-    ) -> BackendResult<Option<ApiConflict>> {
-        let article = Article::read_view(self.article_id, None, context)?;
-        let original_article = if force_dereference {
-            // Make sure to get latest version from origin so that all conflicts can be resolved
-            article.article.ap_id.dereference_forced(context).await?
-        } else {
-            article.article.ap_id.dereference(context).await?
-        };
-
-        // create common ancestor version
-        let edits = Edit::list_for_article(original_article.id, context)?;
-        let ancestor = generate_article_version(&edits, &self.previous_version_id)?;
-
-        let patch = Patch::from_str(&self.diff)?;
-        // apply self.diff to ancestor to get `ours`
-        let ours = apply(&ancestor, &patch)?;
-        match merge(&ancestor, &ours, &original_article.text) {
-            Ok(new_text) => {
-                // patch applies cleanly so we are done, federate the change
-                submit_article_update(
-                    new_text,
-                    self.summary.clone(),
-                    self.previous_version_id.clone(),
-                    &original_article,
-                    self.creator_id,
-                    context,
-                )
-                .await?;
-                DbConflict::delete(self.id, self.creator_id, context)?;
-                Ok(None)
-            }
-            Err(three_way_merge) => {
-                // there is a merge conflict, user needs to do three-way-merge
-                Ok(Some(ApiConflict {
-                    id: self.id,
-                    hash: self.hash.clone(),
-                    three_way_merge,
-                    summary: self.summary.clone(),
-                    article: original_article.clone(),
-                    previous_version_id: original_article.latest_edit_version(context)?,
-                    published: self.published,
-                }))
-            }
-        }
     }
 }

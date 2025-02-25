@@ -46,6 +46,8 @@ activitypub_federation = { version = "0.6.2", features = [
   "diesel",
 ], default-features = false }
 url = { version = "2.5.4", features = ["serde"] }
+diffy = "0.4.0"
+axum = "0.7.9"
 
 # frontend and shared deps
 [dependencies]
@@ -97,7 +99,7 @@ phosphor-leptos = { version = "0.7.0", features = [
 
 # backend-only deps
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
-axum = "0.7.9"
+axum.workspace = true
 axum-macros = "0.4.2"
 axum-extra = { version = "0.9.6", features = ["cookie"] }
 tokio = { version = "1.43.0", default-features = false }
@@ -109,17 +111,14 @@ tower-http = { version = "0.6.2", features = [
 activitypub_federation.workspace = true
 jsonwebtoken = "9.3.0"
 leptos_axum = "0.7.4"
-bcrypt = "0.16.0"
-diffy = "0.4.0"
+diffy.workspace = true
 enum_delegate = "0.2.0"
 async-trait = "0.1.85"
-config = { version = "0.15.6", features = ["toml"] }
 tower = "0.5.2"
 tower-layer = "0.3.3"
 reqwest = { version = "0.12.12", features = ["json", "cookies"] }
 futures = "0.3.31"
 env_logger = { version = "0.11.6", default-features = false }
-anyhow = "1.0.95"
 include_dir = "0.7.4"
 mime_guess = "2.0.5"
 clokwerk = "0.4.0"

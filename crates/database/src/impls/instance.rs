@@ -1,24 +1,13 @@
 use crate::{
-    backend::{
-        database::{
-            schema::{article, comment, edit, instance, instance_follow},
-            IbisContext,
-        },
-        federation::objects::{
-            articles_collection::DbArticleCollection,
-            instance_collection::DbInstanceCollection,
-        },
-        utils::error::BackendResult,
-    },
     common::{
         instance::{Instance, InstanceView, InstanceView2},
         newtypes::{CommentId, InstanceId},
         user::Person,
     },
-};
-use activitypub_federation::{
-    config::Data,
-    fetch::{collection_id::CollectionId, object_id::ObjectId},
+    error::BackendResult,
+    impls::IbisContext,
+    schema::{article, comment, edit, instance, instance_follow},
+    DbUrl,
 };
 use chrono::{DateTime, Utc};
 use diesel::{
@@ -31,15 +20,15 @@ use std::{fmt::Debug, ops::DerefMut};
 #[diesel(table_name = instance, check_for_backend(diesel::pg::Pg))]
 pub struct DbInstanceForm {
     pub domain: String,
-    pub ap_id: ObjectId<Instance>,
+    pub ap_id: DbUrl,
     pub topic: Option<String>,
-    pub articles_url: Option<CollectionId<DbArticleCollection>>,
+    pub articles_url: Option<DbUrl>,
     pub inbox_url: String,
     pub public_key: String,
     pub private_key: Option<String>,
     pub last_refreshed_at: DateTime<Utc>,
     pub local: bool,
-    pub instances_url: Option<CollectionId<DbInstanceCollection>>,
+    pub instances_url: Option<DbUrl>,
     pub name: Option<String>,
 }
 
@@ -54,7 +43,7 @@ pub struct DbInstanceUpdateForm {
 pub enum InstanceViewQuery<'a> {
     Local,
     Id(InstanceId),
-    ApId(&'a ObjectId<Instance>),
+    ApId(&'a DbUrl),
 }
 
 impl Instance {
@@ -81,10 +70,7 @@ impl Instance {
             .get_result(conn.deref_mut())?)
     }
 
-    pub fn read_from_ap_id(
-        ap_id: &ObjectId<Instance>,
-        context: &Data<IbisContext>,
-    ) -> BackendResult<Instance> {
+    pub fn read_from_ap_id(ap_id: &DbUrl, context: &IbisContext) -> BackendResult<Instance> {
         let mut conn = context.db_pool.get()?;
         Ok(instance::table
             .filter(instance::ap_id.eq(ap_id))
@@ -100,7 +86,7 @@ impl Instance {
 
     pub fn read_view(
         params: InstanceViewQuery,
-        context: &Data<IbisContext>,
+        context: &IbisContext,
     ) -> BackendResult<InstanceView2> {
         let instance = match params {
             InstanceViewQuery::Local => Instance::read_local(context),
@@ -119,7 +105,7 @@ impl Instance {
         follower: &Person,
         instance: &Instance,
         pending_: bool,
-        context: &Data<IbisContext>,
+        context: &IbisContext,
     ) -> BackendResult<()> {
         use instance_follow::dsl::{follower_id, instance_id, pending};
         let mut conn = context.db_pool.get()?;
@@ -139,7 +125,7 @@ impl Instance {
     }
 
     pub fn read_followers(id_: InstanceId, context: &IbisContext) -> BackendResult<Vec<Person>> {
-        use crate::backend::database::schema::person;
+        use crate::schema::person;
         use instance_follow::dsl::{follower_id, instance_id};
         let mut conn = context.db_pool.get()?;
         Ok(instance_follow::table
@@ -148,14 +134,14 @@ impl Instance {
             .select(person::all_columns)
             .get_results(conn.deref_mut())?)
     }
-    pub fn list(context: &Data<IbisContext>) -> BackendResult<Vec<Instance>> {
+    pub fn list(context: &IbisContext) -> BackendResult<Vec<Instance>> {
         let mut conn = context.db_pool.get()?;
         Ok(instance::table
             .filter(instance::local.eq(false))
             .get_results(conn.deref_mut())?)
     }
 
-    pub fn list_views(context: &Data<IbisContext>) -> BackendResult<Vec<InstanceView>> {
+    pub fn list_views(context: &IbisContext) -> BackendResult<Vec<InstanceView>> {
         let mut conn = context.db_pool.get()?;
         // select all instances, with most recently edited first (pending edits are ignored)
         let instances = instance::table
@@ -189,7 +175,7 @@ impl Instance {
     /// Note this may be different from the instance where the comment is hosted.
     pub fn read_for_comment(
         comment_id: CommentId,
-        context: &Data<IbisContext>,
+        context: &IbisContext,
     ) -> BackendResult<Instance> {
         let mut conn = context.db_pool.get()?;
         Ok(instance::table

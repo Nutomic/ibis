@@ -1,10 +1,5 @@
-use super::{
-    conflict::DbConflict,
-    schema::{article, article_follow, comment, conflict, edit, notification, person},
-    IbisContext,
-};
+use super::conflict::DbConflict;
 use crate::{
-    backend::{api::check_is_admin, database::schema::local_user, utils::error::BackendResult},
     common::{
         article::{Article, Edit},
         comment::Comment,
@@ -12,8 +7,10 @@ use crate::{
         notifications::ApiNotification,
         user::{LocalUserView, Person},
     },
+    error::BackendResult,
+    impls::IbisContext,
+    schema::{article, article_follow, comment, conflict, edit, local_user, notification, person},
 };
-use activitypub_federation::config::Data;
 use chrono::{DateTime, Utc};
 use diesel::{
     dsl::*,
@@ -26,7 +23,6 @@ use diesel::{
     RunQueryDsl,
     Selectable,
 };
-use futures::future::try_join_all;
 use std::ops::DerefMut;
 
 #[derive(Queryable, Selectable, Debug)]
@@ -55,7 +51,7 @@ struct NotificationInsertForm {
 impl Notification {
     pub(crate) async fn list(
         user: &LocalUserView,
-        context: &Data<IbisContext>,
+        context: &IbisContext,
     ) -> BackendResult<Vec<ApiNotification>> {
         let mut conn = context.db_pool.get()?;
         let mut notifications: Vec<ApiNotification> = vec![];
@@ -64,16 +60,10 @@ impl Notification {
         let conflicts: Vec<DbConflict> = conflict::table
             .filter(conflict::dsl::creator_id.eq(user.person.id))
             .get_results(conn.deref_mut())?;
-        let conflicts = try_join_all(conflicts.into_iter().map(|c| {
-            let data = context.reset_request_count();
-            async move { c.to_api_conflict(false, &data).await }
-        }))
-        .await?
-        .into_iter();
-        notifications.extend(conflicts.flatten().map(ApiNotification::EditConflict));
+        notifications.extend(conflicts.into_iter().map(ApiNotification::EditConflict));
 
         // new articles requiring approval
-        if check_is_admin(user).is_ok() {
+        if user.local_user.admin {
             let articles = article::table
                 .group_by(article::dsl::id)
                 .filter(article::dsl::approved.eq(false))
@@ -114,7 +104,7 @@ impl Notification {
         Ok(notifications)
     }
 
-    pub fn count(user: &LocalUserView, context: &Data<IbisContext>) -> BackendResult<i64> {
+    pub fn count(user: &LocalUserView, context: &IbisContext) -> BackendResult<i64> {
         let mut conn = context.db_pool.get()?;
         let mut num = 0;
         // edit conflicts
@@ -126,7 +116,7 @@ impl Notification {
         num += conflicts;
 
         // new articles requiring approval
-        if check_is_admin(user).is_ok() {
+        if user.local_user.admin {
             let articles = article::table
                 .group_by(article::dsl::id)
                 .filter(article::dsl::approved.eq(false))
