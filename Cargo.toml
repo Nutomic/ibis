@@ -1,15 +1,10 @@
-[package]
-name = "ibis"
+[workspace.package]
 version = "0.2.2"
 edition = "2021"
 
 [workspace]
-members = ["crates/database", "crates/federate"]
-
-[features]
-default = ["ssr"]
-ssr = ["katex/duktape", "leptos/ssr", "leptos-use/ssr", "leptos-use/axum", "ibis_database/ssr"]
-hydrate = ["leptos/hydrate", "katex/wasm-js"]
+resolver = "2"
+members = ["crates/database", "crates/federate", "crates/frontend", "crates/hydrate", "crates/backend"]
 
 # This profile significantly speeds up build time. If debug info is needed you can comment the line
 # out temporarily, but make sure to leave this in the main branch.
@@ -27,7 +22,7 @@ opt-level = 'z'
 lto = "thin"
 panic = "abort"
 
-[lints.clippy]
+[workspace.lints.clippy]
 dbg_macro = "deny"
 unwrap_used = "deny"
 todo = "deny"
@@ -39,6 +34,7 @@ suspicious = { level = "deny", priority = -1 }
 [workspace.dependencies]
 ibis_database = { path = "crates/database" }
 ibis_federate = { path = "crates/federate" }
+ibis_frontend = { path = "crates/frontend" }
 serde = { version = "1.0.217", features = ["derive"] }
 chrono = { version = "0.4.39", features = ["serde"] }
 sha2 = "0.10.8"
@@ -57,98 +53,18 @@ bcrypt = "0.16.0"
 doku = "0.21.1"
 futures = "0.3.31"
 tokio = { version = "1.43.0", default-features = false }
-
-# frontend and shared deps
-[dependencies]
-ibis_database.workspace = true
 leptos = "0.7.4"
-leptos_meta = "0.7.4"
-leptos_router = "0.7.4"
-serde_json = "1.0.135"
-serde.workspace = true
-chrono.workspace = true
-sha2.workspace = true
-uuid.workspace = true
-anyhow.workspace = true
-url.workspace = true
-log.workspace = true
-tracing = "0.1.41"
-console_error_panic_hook = "0.1.7"
-time = "0.3.37"
-markdown-it = "0.6.1"
-katex = { version = "0.4", default-features = false }
-markdown-it-block-spoiler = "1.0.1"
-markdown-it-heading-anchors = "0.3.0"
-markdown-it-footnote = "0.2.0"
-markdown-it-sub = "1.0.1"
-markdown-it-sup = "1.0.1"
-leptos-use = { version = "0.15.5", features = [
-  "use_textarea_autosize",
-  "use_cookie",
-  "use_preferred_dark",
-], default-features = false }
-codee = "0.2.0"
-# When changing this make sure to adjust the version of cargo-leptos in .woodpecker.yml
-wasm-bindgen = "=0.2.100"
-gloo-net = "0.6.0"
-console_log = "1.0.0"
-send_wrapper = "0.6.0"
-web-sys = { version = "0.3.77", default-features = false }
 http = "1.2.0"
-serde_urlencoded = "0.7.1"
-github-slugger = "0.1.0"
-timeago = "0.4.2"
-phosphor-leptos = { version = "0.7.0", features = [
-  "system",
-  "communication",
-  "office",
-  "arrows",
-], default-features = false }
 
-# backend-only deps
-[target.'cfg(not(target_family = "wasm"))'.dependencies]
-ibis_federate.workspace = true
-axum.workspace = true
-axum-macros.workspace = true
-axum-extra = { version = "0.9.6", features = ["cookie"] }
-tokio.workspace = true
-tower-http = { version = "0.6.2", features = [
-  "cors",
-  "fs",
-  "compression-full",
-] }
-activitypub_federation.workspace = true
-jsonwebtoken = "9.3.0"
-leptos_axum = "0.7.4"
-diffy.workspace = true
-tower = "0.5.2"
-tower-layer = "0.3.3"
-reqwest = { version = "0.12.12", features = ["json", "cookies"] }
-futures.workspace = true
-env_logger = { version = "0.11.6", default-features = false }
-include_dir = "0.7.4"
-mime_guess = "2.0.5"
-bcrypt.workspace = true
-fmtm = "0.0.3"
-moka = { version = "0.12.10", features = ["sync"] }
-doku.workspace = true
-
-[dev-dependencies]
-pretty_assertions = "1.4.1"
-retry_future = "0.4.0"
-
-[package.metadata.leptos]
+[[workspace.metadata.leptos]]
+name = "ibis"
 output-name = "ibis"
 assets-dir = "assets"
-bin-features = ["ssr"]
+bin-package = "ibis_backend"
+lib-package = "ibis_frontend"
 lib-features = ["hydrate"]
 lib-profile-release = "wasm-release"
 style-file = "assets/ibis.css"
 tailwind-input-file = "assets/ibis.css"
 tailwind-config-file = "tailwind.config.js"
 
-[lib]
-crate-type = ["cdylib", "rlib"]
-
-[package.metadata.cargo-shear]
-ignored = ["getrandom"]
