@@ -4,7 +4,7 @@ version = "0.2.2"
 edition = "2021"
 
 [dependencies]
-ibis_database={workspace = true, features = ["ssr"]}
+ibis_database = { workspace = true, features = ["ssr"] }
 enum_delegate = "0.2.0"
 async-trait = "0.1.85"
 rand = "0.8.5"

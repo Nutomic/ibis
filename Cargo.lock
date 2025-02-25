@@ -1976,8 +1976,6 @@ dependencies = [
 name = "ibis_api_client"
 version = "0.2.2"
 dependencies = [
- "chrono",
- "codee",
  "gloo-net",
  "http",
  "ibis_database",
@@ -2082,8 +2080,6 @@ dependencies = [
  "chrono",
  "codee",
  "github-slugger",
- "gloo-net",
- "http",
  "ibis_api_client",
  "ibis_database",
  "katex",
@@ -2100,7 +2096,6 @@ dependencies = [
  "markdown-it-sup",
  "phosphor-leptos",
  "reqwest",
- "send_wrapper",
  "serde",
  "timeago",
  "url",

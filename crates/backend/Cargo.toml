@@ -17,7 +17,7 @@ time = "0.3.37"
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
 ibis_federate.workspace = true
 ibis_api_client.workspace = true
-ibis_frontend={workspace = true, features =["ssr"]}
+ibis_frontend = { workspace = true, features = ["ssr"] }
 axum.workspace = true
 axum-macros.workspace = true
 axum-extra = { version = "0.9.6", features = ["cookie"] }

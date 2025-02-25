@@ -12,7 +12,7 @@ serde.workspace = true
 url.workspace = true
 chrono.workspace = true
 uuid.workspace = true
-anyhow.workspace =true
+anyhow.workspace = true
 smart-default = "0.7.1"
 
 # backend-only deps
