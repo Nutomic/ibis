@@ -1,9 +1,7 @@
-use crate::backend::{
-    federation::{
-        objects::{edit::ApubEdit, instance::InstanceWrapper},
-        send_activity,
-    },
-    utils::generate_activity_id,
+use crate::{
+    generate_activity_id,
+    objects::{edit::ApubEdit, instance::InstanceWrapper},
+    send_activity,
 };
 use activitypub_federation::{
     config::Data,

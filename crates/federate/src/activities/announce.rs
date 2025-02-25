@@ -1,10 +1,8 @@
-use crate::backend::{
-    federation::{
-        objects::instance::InstanceWrapper,
-        routes::AnnouncableActivities,
-        send_activity,
-    },
-    utils::generate_activity_id,
+use crate::{
+    generate_activity_id,
+    objects::instance::InstanceWrapper,
+    routes::AnnouncableActivities,
+    send_activity,
 };
 use activitypub_federation::{
     config::Data,
@@ -72,12 +70,10 @@ impl ActivityHandler for AnnounceActivity {
         self.actor.inner()
     }
 
-    #[tracing::instrument(skip_all)]
     async fn verify(&self, _context: &Data<Self::DataType>) -> BackendResult<()> {
         Ok(())
     }
 
-    #[tracing::instrument(skip_all)]
     async fn receive(self, context: &Data<Self::DataType>) -> BackendResult<()> {
         self.object.verify(context).await?;
         self.object.receive(context).await

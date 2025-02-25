@@ -1,33 +1,9 @@
-use activitypub_federation::config::Data;
 use anyhow::anyhow;
 use diffy::{apply, Patch};
 use ibis_database::{
-    common::{
-        article::{Article, Edit, EditVersion},
-        utils::http_protocol_str,
-    },
-    error::{BackendError, BackendResult},
-    impls::IbisContext,
+    common::article::{Edit, EditVersion},
+    error::BackendResult,
 };
-use rand::{distributions::Alphanumeric, thread_rng, Rng};
-use url::{ParseError, Url};
-
-pub(super) mod validate;
-
-pub(super) fn generate_activity_id(context: &Data<IbisContext>) -> Result<Url, ParseError> {
-    let domain = &context.config.federation.domain;
-    let id: String = thread_rng()
-        .sample_iter(&Alphanumeric)
-        .take(7)
-        .map(char::from)
-        .collect();
-    Url::parse(&format!(
-        "{}://{}/activity/{}",
-        http_protocol_str(),
-        domain,
-        id
-    ))
-}
 
 /// Starting from empty string, apply edits until the specified version is reached. If no version is
 /// given, apply all edits up to latest version.
@@ -52,21 +28,13 @@ pub(super) fn generate_article_version(
     Err(anyhow!("failed to generate article version").into())
 }
 
-pub fn can_edit_article(article: &Article, is_admin: bool) -> BackendResult<()> {
-    if article.protected && !article.local && !is_admin {
-        return Err(BackendError(anyhow!(
-            "Article is protected, only admins on origin instance can edit".to_string()
-        )));
-    }
-    Ok(())
-}
-
 #[cfg(test)]
 mod test {
     use super::*;
     use chrono::Utc;
     use diffy::create_patch;
     use ibis_database::common::newtypes::{ArticleId, EditId, PersonId};
+    use url::Url;
 
     fn create_edits() -> BackendResult<Vec<Edit>> {
         let generate_edit = |a, b| -> BackendResult<Edit> {

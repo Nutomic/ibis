@@ -1,5 +1,5 @@
 use super::article::ArticleWrapper;
-use crate::backend::federation::objects::article::ApubArticle;
+use crate::objects::article::ApubArticle;
 use activitypub_federation::{
     config::Data,
     fetch::collection_id::CollectionId,

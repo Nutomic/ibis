@@ -1,4 +1,3 @@
-use crate::backend::{federation::VerifyUrlData, utils::generate_activity_id};
 use activitypub_federation::config::FederationConfig;
 use ibis_database::{
     common::instance::Instance,
@@ -7,13 +6,13 @@ use ibis_database::{
     impls::IbisContext,
     scheduled_tasks,
 };
+use ibis_federate::VerifyUrlData;
 use log::info;
 use server::{setup::setup, start_server};
 use std::{net::SocketAddr, thread};
 use tokio::sync::oneshot;
 
 pub mod api;
-pub mod federation;
 mod server;
 pub mod utils;
 

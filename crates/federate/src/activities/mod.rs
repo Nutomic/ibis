@@ -1,4 +1,4 @@
-use crate::backend::federation::activities::{
+use crate::activities::{
     update_local_article::UpdateLocalArticle,
     update_remote_article::UpdateRemoteArticle,
 };

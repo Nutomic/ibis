@@ -1,13 +1,12 @@
-use crate::backend::{
-    federation::{
-        activities::{reject::RejectEdit, update_local_article::UpdateLocalArticle},
-        objects::{
-            edit::{ApubEdit, EditWrapper},
-            instance::InstanceWrapper,
-        },
-        send_activity,
+use crate::{
+    activities::{reject::RejectEdit, update_local_article::UpdateLocalArticle},
+    generate_activity_id,
+    objects::{
+        edit::{ApubEdit, EditWrapper},
+        instance::InstanceWrapper,
     },
-    utils::{can_edit_article, generate_activity_id},
+    send_activity,
+    validate::can_edit_article,
 };
 use activitypub_federation::{
     config::Data,

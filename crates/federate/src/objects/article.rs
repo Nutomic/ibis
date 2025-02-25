@@ -1,5 +1,5 @@
 use super::{edits_collection::EditCollection, instance::InstanceWrapper};
-use crate::backend::utils::validate::validate_article_title;
+use crate::validate::validate_article_title;
 use activitypub_federation::{
     config::Data,
     fetch::{collection_id::CollectionId, object_id::ObjectId},

@@ -1,15 +1,4 @@
 use super::UserExt;
-use crate::backend::{
-    federation::{
-        activities::comment::{
-            create_or_update_comment::CreateOrUpdateComment,
-            delete_comment::DeleteComment,
-            undo_delete_comment::UndoDeleteComment,
-        },
-        objects::comment::CommentWrapper,
-    },
-    utils::validate::{validate_comment_max_depth, validate_not_empty},
-};
 use activitypub_federation::config::Data;
 use anyhow::anyhow;
 use axum::{Form, Json};
@@ -25,6 +14,15 @@ use ibis_database::{
         comment::{DbCommentInsertForm, DbCommentUpdateForm},
         IbisContext,
     },
+};
+use ibis_federate::{
+    activities::comment::{
+        create_or_update_comment::CreateOrUpdateComment,
+        delete_comment::DeleteComment,
+        undo_delete_comment::UndoDeleteComment,
+    },
+    objects::comment::CommentWrapper,
+    validate::{validate_comment_max_depth, validate_not_empty},
 };
 use url::Url;
 

@@ -1,4 +1,4 @@
-use crate::backend::federation::objects::instance::InstanceWrapper;
+use crate::objects::instance::InstanceWrapper;
 use activitypub_federation::kinds::public;
 use ibis_database::error::BackendResult;
 use url::Url;

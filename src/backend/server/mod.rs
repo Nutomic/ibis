@@ -1,5 +1,5 @@
 use crate::{
-    backend::{api::api_routes, federation::routes::federation_routes},
+    backend::api::api_routes,
     frontend::app::{shell, App},
 };
 use activitypub_federation::config::{FederationConfig, FederationMiddleware};
@@ -16,6 +16,7 @@ use axum::{
     ServiceExt,
 };
 use ibis_database::{common::Auth, error::BackendResult, impls::IbisContext};
+use ibis_federate::routes::federation_routes;
 use leptos::prelude::*;
 use leptos_axum::{generate_route_list, LeptosRoutes};
 use log::info;

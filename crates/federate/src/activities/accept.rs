@@ -1,6 +1,8 @@
-use crate::backend::{
-    federation::{activities::follow::Follow, objects::instance::InstanceWrapper, send_activity},
-    utils::generate_activity_id,
+use crate::{
+    activities::follow::Follow,
+    generate_activity_id,
+    objects::instance::InstanceWrapper,
+    send_activity,
 };
 use activitypub_federation::{
     config::Data,

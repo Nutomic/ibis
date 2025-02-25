@@ -1,5 +1,5 @@
 use super::{article_or_comment::DbArticleOrComment, user::PersonWrapper};
-use crate::backend::utils::validate::validate_comment_max_depth;
+use crate::validate::validate_comment_max_depth;
 use activitypub_federation::{
     config::Data,
     fetch::object_id::ObjectId,

@@ -1,10 +1,8 @@
-use crate::backend::{
-    federation::{
-        activities::accept::Accept,
-        objects::{instance::InstanceWrapper, user::PersonWrapper},
-        send_activity,
-    },
+use crate::{
+    activities::accept::Accept,
     generate_activity_id,
+    objects::{instance::InstanceWrapper, user::PersonWrapper},
+    send_activity,
 };
 use activitypub_federation::{
     config::Data,

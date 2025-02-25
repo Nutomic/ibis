@@ -1,5 +1,4 @@
 use super::{empty_to_none, UserExt};
-use crate::backend::utils::validate::{validate_display_name, validate_user_name};
 use activitypub_federation::config::Data;
 use anyhow::anyhow;
 use axum::{extract::Query, Form, Json};
@@ -24,6 +23,7 @@ use ibis_database::{
     error::BackendResult,
     impls::{notifications::Notification, read_jwt_secret, IbisContext},
 };
+use ibis_federate::validate::{validate_display_name, validate_user_name};
 use jsonwebtoken::{
     decode,
     encode,

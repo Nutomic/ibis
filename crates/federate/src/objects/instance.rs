@@ -1,5 +1,5 @@
 use super::{articles_collection::ArticleCollection, instance_collection::InstanceCollection};
-use crate::backend::federation::send_activity;
+use crate::send_activity;
 use activitypub_federation::{
     config::Data,
     fetch::{collection_id::CollectionId, object_id::ObjectId},
@@ -154,14 +154,14 @@ impl Object for InstanceWrapper {
                 let articles_url: CollectionId<ArticleCollection> = articles_url.into();
                 let res = articles_url.dereference(&(), &context_).await;
                 if let Err(e) = res {
-                    tracing::warn!("error in spawn: {e}");
+                    log::warn!("error in spawn: {e}");
                 }
             }
             if let Some(instances_url) = instance_.instances_url {
                 let instances_url: CollectionId<InstanceCollection> = instances_url.into();
                 let res = instances_url.dereference(&(), &context_).await;
                 if let Err(e) = res {
-                    tracing::warn!("error in spawn: {e}");
+                    log::warn!("error in spawn: {e}");
                 }
             }
         });

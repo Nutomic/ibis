@@ -1,5 +1,4 @@
 use super::{empty_to_none, UserExt};
-use crate::backend::federation::{activities::follow::Follow, objects::instance::InstanceWrapper};
 use activitypub_federation::{config::Data, fetch::object_id::ObjectId};
 use anyhow::anyhow;
 use axum::{extract::Query, Form, Json};
@@ -24,6 +23,7 @@ use ibis_database::{
         IbisContext,
     },
 };
+use ibis_federate::{activities::follow::Follow, objects::instance::InstanceWrapper};
 use moka::sync::Cache;
 use std::{sync::LazyLock, time::Duration};
 use url::Url;

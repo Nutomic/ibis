@@ -1,15 +1,13 @@
-use crate::{
-    backend::utils::can_edit_article,
-    frontend::{
-        api::CLIENT,
-        utils::{
-            errors::{FrontendResult, FrontendResultExt},
-            formatting::{article_path, article_title},
-            resources::{is_admin, is_logged_in},
-        },
+use crate::frontend::{
+    api::CLIENT,
+    utils::{
+        errors::{FrontendResult, FrontendResultExt},
+        formatting::{article_path, article_title},
+        resources::{is_admin, is_logged_in},
     },
 };
 use ibis_database::common::article::ArticleView;
+use ibis_federate::validate::can_edit_article;
 use leptos::prelude::*;
 use leptos_meta::Title;
 use leptos_router::components::A;

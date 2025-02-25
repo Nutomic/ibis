@@ -12,7 +12,7 @@ use super::{
         user::PersonWrapper,
     },
 };
-use crate::backend::federation::{
+use crate::{
     activities::{
         accept::Accept,
         announce::AnnounceActivity,

@@ -4,7 +4,7 @@ version = "0.2.2"
 edition = "2021"
 
 [workspace]
-members = ["crates/database"]
+members = ["crates/database", "crates/federate"]
 
 [features]
 default = ["ssr"]
@@ -37,6 +37,8 @@ style = { level = "deny", priority = -1 }
 suspicious = { level = "deny", priority = -1 }
 
 [workspace.dependencies]
+ibis_database = { path = "crates/database" }
+ibis_federate = { path = "crates/federate" }
 serde = { version = "1.0.217", features = ["derive"] }
 chrono = { version = "0.4.39", features = ["serde"] }
 sha2 = "0.10.8"
@@ -48,19 +50,21 @@ activitypub_federation = { version = "0.6.2", features = [
 url = { version = "2.5.4", features = ["serde"] }
 diffy = "0.4.0"
 axum = "0.7.9"
+axum-macros = "0.4.2"
 anyhow = "1.0.95"
 log = "0.4"
 bcrypt = "0.16.0"
 doku = "0.21.1"
+futures = "0.3.31"
+tokio = { version = "1.43.0", default-features = false }
 
 # frontend and shared deps
 [dependencies]
-ibis_database = { path = "crates/database" }
+ibis_database.workspace = true
+ibis_federate.workspace = true
 leptos = "0.7.4"
 leptos_meta = "0.7.4"
 leptos_router = "0.7.4"
-rand = "0.8.5"
-getrandom = { version = "0.2", features = ["js"] }
 serde_json = "1.0.135"
 serde.workspace = true
 chrono.workspace = true
@@ -106,9 +110,9 @@ phosphor-leptos = { version = "0.7.0", features = [
 # backend-only deps
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
 axum.workspace = true
-axum-macros = "0.4.2"
+axum-macros.workspace = true
 axum-extra = { version = "0.9.6", features = ["cookie"] }
-tokio = { version = "1.43.0", default-features = false }
+tokio.workspace = true
 tower-http = { version = "0.6.2", features = [
   "cors",
   "fs",
@@ -118,18 +122,15 @@ activitypub_federation.workspace = true
 jsonwebtoken = "9.3.0"
 leptos_axum = "0.7.4"
 diffy.workspace = true
-enum_delegate = "0.2.0"
-async-trait = "0.1.85"
 tower = "0.5.2"
 tower-layer = "0.3.3"
 reqwest = { version = "0.12.12", features = ["json", "cookies"] }
-futures = "0.3.31"
+futures.workspace = true
 env_logger = { version = "0.11.6", default-features = false }
 include_dir = "0.7.4"
 mime_guess = "2.0.5"
 bcrypt.workspace = true
 fmtm = "0.0.3"
-regex = "1.11.1"
 moka = { version = "0.12.10", features = ["sync"] }
 doku.workspace = true
 

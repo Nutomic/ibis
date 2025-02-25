@@ -1,0 +1,23 @@
+[package]
+name = "ibis_federate"
+version = "0.2.2"
+edition = "2021"
+
+[dependencies]
+enum_delegate = "0.2.0"
+async-trait = "0.1.85"
+rand = "0.8.5"
+getrandom = { version = "0.2", features = ["js"] }
+regex = "1.11.1"
+tokio.workspace = true
+futures.workspace = true
+log.workspace = true
+ibis_database.workspace = true
+serde.workspace = true
+activitypub_federation.workspace = true
+url.workspace = true
+axum.workspace = true
+axum-macros.workspace = true
+chrono.workspace = true
+diffy.workspace = true
+anyhow.workspace = true

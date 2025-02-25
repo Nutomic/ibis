@@ -1,15 +1,5 @@
 use super::{check_is_admin, UserExt};
-use crate::backend::{
-    federation::{
-        activities::{create_article::CreateArticle, submit_article_update},
-        objects::article::ArticleWrapper,
-    },
-    utils::{
-        can_edit_article,
-        generate_article_version,
-        validate::{validate_article_title, validate_not_empty},
-    },
-};
+use crate::backend::utils::generate_article_version;
 use activitypub_federation::{config::Data, fetch::object_id::ObjectId};
 use anyhow::anyhow;
 use axum::{extract::Query, Form, Json};
@@ -48,6 +38,11 @@ use ibis_database::{
         edit::DbEditForm,
         IbisContext,
     },
+};
+use ibis_federate::{
+    activities::{create_article::CreateArticle, submit_article_update},
+    objects::article::ArticleWrapper,
+    validate::{can_edit_article, validate_article_title, validate_not_empty},
 };
 use url::Url;
 

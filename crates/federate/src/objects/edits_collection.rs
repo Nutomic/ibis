@@ -1,5 +1,5 @@
 use super::edit::EditWrapper;
-use crate::backend::federation::objects::edit::ApubEdit;
+use crate::objects::edit::ApubEdit;
 use activitypub_federation::{
     config::Data,
     kinds::collection::OrderedCollectionType,

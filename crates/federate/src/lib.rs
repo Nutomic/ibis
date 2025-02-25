@@ -7,8 +7,14 @@ use activitypub_federation::{
     traits::{ActivityHandler, Actor},
 };
 use async_trait::async_trait;
-use ibis_database::{config::IbisConfig, error::BackendResult, impls::IbisContext};
+use ibis_database::{
+    common::utils::http_protocol_str,
+    config::IbisConfig,
+    error::BackendResult,
+    impls::IbisContext,
+};
 use objects::{instance::InstanceWrapper, user::PersonWrapper};
+use rand::{distributions::Alphanumeric, thread_rng, Rng};
 use routes::AnnouncableActivities;
 use serde::Serialize;
 use std::fmt::Debug;
@@ -17,6 +23,7 @@ use url::Url;
 pub mod activities;
 pub mod objects;
 pub mod routes;
+pub mod validate;
 
 pub async fn send_activity<Activity, ActorType: Actor>(
     actor: &ActorType,
@@ -74,4 +81,19 @@ impl UrlVerifier for VerifyUrlData {
         }
         Ok(())
     }
+}
+
+pub(crate) fn generate_activity_id(context: &Data<IbisContext>) -> BackendResult<Url> {
+    let domain = &context.config.federation.domain;
+    let id: String = thread_rng()
+        .sample_iter(&Alphanumeric)
+        .take(7)
+        .map(char::from)
+        .collect();
+    Ok(Url::parse(&format!(
+        "{}://{}/activity/{}",
+        http_protocol_str(),
+        domain,
+        id
+    ))?)
 }

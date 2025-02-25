@@ -1,7 +1,3 @@
-use crate::backend::federation::{
-    activities::submit_article_update,
-    objects::{articles_collection::local_articles_url, instance_collection::linked_instances_url},
-};
 use activitypub_federation::config::Data;
 use chrono::Utc;
 use ibis_database::{
@@ -15,6 +11,10 @@ use ibis_database::{
     error::BackendError,
     generate_keypair,
     impls::{article::DbArticleForm, instance::DbInstanceForm, IbisContext},
+};
+use ibis_federate::{
+    activities::submit_article_update,
+    objects::{articles_collection::local_articles_url, instance_collection::linked_instances_url},
 };
 use url::Url;
 

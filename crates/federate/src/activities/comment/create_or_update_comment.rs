@@ -1,15 +1,13 @@
 use super::generate_comment_activity_to;
-use crate::backend::{
-    federation::{
-        objects::{
-            comment::{ApubComment, CommentWrapper},
-            instance::InstanceWrapper,
-            user::PersonWrapper,
-        },
-        routes::AnnouncableActivities,
-        send_activity_to_instance,
-    },
+use crate::{
     generate_activity_id,
+    objects::{
+        comment::{ApubComment, CommentWrapper},
+        instance::InstanceWrapper,
+        user::PersonWrapper,
+    },
+    routes::AnnouncableActivities,
+    send_activity_to_instance,
 };
 use activitypub_federation::{
     config::Data,

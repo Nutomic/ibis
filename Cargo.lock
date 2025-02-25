@@ -1972,7 +1972,6 @@ version = "0.2.2"
 dependencies = [
  "activitypub_federation",
  "anyhow",
- "async-trait",
  "axum",
  "axum-extra",
  "axum-macros",
@@ -1983,15 +1982,14 @@ dependencies = [
  "console_log",
  "diffy",
  "doku",
- "enum_delegate",
  "env_logger",
  "fmtm",
  "futures",
- "getrandom",
  "github-slugger",
  "gloo-net",
  "http",
  "ibis_database",
+ "ibis_federate",
  "include_dir",
  "jsonwebtoken",
  "katex",
@@ -2011,8 +2009,6 @@ dependencies = [
  "moka",
  "phosphor-leptos",
  "pretty_assertions",
- "rand",
- "regex",
  "reqwest",
  "retry_future",
  "send_wrapper",
@@ -2056,6 +2052,29 @@ dependencies = [
  "smart-default",
  "url",
  "uuid",
+]
+
+[[package]]
+name = "ibis_federate"
+version = "0.2.2"
+dependencies = [
+ "activitypub_federation",
+ "anyhow",
+ "async-trait",
+ "axum",
+ "axum-macros",
+ "chrono",
+ "diffy",
+ "enum_delegate",
+ "futures",
+ "getrandom",
+ "ibis_database",
+ "log",
+ "rand",
+ "regex",
+ "serde",
+ "tokio",
+ "url",
 ]
 
 [[package]]
