@@ -1,19 +1,24 @@
 use super::{check_is_admin, UserExt};
-use crate::{
-    backend::{
-        database::{
-            article::DbArticleForm,
-            conflict::{DbConflict, DbConflictForm},
-            edit::DbEditForm,
-            IbisContext,
-        },
-        federation::activities::{create_article::CreateArticle, submit_article_update},
-        utils::{
-            error::BackendResult,
-            generate_article_version,
-            validate::{validate_article_title, validate_not_empty},
-        },
+use crate::backend::{
+    federation::activities::{create_article::CreateArticle, submit_article_update},
+    utils::{
+        generate_article_version,
+        validate::{validate_article_title, validate_not_empty},
     },
+};
+use activitypub_federation::{config::Data, fetch::object_id::ObjectId};
+use anyhow::anyhow;
+use axum::{extract::Query, Form, Json};
+use axum_macros::debug_handler;
+use chrono::Utc;
+use diffy::{apply, create_patch, merge, Patch};
+use ibis_database::impls::{
+    article::DbArticleForm,
+    conflict::{DbConflict, DbConflictForm},
+    edit::DbEditForm,
+    IbisContext,
+};
+use ibis_database::{
     common::{
         article::{
             ApiConflict, ApproveArticleParams, Article, ArticleView, CreateArticleParams,
@@ -23,16 +28,11 @@ use crate::{
         },
         instance::Instance,
         utils::{extract_domain, http_protocol_str},
-        validation::can_edit_article,
         ResolveObjectParams, SuccessResponse,
     },
+    error::BackendResult,
 };
-use activitypub_federation::{config::Data, fetch::object_id::ObjectId};
-use anyhow::anyhow;
-use axum::{extract::Query, Form, Json};
-use axum_macros::debug_handler;
-use chrono::Utc;
-use diffy::{apply, create_patch, merge, Patch};
+use url::Url;
 
 /// Create a new article with empty text, and federate it to followers.
 #[debug_handler]
@@ -45,12 +45,13 @@ pub(in crate::backend::api) async fn create_article(
     validate_not_empty(&params.text)?;
 
     let local_instance = Instance::read_local(&context)?;
-    let ap_id = ObjectId::parse(&format!(
+    let ap_id = Url::parse(&format!(
         "{}://{}/article/{}",
         http_protocol_str(),
         extract_domain(&local_instance.ap_id),
         params.title
-    ))?;
+    ))?
+    .into();
     let form = DbArticleForm {
         title: params.title,
         text: String::new(),
@@ -157,7 +158,9 @@ pub(in crate::backend::api) async fn edit_article(
             previous_version_id: previous_version.hash,
         };
         let conflict = DbConflict::create(&form, &context)?;
-        Ok(Json(conflict.to_api_conflict(true, &context).await?))
+        Ok(Json(
+            db_conflict_to_api_conflict(conflict, true, &context).await?,
+        ))
     }
 }
 
@@ -211,12 +214,13 @@ pub(in crate::backend::api) async fn fork_article(
     params.new_title = validate_article_title(&params.new_title)?;
 
     let local_instance = Instance::read_local(&context)?;
-    let ap_id = ObjectId::parse(&format!(
+    let ap_id = Url::parse(&format!(
         "{}://{}/article/{}",
         http_protocol_str(),
         extract_domain(&local_instance.ap_id),
         &params.new_title
-    ))?;
+    ))?
+    .into();
     let form = DbArticleForm {
         title: params.new_title,
         text: original_article.article.text.clone(),
@@ -313,8 +317,7 @@ pub async fn get_conflict(
     Form(params): Form<GetConflictParams>,
 ) -> BackendResult<Json<ApiConflict>> {
     let conflict = DbConflict::read(params.conflict_id, user.person.id, &context)?;
-    let conflict = conflict
-        .to_api_conflict(true, &context)
+    let conflict = db_conflict_to_api_conflict(conflict, true, &context)
         .await?
         .ok_or(anyhow!("Patch was applied cleanly"))?;
     Ok(Json(conflict))

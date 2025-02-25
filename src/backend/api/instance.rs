@@ -1,32 +1,23 @@
 use super::{empty_to_none, UserExt};
-use crate::{
-    backend::{
-        database::{
-            instance::{DbInstanceUpdateForm, InstanceViewQuery},
-            IbisContext,
-        },
-        federation::activities::follow::Follow,
-        utils::error::BackendResult,
-    },
-    common::{
-        instance::{
-            FollowInstanceParams,
-            GetInstanceParams,
-            Instance,
-            InstanceView,
-            InstanceView2,
-            UpdateInstanceParams,
-        },
-        utils::http_protocol_str,
-        ResolveObjectParams,
-        SuccessResponse,
-    },
-};
+use crate::backend::federation::activities::follow::Follow;
 use activitypub_federation::{config::Data, fetch::object_id::ObjectId};
 use anyhow::anyhow;
 use axum::{extract::Query, Form, Json};
 use axum_macros::debug_handler;
+use ibis_database::{common::{
+    instance::{
+        FollowInstanceParams, GetInstanceParams, Instance, InstanceView, InstanceView2,
+        UpdateInstanceParams,
+    },
+    utils::http_protocol_str,
+    ResolveObjectParams, SuccessResponse,
+}, error::BackendResult};
+use ibis_database::impls::{
+    instance::{DbInstanceUpdateForm, InstanceViewQuery},
+    IbisContext,
+};
 use moka::sync::Cache;
+use url::Url;
 use std::{sync::LazyLock, time::Duration};
 
 /// Retrieve details about an instance. If no id is provided, return local instance.
@@ -40,7 +31,7 @@ pub(in crate::backend::api) async fn get_instance(
         (Some(id), None) => Instance::read_view(Id(id), &context)?,
         (None, Some(hostname)) => {
             let url =
-                ObjectId::<Instance>::parse(&format!("{}://{hostname}", http_protocol_str()))?;
+                Url::parse(&format!("{}://{hostname}", http_protocol_str()))?;
             if let Ok(i) = Instance::read_view(ApId(&url), &context) {
                 i
             } else {

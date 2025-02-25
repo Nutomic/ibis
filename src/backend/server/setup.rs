@@ -1,25 +1,11 @@
-use crate::{
-    backend::{
-        database::{article::DbArticleForm, instance::DbInstanceForm, IbisContext},
-        federation::{
-            activities::submit_article_update,
-            objects::{
-                articles_collection::local_articles_url,
-                instance_collection::linked_instances_url,
-            },
-        },
-        utils::{error::BackendError, generate_keypair},
-    },
-    common::{
-        article::{Article, EditVersion},
-        instance::Instance,
-        user::Person,
-        utils::http_protocol_str,
-        MAIN_PAGE_NAME,
-    },
+use crate::backend::federation::{
+    activities::submit_article_update,
+    objects::{articles_collection::local_articles_url, instance_collection::linked_instances_url},
 };
 use activitypub_federation::{config::Data, fetch::object_id::ObjectId};
 use chrono::Utc;
+use ibis_database::{common::{article::{Article, EditVersion}, instance::Instance, user::Person, utils::http_protocol_str, MAIN_PAGE_NAME}, error::BackendError, generate_keypair, impls::{article::DbArticleForm, instance::DbInstanceForm, IbisContext}};
+use url::Url;
 
 const MAIN_PAGE_DEFAULT_TEXT: &str = "Welcome to Ibis, the federated Wikipedia alternative!
 
@@ -29,7 +15,7 @@ and to list interesting articles.
 
 pub async fn setup(context: &Data<IbisContext>) -> Result<(), BackendError> {
     let domain = &context.config.federation.domain;
-    let ap_id = ObjectId::parse(&format!("{}://{domain}", http_protocol_str()))?;
+    let ap_id = Url::parse(&format!("{}://{domain}", http_protocol_str()))?.into();
     let inbox_url = format!("{}://{domain}/inbox", http_protocol_str());
     let keypair = generate_keypair()?;
     let form = DbInstanceForm {
@@ -58,10 +44,10 @@ pub async fn setup(context: &Data<IbisContext>) -> Result<(), BackendError> {
     let form = DbArticleForm {
         title: MAIN_PAGE_NAME.to_string(),
         text: String::new(),
-        ap_id: ObjectId::parse(&format!(
+        ap_id: Url::parse(&format!(
             "{}://{domain}/article/{MAIN_PAGE_NAME}",
             http_protocol_str()
-        ))?,
+        ))?.into(),
         instance_id: instance.id,
         local: true,
         protected: true,

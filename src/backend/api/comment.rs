@@ -1,30 +1,28 @@
 use super::UserExt;
-use crate::{
-    backend::{
-        database::{
-            comment::{DbCommentInsertForm, DbCommentUpdateForm},
-            IbisContext,
-        },
-        federation::activities::comment::{
-            create_or_update_comment::CreateOrUpdateComment,
-            delete_comment::DeleteComment,
-            undo_delete_comment::UndoDeleteComment,
-        },
-        utils::{
-            error::BackendResult,
-            validate::{validate_comment_max_depth, validate_not_empty},
-        },
+use crate::backend::{
+    federation::activities::comment::{
+        create_or_update_comment::CreateOrUpdateComment, delete_comment::DeleteComment,
+        undo_delete_comment::UndoDeleteComment,
     },
-    common::{
-        comment::{Comment, CommentView, CreateCommentParams, EditCommentParams},
-        utils::http_protocol_str,
-    },
+    utils::validate::{validate_comment_max_depth, validate_not_empty},
 };
 use activitypub_federation::config::Data;
 use anyhow::anyhow;
 use axum::{Form, Json};
 use axum_macros::debug_handler;
 use chrono::Utc;
+use ibis_database::impls::{
+    comment::{DbCommentInsertForm, DbCommentUpdateForm},
+    IbisContext,
+};
+use ibis_database::{
+    common::{
+        comment::{Comment, CommentView, CreateCommentParams, EditCommentParams},
+        utils::http_protocol_str,
+    },
+    error::BackendResult,
+};
+use url::Url;
 
 #[debug_handler]
 pub(in crate::backend::api) async fn create_comment(
@@ -61,7 +59,13 @@ pub(in crate::backend::api) async fn create_comment(
 
     // Set the ap_id which contains db id (so it is not know before inserting)
     let proto = http_protocol_str();
-    let ap_id = format!("{}://{}/comment/{}", proto, context.domain(), comment.id.0).parse()?;
+    let ap_id = Url::parse(&format!(
+        "{}://{}/comment/{}",
+        proto,
+        context.domain(),
+        comment.id.0
+    ))?
+    .into();
     let form = DbCommentUpdateForm {
         ap_id: Some(ap_id),
         ..Default::default()

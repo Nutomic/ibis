@@ -1,8 +1,3 @@
-use super::utils::error::BackendResult;
-use crate::{
-    backend::{database::IbisContext, utils::config::IbisConfig},
-    common::{instance::Instance, user::Person},
-};
 use activities::announce::AnnounceActivity;
 use activitypub_federation::{
     activity_queue::queue_activity,
@@ -12,6 +7,8 @@ use activitypub_federation::{
     traits::{ActivityHandler, Actor},
 };
 use async_trait::async_trait;
+use ibis_database::{config::IbisConfig, error::BackendResult, impls::IbisContext};
+use objects::{instance::InstanceWrapper, user::PersonWrapper};
 use routes::AnnouncableActivities;
 use serde::Serialize;
 use std::fmt::Debug;
@@ -37,9 +34,9 @@ where
 }
 
 pub async fn send_activity_to_instance(
-    actor: &Person,
+    actor: &PersonWrapper,
     activity: AnnouncableActivities,
-    instance: &Instance,
+    instance: &InstanceWrapper,
     context: &Data<IbisContext>,
 ) -> BackendResult<()> {
     if instance.local {

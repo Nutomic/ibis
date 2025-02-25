@@ -1,26 +1,5 @@
 use super::{empty_to_none, UserExt};
-use crate::{
-    backend::{
-        database::{notifications::Notification, read_jwt_secret, IbisContext},
-        utils::{
-            error::BackendResult,
-            validate::{validate_display_name, validate_user_name},
-        },
-    },
-    common::{
-        notifications::{ApiNotification, ArticleNotifMarkAsReadParams},
-        user::{
-            GetUserParams,
-            LocalUserView,
-            LoginUserParams,
-            Person,
-            RegisterUserParams,
-            UpdateUserParams,
-        },
-        SuccessResponse,
-        AUTH_COOKIE,
-    },
-};
+use crate::backend::utils::validate::{validate_display_name, validate_user_name};
 use activitypub_federation::config::Data;
 use anyhow::anyhow;
 use axum::{extract::Query, Form, Json};
@@ -28,14 +7,20 @@ use axum_extra::extract::cookie::{Cookie, CookieJar, Expiration, SameSite};
 use axum_macros::debug_handler;
 use bcrypt::verify;
 use chrono::Utc;
+use ibis_database::impls::{notifications::Notification, read_jwt_secret, IbisContext};
+use ibis_database::{
+    common::{
+        notifications::{ApiNotification, ArticleNotifMarkAsReadParams},
+        user::{
+            GetUserParams, LocalUserView, LoginUserParams, Person, RegisterUserParams,
+            UpdateUserParams,
+        },
+        SuccessResponse, AUTH_COOKIE,
+    },
+    error::BackendResult,
+};
 use jsonwebtoken::{
-    decode,
-    encode,
-    get_current_timestamp,
-    DecodingKey,
-    EncodingKey,
-    Header,
-    Validation,
+    decode, encode, get_current_timestamp, DecodingKey, EncodingKey, Header, Validation,
 };
 use serde::{Deserialize, Serialize};
 use time::{Duration, OffsetDateTime};

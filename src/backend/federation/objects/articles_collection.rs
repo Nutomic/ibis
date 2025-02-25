@@ -1,11 +1,4 @@
-use crate::{
-    backend::{
-        database::IbisContext,
-        federation::objects::article::ApubArticle,
-        utils::error::{BackendError, BackendResult},
-    },
-    common::{article::Article, utils::http_protocol_str},
-};
+use crate::backend::federation::objects::article::ApubArticle;
 use activitypub_federation::{
     config::Data,
     fetch::collection_id::CollectionId,
@@ -14,13 +7,20 @@ use activitypub_federation::{
     traits::{Collection, Object},
 };
 use futures::future::{join_all, try_join_all};
+use ibis_database::{
+    common::{article::Article, utils::http_protocol_str},
+    error::{BackendError, BackendResult},
+    impls::IbisContext,
+};
 use log::warn;
 use serde::{Deserialize, Serialize};
 use url::Url;
 
+use super::article::ArticleWrapper;
+
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct ArticleCollection {
+pub struct ApubArticleCollection {
     pub r#type: CollectionType,
     pub id: Url,
     pub total_items: i32,
@@ -28,9 +28,9 @@ pub struct ArticleCollection {
 }
 
 #[derive(Clone, Debug)]
-pub struct DbArticleCollection(());
+pub struct ArticleCollection(());
 
-pub fn local_articles_url(domain: &str) -> BackendResult<CollectionId<DbArticleCollection>> {
+pub fn local_articles_url(domain: &str) -> BackendResult<CollectionId<ArticleCollection>> {
     Ok(CollectionId::parse(&format!(
         "{}://{domain}/all_articles",
         http_protocol_str()
@@ -38,10 +38,10 @@ pub fn local_articles_url(domain: &str) -> BackendResult<CollectionId<DbArticleC
 }
 
 #[async_trait::async_trait]
-impl Collection for DbArticleCollection {
+impl Collection for ArticleCollection {
     type Owner = ();
     type DataType = IbisContext;
-    type Kind = ArticleCollection;
+    type Kind = ApubArticleCollection;
     type Error = BackendError;
 
     async fn read_local(
@@ -52,11 +52,12 @@ impl Collection for DbArticleCollection {
         let articles = try_join_all(
             local_articles
                 .into_iter()
+                .map(ArticleWrapper)
                 .map(|a| a.into_json(context))
                 .collect::<Vec<_>>(),
         )
         .await?;
-        let collection = ArticleCollection {
+        let collection = ApubArticleCollection {
             r#type: Default::default(),
             id: local_articles_url(&context.config.federation.domain)?.into(),
             total_items: articles.len() as i32,
@@ -85,7 +86,7 @@ impl Collection for DbArticleCollection {
             .filter(|i| !i.id.is_local(context))
             .map(|article| async {
                 let id = article.id.clone();
-                let res = Article::from_json(article, context).await;
+                let res = ArticleWrapper::from_json(article, context).await;
                 if let Err(e) = &res {
                     warn!("Failed to synchronize article {id}: {e}");
                 }
@@ -93,6 +94,6 @@ impl Collection for DbArticleCollection {
             });
         join_all(articles).await;
 
-        Ok(DbArticleCollection(()))
+        Ok(ArticleCollection(()))
     }
 }

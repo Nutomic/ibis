@@ -1,4 +1,4 @@
-use crate::backend::utils::error::BackendResult;
+use ibis_database::error::BackendResult;
 use anyhow::anyhow;
 use axum::{
     body::Body,

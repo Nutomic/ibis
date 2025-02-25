@@ -1,7 +1,5 @@
-use super::{database::IbisContext, utils::error::BackendResult};
 use crate::{
     backend::{api::api_routes, federation::routes::federation_routes},
-    common::Auth,
     frontend::app::{shell, App},
 };
 use activitypub_federation::config::{FederationConfig, FederationMiddleware};
@@ -13,10 +11,9 @@ use axum::{
     middleware::from_fn_with_state,
     response::{IntoResponse, Response},
     routing::get,
-    Extension,
-    Router,
-    ServiceExt,
+    Extension, Router, ServiceExt,
 };
+use ibis_database::{common::Auth, error::BackendResult, impls::IbisContext};
 use leptos::prelude::*;
 use leptos_axum::{generate_route_list, LeptosRoutes};
 use log::info;

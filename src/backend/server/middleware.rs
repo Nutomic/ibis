@@ -1,10 +1,8 @@
-use crate::{
-    backend::{api::user::validate, database::IbisContext},
-    common::{Auth, AUTH_COOKIE},
-};
+use crate::backend::api::user::validate;
 use axum::{body::Body, extract::State, http::Request, middleware::Next, response::Response};
 use axum_macros::debug_middleware;
 use http::{header::COOKIE, HeaderValue};
+use ibis_database::{common::{Auth, AUTH_COOKIE}, impls::IbisContext};
 use std::{collections::HashSet, sync::Arc};
 
 pub(super) const FEDERATION_ROUTES_PREFIX: &str = "/federation_routes";

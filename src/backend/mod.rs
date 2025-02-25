@@ -1,20 +1,12 @@
-use crate::{
-    backend::{
-        database::IbisContext,
-        federation::VerifyUrlData,
-        utils::{config::IbisConfig, error::BackendResult, generate_activity_id},
-    },
-    common::instance::Instance,
-};
+use crate::backend::{federation::VerifyUrlData, utils::generate_activity_id};
 use activitypub_federation::config::FederationConfig;
+use ibis_database::{common::instance::Instance, config::IbisConfig, error::BackendResult, impls::IbisContext, scheduled_tasks};
 use log::info;
 use server::{setup::setup, start_server};
 use std::{net::SocketAddr, thread};
 use tokio::sync::oneshot;
-use utils::scheduled_tasks;
 
 pub mod api;
-pub mod database;
 pub mod federation;
 mod server;
 pub mod utils;

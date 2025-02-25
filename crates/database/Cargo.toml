@@ -1,5 +1,5 @@
 [package]
-name = "database"
+name = "ibis_database"
 version = "0.2.2"
 edition = "2021"
 
@@ -19,9 +19,10 @@ diesel_migrations = "2.2.0"
 smart-default = "0.7.1"
 doku = "0.21.1"
 hex = "0.4.3"
-bcrypt = "0.16.0"
-anyhow = "1.0.95"
+bcrypt.workspace = true
 config = { version = "0.15.6", features = ["toml"] }
+clokwerk = "0.4.0"
+anyhow.workspace =true
 serde.workspace = true
 chrono.workspace = true
 sha2.workspace = true
@@ -30,3 +31,4 @@ activitypub_federation.workspace = true
 url.workspace = true
 diffy.workspace = true
 axum.workspace = true
+log.workspace = true

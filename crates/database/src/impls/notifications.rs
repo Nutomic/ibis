@@ -49,7 +49,7 @@ struct NotificationInsertForm {
 }
 
 impl Notification {
-    pub(crate) async fn list(
+    pub async fn list(
         user: &LocalUserView,
         context: &IbisContext,
     ) -> BackendResult<Vec<ApiNotification>> {

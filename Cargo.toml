@@ -8,7 +8,7 @@ members = ["crates/database"]
 
 [features]
 default = ["ssr"]
-ssr = ["katex/duktape", "leptos/ssr", "leptos-use/ssr", "leptos-use/axum"]
+ssr = ["katex/duktape", "leptos/ssr", "leptos-use/ssr", "leptos-use/axum", "ibis_database/ssr"]
 hydrate = ["leptos/hydrate", "katex/wasm-js"]
 
 # This profile significantly speeds up build time. If debug info is needed you can comment the line
@@ -48,9 +48,13 @@ activitypub_federation = { version = "0.6.2", features = [
 url = { version = "2.5.4", features = ["serde"] }
 diffy = "0.4.0"
 axum = "0.7.9"
+anyhow = "1.0.95"
+log = "0.4"
+bcrypt = "0.16.0"
 
 # frontend and shared deps
 [dependencies]
+ibis_database = { path = "crates/database" }
 leptos = "0.7.4"
 leptos_meta = "0.7.4"
 leptos_router = "0.7.4"
@@ -61,9 +65,10 @@ serde.workspace = true
 chrono.workspace = true
 sha2.workspace = true
 uuid.workspace = true
+anyhow.workspace = true
 activitypub_federation.workspace = true
 url.workspace = true
-log = "0.4"
+log.workspace = true
 tracing = "0.1.41"
 console_error_panic_hook = "0.1.7"
 time = "0.3.37"
@@ -121,7 +126,7 @@ futures = "0.3.31"
 env_logger = { version = "0.11.6", default-features = false }
 include_dir = "0.7.4"
 mime_guess = "2.0.5"
-clokwerk = "0.4.0"
+bcrypt.workspace = true
 fmtm = "0.0.3"
 regex = "1.11.1"
 moka = { version = "0.12.10", features = ["sync"] }

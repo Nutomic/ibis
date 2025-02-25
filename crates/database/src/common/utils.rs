@@ -1,14 +1,12 @@
+use url::Url;
+
 #[cfg(feature = "ssr")]
-pub fn extract_domain<T>(url: &activitypub_federation::fetch::object_id::ObjectId<T>) -> String
-where
-    T: activitypub_federation::traits::Object + Send + 'static,
-    for<'de2> <T as activitypub_federation::traits::Object>::Kind: serde::Deserialize<'de2>,
-{
+pub fn extract_domain(url: &Url) -> String {
     let mut port = String::new();
-    if let Some(port_) = url.inner().port() {
+    if let Some(port_) = url.port() {
         port = format!(":{port_}");
     }
-    format!("{}{port}", url.inner().host_str().expect("has domain"))
+    format!("{}{port}", url.host_str().expect("has domain"))
 }
 
 #[cfg(not(feature = "ssr"))]

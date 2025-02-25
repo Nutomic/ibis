@@ -1,4 +1,8 @@
-use activitypub_federation::http_signatures::{generate_actor_keypair, Keypair};
+use activitypub_federation::{
+    fetch::{collection_id::CollectionId, object_id::ObjectId},
+    http_signatures::{generate_actor_keypair, Keypair},
+    traits::{Collection, Object},
+};
 use diesel::{
     backend::Backend,
     deserialize::{FromSql, FromSqlRow},
@@ -15,10 +19,11 @@ use std::{
 };
 use url::Url;
 
-mod common;
-mod config;
-mod error;
-mod impls;
+pub mod common;
+pub mod config;
+pub mod error;
+pub mod impls;
+pub mod scheduled_tasks;
 mod schema;
 
 #[repr(transparent)]
@@ -58,6 +63,52 @@ impl Into<DbUrl> for Url {
 impl Into<Url> for DbUrl {
     fn into(self) -> Url {
         *self.0
+    }
+}
+
+#[cfg(feature = "ssr")]
+impl<T> From<DbUrl> for ObjectId<T>
+where
+    T: Object + Send + 'static,
+    for<'de2> <T as Object>::Kind: Deserialize<'de2>,
+{
+    fn from(value: DbUrl) -> Self {
+        let url: Url = value.into();
+        ObjectId::from(url)
+    }
+}
+
+#[cfg(feature = "ssr")]
+impl<Kind> From<ObjectId<Kind>> for DbUrl
+where
+    Kind: Object + Send + 'static,
+    for<'de2> <Kind as Object>::Kind: serde::Deserialize<'de2>,
+{
+    fn from(id: ObjectId<Kind>) -> Self {
+        DbUrl(Box::new(id.into()))
+    }
+}
+#[cfg(feature = "ssr")]
+impl<T> From<DbUrl> for CollectionId<T>
+where
+    T: Collection + Send + 'static,
+    for<'de2> <T as Collection>::Kind: Deserialize<'de2>,
+{
+    fn from(value: DbUrl) -> Self {
+        let url: Url = value.into();
+        CollectionId::from(url)
+    }
+}
+
+#[cfg(feature = "ssr")]
+impl<T> From<CollectionId<T>> for DbUrl
+where
+    T: Collection,
+    for<'de2> <T as Collection>::Kind: Deserialize<'de2>,
+{
+    fn from(value: CollectionId<T>) -> Self {
+        let url: Url = value.into();
+        url.into()
     }
 }
 

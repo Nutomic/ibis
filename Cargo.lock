@@ -996,29 +996,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "database"
-version = "0.2.2"
-dependencies = [
- "activitypub_federation",
- "anyhow",
- "axum",
- "bcrypt",
- "chrono",
- "config 0.15.8",
- "diesel",
- "diesel-derive-newtype",
- "diesel_migrations",
- "diffy",
- "doku",
- "hex",
- "serde",
- "sha2",
- "smart-default",
- "url",
- "uuid",
-]
-
-[[package]]
 name = "default-struct-builder"
 version = "0.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1994,12 +1971,13 @@ name = "ibis"
 version = "0.2.2"
 dependencies = [
  "activitypub_federation",
+ "anyhow",
  "async-trait",
  "axum",
  "axum-extra",
  "axum-macros",
+ "bcrypt",
  "chrono",
- "clokwerk",
  "codee",
  "console_error_panic_hook",
  "console_log",
@@ -2012,6 +1990,7 @@ dependencies = [
  "github-slugger",
  "gloo-net",
  "http",
+ "ibis_database",
  "include_dir",
  "jsonwebtoken",
  "katex",
@@ -2051,6 +2030,31 @@ dependencies = [
  "uuid",
  "wasm-bindgen",
  "web-sys",
+]
+
+[[package]]
+name = "ibis_database"
+version = "0.2.2"
+dependencies = [
+ "activitypub_federation",
+ "anyhow",
+ "axum",
+ "bcrypt",
+ "chrono",
+ "clokwerk",
+ "config 0.15.8",
+ "diesel",
+ "diesel-derive-newtype",
+ "diesel_migrations",
+ "diffy",
+ "doku",
+ "hex",
+ "log",
+ "serde",
+ "sha2",
+ "smart-default",
+ "url",
+ "uuid",
 ]
 
 [[package]]

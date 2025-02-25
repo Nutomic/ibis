@@ -1,8 +1,9 @@
-use crate::backend::{database::DbPool, utils::error::BackendResult};
 use clokwerk::{Scheduler, TimeUnits};
 use diesel::{sql_query, RunQueryDsl};
 use log::{error, info};
 use std::time::Duration;
+
+use crate::{error::BackendResult, impls::DbPool};
 
 pub fn start(pool: DbPool) {
     let mut scheduler = Scheduler::new();
@@ -32,8 +33,9 @@ fn active_counts(pool: &DbPool) -> BackendResult<()> {
 
 #[cfg(test)]
 mod test {
+    use crate::{config::IbisConfig, impls::IbisContext};
+
     use super::*;
-    use crate::backend::{IbisConfig, IbisContext};
 
     #[test]
     fn test_scheduled_tasks() -> BackendResult<()> {

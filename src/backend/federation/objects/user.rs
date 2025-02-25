@@ -1,10 +1,3 @@
-use crate::{
-    backend::{
-        database::{user::DbPersonForm, IbisContext},
-        utils::error::BackendError,
-    },
-    common::user::Person,
-};
 use activitypub_federation::{
     config::Data,
     fetch::object_id::ObjectId,
@@ -13,8 +6,13 @@ use activitypub_federation::{
     traits::{Actor, Object},
 };
 use chrono::{DateTime, Utc};
+use ibis_database::{
+    common::user::Person,
+    error::BackendError,
+    impls::{user::DbPersonForm, IbisContext},
+};
 use serde::{Deserialize, Serialize};
-use std::fmt::Debug;
+use std::{fmt::Debug, ops::Deref};
 use url::Url;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -22,7 +20,7 @@ use url::Url;
 pub struct ApubUser {
     #[serde(rename = "type")]
     kind: PersonType,
-    id: ObjectId<Person>,
+    id: ObjectId<PersonWrapper>,
     preferred_username: String,
     /// displayname
     name: Option<String>,
@@ -31,8 +29,25 @@ pub struct ApubUser {
     public_key: PublicKey,
 }
 
+#[derive(Clone, Debug, Deserialize, Serialize)]
+pub struct PersonWrapper(Person);
+
+impl Deref for PersonWrapper {
+    type Target = Person;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl From<Person> for PersonWrapper {
+    fn from(value: Person) -> Self {
+        PersonWrapper(value)
+    }
+}
+
 #[async_trait::async_trait]
-impl Object for Person {
+impl Object for PersonWrapper {
     type DataType = IbisContext;
     type Kind = ApubUser;
     type Error = BackendError;
@@ -45,18 +60,20 @@ impl Object for Person {
         object_id: Url,
         context: &Data<Self::DataType>,
     ) -> Result<Option<Self>, Self::Error> {
-        Ok(Person::read_from_ap_id(&object_id.into(), context).ok())
+        Ok(Person::read_from_ap_id(&object_id.into(), context)
+            .ok()
+            .map(Into::into))
     }
 
     async fn into_json(self, _context: &Data<Self::DataType>) -> Result<Self::Kind, Self::Error> {
         Ok(ApubUser {
             kind: Default::default(),
-            id: __self.ap_id.clone(),
-            preferred_username: __self.username.clone(),
-            inbox: Url::parse(&__self.inbox_url)?,
-            public_key: __self.public_key(),
-            name: self.display_name,
-            summary: self.bio,
+            id: self.ap_id.clone().into(),
+            preferred_username: self.username.clone(),
+            inbox: Url::parse(&self.inbox_url)?,
+            public_key: self.public_key(),
+            name: self.display_name.clone(),
+            summary: self.bio.clone(),
         })
     }
 
@@ -75,7 +92,7 @@ impl Object for Person {
     ) -> Result<Self, Self::Error> {
         let form = DbPersonForm {
             username: json.preferred_username,
-            ap_id: json.id,
+            ap_id: json.id.into(),
             inbox_url: json.inbox.to_string(),
             public_key: json.public_key.public_key_pem,
             private_key: None,
@@ -84,13 +101,13 @@ impl Object for Person {
             display_name: json.name,
             bio: json.summary,
         };
-        Person::create(&form, context)
+        Person::create(&form, context).map(Into::into)
     }
 }
 
-impl Actor for Person {
+impl Actor for PersonWrapper {
     fn id(&self) -> Url {
-        self.ap_id.inner().clone()
+        self.ap_id.clone().into()
     }
 
     fn public_key_pem(&self) -> &str {

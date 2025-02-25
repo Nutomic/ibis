@@ -1,5 +1,5 @@
-use super::error::BackendResult;
 use anyhow::anyhow;
+use ibis_database::error::BackendResult;
 use regex::Regex;
 use std::sync::LazyLock;
 

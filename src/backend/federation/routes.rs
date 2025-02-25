@@ -1,43 +1,27 @@
 use super::{
     activities::comment::{
-        create_or_update_comment::CreateOrUpdateComment,
-        delete_comment::DeleteComment,
+        create_or_update_comment::CreateOrUpdateComment, delete_comment::DeleteComment,
         undo_delete_comment::UndoDeleteComment,
     },
     objects::{
         comment::ApubComment,
+        instance::InstanceWrapper,
         instance_collection::{DbInstanceCollection, InstanceCollection},
+        user::PersonWrapper,
     },
 };
-use crate::{
-    backend::{
-        database::IbisContext,
-        federation::{
-            activities::{
-                accept::Accept,
-                announce::AnnounceActivity,
-                create_article::CreateArticle,
-                follow::Follow,
-                reject::RejectEdit,
-                update_local_article::UpdateLocalArticle,
-                update_remote_article::UpdateRemoteArticle,
-            },
-            objects::{
-                article::ApubArticle,
-                articles_collection::{ArticleCollection, DbArticleCollection},
-                edits_collection::{ApubEditCollection, DbEditCollection},
-                instance::ApubInstance,
-                user::ApubUser,
-            },
-        },
-        utils::error::{BackendError, BackendResult},
+use crate::backend::federation::{
+    activities::{
+        accept::Accept, announce::AnnounceActivity, create_article::CreateArticle, follow::Follow,
+        reject::RejectEdit, update_local_article::UpdateLocalArticle,
+        update_remote_article::UpdateRemoteArticle,
     },
-    common::{
-        article::Article,
-        comment::Comment,
-        instance::Instance,
-        newtypes::CommentId,
-        user::Person,
+    objects::{
+        article::ApubArticle,
+        articles_collection::{ApubArticleCollection, ArticleCollection},
+        edits_collection::{ApubEditCollection, EditCollection},
+        instance::ApubInstance,
+        user::ApubUser,
     },
 };
 use activitypub_federation::{
@@ -57,6 +41,13 @@ use axum::{
 };
 use axum_macros::debug_handler;
 use chrono::{DateTime, Utc};
+use ibis_database::{
+    common::{
+        article::Article, comment::Comment, instance::Instance, newtypes::CommentId, user::Person,
+    },
+    error::{BackendError, BackendResult},
+    impls::IbisContext,
+};
 use serde::{Deserialize, Serialize};
 use url::Url;
 
@@ -94,8 +85,8 @@ async fn http_get_person(
 #[debug_handler]
 async fn http_get_all_articles(
     context: Data<IbisContext>,
-) -> BackendResult<FederationJson<WithContext<ArticleCollection>>> {
-    let collection = DbArticleCollection::read_local(&(), &context).await?;
+) -> BackendResult<FederationJson<WithContext<ApubArticleCollection>>> {
+    let collection = ArticleCollection::read_local(&(), &context).await?;
     Ok(FederationJson(WithContext::new_default(collection)))
 }
 
@@ -123,7 +114,7 @@ async fn http_get_article_edits(
     context: Data<IbisContext>,
 ) -> BackendResult<FederationJson<WithContext<ApubEditCollection>>> {
     let article = Article::read_view((&title, None), None, &context)?;
-    let json = DbEditCollection::read_local(&article.article, &context).await?;
+    let json = EditCollection::read_local(&article.article, &context).await?;
     Ok(FederationJson(WithContext::new_default(json)))
 }
 
@@ -172,8 +163,8 @@ pub async fn http_post_inbox(
 
 #[derive(Clone, Debug)]
 pub enum UserOrInstance {
-    User(Person),
-    Instance(Instance),
+    User(PersonWrapper),
+    Instance(InstanceWrapper),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -206,10 +197,10 @@ impl Object for UserOrInstance {
         object_id: Url,
         data: &Data<Self::DataType>,
     ) -> Result<Option<Self>, BackendError> {
-        let person = Person::read_from_id(object_id.clone(), data).await;
+        let person = PersonWrapper::read_from_id(object_id.clone(), data).await;
         Ok(match person {
             Ok(Some(o)) => Some(UserOrInstance::User(o)),
-            _ => Instance::read_from_id(object_id.clone(), data)
+            _ => InstanceWrapper::read_from_id(object_id.clone(), data)
                 .await?
                 .map(UserOrInstance::Instance),
         })
@@ -232,8 +223,10 @@ impl Object for UserOrInstance {
         data: &Data<Self::DataType>,
     ) -> Result<(), BackendError> {
         match apub {
-            PersonOrInstance::Person(a) => Person::verify(a, expected_domain, data).await,
-            PersonOrInstance::Instance(a) => Instance::verify(a, expected_domain, data).await,
+            PersonOrInstance::Person(a) => PersonWrapper::verify(a, expected_domain, data).await,
+            PersonOrInstance::Instance(a) => {
+                InstanceWrapper::verify(a, expected_domain, data).await
+            }
         }
     }
 
@@ -242,9 +235,11 @@ impl Object for UserOrInstance {
         data: &Data<Self::DataType>,
     ) -> Result<Self, BackendError> {
         Ok(match apub {
-            PersonOrInstance::Person(p) => UserOrInstance::User(Person::from_json(p, data).await?),
+            PersonOrInstance::Person(p) => {
+                UserOrInstance::User(PersonWrapper::from_json(p, data).await?)
+            }
             PersonOrInstance::Instance(p) => {
-                UserOrInstance::Instance(Instance::from_json(p, data).await?)
+                UserOrInstance::Instance(InstanceWrapper::from_json(p, data).await?)
             }
         })
     }

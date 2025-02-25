@@ -1,11 +1,4 @@
-use super::instance::ApubInstance;
-use crate::{
-    backend::{
-        database::IbisContext,
-        utils::error::{BackendError, BackendResult},
-    },
-    common::{instance::Instance, utils::http_protocol_str},
-};
+use super::instance::{ApubInstance, InstanceWrapper};
 use activitypub_federation::{
     config::Data,
     fetch::collection_id::CollectionId,
@@ -14,6 +7,11 @@ use activitypub_federation::{
     traits::{Collection, Object},
 };
 use futures::future::{self, join_all};
+use ibis_database::{
+    common::{instance::Instance, utils::http_protocol_str},
+    error::{BackendError, BackendResult},
+    impls::IbisContext,
+};
 use log::warn;
 use serde::{Deserialize, Serialize};
 use url::Url;
@@ -53,6 +51,7 @@ impl Collection for DbInstanceCollection {
             instances
                 .into_iter()
                 .filter(|i| !i.local)
+                .map(InstanceWrapper)
                 .map(|i| i.into_json(context))
                 .collect::<Vec<_>>(),
         )
@@ -86,7 +85,7 @@ impl Collection for DbInstanceCollection {
             .filter(|i| !i.id.is_local(context))
             .map(|instance| async {
                 let id = instance.id.clone();
-                let res = Instance::from_json(instance, context).await;
+                let res = InstanceWrapper::from_json(instance, context).await;
                 if let Err(e) = &res {
                     warn!("Failed to synchronize article {id}: {e}");
                 }

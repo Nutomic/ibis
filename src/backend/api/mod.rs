@@ -1,30 +1,11 @@
-use super::database::edit::ViewEditParams;
-use crate::{
-    backend::{
-        api::{
-            article::{
-                create_article,
-                edit_article,
-                fork_article,
-                get_article,
-                get_conflict,
-                list_articles,
-                protect_article,
-                resolve_article,
-                search_article,
-            },
-            comment::{create_comment, edit_comment},
-            instance::{follow_instance, get_instance, resolve_instance},
-            user::{get_user, login_user, logout_user, register_user},
-        },
-        database::IbisContext,
-        utils::error::BackendResult,
+use crate::backend::api::{
+    article::{
+        create_article, edit_article, fork_article, get_article, get_conflict, list_articles,
+        protect_article, resolve_article, search_article,
     },
-    common::{
-        article::{Edit, EditView, GetEditList},
-        instance::SiteView,
-        user::{LocalUserView, Person},
-    },
+    comment::{create_comment, edit_comment},
+    instance::{follow_instance, get_instance, resolve_instance},
+    user::{get_user, login_user, logout_user, register_user},
 };
 use activitypub_federation::config::Data;
 use anyhow::anyhow;
@@ -33,19 +14,24 @@ use axum::{
     extract::{rejection::ExtensionRejection, Query},
     response::IntoResponse,
     routing::{delete, get, patch, post},
-    Extension,
-    Json,
-    Router,
+    Extension, Json, Router,
 };
 use axum_macros::{debug_handler, FromRequestParts};
 use http::StatusCode;
+use ibis_database::impls::edit::ViewEditParams;
+use ibis_database::{
+    common::{
+        article::{Edit, EditView, GetEditList},
+        instance::SiteView,
+        user::{LocalUserView, Person},
+    },
+    error::BackendResult,
+    impls::IbisContext,
+};
 use instance::{list_instance_views, list_instances, update_instance};
 use std::ops::Deref;
 use user::{
-    article_notif_mark_as_read,
-    count_notifications,
-    list_notifications,
-    update_user_profile,
+    article_notif_mark_as_read, count_notifications, list_notifications, update_user_profile,
 };
 
 mod article;

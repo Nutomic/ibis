@@ -1,23 +1,17 @@
-use crate::{
-    backend::{database::IbisContext, utils::error::BackendResult},
-    common::{
-        article::{Edit, EditVersion},
-        utils,
-    },
-};
-use activitypub_federation::{
-    config::Data,
-    http_signatures::{generate_actor_keypair, Keypair},
-};
+use activitypub_federation::config::Data;
 use anyhow::anyhow;
 use diffy::{apply, Patch};
+use ibis_database::{
+    common::{
+        article::{Edit, EditVersion},
+        utils::http_protocol_str,
+    },
+    error::BackendResult,
+    impls::IbisContext,
+};
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
-use std::sync::LazyLock;
 use url::{ParseError, Url};
 
-pub mod config;
-pub mod error;
-pub(super) mod scheduled_tasks;
 pub(super) mod validate;
 
 pub(super) fn generate_activity_id(context: &Data<IbisContext>) -> Result<Url, ParseError> {
@@ -29,7 +23,7 @@ pub(super) fn generate_activity_id(context: &Data<IbisContext>) -> Result<Url, P
         .collect();
     Url::parse(&format!(
         "{}://{}/activity/{}",
-        utils::http_protocol_str(),
+        http_protocol_str(),
         domain,
         id
     ))
@@ -61,13 +55,9 @@ pub(super) fn generate_article_version(
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::common::{
-        article::Edit,
-        newtypes::{ArticleId, EditId, PersonId},
-    };
-    use activitypub_federation::fetch::object_id::ObjectId;
     use chrono::Utc;
     use diffy::create_patch;
+    use ibis_database::common::newtypes::{ArticleId, EditId, PersonId};
 
     fn create_edits() -> BackendResult<Vec<Edit>> {
         let generate_edit = |a, b| -> BackendResult<Edit> {
@@ -76,7 +66,7 @@ mod test {
                 id: EditId(0),
                 creator_id: PersonId(0),
                 hash: EditVersion::new(&diff),
-                ap_id: ObjectId::parse("http://example.com")?,
+                ap_id: Url::parse("http://example.com")?.into(),
                 diff,
                 summary: String::new(),
                 article_id: ArticleId(0),
