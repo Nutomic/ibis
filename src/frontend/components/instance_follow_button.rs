@@ -1,15 +1,13 @@
-use crate::{
-    common::{
-        instance::{FollowInstanceParams, Instance},
-        newtypes::InstanceId,
+use crate::frontend::{
+    api::CLIENT,
+    utils::{
+        errors::FrontendResultExt,
+        resources::{my_profile, site},
     },
-    frontend::{
-        api::CLIENT,
-        utils::{
-            errors::FrontendResultExt,
-            resources::{my_profile, site},
-        },
-    },
+};
+use ibis_database::common::{
+    instance::{FollowInstanceParams, Instance},
+    newtypes::InstanceId,
 };
 use leptos::prelude::*;
 

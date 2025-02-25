@@ -1,11 +1,9 @@
-use crate::{
-    common::instance::GetInstanceParams,
-    frontend::{
-        api::CLIENT,
-        components::suspense_error::SuspenseError,
-        utils::{formatting::user_link, resources::site},
-    },
+use crate::frontend::{
+    api::CLIENT,
+    components::suspense_error::SuspenseError,
+    utils::{formatting::user_link, resources::site},
 };
+use ibis_database::common::instance::GetInstanceParams;
 use leptos::prelude::*;
 use leptos_meta::Title;
 

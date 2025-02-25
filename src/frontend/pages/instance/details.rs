@@ -1,21 +1,14 @@
-use crate::{
-    common::{
-        article::ListArticlesParams,
-        instance::{GetInstanceParams, Instance},
+use crate::frontend::{
+    api::CLIENT,
+    components::{instance_follow_button::InstanceFollowButton, suspense_error::SuspenseError},
+    utils::{
+        errors::FrontendError,
+        formatting::{article_path, article_title, instance_title_with_domain, instance_updated},
     },
-    frontend::{
-        api::CLIENT,
-        components::{instance_follow_button::InstanceFollowButton, suspense_error::SuspenseError},
-        utils::{
-            errors::FrontendError,
-            formatting::{
-                article_path,
-                article_title,
-                instance_title_with_domain,
-                instance_updated,
-            },
-        },
-    },
+};
+use ibis_database::common::{
+    article::ListArticlesParams,
+    instance::{GetInstanceParams, Instance},
 };
 use leptos::prelude::*;
 use leptos_meta::Title;

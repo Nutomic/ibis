@@ -29,7 +29,13 @@ mod schema;
 #[repr(transparent)]
 #[derive(Clone, PartialEq, Eq, Serialize, Deserialize, Debug, Hash, AsExpression, FromSqlRow)]
 #[diesel(sql_type = diesel::sql_types::Text)]
-pub struct DbUrl(pub(crate) Box<Url>);
+pub struct DbUrl(pub Box<Url>);
+
+impl DbUrl {
+    pub fn inner(&self) -> &Url {
+        &self.0
+    }
+}
 
 impl ToSql<Text, Pg> for DbUrl {
     fn to_sql(&self, out: &mut Output<Pg>) -> diesel::serialize::Result {

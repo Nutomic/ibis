@@ -1,11 +1,9 @@
-use crate::{
-    common::user::UpdateUserParams,
-    frontend::{
-        api::CLIENT,
-        components::suspense_error::SuspenseError,
-        utils::{errors::FrontendResultExt, resources::site},
-    },
+use crate::frontend::{
+    api::CLIENT,
+    components::suspense_error::SuspenseError,
+    utils::{errors::FrontendResultExt, resources::site},
 };
+use ibis_database::common::user::UpdateUserParams;
 use leptos::prelude::*;
 use leptos_meta::Title;
 

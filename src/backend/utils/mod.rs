@@ -3,10 +3,10 @@ use anyhow::anyhow;
 use diffy::{apply, Patch};
 use ibis_database::{
     common::{
-        article::{Edit, EditVersion},
+        article::{Article, Edit, EditVersion},
         utils::http_protocol_str,
     },
-    error::BackendResult,
+    error::{BackendError, BackendResult},
     impls::IbisContext,
 };
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
@@ -50,6 +50,17 @@ pub(super) fn generate_article_version(
         }
     }
     Err(anyhow!("failed to generate article version").into())
+}
+
+pub fn can_edit_article(article: &Article, is_admin: bool) -> BackendResult<()> {
+    if article.protected {
+        if !article.local && !is_admin {
+            return Err(BackendError(anyhow!(
+                "Article is protected, only admins on origin instance can edit".to_string()
+            )));
+        }
+    }
+    Ok(())
 }
 
 #[cfg(test)]

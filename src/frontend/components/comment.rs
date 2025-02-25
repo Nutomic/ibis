@@ -1,19 +1,17 @@
-use crate::{
-    common::{
-        article::ArticleView,
-        comment::{Comment, CommentView, EditCommentParams},
-        newtypes::CommentId,
+use crate::frontend::{
+    api::CLIENT,
+    components::comment_editor::{CommentEditorView, EditParams},
+    markdown::render_comment_markdown,
+    utils::{
+        errors::{FrontendResult, FrontendResultExt},
+        formatting::{comment_path, time_ago, user_link},
+        resources::my_profile,
     },
-    frontend::{
-        api::CLIENT,
-        components::comment_editor::{CommentEditorView, EditParams},
-        markdown::render_comment_markdown,
-        utils::{
-            errors::{FrontendResult, FrontendResultExt},
-            formatting::{comment_path, time_ago, user_link},
-            resources::my_profile,
-        },
-    },
+};
+use ibis_database::common::{
+    article::ArticleView,
+    comment::{Comment, CommentView, EditCommentParams},
+    newtypes::CommentId,
 };
 use leptos::prelude::*;
 use phosphor_leptos::{Icon, ARROW_BEND_UP_LEFT, FEDIVERSE_LOGO, LINK, PENCIL, TRASH};

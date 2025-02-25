@@ -1,11 +1,9 @@
 use super::ApiClient;
-use crate::{
-    common::{
-        newtypes::ArticleNotifId,
-        notifications::{ApiNotification, ArticleNotifMarkAsReadParams},
-        SuccessResponse,
-    },
-    frontend::utils::errors::FrontendResult,
+use crate::frontend::utils::errors::FrontendResult;
+use ibis_database::common::{
+    newtypes::ArticleNotifId,
+    notifications::{ApiNotification, ArticleNotifMarkAsReadParams},
+    SuccessResponse,
 };
 
 impl ApiClient {

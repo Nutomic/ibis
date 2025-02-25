@@ -1,7 +1,5 @@
-use crate::{
-    common::article::EditView,
-    frontend::utils::formatting::{article_link, edit_path, render_date_time, user_link},
-};
+use crate::frontend::utils::formatting::{article_link, edit_path, render_date_time, user_link};
+use ibis_database::common::article::EditView;
 use leptos::{either::Either, prelude::*};
 
 // If `for_article` is true, edit entries link to the respective user account. Otherwise

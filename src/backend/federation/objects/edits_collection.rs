@@ -52,7 +52,7 @@ impl Collection for EditCollection {
         .await?;
         let collection = ApubEditCollection {
             r#type: Default::default(),
-            id: article.edits_id()?,
+            id: article.edits_id()?.into(),
             total_items: edits.len() as i32,
             items: edits,
         };

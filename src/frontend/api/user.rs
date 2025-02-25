@@ -1,19 +1,12 @@
 use super::ApiClient;
-use crate::{
-    common::{
-        article::{EditView, GetEditList},
-        newtypes::PersonId,
-        user::{
-            GetUserParams,
-            LocalUserView,
-            LoginUserParams,
-            Person,
-            RegisterUserParams,
-            UpdateUserParams,
-        },
-        SuccessResponse,
+use crate::frontend::utils::errors::FrontendResult;
+use ibis_database::common::{
+    article::{EditView, GetEditList},
+    newtypes::PersonId,
+    user::{
+        GetUserParams, LocalUserView, LoginUserParams, Person, RegisterUserParams, UpdateUserParams,
     },
-    frontend::utils::errors::FrontendResult,
+    SuccessResponse,
 };
 
 impl ApiClient {

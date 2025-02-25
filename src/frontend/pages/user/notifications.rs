@@ -1,4 +1,15 @@
-use crate::{
+use crate::frontend::{
+    api::CLIENT,
+    components::suspense_error::SuspenseError,
+    utils::{
+        errors::{FrontendError, FrontendResultExt},
+        formatting::{
+            article_link, article_path, article_title, comment_path, edit_path, time_ago, user_link,
+        },
+    },
+};
+use chrono::{DateTime, Utc};
+use ibis_database::{
     common::{
         article::{ApiConflict, Article, Edit},
         comment::Comment,
@@ -6,24 +17,8 @@ use crate::{
         notifications::ApiNotification,
         user::Person,
     },
-    frontend::{
-        api::CLIENT,
-        components::suspense_error::SuspenseError,
-        utils::{
-            errors::{FrontendError, FrontendResultExt},
-            formatting::{
-                article_link,
-                article_path,
-                article_title,
-                comment_path,
-                edit_path,
-                time_ago,
-                user_link,
-            },
-        },
-    },
+    impls::conflict::Conflict,
 };
-use chrono::{DateTime, Utc};
 use leptos::{either::EitherOf4, prelude::*};
 use leptos_meta::Title;
 use phosphor_leptos::{Icon, CHECK, LINK};
@@ -50,8 +45,8 @@ pub fn Notifications() -> impl IntoView {
                                 .map(|ref notif| {
                                     use ApiNotification::*;
                                     match notif {
-                                        EditConflict(c) => {
-                                            EitherOf4::A(edit_conflict_view(c, notifications))
+                                        EditConflict(c, a) => {
+                                            EitherOf4::A(edit_conflict_view(c, a, notifications))
                                         }
                                         ArticleApprovalRequired(a) => {
                                             EitherOf4::B(article_approval_view(a, notifications))
@@ -73,8 +68,12 @@ pub fn Notifications() -> impl IntoView {
     }
 }
 
-fn edit_conflict_view(c: &ApiConflict, notifications: NotificationsResource) -> impl IntoView {
-    let link = format!("{}/edit?conflict_id={}", article_path(&c.article), c.id.0,);
+fn edit_conflict_view(
+    c: &Conflict,
+    a: &Article,
+    notifications: NotificationsResource,
+) -> impl IntoView {
+    let link = format!("{}/edit?conflict_id={}", article_path(&a), c.id.0,);
     let id = c.id;
     let click_dismiss = Action::new(move |_: &()| async move {
         CLIENT
@@ -85,7 +84,7 @@ fn edit_conflict_view(c: &ApiConflict, notifications: NotificationsResource) -> 
     view! {
         <li class="py-2">
             <a class="text-lg link" href=link>
-                {format!("Conflict: {} - {}", article_title(&c.article), c.summary)}
+                {format!("Conflict: {} - {}", article_title(&a), c.summary)}
             </a>
             <div class="mt-2 card-actions">
                 <button

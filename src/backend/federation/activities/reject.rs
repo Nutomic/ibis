@@ -1,23 +1,21 @@
-use crate::{
-    backend::{
-        database::{
-            conflict::{DbConflict, DbConflictForm},
-            IbisContext,
-        },
-        federation::{objects::edit::ApubEdit, send_activity},
-        utils::{
-            error::{BackendError, BackendResult},
-            generate_activity_id,
-        },
+use crate::backend::{
+    federation::{
+        objects::{edit::ApubEdit, instance::InstanceWrapper},
+        send_activity,
     },
-    common::{article::EditVersion, instance::Instance},
+    utils::generate_activity_id,
 };
 use activitypub_federation::{
-    config::Data,
-    fetch::object_id::ObjectId,
-    kinds::activity::RejectType,
-    protocol::helpers::deserialize_one_or_many,
-    traits::ActivityHandler,
+    config::Data, fetch::object_id::ObjectId, kinds::activity::RejectType,
+    protocol::helpers::deserialize_one_or_many, traits::ActivityHandler,
+};
+use ibis_database::{
+    common::{article::EditVersion, instance::Instance},
+    error::{BackendError, BackendResult},
+    impls::{
+        conflict::{Conflict, DbConflictForm},
+        IbisContext,
+    },
 };
 use serde::{Deserialize, Serialize};
 use url::Url;
@@ -25,7 +23,7 @@ use url::Url;
 #[derive(Deserialize, Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct RejectEdit {
-    pub actor: ObjectId<Instance>,
+    pub actor: ObjectId<InstanceWrapper>,
     #[serde(deserialize_with = "deserialize_one_or_many")]
     pub to: Vec<Url>,
     pub object: ApubEdit,
@@ -37,14 +35,14 @@ pub struct RejectEdit {
 impl RejectEdit {
     pub async fn send(
         edit: ApubEdit,
-        user_instance: Instance,
+        user_instance: InstanceWrapper,
         context: &Data<IbisContext>,
     ) -> BackendResult<()> {
-        let local_instance = Instance::read_local(context)?;
+        let local_instance: InstanceWrapper = Instance::read_local(context)?.into();
         let id = generate_activity_id(context)?;
         let reject = RejectEdit {
-            actor: local_instance.ap_id.clone(),
-            to: vec![user_instance.ap_id.into_inner()],
+            actor: local_instance.ap_id.clone().into(),
+            to: vec![user_instance.ap_id.clone().into()],
             object: edit,
             kind: Default::default(),
             id,
@@ -89,7 +87,7 @@ impl ActivityHandler for RejectEdit {
             article_id: article.id,
             previous_version_id: self.object.previous_version,
         };
-        DbConflict::create(&form, context)?;
+        Conflict::create(&form, context)?;
         Ok(())
     }
 }

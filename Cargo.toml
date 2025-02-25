@@ -51,6 +51,7 @@ axum = "0.7.9"
 anyhow = "1.0.95"
 log = "0.4"
 bcrypt = "0.16.0"
+doku = "0.21.1"
 
 # frontend and shared deps
 [dependencies]
@@ -130,6 +131,7 @@ bcrypt.workspace = true
 fmtm = "0.0.3"
 regex = "1.11.1"
 moka = { version = "0.12.10", features = ["sync"] }
+doku.workspace = true
 
 [dev-dependencies]
 pretty_assertions = "1.4.1"

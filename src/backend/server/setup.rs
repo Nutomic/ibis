@@ -4,7 +4,18 @@ use crate::backend::federation::{
 };
 use activitypub_federation::{config::Data, fetch::object_id::ObjectId};
 use chrono::Utc;
-use ibis_database::{common::{article::{Article, EditVersion}, instance::Instance, user::Person, utils::http_protocol_str, MAIN_PAGE_NAME}, error::BackendError, generate_keypair, impls::{article::DbArticleForm, instance::DbInstanceForm, IbisContext}};
+use ibis_database::{
+    common::{
+        article::{Article, EditVersion},
+        instance::Instance,
+        user::Person,
+        utils::http_protocol_str,
+        MAIN_PAGE_NAME,
+    },
+    error::BackendError,
+    generate_keypair,
+    impls::{article::DbArticleForm, instance::DbInstanceForm, IbisContext},
+};
 use url::Url;
 
 const MAIN_PAGE_DEFAULT_TEXT: &str = "Welcome to Ibis, the federated Wikipedia alternative!
@@ -21,8 +32,8 @@ pub async fn setup(context: &Data<IbisContext>) -> Result<(), BackendError> {
     let form = DbInstanceForm {
         domain: domain.to_string(),
         ap_id,
-        articles_url: Some(local_articles_url(domain)?),
-        instances_url: Some(linked_instances_url(domain)?),
+        articles_url: Some(local_articles_url(domain)?.into()),
+        instances_url: Some(linked_instances_url(domain)?.into()),
         inbox_url,
         public_key: keypair.public_key,
         private_key: Some(keypair.private_key),
@@ -47,7 +58,8 @@ pub async fn setup(context: &Data<IbisContext>) -> Result<(), BackendError> {
         ap_id: Url::parse(&format!(
             "{}://{domain}/article/{MAIN_PAGE_NAME}",
             http_protocol_str()
-        ))?.into(),
+        ))?
+        .into(),
         instance_id: instance.id,
         local: true,
         protected: true,

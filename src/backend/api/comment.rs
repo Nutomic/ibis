@@ -1,8 +1,11 @@
 use super::UserExt;
 use crate::backend::{
-    federation::activities::comment::{
-        create_or_update_comment::CreateOrUpdateComment, delete_comment::DeleteComment,
-        undo_delete_comment::UndoDeleteComment,
+    federation::{
+        activities::comment::{
+            create_or_update_comment::CreateOrUpdateComment, delete_comment::DeleteComment,
+            undo_delete_comment::UndoDeleteComment,
+        },
+        objects::comment::CommentWrapper,
     },
     utils::validate::{validate_comment_max_depth, validate_not_empty},
 };
@@ -72,7 +75,7 @@ pub(in crate::backend::api) async fn create_comment(
     };
     let comment = Comment::update(form, comment.id, &context)?;
 
-    CreateOrUpdateComment::send(&comment.comment, &context).await?;
+    CreateOrUpdateComment::send(&comment.comment.clone().into(), &context).await?;
 
     Ok(Json(comment))
 }
@@ -101,15 +104,16 @@ pub(in crate::backend::api) async fn edit_comment(
     };
     let comment = Comment::update(form, params.id, &context)?;
 
+    let apub_comment: CommentWrapper = comment.comment.clone().into();
     // federate
     if orig_comment.content != comment.comment.content {
-        CreateOrUpdateComment::send(&comment.comment, &context).await?;
+        CreateOrUpdateComment::send(&apub_comment, &context).await?;
     }
     if !orig_comment.deleted && comment.comment.deleted {
-        DeleteComment::send(&comment.comment, &context).await?;
+        DeleteComment::send(&apub_comment, &context).await?;
     }
     if orig_comment.deleted && !comment.comment.deleted {
-        UndoDeleteComment::send(&comment.comment, &context).await?;
+        UndoDeleteComment::send(&apub_comment, &context).await?;
     }
 
     Ok(Json(comment))

@@ -1,10 +1,8 @@
 use super::utils::errors::FrontendResult;
-use crate::{
-    common::{
-        article::{ArticleView, EditView, GetArticleParams},
-        MAIN_PAGE_NAME,
-    },
-    frontend::api::CLIENT,
+use crate::frontend::api::CLIENT;
+use ibis_database::common::{
+    article::{ArticleView, EditView, GetArticleParams},
+    MAIN_PAGE_NAME,
 };
 use leptos::prelude::*;
 use leptos_router::hooks::use_params_map;

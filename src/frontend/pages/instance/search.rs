@@ -1,12 +1,10 @@
-use crate::{
-    common::{
-        article::{Article, SearchArticleParams},
-        instance::Instance,
-    },
-    frontend::{
-        api::CLIENT,
-        utils::formatting::{article_path, article_title},
-    },
+use crate::frontend::{
+    api::CLIENT,
+    utils::formatting::{article_path, article_title},
+};
+use ibis_database::common::{
+    article::{Article, SearchArticleParams},
+    instance::Instance,
 };
 use leptos::prelude::*;
 use leptos_meta::Title;

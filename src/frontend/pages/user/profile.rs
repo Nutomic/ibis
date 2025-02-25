@@ -1,12 +1,10 @@
-use crate::{
-    common::user::GetUserParams,
-    frontend::{
-        api::CLIENT,
-        components::{edit_list::EditList, suspense_error::SuspenseError},
-        markdown::render_article_markdown,
-        utils::formatting::user_title,
-    },
+use crate::frontend::{
+    api::CLIENT,
+    components::{edit_list::EditList, suspense_error::SuspenseError},
+    markdown::render_article_markdown,
+    utils::formatting::user_title,
 };
+use ibis_database::common::user::GetUserParams;
 use leptos::prelude::*;
 use leptos_meta::Title;
 use leptos_router::hooks::use_params_map;

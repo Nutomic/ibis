@@ -1,21 +1,14 @@
-use crate::{
-    backend::{
-        database::IbisContext,
-        federation::{
-            activities::{reject::RejectEdit, update_local_article::UpdateLocalArticle},
-            objects::edit::ApubEdit,
-            send_activity,
+use crate::backend::{
+    federation::{
+        activities::{reject::RejectEdit, update_local_article::UpdateLocalArticle},
+        objects::{
+            article::ArticleWrapper,
+            edit::{ApubEdit, EditWrapper},
+            instance::InstanceWrapper,
         },
-        utils::{
-            error::{BackendError, BackendResult},
-            generate_activity_id,
-        },
+        send_activity,
     },
-    common::{
-        article::{Article, Edit},
-        instance::Instance,
-        validation::can_edit_article,
-    },
+    utils::{can_edit_article, generate_activity_id},
 };
 use activitypub_federation::{
     config::Data,
@@ -25,13 +18,21 @@ use activitypub_federation::{
     traits::{ActivityHandler, Object},
 };
 use diffy::{apply, Patch};
+use ibis_database::{
+    common::{
+        article::{Article, Edit},
+        instance::Instance,
+    },
+    error::{BackendError, BackendResult},
+    impls::IbisContext,
+};
 use serde::{Deserialize, Serialize};
 use url::Url;
 
 #[derive(Deserialize, Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateRemoteArticle {
-    pub actor: ObjectId<Instance>,
+    pub actor: ObjectId<InstanceWrapper>,
     #[serde(deserialize_with = "deserialize_one_or_many")]
     pub to: Vec<Url>,
     pub object: ApubEdit,
@@ -43,15 +44,15 @@ pub struct UpdateRemoteArticle {
 impl UpdateRemoteArticle {
     /// Sent by a follower instance
     pub async fn send(
-        edit: Edit,
+        edit: EditWrapper,
         article_instance: Instance,
         context: &Data<IbisContext>,
     ) -> BackendResult<()> {
-        let local_instance = Instance::read_local(context)?;
+        let local_instance: InstanceWrapper = Instance::read_local(context)?.into();
         let id = generate_activity_id(context)?;
         let update = UpdateRemoteArticle {
-            actor: local_instance.ap_id.clone(),
-            to: vec![article_instance.ap_id.into_inner()],
+            actor: local_instance.ap_id.clone().into(),
+            to: vec![*article_instance.ap_id.0],
             object: edit.into_json(context).await?,
             kind: Default::default(),
             id,
@@ -81,22 +82,22 @@ impl ActivityHandler for UpdateRemoteArticle {
     }
 
     async fn verify(&self, context: &Data<Self::DataType>) -> Result<(), Self::Error> {
-        let article = Article::read_from_ap_id(&self.object.object, context)?;
+        let article = Article::read_from_ap_id(&self.object.object.clone().into(), context)?;
         can_edit_article(&article, false)?;
         Ok(())
     }
 
     /// Received on article origin instance
     async fn receive(self, context: &Data<Self::DataType>) -> Result<(), Self::Error> {
-        let local_article = Article::read_from_ap_id(&self.object.object, context)?;
+        let local_article = Article::read_from_ap_id(&self.object.object.clone().into(), context)?;
         let patch = Patch::from_str(&self.object.content)?;
 
         match apply(&local_article.text, &patch) {
             Ok(applied) => {
-                let edit = Edit::from_json(self.object.clone(), context).await?;
+                let edit = EditWrapper::from_json(self.object.clone(), context).await?;
                 let article = Article::update_text(edit.article_id, &applied, context)?;
                 UpdateLocalArticle::send(
-                    article,
+                    article.into(),
                     vec![self.actor.dereference(context).await?],
                     context,
                 )

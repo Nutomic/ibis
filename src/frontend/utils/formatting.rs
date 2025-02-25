@@ -1,11 +1,11 @@
-use crate::common::{
+use chrono::{DateTime, Local, Utc};
+use ibis_database::common::{
     article::{Article, Edit},
     comment::Comment,
     instance::Instance,
     user::Person,
     utils::extract_domain,
 };
-use chrono::{DateTime, Local, Utc};
 use leptos::prelude::*;
 use std::sync::OnceLock;
 use timeago::Formatter;
@@ -17,7 +17,7 @@ pub fn article_path(article: &Article) -> String {
         format!(
             "/article/{}@{}",
             article.title,
-            extract_domain(&article.ap_id)
+            extract_domain(article.ap_id.inner())
         )
     }
 }
@@ -36,7 +36,7 @@ pub fn article_title(article: &Article) -> String {
     if article.local {
         title
     } else {
-        format!("{}@{}", title, extract_domain(&article.ap_id))
+        format!("{}@{}", title, extract_domain(article.ap_id.inner()))
     }
 }
 
@@ -48,7 +48,7 @@ pub fn user_title(person: &Person) -> String {
     if person.local {
         format!("@{name}")
     } else {
-        format!("@{}@{}", name, extract_domain(&person.ap_id))
+        format!("@{}@{}", name, extract_domain(person.ap_id.inner()))
     }
 }
 
@@ -59,7 +59,7 @@ pub fn user_link(person: &Person) -> impl IntoView {
         format!(
             "/user/{}@{}",
             person.username,
-            extract_domain(&person.ap_id)
+            extract_domain(person.ap_id.inner())
         )
     };
     view! {
@@ -114,7 +114,7 @@ pub fn edit_path(edit: &Edit, article: &Article) -> String {
     format!(
         "/article/{}@{}/diff/{}",
         article.title,
-        extract_domain(&article.ap_id),
+        extract_domain(article.ap_id.inner()),
         edit.hash.0,
     )
 }

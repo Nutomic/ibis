@@ -1,10 +1,6 @@
 use crate::backend::federation::send_activity;
 
-use super::{
-    article::ArticleWrapper,
-    articles_collection::ArticleCollection,
-    instance_collection::{DbInstanceCollection, InstanceCollection},
-};
+use super::{articles_collection::ArticleCollection, instance_collection::InstanceCollection};
 use activitypub_federation::{
     config::Data,
     fetch::{collection_id::CollectionId, object_id::ObjectId},
@@ -34,7 +30,7 @@ pub struct ApubInstance {
     name: Option<String>,
     summary: Option<String>,
     articles: Option<CollectionId<ArticleCollection>>,
-    instances: Option<CollectionId<DbInstanceCollection>>,
+    instances: Option<CollectionId<InstanceCollection>>,
     inbox: Url,
     public_key: PublicKey,
 }
@@ -71,7 +67,7 @@ impl InstanceWrapper {
     pub async fn send_to_followers<Activity>(
         &self,
         activity: Activity,
-        extra_recipients: Vec<Instance>,
+        extra_recipients: Vec<InstanceWrapper>,
         context: &Data<IbisContext>,
     ) -> Result<(), <Activity as ActivityHandler>::Error>
     where
@@ -162,7 +158,7 @@ impl Object for InstanceWrapper {
                     tracing::warn!("error in spawn: {e}");
                 }
             }
-            if let Some(instances_url) = &instance_.instances_url {
+            if let Some(instances_url) = instance_.instances_url {
                 let instances_url: CollectionId<InstanceCollection> = instances_url.into();
                 let res = instances_url.dereference(&(), &context_).await;
                 if let Err(e) = res {

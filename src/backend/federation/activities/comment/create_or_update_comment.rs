@@ -1,22 +1,26 @@
 use super::generate_comment_activity_to;
-use crate::{
-    backend::{
-        database::IbisContext,
-        federation::{
-            objects::comment::ApubComment,
-            routes::AnnouncableActivities,
-            send_activity_to_instance,
+use crate::backend::{
+    federation::{
+        objects::{
+            comment::{ApubComment, CommentWrapper},
+            instance::InstanceWrapper,
+            user::PersonWrapper,
         },
-        generate_activity_id,
-        utils::error::{BackendError, BackendResult},
+        routes::AnnouncableActivities,
+        send_activity_to_instance,
     },
-    common::{comment::Comment, instance::Instance, user::Person},
+    generate_activity_id,
 };
 use activitypub_federation::{
     config::Data,
     fetch::object_id::ObjectId,
     protocol::{helpers::deserialize_one_or_many, verification::verify_domains_match},
     traits::{ActivityHandler, Object},
+};
+use ibis_database::{
+    common::{comment::Comment, instance::Instance, user::Person},
+    error::{BackendError, BackendResult},
+    impls::IbisContext,
 };
 use serde::{Deserialize, Serialize};
 use url::Url;
@@ -30,7 +34,7 @@ pub enum CreateOrUpdateType {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateOrUpdateComment {
-    pub(crate) actor: ObjectId<Person>,
+    pub(crate) actor: ObjectId<PersonWrapper>,
     #[serde(deserialize_with = "deserialize_one_or_many")]
     pub(crate) to: Vec<Url>,
     pub(crate) object: ApubComment,
@@ -40,8 +44,8 @@ pub struct CreateOrUpdateComment {
 }
 
 impl CreateOrUpdateComment {
-    pub async fn send(comment: &Comment, context: &Data<IbisContext>) -> BackendResult<()> {
-        let instance = Instance::read_for_comment(comment.id, context)?;
+    pub async fn send(comment: &CommentWrapper, context: &Data<IbisContext>) -> BackendResult<()> {
+        let instance: InstanceWrapper = Instance::read_for_comment(comment.id, context)?.into();
 
         let kind = if comment.updated.is_none() {
             CreateOrUpdateType::Create
@@ -51,14 +55,14 @@ impl CreateOrUpdateComment {
         let object = comment.clone().into_json(context).await?;
         let id = generate_activity_id(context)?;
         let activity = Self {
-            actor: object.attributed_to.clone(),
+            actor: object.attributed_to.clone().into(),
             object,
             to: generate_comment_activity_to(&instance)?,
             kind,
             id,
         };
         let activity = AnnouncableActivities::CreateOrUpdateComment(activity);
-        let creator = Person::read(comment.creator_id, context)?;
+        let creator: PersonWrapper = Person::read(comment.creator_id, context)?.into();
         send_activity_to_instance(&creator, activity, &instance, context).await?;
         Ok(())
     }
@@ -84,7 +88,7 @@ impl ActivityHandler for CreateOrUpdateComment {
     }
 
     async fn receive(self, context: &Data<Self::DataType>) -> Result<(), Self::Error> {
-        let comment = Comment::from_json(self.object, context).await?;
+        let comment = CommentWrapper::from_json(self.object, context).await?;
 
         let instance = Instance::read_for_comment(comment.id, context)?;
         if instance.local {

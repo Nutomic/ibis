@@ -1,8 +1,6 @@
 use super::ApiClient;
-use crate::{
-    common::comment::{CommentView, CreateCommentParams, EditCommentParams},
-    frontend::utils::errors::FrontendResult,
-};
+use crate::frontend::utils::errors::FrontendResult;
+use ibis_database::common::comment::{CommentView, CreateCommentParams, EditCommentParams};
 
 impl ApiClient {
     pub async fn create_comment(

@@ -1,11 +1,10 @@
-use crate::{
-    backend::{
-        database::IbisContext,
-        federation::{activities::accept::Accept, send_activity},
-        generate_activity_id,
-        utils::error::{BackendError, BackendResult},
+use crate::backend::{
+    federation::{
+        activities::accept::Accept,
+        objects::{instance::InstanceWrapper, user::PersonWrapper},
+        send_activity,
     },
-    common::{instance::Instance, user::Person},
+    generate_activity_id,
 };
 use activitypub_federation::{
     config::Data,
@@ -14,14 +13,19 @@ use activitypub_federation::{
     protocol::verification::verify_urls_match,
     traits::{ActivityHandler, Actor},
 };
+use ibis_database::{
+    common::{instance::Instance, user::Person},
+    error::{BackendError, BackendResult},
+    impls::IbisContext,
+};
 use serde::{Deserialize, Serialize};
 use url::Url;
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Follow {
-    pub actor: ObjectId<Person>,
-    pub object: ObjectId<Instance>,
+    pub actor: ObjectId<PersonWrapper>,
+    pub object: ObjectId<InstanceWrapper>,
     #[serde(rename = "type")]
     kind: FollowType,
     id: Url,
@@ -29,14 +33,14 @@ pub struct Follow {
 
 impl Follow {
     pub async fn send(
-        actor: Person,
-        to: &Instance,
+        actor: PersonWrapper,
+        to: &InstanceWrapper,
         context: &Data<IbisContext>,
     ) -> BackendResult<()> {
         let id = generate_activity_id(context)?;
         let follow = Follow {
-            actor: actor.ap_id.clone(),
-            object: to.ap_id.clone(),
+            actor: actor.ap_id.clone().into(),
+            object: to.ap_id.clone().into(),
             kind: Default::default(),
             id,
         };
@@ -64,7 +68,7 @@ impl ActivityHandler for Follow {
 
     async fn receive(self, context: &Data<Self::DataType>) -> Result<(), Self::Error> {
         let actor = self.actor.dereference(context).await?;
-        let local_instance = Instance::read_local(context)?;
+        let local_instance: InstanceWrapper = Instance::read_local(context)?.into();
         verify_urls_match(self.object.inner(), local_instance.ap_id.inner())?;
         Instance::follow(&actor, &local_instance, false, context)?;
 

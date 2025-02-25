@@ -1,18 +1,15 @@
-use crate::{
-    common::{
-        article::{ForkArticleParams, ProtectArticleParams},
-        newtypes::ArticleId,
+use crate::frontend::{
+    api::CLIENT,
+    components::{
+        article_nav::{ActiveTab, ArticleNav},
+        suspense_error::SuspenseError,
     },
-    frontend::{
-        api::CLIENT,
-        components::{
-            article_nav::{ActiveTab, ArticleNav},
-            suspense_error::SuspenseError,
-        },
-        pages::article_resource,
-        utils::{formatting::article_path, resources::is_admin},
-        Article,
-    },
+    pages::article_resource,
+    utils::{formatting::article_path, resources::is_admin},
+};
+use ibis_database::common::{
+    article::{Article, ForkArticleParams, ProtectArticleParams},
+    newtypes::ArticleId,
 };
 use leptos::{ev::KeyboardEvent, prelude::*};
 use leptos_router::components::Redirect;

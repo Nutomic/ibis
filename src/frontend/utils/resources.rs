@@ -1,10 +1,8 @@
 use super::errors::FrontendResult;
-use crate::{
-    common::{
-        instance::{Options, SiteView},
-        user::LocalUserView,
-    },
-    frontend::api::CLIENT,
+use crate::frontend::api::CLIENT;
+use ibis_database::common::{
+    instance::{Options, SiteView},
+    user::LocalUserView,
 };
 use leptos::prelude::*;
 

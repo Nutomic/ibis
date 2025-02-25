@@ -1,22 +1,14 @@
 use super::ApiClient;
-use crate::{
-    common::{
-        article::{Article, SearchArticleParams},
-        instance::{
-            FollowInstanceParams,
-            GetInstanceParams,
-            Instance,
-            InstanceView,
-            InstanceView2,
-            SiteView,
-            UpdateInstanceParams,
-        },
-        ResolveObjectParams,
-        SuccessResponse,
-    },
-    frontend::utils::errors::FrontendResult,
-};
+use crate::frontend::utils::errors::FrontendResult;
 use http::Method;
+use ibis_database::common::{
+    article::{Article, SearchArticleParams},
+    instance::{
+        FollowInstanceParams, GetInstanceParams, Instance, InstanceView, InstanceView2, SiteView,
+        UpdateInstanceParams,
+    },
+    ResolveObjectParams, SuccessResponse,
+};
 use url::Url;
 
 impl ApiClient {
@@ -69,7 +61,7 @@ impl ApiClient {
         &self,
         follow_instance: &str,
     ) -> FrontendResult<Instance> {
-        use crate::common::{utils::http_protocol_str, ResolveObjectParams};
+        use ibis_database::common::{utils::http_protocol_str, ResolveObjectParams};
         use url::Url;
         let params = ResolveObjectParams {
             id: Url::parse(&format!("{}://{}", http_protocol_str(), follow_instance))?,

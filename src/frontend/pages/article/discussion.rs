@@ -1,15 +1,13 @@
-use crate::{
-    common::{comment::CommentView, newtypes::CommentId},
-    frontend::{
-        components::{
-            article_nav::{ActiveTab, ArticleNav},
-            comment::CommentView,
-            comment_editor::CommentEditorView,
-            suspense_error::SuspenseError,
-        },
-        pages::article_resource,
+use crate::frontend::{
+    components::{
+        article_nav::{ActiveTab, ArticleNav},
+        comment::CommentView,
+        comment_editor::CommentEditorView,
+        suspense_error::SuspenseError,
     },
+    pages::article_resource,
 };
+use ibis_database::common::{comment::CommentView, newtypes::CommentId};
 use leptos::prelude::*;
 use std::collections::HashMap;
 

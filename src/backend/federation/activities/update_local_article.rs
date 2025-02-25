@@ -1,13 +1,9 @@
-use crate::{
-    backend::{
-        database::IbisContext,
-        federation::objects::article::ApubArticle,
-        utils::{
-            error::{BackendError, BackendResult},
-            generate_activity_id,
-        },
+use crate::backend::{
+    federation::objects::{
+        article::{ApubArticle, ArticleWrapper},
+        instance::InstanceWrapper,
     },
-    common::{article::Article, instance::Instance},
+    utils::generate_activity_id,
 };
 use activitypub_federation::{
     config::Data,
@@ -16,13 +12,18 @@ use activitypub_federation::{
     protocol::helpers::deserialize_one_or_many,
     traits::{ActivityHandler, Object},
 };
+use ibis_database::{
+    common::{article::Article, instance::Instance},
+    error::{BackendError, BackendResult},
+    impls::IbisContext,
+};
 use serde::{Deserialize, Serialize};
 use url::Url;
 
 #[derive(Deserialize, Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateLocalArticle {
-    pub actor: ObjectId<Instance>,
+    pub actor: ObjectId<InstanceWrapper>,
     #[serde(deserialize_with = "deserialize_one_or_many")]
     pub to: Vec<Url>,
     pub object: ApubArticle,
@@ -34,17 +35,17 @@ pub struct UpdateLocalArticle {
 impl UpdateLocalArticle {
     /// Sent from article origin instance
     pub async fn send(
-        article: Article,
-        extra_recipients: Vec<Instance>,
+        article: ArticleWrapper,
+        extra_recipients: Vec<InstanceWrapper>,
         context: &Data<IbisContext>,
     ) -> BackendResult<()> {
         debug_assert!(article.local);
-        let local_instance = Instance::read_local(context)?;
+        let local_instance: InstanceWrapper = Instance::read_local(context)?.into();
         let id = generate_activity_id(context)?;
         let mut to = local_instance.follower_ids(context)?;
-        to.extend(extra_recipients.iter().map(|i| i.ap_id.inner().clone()));
+        to.extend(extra_recipients.iter().map(|i| i.ap_id.clone().into()));
         let update = UpdateLocalArticle {
-            actor: local_instance.ap_id.clone(),
+            actor: local_instance.ap_id.clone().into(),
             to,
             object: article.into_json(context).await?,
             kind: Default::default(),
@@ -76,7 +77,7 @@ impl ActivityHandler for UpdateLocalArticle {
 
     /// Received on article follower instances (where article is always remote)
     async fn receive(self, context: &Data<Self::DataType>) -> Result<(), Self::Error> {
-        Article::from_json(self.object, context).await?;
+        ArticleWrapper::from_json(self.object, context).await?;
 
         Ok(())
     }

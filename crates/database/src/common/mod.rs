@@ -5,7 +5,6 @@ pub mod newtypes;
 pub mod notifications;
 pub mod user;
 pub mod utils;
-pub mod validation;
 
 use serde::{Deserialize, Serialize};
 use url::Url;

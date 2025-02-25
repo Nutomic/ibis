@@ -1,11 +1,9 @@
-use crate::{
-    common::article::CreateArticleParams,
-    frontend::{
-        api::CLIENT,
-        components::article_editor::EditorView,
-        utils::resources::{config, is_admin},
-    },
+use crate::frontend::{
+    api::CLIENT,
+    components::article_editor::EditorView,
+    utils::resources::{config, is_admin},
 };
+use ibis_database::common::article::CreateArticleParams;
 use leptos::{html::Textarea, prelude::*};
 use leptos_meta::Title;
 use leptos_router::{components::Redirect, hooks::use_query_map};

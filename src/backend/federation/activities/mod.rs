@@ -1,19 +1,16 @@
-use crate::{
-    backend::{
-        database::{edit::DbEditForm, IbisContext},
-        federation::activities::{
-            update_local_article::UpdateLocalArticle,
-            update_remote_article::UpdateRemoteArticle,
-        },
-        utils::error::BackendError,
-    },
+use crate::backend::federation::activities::{
+    update_local_article::UpdateLocalArticle, update_remote_article::UpdateRemoteArticle,
+};
+use activitypub_federation::config::Data;
+use ibis_database::{
     common::{
         article::{Article, Edit, EditVersion},
         instance::Instance,
         newtypes::PersonId,
     },
+    error::BackendResult,
+    impls::{edit::DbEditForm, IbisContext},
 };
-use activitypub_federation::config::Data;
 
 pub mod accept;
 pub mod announce;
@@ -31,7 +28,7 @@ pub async fn submit_article_update(
     original_article: &Article,
     creator_id: PersonId,
     context: &Data<IbisContext>,
-) -> Result<(), BackendError> {
+) -> BackendResult<()> {
     let mut form = DbEditForm::new(
         original_article,
         creator_id,
@@ -44,13 +41,13 @@ pub async fn submit_article_update(
         let edit = Edit::create(&form, context)?;
         let updated_article = Article::update_text(edit.article_id, &new_text, context)?;
 
-        UpdateLocalArticle::send(updated_article, vec![], context).await?;
+        UpdateLocalArticle::send(updated_article.into(), vec![], context).await?;
     } else {
         // insert edit as pending, so only the creator can see it
         form.pending = true;
         let edit = Edit::create(&form, context)?;
         let instance = Instance::read(original_article.instance_id, context)?;
-        UpdateRemoteArticle::send(edit, instance, context).await?;
+        UpdateRemoteArticle::send(edit.into(), instance, context).await?;
     }
     Ok(())
 }

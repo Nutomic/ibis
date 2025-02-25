@@ -1,13 +1,6 @@
-use crate::{
-    backend::{
-        database::IbisContext,
-        federation::{routes::AnnouncableActivities, send_activity},
-        utils::{
-            error::{BackendError, BackendResult},
-            generate_activity_id,
-        },
-    },
-    common::instance::Instance,
+use crate::backend::{
+    federation::{objects::instance::InstanceWrapper, routes::AnnouncableActivities, send_activity},
+    utils::generate_activity_id,
 };
 use activitypub_federation::{
     config::Data,
@@ -16,13 +9,14 @@ use activitypub_federation::{
     protocol::helpers::deserialize_one_or_many,
     traits::{ActivityHandler, Actor},
 };
+use ibis_database::{common::instance::Instance, error::{BackendError, BackendResult}, impls::IbisContext};
 use serde::{Deserialize, Serialize};
 use url::Url;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct AnnounceActivity {
-    pub(crate) actor: ObjectId<Instance>,
+    pub(crate) actor: ObjectId<InstanceWrapper>,
     #[serde(deserialize_with = "deserialize_one_or_many")]
     pub(crate) to: Vec<Url>,
     pub(crate) object: AnnouncableActivities,
@@ -37,7 +31,7 @@ impl AnnounceActivity {
         context: &Data<IbisContext>,
     ) -> BackendResult<()> {
         let id = generate_activity_id(context)?;
-        let instance = Instance::read_local(context)?;
+        let instance: InstanceWrapper = Instance::read_local(context)?.into();
         let announce = AnnounceActivity {
             actor: instance.id().into(),
             to: vec![public()],

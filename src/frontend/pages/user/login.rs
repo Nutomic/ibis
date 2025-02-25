@@ -1,7 +1,5 @@
-use crate::{
-    common::user::LoginUserParams,
-    frontend::{api::CLIENT, components::credentials::*, utils::resources::site},
-};
+use crate::frontend::{api::CLIENT, components::credentials::*, utils::resources::site};
+use ibis_database::common::user::LoginUserParams;
 use leptos::prelude::*;
 use leptos_meta::Title;
 use leptos_router::components::Redirect;

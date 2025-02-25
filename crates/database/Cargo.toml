@@ -17,11 +17,11 @@ diesel = { version = "2.2.6", default-features = false, features = [
 diesel-derive-newtype = "2.1.2"
 diesel_migrations = "2.2.0"
 smart-default = "0.7.1"
-doku = "0.21.1"
 hex = "0.4.3"
 bcrypt.workspace = true
 config = { version = "0.15.6", features = ["toml"] }
 clokwerk = "0.4.0"
+doku.workspace = true
 anyhow.workspace =true
 serde.workspace = true
 chrono.workspace = true

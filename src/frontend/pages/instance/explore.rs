@@ -1,15 +1,13 @@
-use crate::{
-    common::{article::Article, instance::InstanceView},
-    frontend::{
-        api::CLIENT,
-        components::suspense_error::SuspenseError,
-        utils::{
-            errors::{FrontendResult, FrontendResultExt},
-            formatting::{article_link, instance_title_with_domain, instance_updated},
-        },
+use crate::frontend::{
+    api::CLIENT,
+    components::suspense_error::SuspenseError,
+    utils::{
+        errors::{FrontendResult, FrontendResultExt},
+        formatting::{article_link, instance_title_with_domain, instance_updated},
     },
 };
 use codee::string::JsonSerdeCodec;
+use ibis_database::common::{article::Article, instance::InstanceView};
 use leptos::prelude::*;
 use leptos_meta::Title;
 use url::Url;

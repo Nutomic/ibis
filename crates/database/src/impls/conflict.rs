@@ -9,15 +9,8 @@ use crate::{
 };
 use chrono::{DateTime, Utc};
 use diesel::{
-    delete,
-    insert_into,
-    ExpressionMethods,
-    Identifiable,
-    Insertable,
-    QueryDsl,
-    Queryable,
-    RunQueryDsl,
-    Selectable,
+    delete, insert_into, ExpressionMethods, Identifiable, Insertable, QueryDsl, Queryable,
+    RunQueryDsl, Selectable,
 };
 use serde::{Deserialize, Serialize};
 use std::ops::DerefMut;
@@ -26,7 +19,7 @@ use std::ops::DerefMut;
 /// when a local user edit conflicts with another concurrent edit.
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Queryable, Selectable, Identifiable)]
 #[diesel(table_name = conflict, check_for_backend(diesel::pg::Pg), belongs_to(DbArticle, foreign_key = article_id))]
-pub struct DbConflict {
+pub struct Conflict {
     pub id: ConflictId,
     pub hash: EditVersion,
     pub diff: String,
@@ -48,7 +41,7 @@ pub struct DbConflictForm {
     pub previous_version_id: EditVersion,
 }
 
-impl DbConflict {
+impl Conflict {
     pub fn create(form: &DbConflictForm, context: &IbisContext) -> BackendResult<Self> {
         let mut conn = context.db_pool.get()?;
         Ok(insert_into(conflict::table)
@@ -60,7 +53,7 @@ impl DbConflict {
         id: ConflictId,
         person_id: PersonId,
         context: &IbisContext,
-    ) -> BackendResult<DbConflict> {
+    ) -> BackendResult<Conflict> {
         let mut conn = context.db_pool.get()?;
         Ok(conflict::table
             .find(id)

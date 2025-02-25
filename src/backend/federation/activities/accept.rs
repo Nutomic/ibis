@@ -1,13 +1,6 @@
-use crate::{
-    backend::{
-        database::IbisContext,
-        federation::{activities::follow::Follow, send_activity},
-        utils::{
-            error::{BackendError, BackendResult},
-            generate_activity_id,
-        },
-    },
-    common::instance::Instance,
+use crate::backend::{
+    federation::{activities::follow::Follow, objects::instance::InstanceWrapper, send_activity},
+    utils::generate_activity_id,
 };
 use activitypub_federation::{
     config::Data,
@@ -15,13 +8,18 @@ use activitypub_federation::{
     kinds::activity::AcceptType,
     traits::{ActivityHandler, Actor},
 };
+use ibis_database::{
+    common::instance::Instance,
+    error::{BackendError, BackendResult},
+    impls::IbisContext,
+};
 use serde::{Deserialize, Serialize};
 use url::Url;
 
 #[derive(Deserialize, Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Accept {
-    actor: ObjectId<Instance>,
+    actor: ObjectId<InstanceWrapper>,
     object: Follow,
     #[serde(rename = "type")]
     kind: AcceptType,
@@ -30,14 +28,14 @@ pub struct Accept {
 
 impl Accept {
     pub async fn send(
-        local_instance: Instance,
+        local_instance: InstanceWrapper,
         object: Follow,
         context: &Data<IbisContext>,
     ) -> BackendResult<()> {
         let id = generate_activity_id(context)?;
         let follower = object.actor.dereference(context).await?;
         let accept = Accept {
-            actor: local_instance.ap_id.clone(),
+            actor: local_instance.ap_id.clone().into(),
             object,
             kind: Default::default(),
             id,

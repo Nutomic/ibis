@@ -148,7 +148,7 @@ pub struct EditView {
 /// and using the first 16 bytes so that it fits into UUID.
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, Hash)]
 #[cfg_attr(feature = "ssr", derive(diesel_derive_newtype::DieselNewType))]
-pub struct EditVersion(pub(crate) Uuid);
+pub struct EditVersion(pub Uuid);
 
 impl EditVersion {
     pub fn new(diff: &str) -> Self {

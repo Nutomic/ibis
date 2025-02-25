@@ -18,7 +18,7 @@ use url::Url;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct InstanceCollection {
+pub struct ApubInstanceCollection {
     pub r#type: CollectionType,
     pub id: Url,
     pub total_items: i32,
@@ -26,9 +26,9 @@ pub struct InstanceCollection {
 }
 
 #[derive(Clone, Debug)]
-pub struct DbInstanceCollection(());
+pub struct InstanceCollection(());
 
-pub fn linked_instances_url(domain: &str) -> BackendResult<CollectionId<DbInstanceCollection>> {
+pub fn linked_instances_url(domain: &str) -> BackendResult<CollectionId<InstanceCollection>> {
     Ok(CollectionId::parse(&format!(
         "{}://{domain}/linked_instances",
         http_protocol_str()
@@ -36,10 +36,10 @@ pub fn linked_instances_url(domain: &str) -> BackendResult<CollectionId<DbInstan
 }
 
 #[async_trait::async_trait]
-impl Collection for DbInstanceCollection {
+impl Collection for InstanceCollection {
     type Owner = ();
     type DataType = IbisContext;
-    type Kind = InstanceCollection;
+    type Kind = ApubInstanceCollection;
     type Error = BackendError;
 
     async fn read_local(
@@ -56,7 +56,7 @@ impl Collection for DbInstanceCollection {
                 .collect::<Vec<_>>(),
         )
         .await?;
-        let collection = InstanceCollection {
+        let collection = ApubInstanceCollection {
             r#type: Default::default(),
             id: linked_instances_url(&context.config.federation.domain)?.into(),
             total_items: instances.len() as i32,
@@ -93,6 +93,6 @@ impl Collection for DbInstanceCollection {
             });
         join_all(instances).await;
 
-        Ok(DbInstanceCollection(()))
+        Ok(InstanceCollection(()))
     }
 }

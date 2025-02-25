@@ -1,14 +1,11 @@
 use super::{delete_comment::DeleteComment, generate_comment_activity_to};
-use crate::{
-    backend::{
-        database::{comment::DbCommentUpdateForm, IbisContext},
-        federation::{routes::AnnouncableActivities, send_activity_to_instance},
-        utils::{
-            error::{BackendError, BackendResult},
-            generate_activity_id,
-        },
+use crate::backend::{
+    federation::{
+        objects::{comment::CommentWrapper, instance::InstanceWrapper, user::PersonWrapper},
+        routes::AnnouncableActivities,
+        send_activity_to_instance,
     },
-    common::{comment::Comment, instance::Instance, user::Person},
+    utils::generate_activity_id,
 };
 use activitypub_federation::{
     config::Data,
@@ -21,13 +18,18 @@ use activitypub_federation::{
     traits::ActivityHandler,
 };
 use chrono::Utc;
+use ibis_database::{
+    common::{comment::Comment, instance::Instance, user::Person},
+    error::{BackendError, BackendResult},
+    impls::{comment::DbCommentUpdateForm, IbisContext},
+};
 use serde::{Deserialize, Serialize};
 use url::Url;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UndoDeleteComment {
-    pub(crate) actor: ObjectId<Person>,
+    pub(crate) actor: ObjectId<PersonWrapper>,
     #[serde(deserialize_with = "deserialize_one_or_many")]
     pub(crate) to: Vec<Url>,
     pub(crate) object: DeleteComment,
@@ -37,13 +39,13 @@ pub struct UndoDeleteComment {
 }
 
 impl UndoDeleteComment {
-    pub async fn send(comment: &Comment, context: &Data<IbisContext>) -> BackendResult<()> {
-        let instance = Instance::read_for_comment(comment.id, context)?;
+    pub async fn send(comment: &CommentWrapper, context: &Data<IbisContext>) -> BackendResult<()> {
+        let instance: InstanceWrapper = Instance::read_for_comment(comment.id, context)?.into();
         let id = generate_activity_id(context)?;
-        let creator = Person::read(comment.creator_id, context)?;
+        let creator: PersonWrapper = Person::read(comment.creator_id, context)?.into();
         let object = DeleteComment::new(comment, &creator, &instance, context)?;
         let activity = UndoDeleteComment {
-            actor: creator.ap_id.clone(),
+            actor: creator.ap_id.clone().into(),
             object,
             to: generate_comment_activity_to(&instance)?,
             kind: Default::default(),

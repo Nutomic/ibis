@@ -1,20 +1,18 @@
-use crate::{
-    common::{
-        article::{ApiConflict, ArticleView, EditArticleParams},
-        newtypes::ConflictId,
-        MAIN_PAGE_NAME,
+use crate::frontend::{
+    api::CLIENT,
+    components::{
+        article_editor::EditorView,
+        article_nav::{ActiveTab, ArticleNav},
+        suspense_error::SuspenseError,
     },
-    frontend::{
-        api::CLIENT,
-        components::{
-            article_editor::EditorView,
-            article_nav::{ActiveTab, ArticleNav},
-            suspense_error::SuspenseError,
-        },
-        pages::article_resource,
-    },
+    pages::article_resource,
 };
 use chrono::{Days, Utc};
+use ibis_database::common::{
+    article::{ApiConflict, ArticleView, EditArticleParams},
+    newtypes::ConflictId,
+    MAIN_PAGE_NAME,
+};
 use leptos::{html::Textarea, prelude::*};
 use leptos_router::{
     components::Redirect,

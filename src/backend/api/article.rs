@@ -1,8 +1,11 @@
 use super::{check_is_admin, UserExt};
 use crate::backend::{
-    federation::activities::{create_article::CreateArticle, submit_article_update},
+    federation::{
+        activities::{create_article::CreateArticle, submit_article_update},
+        objects::article::ArticleWrapper,
+    },
     utils::{
-        generate_article_version,
+        can_edit_article, generate_article_version,
         validate::{validate_article_title, validate_not_empty},
     },
 };
@@ -14,7 +17,7 @@ use chrono::Utc;
 use diffy::{apply, create_patch, merge, Patch};
 use ibis_database::impls::{
     article::DbArticleForm,
-    conflict::{DbConflict, DbConflictForm},
+    conflict::{Conflict, DbConflictForm},
     edit::DbEditForm,
     IbisContext,
 };
@@ -48,7 +51,7 @@ pub(in crate::backend::api) async fn create_article(
     let ap_id = Url::parse(&format!(
         "{}://{}/article/{}",
         http_protocol_str(),
-        extract_domain(&local_instance.ap_id),
+        extract_domain(&local_instance.ap_id.into()),
         params.title
     ))?
     .into();
@@ -84,7 +87,7 @@ pub(in crate::backend::api) async fn create_article(
 
     // allow reading unapproved article here
     let article_view = Article::read_view(article.id, Some(&user), &context)?;
-    CreateArticle::send_to_followers(article_view.article.clone(), &context).await?;
+    CreateArticle::send_to_followers(article_view.article.clone().into(), &context).await?;
 
     Ok(Json(article_view))
 }
@@ -107,7 +110,7 @@ pub(in crate::backend::api) async fn edit_article(
     validate_not_empty(&params.new_text)?;
     // resolve conflict if any
     if let Some(resolve_conflict_id) = params.resolve_conflict_id {
-        DbConflict::delete(resolve_conflict_id, user.person.id, &context)?;
+        Conflict::delete(resolve_conflict_id, user.person.id, &context)?;
     }
     let original_article = Article::read_view(params.article_id, Some(&user), &context)?;
     if params.new_text == original_article.article.text {
@@ -157,7 +160,7 @@ pub(in crate::backend::api) async fn edit_article(
             article_id: original_article.article.id,
             previous_version_id: previous_version.hash,
         };
-        let conflict = DbConflict::create(&form, &context)?;
+        let conflict = Conflict::create(&form, &context)?;
         Ok(Json(
             db_conflict_to_api_conflict(conflict, true, &context).await?,
         ))
@@ -217,7 +220,7 @@ pub(in crate::backend::api) async fn fork_article(
     let ap_id = Url::parse(&format!(
         "{}://{}/article/{}",
         http_protocol_str(),
-        extract_domain(&local_instance.ap_id),
+        extract_domain(&local_instance.ap_id.into()),
         &params.new_title
     ))?
     .into();
@@ -254,7 +257,7 @@ pub(in crate::backend::api) async fn fork_article(
 
     Article::follow(article.id, &user, &context)?;
 
-    CreateArticle::send_to_followers(article.clone(), &context).await?;
+    CreateArticle::send_to_followers(article.clone().into(), &context).await?;
 
     Ok(Json(Article::read_view(article.id, Some(&user), &context)?))
 }
@@ -267,7 +270,7 @@ pub(super) async fn resolve_article(
     Query(query): Query<ResolveObjectParams>,
     context: Data<IbisContext>,
 ) -> BackendResult<Json<ArticleView>> {
-    let article: Article = ObjectId::from(query.id).dereference(&context).await?;
+    let article: ArticleWrapper = ObjectId::from(query.id).dereference(&context).await?;
     Ok(Json(Article::read_view(article.id, Some(&user), &context)?))
 }
 
@@ -316,7 +319,7 @@ pub async fn get_conflict(
     context: Data<IbisContext>,
     Form(params): Form<GetConflictParams>,
 ) -> BackendResult<Json<ApiConflict>> {
-    let conflict = DbConflict::read(params.conflict_id, user.person.id, &context)?;
+    let conflict = Conflict::read(params.conflict_id, user.person.id, &context)?;
     let conflict = db_conflict_to_api_conflict(conflict, true, &context)
         .await?
         .ok_or(anyhow!("Patch was applied cleanly"))?;
@@ -329,7 +332,7 @@ pub async fn delete_conflict(
     context: Data<IbisContext>,
     Form(params): Form<DeleteConflictParams>,
 ) -> BackendResult<Json<()>> {
-    DbConflict::delete(params.conflict_id, user.person.id, &context)?;
+    Conflict::delete(params.conflict_id, user.person.id, &context)?;
     Ok(Json(()))
 }
 
@@ -348,16 +351,17 @@ pub(in crate::backend::api) async fn follow_article(
 }
 
 pub async fn db_conflict_to_api_conflict(
-    conflict: DbConflict,
+    conflict: Conflict,
     force_dereference: bool,
     context: &Data<IbisContext>,
 ) -> BackendResult<Option<ApiConflict>> {
     let article = Article::read_view(conflict.article_id, None, context)?;
+    let ap_id = ObjectId::<ArticleWrapper>::from(article.article.ap_id);
     let original_article = if force_dereference {
         // Make sure to get latest version from origin so that all conflicts can be resolved
-        article.article.ap_id.dereference_forced(context).await?
+        ap_id.dereference_forced(context).await?
     } else {
-        article.article.ap_id.dereference(context).await?
+        ap_id.dereference(context).await?
     };
 
     // create common ancestor version
@@ -379,7 +383,7 @@ pub async fn db_conflict_to_api_conflict(
                 context,
             )
             .await?;
-            DbConflict::delete(conflict.id, conflict.creator_id, context)?;
+            Conflict::delete(conflict.id, conflict.creator_id, context)?;
             Ok(None)
         }
         Err(three_way_merge) => {
@@ -389,7 +393,7 @@ pub async fn db_conflict_to_api_conflict(
                 hash: conflict.hash.clone(),
                 three_way_merge,
                 summary: conflict.summary.clone(),
-                article: original_article.clone(),
+                article: original_article.clone().0,
                 previous_version_id: original_article.latest_edit_version(context)?,
                 published: conflict.published,
             }))

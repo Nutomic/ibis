@@ -4,9 +4,10 @@ use super::{
         undo_delete_comment::UndoDeleteComment,
     },
     objects::{
-        comment::ApubComment,
+        article::ArticleWrapper,
+        comment::{ApubComment, CommentWrapper},
         instance::InstanceWrapper,
-        instance_collection::{DbInstanceCollection, InstanceCollection},
+        instance_collection::{ApubInstanceCollection, InstanceCollection},
         user::PersonWrapper,
     },
 };
@@ -67,7 +68,7 @@ pub fn federation_routes() -> Router<()> {
 async fn http_get_instance(
     context: Data<IbisContext>,
 ) -> BackendResult<FederationJson<WithContext<ApubInstance>>> {
-    let local_instance = Instance::read_local(&context)?;
+    let local_instance: InstanceWrapper = Instance::read_local(&context)?.into();
     let json_instance = local_instance.into_json(&context).await?;
     Ok(FederationJson(WithContext::new_default(json_instance)))
 }
@@ -77,7 +78,7 @@ async fn http_get_person(
     Path(name): Path<String>,
     context: Data<IbisContext>,
 ) -> BackendResult<FederationJson<WithContext<ApubUser>>> {
-    let person = Person::read_local_from_name(&name, &context)?.person;
+    let person: PersonWrapper = Person::read_local_from_name(&name, &context)?.person.into();
     let json_person = person.into_json(&context).await?;
     Ok(FederationJson(WithContext::new_default(json_person)))
 }
@@ -93,8 +94,8 @@ async fn http_get_all_articles(
 #[debug_handler]
 async fn http_get_linked_instances(
     context: Data<IbisContext>,
-) -> BackendResult<FederationJson<WithContext<InstanceCollection>>> {
-    let collection = DbInstanceCollection::read_local(&(), &context).await?;
+) -> BackendResult<FederationJson<WithContext<ApubInstanceCollection>>> {
+    let collection = InstanceCollection::read_local(&(), &context).await?;
     Ok(FederationJson(WithContext::new_default(collection)))
 }
 
@@ -103,8 +104,10 @@ async fn http_get_article(
     Path(title): Path<String>,
     context: Data<IbisContext>,
 ) -> BackendResult<FederationJson<WithContext<ApubArticle>>> {
-    let article = Article::read_view((&title, None), None, &context)?;
-    let json = article.article.into_json(&context).await?;
+    let article: ArticleWrapper = Article::read_view((&title, None), None, &context)?
+        .article
+        .into();
+    let json = article.into_json(&context).await?;
     Ok(FederationJson(WithContext::new_default(json)))
 }
 
@@ -123,7 +126,7 @@ async fn http_get_comment(
     Path(id): Path<i32>,
     context: Data<IbisContext>,
 ) -> BackendResult<FederationJson<WithContext<ApubComment>>> {
-    let comment = Comment::read(CommentId(id), &context)?;
+    let comment: CommentWrapper = Comment::read(CommentId(id), &context)?.into();
     let json = comment.into_json(&context).await?;
     Ok(FederationJson(WithContext::new_default(json)))
 }

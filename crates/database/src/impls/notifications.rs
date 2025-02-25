@@ -1,4 +1,4 @@
-use super::conflict::DbConflict;
+use super::conflict::Conflict;
 use crate::{
     common::{
         article::{Article, Edit},
@@ -13,15 +13,8 @@ use crate::{
 };
 use chrono::{DateTime, Utc};
 use diesel::{
-    dsl::*,
-    ExpressionMethods,
-    Insertable,
-    JoinOnDsl,
-    NullableExpressionMethods,
-    QueryDsl,
-    Queryable,
-    RunQueryDsl,
-    Selectable,
+    dsl::*, ExpressionMethods, Insertable, JoinOnDsl, NullableExpressionMethods, QueryDsl,
+    Queryable, RunQueryDsl, Selectable,
 };
 use std::ops::DerefMut;
 
@@ -57,10 +50,16 @@ impl Notification {
         let mut notifications: Vec<ApiNotification> = vec![];
 
         // edit conflicts
-        let conflicts: Vec<DbConflict> = conflict::table
+        let conflicts: Vec<(Conflict, Article)> = conflict::table
+            .inner_join(article::table)
             .filter(conflict::dsl::creator_id.eq(user.person.id))
+            .select((conflict::all_columns, article::all_columns))
             .get_results(conn.deref_mut())?;
-        notifications.extend(conflicts.into_iter().map(ApiNotification::EditConflict));
+        notifications.extend(
+            conflicts
+                .into_iter()
+                .map(|(c, a)| ApiNotification::EditConflict(c, a)),
+        );
 
         // new articles requiring approval
         if user.local_user.admin {

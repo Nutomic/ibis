@@ -1,24 +1,27 @@
 use super::{empty_to_none, UserExt};
-use crate::backend::federation::activities::follow::Follow;
+use crate::backend::federation::{activities::follow::Follow, objects::instance::InstanceWrapper};
 use activitypub_federation::{config::Data, fetch::object_id::ObjectId};
 use anyhow::anyhow;
 use axum::{extract::Query, Form, Json};
 use axum_macros::debug_handler;
-use ibis_database::{common::{
-    instance::{
-        FollowInstanceParams, GetInstanceParams, Instance, InstanceView, InstanceView2,
-        UpdateInstanceParams,
-    },
-    utils::http_protocol_str,
-    ResolveObjectParams, SuccessResponse,
-}, error::BackendResult};
 use ibis_database::impls::{
     instance::{DbInstanceUpdateForm, InstanceViewQuery},
     IbisContext,
 };
+use ibis_database::{
+    common::{
+        instance::{
+            FollowInstanceParams, GetInstanceParams, Instance, InstanceView, InstanceView2,
+            UpdateInstanceParams,
+        },
+        utils::http_protocol_str,
+        ResolveObjectParams, SuccessResponse,
+    },
+    error::BackendResult,
+};
 use moka::sync::Cache;
-use url::Url;
 use std::{sync::LazyLock, time::Duration};
+use url::Url;
 
 /// Retrieve details about an instance. If no id is provided, return local instance.
 #[debug_handler]
@@ -30,12 +33,14 @@ pub(in crate::backend::api) async fn get_instance(
     let local_instance = match (params.id, params.hostname) {
         (Some(id), None) => Instance::read_view(Id(id), &context)?,
         (None, Some(hostname)) => {
-            let url =
-                Url::parse(&format!("{}://{hostname}", http_protocol_str()))?;
+            let url = Url::parse(&format!("{}://{hostname}", http_protocol_str()))?.into();
             if let Ok(i) = Instance::read_view(ApId(&url), &context) {
                 i
             } else {
-                let id = url.dereference(&context).await?.id;
+                let id = ObjectId::<InstanceWrapper>::from(url)
+                    .dereference(&context)
+                    .await?
+                    .id;
                 Instance::read_view(Id(id), &context)?
             }
         }
@@ -71,7 +76,7 @@ pub(in crate::backend::api) async fn follow_instance(
     let pending = !target.local;
     Instance::follow(&user.person, &target, pending, &context)?;
     let instance = Instance::read(params.id, &context)?;
-    Follow::send(user.inner().person, &instance, &context).await?;
+    Follow::send(user.inner().person.into(), &instance.into(), &context).await?;
     Ok(Json(SuccessResponse::default()))
 }
 
@@ -82,8 +87,8 @@ pub(super) async fn resolve_instance(
     Query(params): Query<ResolveObjectParams>,
     context: Data<IbisContext>,
 ) -> BackendResult<Json<Instance>> {
-    let instance: Instance = ObjectId::from(params.id).dereference(&context).await?;
-    Ok(Json(instance))
+    let instance: InstanceWrapper = ObjectId::from(params.id).dereference(&context).await?;
+    Ok(Json(instance.0))
 }
 
 #[debug_handler]
