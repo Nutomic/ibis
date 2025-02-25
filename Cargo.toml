@@ -4,7 +4,7 @@ edition = "2021"
 
 [workspace]
 resolver = "2"
-members = ["crates/database", "crates/federate", "crates/frontend", "crates/hydrate", "crates/backend"]
+members = ["crates/api_client", "crates/database", "crates/federate", "crates/frontend", "crates/hydrate", "crates/backend"]
 
 # This profile significantly speeds up build time. If debug info is needed you can comment the line
 # out temporarily, but make sure to leave this in the main branch.
@@ -35,6 +35,7 @@ suspicious = { level = "deny", priority = -1 }
 ibis_database = { path = "crates/database" }
 ibis_federate = { path = "crates/federate" }
 ibis_frontend = { path = "crates/frontend" }
+ibis_api_client = { path = "crates/api_client" }
 serde = { version = "1.0.217", features = ["derive"] }
 chrono = { version = "0.4.39", features = ["serde"] }
 sha2 = "0.10.8"

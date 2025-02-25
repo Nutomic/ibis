@@ -1,18 +1,36 @@
 use super::ApiClient;
-use crate::utils::errors::FrontendResult;
+use crate::{article::GetEditList, errors::FrontendResult};
 use ibis_database::common::{
-    article::{EditView, GetEditList},
+    article::EditView,
     newtypes::PersonId,
-    user::{
-        GetUserParams,
-        LocalUserView,
-        LoginUserParams,
-        Person,
-        RegisterUserParams,
-        UpdateUserParams,
-    },
+    user::{LocalUserView, Person},
     SuccessResponse,
 };
+use serde::{Deserialize, Serialize};
+
+#[derive(Deserialize, Serialize, Clone, Debug)]
+pub struct RegisterUserParams {
+    pub username: String,
+    pub password: String,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct LoginUserParams {
+    pub username: String,
+    pub password: String,
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug)]
+pub struct GetUserParams {
+    pub name: String,
+    pub domain: Option<String>,
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug)]
+pub struct UpdateUserParams {
+    pub display_name: Option<String>,
+    pub bio: Option<String>,
+}
 
 impl ApiClient {
     pub async fn register(&self, params: RegisterUserParams) -> FrontendResult<LocalUserView> {

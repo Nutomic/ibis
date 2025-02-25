@@ -1,7 +1,7 @@
 use super::{
     article::{Article, Conflict, Edit},
     comment::Comment,
-    newtypes::{ArticleNotifId, CommentId},
+    newtypes::ArticleNotifId,
     user::Person,
 };
 use chrono::{DateTime, Utc};
@@ -26,14 +26,4 @@ impl ApiNotification {
             Edit(_, e, _, _) => &e.published,
         }
     }
-}
-
-#[derive(Deserialize, Serialize, Debug)]
-pub struct MarkAsReadParams {
-    pub id: CommentId,
-}
-
-#[derive(Deserialize, Serialize, Debug, Clone)]
-pub struct ArticleNotifMarkAsReadParams {
-    pub id: ArticleNotifId,
 }

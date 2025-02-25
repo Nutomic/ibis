@@ -1,7 +1,5 @@
-use crate::{
-    pages::article_title_param,
-    utils::{errors::FrontendResult, resources::is_logged_in},
-};
+use crate::{pages::article_title_param, utils::resources::is_logged_in};
+use ibis_api_client::errors::FrontendResult;
 use leptos::{either::Either, prelude::*};
 
 #[component]

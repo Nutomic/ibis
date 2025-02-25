@@ -27,9 +27,10 @@ use axum::{
 };
 use axum_macros::{debug_handler, FromRequestParts};
 use http::StatusCode;
+use ibis_api_client::article::GetEditList;
 use ibis_database::{
     common::{
-        article::{Edit, EditView, GetEditList},
+        article::{Edit, EditView},
         instance::SiteView,
         user::{LocalUserView, Person},
     },

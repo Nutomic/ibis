@@ -5,11 +5,12 @@ edition = "2021"
 
 [features]
 default = ["ssr"]
-ssr = ["katex/duktape","leptos-use/ssr", "leptos-use/axum", "leptos/ssr"]
-hydrate = ["katex/wasm-js", "leptos/hydrate"]
+ssr = ["katex/duktape","leptos-use/ssr", "leptos-use/axum", "leptos/ssr", "ibis_api_client/ssr"]
+hydrate = ["katex/wasm-js", "leptos/hydrate", "ibis_api_client/hydrate"]
 
 [dependencies]
 ibis_database.workspace = true
+ibis_api_client.workspace = true
 leptos.workspace =true
 log.workspace = true
 serde.workspace = true
@@ -35,8 +36,6 @@ send_wrapper = "0.6.0"
 katex = { version = "0.4", default-features = false }
 github-slugger = "0.1.0"
 timeago = "0.4.2"
-serde_urlencoded = "0.7.1"
-serde_json = "1.0.135"
 phosphor-leptos = { version = "0.7.0", features = [
   "system",
   "communication",

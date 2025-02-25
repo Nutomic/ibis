@@ -1,10 +1,21 @@
 use super::ApiClient;
-use crate::utils::errors::FrontendResult;
+use crate::errors::FrontendResult;
 use ibis_database::common::{
-    newtypes::ArticleNotifId,
-    notifications::{ApiNotification, ArticleNotifMarkAsReadParams},
+    newtypes::{ArticleNotifId, CommentId},
+    notifications::ApiNotification,
     SuccessResponse,
 };
+use serde::{Deserialize, Serialize};
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct MarkAsReadParams {
+    pub id: CommentId,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct ArticleNotifMarkAsReadParams {
+    pub id: ArticleNotifId,
+}
 
 impl ApiClient {
     pub async fn notifications_list(&self) -> FrontendResult<Vec<ApiNotification>> {

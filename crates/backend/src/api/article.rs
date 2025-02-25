@@ -6,27 +6,31 @@ use axum::{extract::Query, Form, Json};
 use axum_macros::debug_handler;
 use chrono::Utc;
 use diffy::{apply, create_patch, merge, Patch};
+use ibis_api_client::{
+    article::{
+        ApproveArticleParams,
+        CreateArticleParams,
+        DeleteConflictParams,
+        EditArticleParams,
+        FollowArticleParams,
+        ForkArticleParams,
+        GetArticleParams,
+        GetConflictParams,
+        ListArticlesParams,
+        ProtectArticleParams,
+    },
+    instance::SearchArticleParams,
+};
 use ibis_database::{
     common::{
         article::{
             can_edit_article,
             ApiConflict,
-            ApproveArticleParams,
             Article,
             ArticleView,
             Conflict,
-            CreateArticleParams,
-            DeleteConflictParams,
             Edit,
-            EditArticleParams,
             EditVersion,
-            FollowArticleParams,
-            ForkArticleParams,
-            GetArticleParams,
-            GetConflictParams,
-            ListArticlesParams,
-            ProtectArticleParams,
-            SearchArticleParams,
         },
         instance::Instance,
         utils::{extract_domain, http_protocol_str},

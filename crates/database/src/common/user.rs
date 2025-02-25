@@ -12,18 +12,6 @@ use {
     diesel::{Identifiable, Queryable, Selectable},
 };
 
-#[derive(Deserialize, Serialize, Clone, Debug)]
-pub struct RegisterUserParams {
-    pub username: String,
-    pub password: String,
-}
-
-#[derive(Deserialize, Serialize, Debug)]
-pub struct LoginUserParams {
-    pub username: String,
-    pub password: String,
-}
-
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[cfg_attr(feature = "ssr", derive(Queryable))]
 #[cfg_attr(feature = "ssr", diesel(check_for_backend(diesel::pg::Pg)))]
@@ -69,17 +57,4 @@ impl Person {
     pub fn inbox_url(&self) -> Url {
         Url::parse(&self.inbox_url).expect("can parse inbox url")
     }
-}
-
-#[derive(Deserialize, Serialize, Clone, Debug)]
-pub struct GetUserParams {
-    pub name: String,
-    pub domain: Option<String>,
-}
-
-#[derive(Deserialize, Serialize, Clone, Debug)]
-pub struct UpdateUserParams {
-    pub person_id: PersonId,
-    pub display_name: Option<String>,
-    pub bio: Option<String>,
 }

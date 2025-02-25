@@ -16,6 +16,7 @@ time = "0.3.37"
 # backend-only deps
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
 ibis_federate.workspace = true
+ibis_api_client.workspace = true
 ibis_frontend={workspace = true, features =["ssr"]}
 axum.workspace = true
 axum-macros.workspace = true

@@ -1,7 +1,6 @@
-use super::utils::errors::FrontendResult;
-use crate::api::CLIENT;
+use ibis_api_client::{article::GetArticleParams, errors::FrontendResult, CLIENT};
 use ibis_database::common::{
-    article::{ArticleView, EditView, GetArticleParams},
+    article::{ArticleView, EditView},
     MAIN_PAGE_NAME,
 };
 use leptos::prelude::*;

@@ -3,16 +3,10 @@ use activitypub_federation::{config::Data, fetch::object_id::ObjectId};
 use anyhow::anyhow;
 use axum::{extract::Query, Form, Json};
 use axum_macros::debug_handler;
+use ibis_api_client::instance::{FollowInstanceParams, GetInstanceParams, UpdateInstanceParams};
 use ibis_database::{
     common::{
-        instance::{
-            FollowInstanceParams,
-            GetInstanceParams,
-            Instance,
-            InstanceView,
-            InstanceView2,
-            UpdateInstanceParams,
-        },
+        instance::{Instance, InstanceView, InstanceView2},
         utils::http_protocol_str,
         ResolveObjectParams,
         SuccessResponse,

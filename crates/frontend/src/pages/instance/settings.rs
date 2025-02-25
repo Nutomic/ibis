@@ -1,9 +1,5 @@
-use crate::{
-    api::CLIENT,
-    components::suspense_error::SuspenseError,
-    utils::errors::FrontendResultExt,
-};
-use ibis_database::common::instance::UpdateInstanceParams;
+use crate::components::suspense_error::SuspenseError;
+use ibis_api_client::{errors::FrontendResultExt, instance::UpdateInstanceParams, CLIENT};
 use leptos::prelude::*;
 use leptos_meta::Title;
 

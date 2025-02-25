@@ -6,22 +6,19 @@ use axum_extra::extract::cookie::{Cookie, CookieJar, Expiration, SameSite};
 use axum_macros::debug_handler;
 use bcrypt::verify;
 use chrono::Utc;
+use ibis_api_client::{
+    notifications::ArticleNotifMarkAsReadParams,
+    user::{GetUserParams, LoginUserParams, RegisterUserParams, UpdateUserParams},
+};
 use ibis_database::{
     common::{
-        notifications::{ApiNotification, ArticleNotifMarkAsReadParams},
-        user::{
-            GetUserParams,
-            LocalUserView,
-            LoginUserParams,
-            Person,
-            RegisterUserParams,
-            UpdateUserParams,
-        },
+        notifications::ApiNotification,
+        user::{LocalUserView, Person},
         SuccessResponse,
         AUTH_COOKIE,
     },
     error::BackendResult,
-    impls::{notifications::Notification, read_jwt_secret, IbisContext},
+    impls::{notifications::Notification, read_jwt_secret, user::PersonUpdateForm, IbisContext},
 };
 use ibis_federate::validate::{validate_display_name, validate_user_name};
 use jsonwebtoken::{
@@ -147,12 +144,17 @@ pub(crate) async fn get_user(
 #[debug_handler]
 pub(crate) async fn update_user_profile(
     context: Data<IbisContext>,
+    user: UserExt,
     Form(mut params): Form<UpdateUserParams>,
 ) -> BackendResult<Json<SuccessResponse>> {
     empty_to_none(&mut params.display_name);
     empty_to_none(&mut params.bio);
     validate_display_name(&params.display_name)?;
-    Person::update_profile(&params, &context)?;
+    let form = PersonUpdateForm {
+        display_name: params.display_name,
+        bio: params.bio,
+    };
+    Person::update_profile(&form, user.person.id, &context)?;
     Ok(Json(SuccessResponse::default()))
 }
 

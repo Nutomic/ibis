@@ -1,4 +1,4 @@
-use crate::utils::errors::{FrontendError, FrontendResult};
+use crate::errors::{FrontendError, FrontendResult};
 use http::{Method, StatusCode};
 use log::info;
 use serde::{Deserialize, Serialize};
@@ -6,6 +6,7 @@ use std::{fmt::Debug, sync::LazyLock};
 
 pub mod article;
 pub mod comment;
+pub mod errors;
 pub mod instance;
 pub mod notifications;
 pub mod user;

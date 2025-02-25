@@ -1,10 +1,10 @@
-use crate::{
-    api::CLIENT,
-    utils::{
-        errors::{FrontendResult, FrontendResultExt},
-        formatting::{article_path, article_title},
-        resources::{is_admin, is_logged_in},
-    },
+use crate::utils::{
+    formatting::{article_path, article_title},
+    resources::{is_admin, is_logged_in},
+};
+use ibis_api_client::{
+    errors::{FrontendResult, FrontendResultExt},
+    CLIENT,
 };
 use ibis_database::common::article::{can_edit_article, ArticleView};
 use leptos::prelude::*;

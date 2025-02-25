@@ -1,5 +1,4 @@
 use crate::{
-    api::CLIENT,
     components::{
         article_editor::EditorView,
         article_nav::{ActiveTab, ArticleNav},
@@ -8,8 +7,9 @@ use crate::{
     pages::article_resource,
 };
 use chrono::{Days, Utc};
+use ibis_api_client::{article::EditArticleParams, CLIENT};
 use ibis_database::common::{
-    article::{ApiConflict, ArticleView, EditArticleParams},
+    article::{ApiConflict, ArticleView},
     newtypes::ConflictId,
     MAIN_PAGE_NAME,
 };

@@ -1973,6 +1973,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "ibis_api_client"
+version = "0.2.2"
+dependencies = [
+ "chrono",
+ "codee",
+ "gloo-net",
+ "http",
+ "ibis_database",
+ "leptos",
+ "log",
+ "reqwest",
+ "send_wrapper",
+ "serde",
+ "serde_json",
+ "serde_urlencoded",
+ "url",
+]
+
+[[package]]
 name = "ibis_backend"
 version = "0.2.2"
 dependencies = [
@@ -1989,6 +2008,7 @@ dependencies = [
  "fmtm",
  "futures",
  "http",
+ "ibis_api_client",
  "ibis_database",
  "ibis_federate",
  "ibis_frontend",
@@ -2064,6 +2084,7 @@ dependencies = [
  "github-slugger",
  "gloo-net",
  "http",
+ "ibis_api_client",
  "ibis_database",
  "katex",
  "leptos",
@@ -2081,8 +2102,6 @@ dependencies = [
  "reqwest",
  "send_wrapper",
  "serde",
- "serde_json",
- "serde_urlencoded",
  "timeago",
  "url",
 ]

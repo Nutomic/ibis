@@ -1,5 +1,4 @@
 use crate::{
-    api::CLIENT,
     components::{nav::Nav, protected_route::IbisProtectedRoute},
     pages::{
         article::{
@@ -26,8 +25,9 @@ use crate::{
             register::Register,
         },
     },
-    utils::{dark_mode::DarkMode, errors::ErrorPopup, formatting::instance_title},
+    utils::{dark_mode::DarkMode, formatting::instance_title},
 };
+use ibis_api_client::{errors::ErrorPopup, CLIENT};
 use leptos::prelude::*;
 use leptos_meta::{provide_meta_context, *};
 use leptos_router::{

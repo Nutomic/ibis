@@ -4,9 +4,10 @@ use anyhow::anyhow;
 use axum::{Form, Json};
 use axum_macros::debug_handler;
 use chrono::Utc;
+use ibis_api_client::comment::{CreateCommentParams, EditCommentParams};
 use ibis_database::{
     common::{
-        comment::{Comment, CommentView, CreateCommentParams, EditCommentParams},
+        comment::{Comment, CommentView},
         utils::http_protocol_str,
     },
     error::BackendResult,

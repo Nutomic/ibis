@@ -1,12 +1,9 @@
-use crate::{
-    api::CLIENT,
-    utils::{
-        dark_mode::DarkMode,
-        errors::FrontendResultExt,
-        formatting::instance_title,
-        resources::{config, is_admin, is_logged_in, my_profile, site},
-    },
+use crate::utils::{
+    dark_mode::DarkMode,
+    formatting::instance_title,
+    resources::{config, is_admin, is_logged_in, my_profile, site},
 };
+use ibis_api_client::{errors::FrontendResultExt, CLIENT};
 use leptos::{component, prelude::*, view, IntoView, *};
 use leptos_router::hooks::use_navigate;
 use phosphor_leptos::{

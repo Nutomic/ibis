@@ -1,9 +1,8 @@
 use crate::{
-    api::CLIENT,
     components::article_editor::EditorView,
     utils::resources::{config, is_admin},
 };
-use ibis_database::common::article::CreateArticleParams;
+use ibis_api_client::{article::CreateArticleParams, CLIENT};
 use leptos::{html::Textarea, prelude::*};
 use leptos_meta::Title;
 use leptos_router::{components::Redirect, hooks::use_query_map};

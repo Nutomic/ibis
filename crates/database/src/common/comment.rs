@@ -35,22 +35,3 @@ pub struct CommentView {
     pub comment: Comment,
     pub creator: Person,
 }
-
-#[derive(Deserialize, Serialize, Debug)]
-pub struct CreateCommentParams {
-    pub content: String,
-    pub article_id: ArticleId,
-    pub parent_id: Option<CommentId>,
-}
-
-#[derive(Deserialize, Serialize, Debug)]
-pub struct EditCommentParams {
-    pub id: CommentId,
-    pub content: Option<String>,
-    pub deleted: Option<bool>,
-}
-
-#[derive(Deserialize, Serialize, Debug)]
-pub struct DeleteCommentParams {
-    pub id: CommentId,
-}

@@ -1,29 +1,91 @@
 use super::ApiClient;
-use crate::utils::errors::FrontendResult;
+use crate::errors::FrontendResult;
 use http::Method;
 use ibis_database::common::{
-    article::{
-        ApiConflict,
-        ApproveArticleParams,
-        Article,
-        ArticleView,
-        CreateArticleParams,
-        DeleteConflictParams,
-        EditArticleParams,
-        EditView,
-        FollowArticleParams,
-        ForkArticleParams,
-        GetArticleParams,
-        GetConflictParams,
-        GetEditList,
-        ListArticlesParams,
-        ProtectArticleParams,
-    },
-    newtypes::{ArticleId, ConflictId},
+    article::{ApiConflict, Article, ArticleView, EditVersion, EditView},
+    newtypes::{ArticleId, ConflictId, InstanceId, PersonId},
     ResolveObjectParams,
     SuccessResponse,
 };
+use serde::{Deserialize, Serialize};
 use url::Url;
+
+/// Should be an enum Title/Id but fails due to https://github.com/nox/serde_urlencoded/issues/66
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
+pub struct GetArticleParams {
+    pub title: Option<String>,
+    pub domain: Option<String>,
+    pub id: Option<ArticleId>,
+}
+
+#[derive(Deserialize, Serialize, Clone, Default, Debug)]
+pub struct ListArticlesParams {
+    pub only_local: Option<bool>,
+    pub instance_id: Option<InstanceId>,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct CreateArticleParams {
+    pub title: String,
+    pub text: String,
+    pub summary: String,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct EditArticleParams {
+    /// Id of the article to edit
+    pub article_id: ArticleId,
+    /// Full, new text of the article. A diff against `previous_version` is generated on the backend
+    /// side to handle conflicts.
+    pub new_text: String,
+    /// What was changed
+    pub summary: String,
+    /// The version that this edit is based on, ie [DbArticle.latest_version] or
+    /// [ApiConflict.previous_version]
+    pub previous_version_id: EditVersion,
+    /// If you are resolving a conflict, pass the id to delete conflict from the database
+    pub resolve_conflict_id: Option<ConflictId>,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct ProtectArticleParams {
+    pub article_id: ArticleId,
+    pub protected: bool,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct ForkArticleParams {
+    pub article_id: ArticleId,
+    pub new_title: String,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct ApproveArticleParams {
+    pub article_id: ArticleId,
+    pub approve: bool,
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
+pub struct GetEditList {
+    pub article_id: Option<ArticleId>,
+    pub person_id: Option<PersonId>,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct DeleteConflictParams {
+    pub conflict_id: ConflictId,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct GetConflictParams {
+    pub conflict_id: ConflictId,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct FollowArticleParams {
+    pub id: ArticleId,
+    pub follow: bool,
+}
 
 impl ApiClient {
     pub async fn create_article(&self, data: &CreateArticleParams) -> FrontendResult<ArticleView> {

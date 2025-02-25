@@ -1,16 +1,19 @@
 use crate::{
-    api::CLIENT,
     components::comment_editor::{CommentEditorView, EditParams},
     markdown::render_comment_markdown,
     utils::{
-        errors::{FrontendResult, FrontendResultExt},
         formatting::{comment_path, time_ago, user_link},
         resources::my_profile,
     },
 };
+use ibis_api_client::{
+    comment::EditCommentParams,
+    errors::{FrontendResult, FrontendResultExt},
+    CLIENT,
+};
 use ibis_database::common::{
     article::ArticleView,
-    comment::{Comment, CommentView, EditCommentParams},
+    comment::{Comment, CommentView},
     newtypes::CommentId,
 };
 use leptos::prelude::*;

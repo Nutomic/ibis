@@ -32,20 +32,6 @@ pub struct Conflict {
     pub published: DateTime<Utc>,
 }
 
-/// Should be an enum Title/Id but fails due to https://github.com/nox/serde_urlencoded/issues/66
-#[derive(Deserialize, Serialize, Clone, Debug, Default)]
-pub struct GetArticleParams {
-    pub title: Option<String>,
-    pub domain: Option<String>,
-    pub id: Option<ArticleId>,
-}
-
-#[derive(Deserialize, Serialize, Clone, Default, Debug)]
-pub struct ListArticlesParams {
-    pub only_local: Option<bool>,
-    pub instance_id: Option<InstanceId>,
-}
-
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[cfg_attr(feature = "ssr", derive(Queryable))]
 #[cfg_attr(feature = "ssr", diesel(table_name = article, check_for_backend(diesel::pg::Pg)))]
@@ -72,52 +58,6 @@ pub struct Article {
     pub published: DateTime<Utc>,
 }
 
-#[derive(Deserialize, Serialize, Debug)]
-pub struct CreateArticleParams {
-    pub title: String,
-    pub text: String,
-    pub summary: String,
-}
-
-#[derive(Deserialize, Serialize, Debug)]
-pub struct EditArticleParams {
-    /// Id of the article to edit
-    pub article_id: ArticleId,
-    /// Full, new text of the article. A diff against `previous_version` is generated on the backend
-    /// side to handle conflicts.
-    pub new_text: String,
-    /// What was changed
-    pub summary: String,
-    /// The version that this edit is based on, ie [DbArticle.latest_version] or
-    /// [ApiConflict.previous_version]
-    pub previous_version_id: EditVersion,
-    /// If you are resolving a conflict, pass the id to delete conflict from the database
-    pub resolve_conflict_id: Option<ConflictId>,
-}
-
-#[derive(Deserialize, Serialize, Debug)]
-pub struct ProtectArticleParams {
-    pub article_id: ArticleId,
-    pub protected: bool,
-}
-
-#[derive(Deserialize, Serialize, Debug)]
-pub struct ForkArticleParams {
-    pub article_id: ArticleId,
-    pub new_title: String,
-}
-
-#[derive(Deserialize, Serialize, Debug)]
-pub struct ApproveArticleParams {
-    pub article_id: ArticleId,
-    pub approve: bool,
-}
-
-#[derive(Deserialize, Serialize, Clone, Debug)]
-pub struct SearchArticleParams {
-    pub query: String,
-}
-
 /// Represents a single change to the article.
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[cfg_attr(feature = "ssr", derive(Queryable, Selectable))]
@@ -138,12 +78,6 @@ pub struct Edit {
     pub previous_version_id: EditVersion,
     pub published: DateTime<Utc>,
     pub pending: bool,
-}
-
-#[derive(Deserialize, Serialize, Clone, Debug, Default)]
-pub struct GetEditList {
-    pub article_id: Option<ArticleId>,
-    pub person_id: Option<PersonId>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
@@ -184,11 +118,6 @@ impl Default for EditVersion {
     }
 }
 
-#[derive(Deserialize, Serialize, Debug)]
-pub struct DeleteConflictParams {
-    pub conflict_id: ConflictId,
-}
-
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct ApiConflict {
     pub id: ConflictId,
@@ -198,17 +127,6 @@ pub struct ApiConflict {
     pub article: Article,
     pub previous_version_id: EditVersion,
     pub published: DateTime<Utc>,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
-pub struct GetConflictParams {
-    pub conflict_id: ConflictId,
-}
-
-#[derive(Deserialize, Serialize, Debug)]
-pub struct FollowArticleParams {
-    pub id: ArticleId,
-    pub follow: bool,
 }
 
 pub fn can_edit_article(article: &Article, is_admin: bool) -> Result<(), anyhow::Error> {

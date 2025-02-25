@@ -1,5 +1,5 @@
-use crate::{api::CLIENT, components::credentials::*, utils::resources::site};
-use ibis_database::common::user::RegisterUserParams;
+use crate::{components::credentials::*, utils::resources::site};
+use ibis_api_client::{user::RegisterUserParams, CLIENT};
 use leptos::prelude::*;
 use leptos_meta::Title;
 use log::info;

@@ -1,5 +1,4 @@
 use crate::{
-    api::CLIENT,
     components::{
         article_nav::{ActiveTab, ArticleNav},
         suspense_error::SuspenseError,
@@ -7,10 +6,11 @@ use crate::{
     pages::article_resource,
     utils::{formatting::article_path, resources::is_admin},
 };
-use ibis_database::common::{
-    article::{Article, ForkArticleParams, ProtectArticleParams},
-    newtypes::ArticleId,
+use ibis_api_client::{
+    article::{ForkArticleParams, ProtectArticleParams},
+    CLIENT,
 };
+use ibis_database::common::{article::Article, newtypes::ArticleId};
 use leptos::{ev::KeyboardEvent, prelude::*};
 use leptos_router::components::Redirect;
 

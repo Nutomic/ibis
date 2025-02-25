@@ -80,20 +80,3 @@ pub struct SiteView {
     pub config: Options,
     pub admin: Person,
 }
-
-#[derive(Deserialize, Serialize, Debug)]
-pub struct GetInstanceParams {
-    pub id: Option<InstanceId>,
-    pub hostname: Option<String>,
-}
-
-#[derive(Deserialize, Serialize, Debug)]
-pub struct FollowInstanceParams {
-    pub id: InstanceId,
-}
-
-#[derive(Deserialize, Serialize, Clone, Debug)]
-pub struct UpdateInstanceParams {
-    pub name: Option<String>,
-    pub topic: Option<String>,
-}

@@ -1,9 +1,5 @@
-use crate::{
-    api::CLIENT,
-    components::suspense_error::SuspenseError,
-    utils::{errors::FrontendResultExt, resources::site},
-};
-use ibis_database::common::user::UpdateUserParams;
+use crate::{components::suspense_error::SuspenseError, utils::resources::site};
+use ibis_api_client::{errors::FrontendResultExt, user::UpdateUserParams, CLIENT};
 use leptos::prelude::*;
 use leptos_meta::Title;
 
@@ -67,7 +63,6 @@ pub fn UserEditProfile() -> impl IntoView {
                                 class="btn btn-primary"
                                 on:click=move |_| {
                                     let form = UpdateUserParams {
-                                        person_id: my_profile.person.id,
                                         display_name: Some(display_name.get()),
                                         bio: Some(bio.get()),
                                     };

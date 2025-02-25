@@ -1,12 +1,9 @@
-use crate::{
-    api::CLIENT,
-    utils::errors::{FrontendResult, FrontendResultExt},
+use ibis_api_client::{
+    comment::{CreateCommentParams, EditCommentParams},
+    errors::{FrontendResult, FrontendResultExt},
+    CLIENT,
 };
-use ibis_database::common::{
-    article::ArticleView,
-    comment::{Comment, CreateCommentParams, EditCommentParams},
-    newtypes::CommentId,
-};
+use ibis_database::common::{article::ArticleView, comment::Comment, newtypes::CommentId};
 use leptos::{html::Textarea, prelude::*};
 use leptos_use::{use_textarea_autosize, UseTextareaAutosizeReturn};
 

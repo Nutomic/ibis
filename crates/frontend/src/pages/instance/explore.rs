@@ -1,12 +1,12 @@
 use crate::{
-    api::CLIENT,
     components::suspense_error::SuspenseError,
-    utils::{
-        errors::{FrontendResult, FrontendResultExt},
-        formatting::{article_link, instance_title_with_domain, instance_updated},
-    },
+    utils::formatting::{article_link, instance_title_with_domain, instance_updated},
 };
 use codee::string::JsonSerdeCodec;
+use ibis_api_client::{
+    errors::{FrontendResult, FrontendResultExt},
+    CLIENT,
+};
 use ibis_database::common::{article::Article, instance::InstanceView};
 use leptos::prelude::*;
 use leptos_meta::Title;

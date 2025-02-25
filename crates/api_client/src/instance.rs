@@ -1,21 +1,37 @@
 use super::ApiClient;
-use crate::utils::errors::FrontendResult;
+use crate::errors::FrontendResult;
 use http::Method;
 use ibis_database::common::{
-    article::{Article, SearchArticleParams},
-    instance::{
-        FollowInstanceParams,
-        GetInstanceParams,
-        Instance,
-        InstanceView,
-        InstanceView2,
-        SiteView,
-        UpdateInstanceParams,
-    },
+    article::Article,
+    instance::{Instance, InstanceView, InstanceView2, SiteView},
+    newtypes::InstanceId,
     ResolveObjectParams,
     SuccessResponse,
 };
+use serde::{Deserialize, Serialize};
 use url::Url;
+
+#[derive(Deserialize, Serialize, Clone, Debug)]
+pub struct SearchArticleParams {
+    pub query: String,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct GetInstanceParams {
+    pub id: Option<InstanceId>,
+    pub hostname: Option<String>,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct FollowInstanceParams {
+    pub id: InstanceId,
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug)]
+pub struct UpdateInstanceParams {
+    pub name: Option<String>,
+    pub topic: Option<String>,
+}
 
 impl ApiClient {
     pub async fn get_local_instance(&self) -> FrontendResult<InstanceView2> {

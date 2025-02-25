@@ -1,20 +1,20 @@
 use crate::{
-    api::CLIENT,
     components::suspense_error::SuspenseError,
-    utils::{
-        errors::{FrontendError, FrontendResultExt},
-        formatting::{
-            article_link,
-            article_path,
-            article_title,
-            comment_path,
-            edit_path,
-            time_ago,
-            user_link,
-        },
+    utils::formatting::{
+        article_link,
+        article_path,
+        article_title,
+        comment_path,
+        edit_path,
+        time_ago,
+        user_link,
     },
 };
 use chrono::{DateTime, Utc};
+use ibis_api_client::{
+    errors::{FrontendError, FrontendResultExt},
+    CLIENT,
+};
 use ibis_database::common::{
     article::{Article, Conflict, Edit},
     comment::Comment,

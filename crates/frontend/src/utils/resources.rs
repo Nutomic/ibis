@@ -1,5 +1,4 @@
-use super::errors::FrontendResult;
-use crate::api::CLIENT;
+use ibis_api_client::{errors::FrontendResult, CLIENT};
 use ibis_database::common::{
     instance::{Options, SiteView},
     user::LocalUserView,

@@ -9,7 +9,7 @@ use chrono::{DateTime, Utc};
 use ibis_database::{
     common::user::Person,
     error::BackendError,
-    impls::{user::DbPersonForm, IbisContext},
+    impls::{user::PersonInsertForm, IbisContext},
 };
 use serde::{Deserialize, Serialize};
 use std::{fmt::Debug, ops::Deref};
@@ -90,7 +90,7 @@ impl Object for PersonWrapper {
         json: Self::Kind,
         context: &Data<Self::DataType>,
     ) -> Result<Self, Self::Error> {
-        let form = DbPersonForm {
+        let form = PersonInsertForm {
             username: json.preferred_username,
             ap_id: json.id.into(),
             inbox_url: json.inbox.to_string(),

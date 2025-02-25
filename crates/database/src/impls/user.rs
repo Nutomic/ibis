@@ -2,7 +2,7 @@ use crate::{
     common::{
         instance::Instance,
         newtypes::PersonId,
-        user::{LocalUser, LocalUserView, Person, UpdateUserParams},
+        user::{LocalUser, LocalUserView, Person},
         utils::http_protocol_str,
     },
     error::BackendResult,
@@ -28,7 +28,7 @@ use url::Url;
 
 #[derive(Debug, Clone, Insertable, AsChangeset)]
 #[diesel(table_name = local_user, check_for_backend(diesel::pg::Pg))]
-pub struct DbLocalUserForm {
+pub struct LocalUserForm {
     pub password_encrypted: String,
     pub person_id: PersonId,
     pub admin: bool,
@@ -36,7 +36,7 @@ pub struct DbLocalUserForm {
 
 #[derive(Debug, Clone, Insertable, AsChangeset)]
 #[diesel(table_name = person, check_for_backend(diesel::pg::Pg))]
-pub struct DbPersonForm {
+pub struct PersonInsertForm {
     pub username: String,
     pub ap_id: DbUrl,
     pub inbox_url: String,
@@ -48,8 +48,15 @@ pub struct DbPersonForm {
     pub bio: Option<String>,
 }
 
+#[derive(Debug, Clone, Insertable, AsChangeset)]
+#[diesel(table_name = person, check_for_backend(diesel::pg::Pg))]
+pub struct PersonUpdateForm {
+    pub display_name: Option<String>,
+    pub bio: Option<String>,
+}
+
 impl Person {
-    pub fn create(person_form: &DbPersonForm, context: &IbisContext) -> BackendResult<Self> {
+    pub fn create(person_form: &PersonInsertForm, context: &IbisContext) -> BackendResult<Self> {
         let mut conn = context.db_pool.get()?;
         Ok(insert_into(person::table)
             .values(person_form)
@@ -88,7 +95,7 @@ impl Person {
         .into();
         let inbox_url = format!("{}://{domain}/inbox", http_protocol_str());
         let keypair = generate_keypair()?;
-        let person_form = DbPersonForm {
+        let person_form = PersonInsertForm {
             username,
             ap_id,
             inbox_url,
@@ -104,7 +111,7 @@ impl Person {
             .values(person_form)
             .get_result::<Person>(conn.deref_mut())?;
 
-        let local_user_form = DbLocalUserForm {
+        let local_user_form = LocalUserForm {
             password_encrypted: hash(password, DEFAULT_COST)?,
             person_id: person.id,
             admin,
@@ -149,13 +156,14 @@ impl Person {
         Ok(query.get_result(conn.deref_mut())?)
     }
 
-    pub fn update_profile(params: &UpdateUserParams, context: &IbisContext) -> BackendResult<()> {
+    pub fn update_profile(
+        form: &PersonUpdateForm,
+        id: PersonId,
+        context: &IbisContext,
+    ) -> BackendResult<()> {
         let mut conn = context.db_pool.get()?;
-        diesel::update(person::table.find(params.person_id))
-            .set((
-                person::dsl::display_name.eq(&params.display_name),
-                person::dsl::bio.eq(&params.bio),
-            ))
+        diesel::update(person::table.find(id))
+            .set(form)
             .execute(conn.deref_mut())?;
         Ok(())
     }
@@ -204,7 +212,7 @@ impl Person {
             .into();
             let inbox_url = format!("{}://{domain}/inbox", http_protocol_str());
             let keypair = generate_keypair()?;
-            let person_form = DbPersonForm {
+            let person_form = PersonInsertForm {
                 username: username.to_string(),
                 ap_id,
                 inbox_url,
