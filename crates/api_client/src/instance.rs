@@ -25,6 +25,7 @@ pub struct GetInstanceParams {
 #[derive(Deserialize, Serialize, Debug)]
 pub struct FollowInstanceParams {
     pub id: InstanceId,
+    pub follow: bool,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
@@ -65,8 +66,10 @@ impl ApiClient {
 
     pub async fn follow_instance(
         &self,
-        params: FollowInstanceParams,
+        id: InstanceId,
+        follow: bool,
     ) -> FrontendResult<SuccessResponse> {
+        let params = FollowInstanceParams { id, follow };
         self.post("/api/v1/instance/follow", Some(params)).await
     }
 
@@ -88,10 +91,7 @@ impl ApiClient {
             self.get("/api/v1/instance/resolve", Some(params)).await?;
 
         // send follow
-        let params = FollowInstanceParams {
-            id: instance_resolved.id,
-        };
-        self.follow_instance(params).await?;
+        self.follow_instance(instance_resolved.id, true).await?;
         Ok(instance_resolved)
     }
 }

@@ -137,6 +137,14 @@ async fn api_test_follow_instance() -> Result<()> {
     let beta_site = beta.site().await.unwrap();
     assert_eq!(beta_site.instance.ap_id, alpha_follows[0].instance.ap_id);
 
+    // unfollow
+    alpha
+        .follow_instance(alpha_follows[0].instance.id, false)
+        .await
+        .unwrap();
+    let alpha_follows = alpha.get_follows().await.unwrap();
+    assert_eq!(0, alpha_follows.len());
+
     TestData::stop(alpha, beta, gamma)
 }
 

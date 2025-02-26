@@ -1,5 +1,5 @@
+use super::follow::Follow;
 use crate::{
-    activities::accept::Accept,
     generate_activity_id,
     objects::{instance::InstanceWrapper, user::PersonWrapper},
     send_activity,
@@ -7,7 +7,7 @@ use crate::{
 use activitypub_federation::{
     config::Data,
     fetch::object_id::ObjectId,
-    kinds::activity::FollowType,
+    kinds::activity::UndoType,
     protocol::verification::verify_urls_match,
     traits::{ActivityHandler, Actor},
 };
@@ -19,44 +19,42 @@ use ibis_database::{
 use serde::{Deserialize, Serialize};
 use url::Url;
 
-#[derive(Deserialize, Serialize, Clone, Debug)]
+#[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct Follow {
+pub struct UndoFollow {
     pub actor: ObjectId<PersonWrapper>,
-    pub object: ObjectId<InstanceWrapper>,
+    pub(crate) object: Follow,
     #[serde(rename = "type")]
-    kind: FollowType,
-    id: Url,
+    pub(crate) kind: UndoType,
+    pub(crate) id: Url,
 }
 
-impl Follow {
-    pub fn new(
-        actor: &PersonWrapper,
-        to: &InstanceWrapper,
-        context: &Data<IbisContext>,
-    ) -> BackendResult<Self> {
-        let id = generate_activity_id(context)?;
-        Ok(Follow {
-            actor: actor.ap_id.clone().into(),
-            object: to.ap_id.clone().into(),
-            kind: Default::default(),
-            id,
-        })
-    }
-
+impl UndoFollow {
     pub async fn send(
         actor: &PersonWrapper,
         to: &InstanceWrapper,
         context: &Data<IbisContext>,
     ) -> BackendResult<()> {
-        let follow = Self::new(actor, to, context)?;
-        send_activity(actor, follow, vec![to.shared_inbox_or_inbox()], context).await?;
+        let id = generate_activity_id(context)?;
+        let undo_follow = UndoFollow {
+            actor: actor.ap_id.clone().into(),
+            object: Follow::new(actor, to, context)?,
+            kind: Default::default(),
+            id,
+        };
+        send_activity(
+            actor,
+            undo_follow,
+            vec![to.shared_inbox_or_inbox()],
+            context,
+        )
+        .await?;
         Ok(())
     }
 }
 
 #[async_trait::async_trait]
-impl ActivityHandler for Follow {
+impl ActivityHandler for UndoFollow {
     type DataType = IbisContext;
     type Error = BackendError;
 
@@ -68,18 +66,18 @@ impl ActivityHandler for Follow {
         self.actor.inner()
     }
 
-    async fn verify(&self, _context: &Data<Self::DataType>) -> Result<(), Self::Error> {
+    async fn verify(&self, context: &Data<Self::DataType>) -> Result<(), Self::Error> {
+        verify_urls_match(self.actor.inner(), self.object.actor.inner())?;
+        self.object.verify(context).await?;
         Ok(())
     }
 
     async fn receive(self, context: &Data<Self::DataType>) -> Result<(), Self::Error> {
         let actor = self.actor.dereference(context).await?;
         let local_instance: InstanceWrapper = Instance::read_local(context)?.into();
-        verify_urls_match(self.object.inner(), local_instance.ap_id.inner())?;
-        Instance::follow(&actor, &local_instance, false, context)?;
+        verify_urls_match(self.object.object.inner(), local_instance.ap_id.inner())?;
+        Instance::unfollow(&actor, &local_instance, context)?;
 
-        // send back an accept
-        Accept::send(local_instance, self, context).await?;
         Ok(())
     }
 }

@@ -1,4 +1,5 @@
 use crate::{
+    DbUrl,
     common::{
         instance::{Instance, InstanceView, InstanceWithArticles},
         newtypes::{CommentId, InstanceId},
@@ -7,7 +8,6 @@ use crate::{
     error::BackendResult,
     impls::IbisContext,
     schema::{article, comment, edit, instance, instance_follow},
-    DbUrl,
 };
 use chrono::{DateTime, Utc};
 use diesel::{
@@ -126,6 +126,20 @@ impl Instance {
             .on_conflict((instance_id, follower_id))
             .do_update()
             .set(form)
+            .execute(conn.deref_mut())?;
+        debug_assert_eq!(1, rows);
+        Ok(())
+    }
+
+    pub fn unfollow(
+        follower: &Person,
+        instance: &Instance,
+        context: &IbisContext,
+    ) -> BackendResult<()> {
+        use instance_follow::dsl::{follower_id, instance_id};
+        let mut conn = context.db_pool.get()?;
+        let rows = delete(instance_follow::table)
+            .filter(instance_id.eq(instance.id).and(follower_id.eq(follower.id)))
             .execute(conn.deref_mut())?;
         debug_assert_eq!(1, rows);
         Ok(())

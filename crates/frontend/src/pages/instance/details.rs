@@ -13,7 +13,6 @@ use ibis_api_client::{
     errors::FrontendError,
     instance::GetInstanceParams,
 };
-use ibis_database::common::instance::InstanceView;
 use leptos::prelude::*;
 use leptos_meta::Title;
 use leptos_router::hooks::use_params_map;
@@ -22,7 +21,7 @@ use leptos_router::hooks::use_params_map;
 pub fn InstanceDetails() -> impl IntoView {
     let params = use_params_map();
     let hostname = move || params.get().get("hostname").clone();
-    let instance_profile = Resource::new(hostname, move |hostname| async move {
+    let instance = Resource::new(hostname, move |hostname| async move {
         let hostname = hostname.ok_or(FrontendError::new("No instance given"))?;
         let params = GetInstanceParams {
             id: None,
@@ -32,13 +31,13 @@ pub fn InstanceDetails() -> impl IntoView {
     });
 
     view! {
-        <SuspenseError result=instance_profile>
+        <SuspenseError result=instance>
             {move || Suspend::new(async move {
-                instance_profile
+                instance
                     .await
-                    .map(|instance: InstanceView| {
+                    .map(|instance_| {
                         let articles = Resource::new(
-                            move || instance.instance.id,
+                            move || instance_.instance.id,
                             |instance_id| async move {
                                 CLIENT
                                     .list_articles(ListArticlesParams {
@@ -48,19 +47,18 @@ pub fn InstanceDetails() -> impl IntoView {
                                     .await
                             },
                         );
-                        let title = instance_title_with_domain(&instance.instance);
-                        let instance_ = instance.clone();
+                        let title = instance_title_with_domain(&instance_.instance);
                         view! {
                             <Title text=title.clone() />
                             <div class="grid gap-3 mt-4">
                                 <div class="flex flex-row items-center">
                                     <h1 class="w-full font-serif text-4xl font-bold">{title}</h1>
                                     {instance_updated(&instance_.instance)}
-                                    <InstanceFollowButton instance=instance_.clone() />
+                                    <InstanceFollowButton instance=instance />
                                 </div>
 
                                 <div class="divider"></div>
-                                <div>{instance.instance.topic}</div>
+                                <div>{instance_.instance.topic}</div>
                                 <h2 class="font-serif text-xl font-bold">Articles</h2>
                                 <ul class="list-none">
                                     <SuspenseError result=articles>

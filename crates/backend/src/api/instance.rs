@@ -17,7 +17,10 @@ use ibis_database::{
         instance::{DbInstanceUpdateForm, InstanceViewQuery},
     },
 };
-use ibis_federate::{activities::follow::Follow, objects::instance::InstanceWrapper};
+use ibis_federate::{
+    activities::{follow::Follow, undo_follow::UndoFollow},
+    objects::instance::InstanceWrapper,
+};
 use moka::sync::Cache;
 use std::{sync::LazyLock, time::Duration};
 
@@ -71,11 +74,17 @@ pub(crate) async fn follow_instance(
     context: Data<IbisContext>,
     Form(params): Form<FollowInstanceParams>,
 ) -> BackendResult<Json<SuccessResponse>> {
-    let target = Instance::read(params.id, &context)?;
-    let pending = !target.local;
-    Instance::follow(&user.person, &target, pending, &context)?;
     let instance = Instance::read(params.id, &context)?;
-    Follow::send(user.inner().person.into(), &instance.into(), &context).await?;
+    let person = user.person.clone();
+    let actor = user.inner().person.into();
+    if params.follow {
+        let pending = !instance.local;
+        Instance::follow(&person, &instance, pending, &context)?;
+        Follow::send(&actor, &instance.into(), &context).await?;
+    } else {
+        Instance::unfollow(&person, &instance, &context)?;
+        UndoFollow::send(&actor, &instance.into(), &context).await?;
+    }
     Ok(Json(SuccessResponse::default()))
 }
 

@@ -19,6 +19,7 @@ use crate::{
         create_article::CreateArticle,
         follow::Follow,
         reject::RejectEdit,
+        undo_follow::UndoFollow,
         update_local_article::UpdateLocalArticle,
         update_remote_article::UpdateRemoteArticle,
     },
@@ -146,6 +147,7 @@ async fn http_get_comment(
 #[enum_delegate::implement(ActivityHandler)]
 pub enum InboxActivities {
     Follow(Follow),
+    UndoFollow(UndoFollow),
     Accept(Accept),
     CreateArticle(CreateArticle),
     UpdateLocalArticle(UpdateLocalArticle),
