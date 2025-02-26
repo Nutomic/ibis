@@ -46,9 +46,5 @@ phosphor-leptos = { version = "0.7.0", features = [
   "arrows",
 ], default-features = false }
 
-# ssr-only deps
-[target.'cfg(not(target_family = "wasm"))'.dependencies]
-reqwest = { version = "0.12.12", features = ["json", "cookies"] }
-
 [lib]
 crate-type = ["cdylib", "rlib"]

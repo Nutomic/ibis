@@ -2004,7 +2004,6 @@ dependencies = [
  "doku",
  "env_logger",
  "fmtm",
- "futures",
  "http",
  "ibis_api_client",
  "ibis_database",
@@ -2095,7 +2094,6 @@ dependencies = [
  "markdown-it-sub",
  "markdown-it-sup",
  "phosphor-leptos",
- "reqwest",
  "serde",
  "timeago",
  "url",
@@ -2110,7 +2108,6 @@ dependencies = [
  "ibis_frontend",
  "leptos",
  "log",
- "wasm-bindgen",
 ]
 
 [[package]]

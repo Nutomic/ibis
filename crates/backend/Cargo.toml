@@ -34,7 +34,6 @@ leptos_axum = "0.7.4"
 diffy.workspace = true
 tower = "0.5.2"
 tower-layer = "0.3.3"
-futures.workspace = true
 env_logger = { version = "0.11.6", default-features = false }
 include_dir = "0.7.4"
 mime_guess = "2.0.5"
@@ -42,5 +41,3 @@ bcrypt.workspace = true
 fmtm = "0.0.3"
 moka = { version = "0.12.10", features = ["sync"] }
 doku.workspace = true
-
-[dev-dependencies]

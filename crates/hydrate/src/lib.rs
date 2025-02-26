@@ -1,3 +1,5 @@
+use leptos::wasm_bindgen;
+
 #[wasm_bindgen::prelude::wasm_bindgen]
 pub fn hydrate() {
     use ibis_frontend::app::App;
