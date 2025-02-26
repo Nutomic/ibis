@@ -133,7 +133,7 @@ SET
         SELECT
             *
         FROM
-            instance_stats_activity ('1 month'));
+            instance_stats_activity ('1 month') as users_active_month);
 
 UPDATE
     instance_stats
@@ -142,5 +142,5 @@ SET
         SELECT
             *
         FROM
-            instance_stats_activity ('6 months'));
+            instance_stats_activity ('6 months') as users_active_half_year);
 
