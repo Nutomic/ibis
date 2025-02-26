@@ -2,14 +2,14 @@ use activitypub_federation::config::Data;
 use chrono::Utc;
 use ibis_database::{
     common::{
-        MAIN_PAGE_NAME,
         article::{Article, EditVersion},
         instance::Instance,
         user::Person,
         utils::http_protocol_str,
+        MAIN_PAGE_NAME,
     },
     error::BackendError,
-    impls::{IbisContext, article::DbArticleForm, instance::DbInstanceForm},
+    impls::{article::DbArticleForm, instance::DbInstanceForm, IbisContext},
     utils::generate_keypair,
 };
 use ibis_federate::{
@@ -44,12 +44,15 @@ pub async fn setup(context: &Data<IbisContext>) -> Result<(), BackendError> {
     };
     let instance = Instance::create(&form, context)?;
 
-    let person = Person::create_local(
+    let admin = Person::create_local(
         context.config.setup.admin_username.clone(),
         context.config.setup.admin_password.clone(),
         true,
         context,
     )?;
+
+    // Admin follows local instance by default
+    Instance::follow(&admin.person.clone().into(), &instance, false, &context)?;
 
     // Create the main page which is shown by default
     let form = DbArticleForm {
@@ -72,7 +75,7 @@ pub async fn setup(context: &Data<IbisContext>) -> Result<(), BackendError> {
         "Default main page".to_string(),
         EditVersion::default(),
         &article,
-        person.person.id,
+        admin.person.id,
         context,
     )
     .await?;
