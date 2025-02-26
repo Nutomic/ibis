@@ -41,3 +41,7 @@ bcrypt.workspace = true
 fmtm = "0.0.3"
 moka = { version = "0.12.10", features = ["sync"] }
 doku.workspace = true
+
+[dev-dependencies]
+pretty_assertions = "1.4.1"
+retry_future = "0.4.0"

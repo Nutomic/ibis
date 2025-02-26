@@ -1185,6 +1185,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "diff"
+version = "0.1.13"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "56254986775e3233ffa9c4d7d3faaf6d36a2c09d30b20687e9f88bc8bafc16c8"
+
+[[package]]
 name = "diffy"
 version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2016,6 +2022,8 @@ dependencies = [
  "log",
  "mime_guess",
  "moka",
+ "pretty_assertions",
+ "retry_future",
  "serde",
  "time",
  "tokio",
@@ -3437,6 +3445,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "pretty_assertions"
+version = "1.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3ae130e2f271fbc2ac3a40fb1d07180839cdbbe443c7a27e1e3c13c5cac0116d"
+dependencies = [
+ "diff",
+ "yansi",
+]
+
+[[package]]
 name = "prettyplease"
 version = "0.2.29"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3872,6 +3890,18 @@ dependencies = [
  "serde",
  "thiserror 1.0.69",
  "tower-service",
+]
+
+[[package]]
+name = "retry_future"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a831851ed690d7d2ca106ddba947ee9f59e130c00311e815bd6d4ccbefbbc11f"
+dependencies = [
+ "anyhow",
+ "futures",
+ "pin-project",
+ "tokio",
 ]
 
 [[package]]

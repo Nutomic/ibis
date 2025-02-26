@@ -4,6 +4,7 @@ version = "0.2.2"
 edition = "2021"
 
 [features]
+default = ["ssr"]
 ssr = []
 hydrate = []
 

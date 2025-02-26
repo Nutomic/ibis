@@ -18,8 +18,13 @@ pub struct IbisConfig {
 
 impl IbisConfig {
     pub fn read() -> BackendResult<Self> {
+        let config_file = if cfg!(test) {
+            "../../config.toml"
+        } else {
+            "config.toml"
+        };
         let config = Config::builder()
-            .add_source(config::File::with_name("config.toml"))
+            .add_source(config::File::with_name(config_file))
             // Cant use _ as separator due to https://github.com/mehcode/config-rs/issues/391
             .add_source(config::Environment::with_prefix("IBIS").separator("__"))
             .build()?;

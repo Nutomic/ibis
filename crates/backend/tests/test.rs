@@ -4,23 +4,24 @@ mod common;
 
 use crate::common::{TestData, TEST_ARTICLE_DEFAULT_TEXT};
 use anyhow::Result;
-use ibis_database::common::{
+use ibis_api_client::{
     article::{
-        ArticleView,
         CreateArticleParams,
         EditArticleParams,
         ForkArticleParams,
         GetArticleParams,
         ListArticlesParams,
         ProtectArticleParams,
-        SearchArticleParams,
     },
     comment::{CreateCommentParams, EditCommentParams},
-    notifications::ApiNotification,
+    instance::SearchArticleParams,
     user::{GetUserParams, LoginUserParams, RegisterUserParams},
+};
+use ibis_database::common::{
+    article::ArticleView,
+    notifications::ApiNotification,
     utils::extract_domain,
 };
-use pretty_assertions::{assert_eq, assert_ne};
 use retry_future::{LinearRetryStrategy, RetryFuture, RetryPolicy};
 use std::time::Duration;
 use tokio::time::sleep;

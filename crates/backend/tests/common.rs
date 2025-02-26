@@ -1,11 +1,13 @@
 #![expect(clippy::unwrap_used)]
 
 use anyhow::Result;
-use ibis::{backend::start, frontend::api::ApiClient};
+use ibis_api_client::{user::RegisterUserParams, ApiClient};
+use ibis_backend::start;
 use ibis_database::{
-    common::{instance::Options, user::RegisterUserParams},
+    common::instance::Options,
     config::{IbisConfig, IbisConfigDatabase, IbisConfigFederation},
 };
+use log::LevelFilter;
 use std::{
     env::current_dir,
     fs::{create_dir_all, remove_dir_all},
@@ -18,7 +20,6 @@ use std::{
     thread::spawn,
 };
 use tokio::{join, sync::oneshot, task::JoinHandle};
-use tracing::log::LevelFilter;
 
 pub struct TestData(pub IbisInstance, pub IbisInstance, pub IbisInstance);
 
@@ -75,7 +76,7 @@ impl TestData {
 /// Generate a unique db path for each postgres so that tests can run in parallel.
 fn generate_db_path(name: &'static str, port: i32) -> String {
     let path = format!(
-        "{}/target/test_db/{name}-{port}",
+        "{}/../../target/test_db/{name}-{port}",
         current_dir().unwrap().display()
     );
     create_dir_all(&path).unwrap();
@@ -96,7 +97,7 @@ impl IbisInstance {
         // remove old db
         remove_dir_all(&db_path).unwrap();
         spawn(move || {
-            Command::new("./scripts/start_dev_db.sh")
+            Command::new("./scripts/start_test_db.sh")
                 .arg(&db_path)
                 .stdout(Stdio::null())
                 .stderr(Stdio::null())
@@ -154,7 +155,7 @@ impl IbisInstance {
 
     fn stop_internal(db_path: String) -> std::thread::JoinHandle<()> {
         spawn(move || {
-            Command::new("./scripts/stop_dev_db.sh")
+            Command::new("./scripts/stop_test_db.sh")
                 .arg(db_path)
                 .stdout(Stdio::null())
                 .stderr(Stdio::null())
