@@ -13,7 +13,7 @@ use ibis_api_client::{
     errors::FrontendError,
     instance::GetInstanceParams,
 };
-use ibis_database::common::instance::Instance;
+use ibis_database::common::instance::InstanceView;
 use leptos::prelude::*;
 use leptos_meta::Title;
 use leptos_router::hooks::use_params_map;
@@ -36,10 +36,9 @@ pub fn InstanceDetails() -> impl IntoView {
             {move || Suspend::new(async move {
                 instance_profile
                     .await
-                    .map(|i| i.instance)
-                    .map(|instance: Instance| {
+                    .map(|instance: InstanceView| {
                         let articles = Resource::new(
-                            move || instance.id,
+                            move || instance.instance.id,
                             |instance_id| async move {
                                 CLIENT
                                     .list_articles(ListArticlesParams {
@@ -49,19 +48,19 @@ pub fn InstanceDetails() -> impl IntoView {
                                     .await
                             },
                         );
-                        let title = instance_title_with_domain(&instance);
+                        let title = instance_title_with_domain(&instance.instance);
                         let instance_ = instance.clone();
                         view! {
                             <Title text=title.clone() />
                             <div class="grid gap-3 mt-4">
                                 <div class="flex flex-row items-center">
                                     <h1 class="w-full font-serif text-4xl font-bold">{title}</h1>
-                                    {instance_updated(&instance_)}
+                                    {instance_updated(&instance_.instance)}
                                     <InstanceFollowButton instance=instance_.clone() />
                                 </div>
 
                                 <div class="divider"></div>
-                                <div>{instance.topic}</div>
+                                <div>{instance.instance.topic}</div>
                                 <h2 class="font-serif text-xl font-bold">Articles</h2>
                                 <ul class="list-none">
                                     <SuspenseError result=articles>

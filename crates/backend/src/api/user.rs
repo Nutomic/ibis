@@ -14,6 +14,7 @@ use ibis_database::{
     common::{
         AUTH_COOKIE,
         SuccessResponse,
+        instance::InstanceFollow,
         notifications::ApiNotification,
         user::{LocalUserView, Person},
     },
@@ -139,6 +140,14 @@ pub(crate) async fn get_user(
         &params.domain,
         &context,
     )?))
+}
+
+#[debug_handler]
+pub(crate) async fn get_user_follows(
+    user: UserExt,
+    context: Data<IbisContext>,
+) -> BackendResult<Json<Vec<InstanceFollow>>> {
+    Ok(Json(Person::read_following(user.person.id, &context)?))
 }
 
 #[debug_handler]

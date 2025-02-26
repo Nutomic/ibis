@@ -25,7 +25,7 @@ use crate::{
             register::Register,
         },
     },
-    utils::{dark_mode::DarkMode, formatting::instance_title},
+    utils::{dark_mode::DarkMode, formatting::instance_title, resources::site},
 };
 use ibis_api_client::{CLIENT, errors::ErrorPopup};
 use leptos::prelude::*;
@@ -60,8 +60,6 @@ pub fn App() -> impl IntoView {
     let site_resource = Resource::new(|| (), |_| async move { CLIENT.site().await });
     provide_context(site_resource);
 
-    let instance = Resource::new(|| (), |_| async move { CLIENT.get_local_instance().await });
-
     let darkmode = DarkMode::init();
     provide_context(darkmode.clone());
 
@@ -78,11 +76,11 @@ pub fn App() -> impl IntoView {
                 <main class="p-4 md:ml-64">
                     <Suspense>
                         {move || Suspend::new(async move {
-                            instance
+                            site()
                                 .await
-                                .map(|i| {
+                                .map(|s| {
                                     let formatter = move |text| {
-                                        format!("{text} — {}", instance_title(&i.instance))
+                                        format!("{text} — {}", instance_title(&s.instance))
                                     };
                                     view! { <Title formatter /> }
                                 })

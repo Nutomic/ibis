@@ -3,6 +3,7 @@ use crate::{article::GetEditList, errors::FrontendResult};
 use ibis_database::common::{
     SuccessResponse,
     article::EditView,
+    instance::InstanceFollow,
     newtypes::PersonId,
     user::{LocalUserView, Person},
 };
@@ -47,6 +48,10 @@ impl ApiClient {
 
     pub async fn get_user(&self, data: GetUserParams) -> FrontendResult<Person> {
         self.get("/api/v1/user", Some(data)).await
+    }
+
+    pub async fn get_follows(&self) -> FrontendResult<Vec<InstanceFollow>> {
+        self.get("/api/v1/user/follows", None::<()>).await
     }
 
     pub async fn update_user_profile(

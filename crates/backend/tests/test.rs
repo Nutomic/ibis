@@ -120,10 +120,10 @@ async fn api_test_follow_instance() -> Result<()> {
     let TestData(alpha, beta, gamma) = TestData::start(false).await;
 
     // check initial state
-    let alpha_user = alpha.site().await.unwrap().my_profile.unwrap();
-    assert_eq!(0, alpha_user.following.len());
-    let beta_instance = beta.get_local_instance().await.unwrap();
-    assert_eq!(0, beta_instance.followers.len());
+    let alpha_follows = alpha.get_follows().await.unwrap();
+    assert_eq!(0, alpha_follows.len());
+    let beta_follows = beta.get_follows().await.unwrap();
+    assert_eq!(0, beta_follows.len());
 
     alpha
         .follow_instance_with_resolve(&beta.hostname)
@@ -131,13 +131,11 @@ async fn api_test_follow_instance() -> Result<()> {
         .unwrap();
 
     // check that follow was federated
-    let alpha_user = alpha.site().await.unwrap().my_profile.unwrap();
-    assert_eq!(1, alpha_user.following.len());
-    assert_eq!(beta_instance.instance.ap_id, alpha_user.following[0].ap_id);
-
-    let beta_instance = beta.get_local_instance().await.unwrap();
-    assert_eq!(1, beta_instance.followers.len());
-    assert_eq!(alpha_user.person.ap_id, beta_instance.followers[0].ap_id);
+    let alpha_follows = alpha.get_follows().await.unwrap();
+    assert_eq!(1, alpha_follows.len());
+    assert!(!alpha_follows[0].pending);
+    let beta_site = beta.site().await.unwrap();
+    assert_eq!(beta_site.instance.ap_id, alpha_follows[0].instance.ap_id);
 
     TestData::stop(alpha, beta, gamma)
 }
@@ -676,8 +674,8 @@ async fn api_test_fork_article() -> Result<()> {
     assert_ne!(resolved_article.ap_id, forked_article.ap_id);
     assert!(forked_article.local);
 
-    let beta_instance = beta.get_local_instance().await.unwrap();
-    assert_eq!(forked_article.instance_id, beta_instance.instance.id);
+    let beta_site = beta.site().await.unwrap();
+    assert_eq!(forked_article.instance_id, beta_site.instance.id);
 
     // now search returns two articles for this title (original and forked)
     let search_params = SearchArticleParams {

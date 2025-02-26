@@ -1,7 +1,7 @@
 use crate::{
     DbUrl,
     common::{
-        instance::Instance,
+        instance::InstanceFollow,
         newtypes::PersonId,
         user::{LocalUser, LocalUserView, Person},
         utils::http_protocol_str,
@@ -121,11 +121,7 @@ impl Person {
             .values(local_user_form)
             .get_result::<LocalUser>(conn.deref_mut())?;
 
-        Ok(LocalUserView {
-            local_user,
-            person,
-            following: vec![],
-        })
+        Ok(LocalUserView { local_user, person })
     }
 
     pub fn read_from_ap_id(ap_id: &DbUrl, context: &IbisContext) -> BackendResult<Person> {
@@ -178,22 +174,19 @@ impl Person {
             .filter(person::dsl::local)
             .filter(person::dsl::username.eq(username))
             .get_result::<(Person, LocalUser)>(conn.deref_mut())?;
-        // TODO: handle this in single query
-        let following = Self::read_following(person.id, context)?;
-        Ok(LocalUserView {
-            person,
-            local_user,
-            following,
-        })
+        Ok(LocalUserView { person, local_user })
     }
 
-    fn read_following(id_: PersonId, context: &IbisContext) -> BackendResult<Vec<Instance>> {
+    pub fn read_following(
+        id_: PersonId,
+        context: &IbisContext,
+    ) -> BackendResult<Vec<InstanceFollow>> {
         use instance_follow::dsl::{follower_id, instance_id};
         let mut conn = context.db_pool.get()?;
         Ok(instance_follow::table
             .inner_join(instance::table.on(instance_id.eq(instance::dsl::id)))
             .filter(follower_id.eq(id_))
-            .select(instance::all_columns)
+            .select((instance::all_columns, instance_follow::pending))
             .get_results(conn.deref_mut())?)
     }
 

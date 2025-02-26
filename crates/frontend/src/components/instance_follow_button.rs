@@ -1,10 +1,10 @@
-use crate::utils::resources::{my_profile, site};
+use crate::utils::resources::site;
 use ibis_api_client::{CLIENT, errors::FrontendResultExt, instance::FollowInstanceParams};
-use ibis_database::common::{instance::Instance, newtypes::InstanceId};
+use ibis_database::common::{instance::InstanceView, newtypes::InstanceId};
 use leptos::prelude::*;
 
 #[component]
-pub fn InstanceFollowButton(instance: Instance) -> impl IntoView {
+pub fn InstanceFollowButton(instance: InstanceView) -> impl IntoView {
     let follow_action = Action::new(move |instance_id: &InstanceId| {
         let instance_id = *instance_id;
         async move {
@@ -15,27 +15,19 @@ pub fn InstanceFollowButton(instance: Instance) -> impl IntoView {
                 .error_popup(|_| site().refetch());
         }
     });
-    let is_following = my_profile()
-        .map(|my_profile| my_profile.following.contains(&instance))
-        .unwrap_or(false);
-    let follow_text = if is_following {
+    let follow_text = if instance.following {
         "Following instance"
     } else {
         "Follow instance"
     };
 
-    let class_ = if instance.local {
-        "hidden"
-    } else {
-        "btn btn-sm"
-    };
     view! {
         <button
-            class=class_
+            class="btn btn-sm ml-2"
             on:click=move |_| {
-                follow_action.dispatch(instance.id);
+                follow_action.dispatch(instance.instance.id);
             }
-            prop:disabled=move || is_following
+            prop:disabled=move || instance.following
             title="Follow the instance so that new edits are synchronized to your instance."
         >
             {follow_text}

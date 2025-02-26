@@ -43,17 +43,23 @@ impl Instance {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[cfg_attr(feature = "ssr", derive(Queryable))]
 pub struct InstanceView {
     pub instance: Instance,
-    pub articles: Vec<Article>,
+    pub following: bool,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[cfg_attr(feature = "ssr", derive(Queryable))]
-#[cfg_attr(feature = "ssr", diesel(table_name = article, check_for_backend(diesel::pg::Pg)))]
-pub struct InstanceView2 {
+pub struct InstanceFollow {
     pub instance: Instance,
-    pub followers: Vec<Person>,
+    pub pending: bool,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct InstanceWithArticles {
+    pub instance: Instance,
+    pub articles: Vec<Article>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, SmartDefault)]
@@ -79,4 +85,5 @@ pub struct SiteView {
     pub my_profile: Option<LocalUserView>,
     pub config: Options,
     pub admin: Person,
+    pub instance: Instance,
 }

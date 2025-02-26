@@ -8,7 +8,7 @@ use ibis_database::{
     common::{
         ResolveObjectParams,
         SuccessResponse,
-        instance::{Instance, InstanceView, InstanceView2},
+        instance::{Instance, InstanceView, InstanceWithArticles},
         utils::http_protocol_str,
     },
     error::BackendResult,
@@ -20,34 +20,34 @@ use ibis_database::{
 use ibis_federate::{activities::follow::Follow, objects::instance::InstanceWrapper};
 use moka::sync::Cache;
 use std::{sync::LazyLock, time::Duration};
-use url::Url;
 
 /// Retrieve details about an instance. If no id is provided, return local instance.
 #[debug_handler]
 pub(crate) async fn get_instance(
     context: Data<IbisContext>,
     Form(params): Form<GetInstanceParams>,
-) -> BackendResult<Json<InstanceView2>> {
+) -> BackendResult<Json<InstanceView>> {
     use InstanceViewQuery::*;
-    let local_instance = match (params.id, params.hostname) {
+    let instance = match (params.id, params.hostname) {
         (Some(id), None) => Instance::read_view(Id(id), &context)?,
         (None, Some(hostname)) => {
-            let url = Url::parse(&format!("{}://{hostname}", http_protocol_str()))?.into();
-            if let Ok(i) = Instance::read_view(ApId(&url), &context) {
+            if let Ok(i) = Instance::read_view(Hostname(&hostname), &context) {
                 i
             } else {
-                let id = ObjectId::<InstanceWrapper>::from(url)
-                    .dereference(&context)
-                    .await?
-                    .id;
+                let id = ObjectId::<InstanceWrapper>::parse(&format!(
+                    "{}://{hostname}",
+                    http_protocol_str()
+                ))?
+                .dereference(&context)
+                .await?
+                .id;
                 Instance::read_view(Id(id), &context)?
             }
         }
-        (None, None) => Instance::read_view(Local, &context)?,
         _ => return Err(anyhow!("invalid params").into()),
     };
 
-    Ok(Json(local_instance))
+    Ok(Json(instance))
 }
 
 pub(crate) async fn update_instance(
@@ -91,29 +91,21 @@ pub(super) async fn resolve_instance(
 }
 
 #[debug_handler]
-pub(crate) async fn list_instances(
-    context: Data<IbisContext>,
-) -> BackendResult<Json<Vec<Instance>>> {
-    let instances = Instance::list(&context)?;
-    Ok(Json(instances))
-}
-
-#[debug_handler]
 pub(crate) async fn list_instance_views(
     context: Data<IbisContext>,
-) -> BackendResult<Json<Vec<InstanceView>>> {
+) -> BackendResult<Json<Vec<InstanceWithArticles>>> {
     let instances = if cfg!(debug_assertions) {
-        Instance::list_views(&context)?
+        Instance::list_with_articles(&context)?
     } else {
         // Cache result of the db read in prod because it uses a lot of queries and rarely changes
-        static CACHE: LazyLock<Cache<(), Vec<InstanceView>>> = LazyLock::new(|| {
+        static CACHE: LazyLock<Cache<(), Vec<InstanceWithArticles>>> = LazyLock::new(|| {
             Cache::builder()
                 .max_capacity(1)
                 .time_to_live(Duration::from_secs(60 * 60))
                 .build()
         });
         CACHE
-            .try_get_with((), || Instance::list_views(&context))
+            .try_get_with((), || Instance::list_with_articles(&context))
             .map_err(|e| anyhow!(e))?
     };
     Ok(Json(instances))

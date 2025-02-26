@@ -26,7 +26,6 @@ pub fn Nav() -> impl IntoView {
         || (),
         move |_| async move { CLIENT.notifications_count().await.unwrap_or_default() },
     );
-    let instance = Resource::new(|| (), |_| async move { CLIENT.get_local_instance().await });
 
     let (search_query, set_search_query) = signal(String::new());
     let mut dark_mode = expect_context::<DarkMode>();
@@ -40,7 +39,7 @@ pub fn Nav() -> impl IntoView {
                     <img src="/logo.png" class="m-auto size-8" />
                     <h2 class="m-2 font-serif text-xl font-bold">
                         {move || Suspend::new(async move {
-                            instance.await.map(|i| instance_title(&i.instance))
+                            site().await.map(|s| instance_title(&s.instance))
                         })}
                     </h2>
                 </a>
@@ -52,7 +51,7 @@ pub fn Nav() -> impl IntoView {
                             <img src="/logo.png" class="m-auto" />
                             <h2 class="m-4 font-serif text-xl font-bold">
                                 {move || Suspend::new(async move {
-                                    instance.await.map(|i| instance_title(&i.instance))
+                                    site().await.map(|s| instance_title(&s.instance))
                                 })}
                             </h2>
                         </a>

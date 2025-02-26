@@ -31,17 +31,18 @@ use ibis_api_client::article::GetEditList;
 use ibis_database::{
     common::{
         article::{Edit, EditView},
-        instance::SiteView,
+        instance::{Instance, SiteView},
         user::{LocalUserView, Person},
     },
     error::BackendResult,
     impls::{IbisContext, edit::ViewEditParams},
 };
-use instance::{list_instance_views, list_instances, update_instance};
+use instance::{list_instance_views, update_instance};
 use std::ops::Deref;
 use user::{
     article_notif_mark_as_read,
     count_notifications,
+    get_user_follows,
     list_notifications,
     update_user_profile,
 };
@@ -72,11 +73,10 @@ pub fn api_routes() -> Router<()> {
         .route("/instance", patch(update_instance))
         .route("/instance/follow", post(follow_instance))
         .route("/instance/resolve", get(resolve_instance))
-        // TODO: deprecated, remove in 0.3
-        .route("/instance/list", get(list_instances))
-        .route("/instance/list_views", get(list_instance_views))
+        .route("/instance/list", get(list_instance_views))
         .route("/search", get(search_article))
         .route("/user", get(get_user))
+        .route("/user/follows", get(get_user_follows))
         .route("/user/notifications/list", get(list_notifications))
         .route("/user/notifications/count", get(count_notifications))
         .route(
@@ -106,6 +106,7 @@ pub(crate) async fn site_view(
         my_profile: user.map(|u| u.inner()),
         config: context.config.options.clone(),
         admin: Person::read_admin(&context)?,
+        instance: Instance::read_local(&context)?,
     }))
 }
 

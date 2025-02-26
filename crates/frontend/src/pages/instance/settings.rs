@@ -1,4 +1,4 @@
-use crate::components::suspense_error::SuspenseError;
+use crate::{components::suspense_error::SuspenseError, utils::resources::site};
 use ibis_api_client::{CLIENT, errors::FrontendResultExt, instance::UpdateInstanceParams};
 use leptos::prelude::*;
 use leptos_meta::Title;
@@ -6,7 +6,7 @@ use leptos_meta::Title;
 #[component]
 pub fn InstanceSettings() -> impl IntoView {
     let (saved, set_saved) = signal(false);
-    let instance = Resource::new(|| (), |_| async move { CLIENT.get_local_instance().await });
+    let site = site();
 
     let submit_action = Action::new(move |params: &UpdateInstanceParams| {
         let params = params.clone();
@@ -15,7 +15,7 @@ pub fn InstanceSettings() -> impl IntoView {
                 .update_local_instance(&params)
                 .await
                 .error_popup(|_| {
-                    instance.refetch();
+                    site.refetch();
                     set_saved.set(true);
                 });
         }
@@ -25,15 +25,12 @@ pub fn InstanceSettings() -> impl IntoView {
     //       that completely breaks reactivity.
     view! {
         <Title text="Instance Settings" />
-        <SuspenseError result=instance>
+        <SuspenseError result=site>
             {move || Suspend::new(async move {
-                instance
-                    .await
-                    .map(|instance| {
-                        let (name, set_name) = signal(instance.instance.name.unwrap_or_default());
-                        let (topic, set_topic) = signal(
-                            instance.instance.topic.unwrap_or_default(),
-                        );
+                site.await
+                    .map(|site| {
+                        let (name, set_name) = signal(site.instance.name.unwrap_or_default());
+                        let (topic, set_topic) = signal(site.instance.topic.unwrap_or_default());
                         view! {
                             <h1 class="flex-auto my-6 font-serif text-4xl font-bold grow">
                                 "Instance Settings"

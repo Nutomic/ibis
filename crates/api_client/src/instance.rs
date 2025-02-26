@@ -5,7 +5,7 @@ use ibis_database::common::{
     ResolveObjectParams,
     SuccessResponse,
     article::Article,
-    instance::{Instance, InstanceView, InstanceView2, SiteView},
+    instance::{Instance, InstanceView, InstanceWithArticles, SiteView},
     newtypes::InstanceId,
 };
 use serde::{Deserialize, Serialize};
@@ -34,16 +34,12 @@ pub struct UpdateInstanceParams {
 }
 
 impl ApiClient {
-    pub async fn get_local_instance(&self) -> FrontendResult<InstanceView2> {
-        self.get("/api/v1/instance", None::<i32>).await
-    }
-
-    pub async fn get_instance(&self, params: &GetInstanceParams) -> FrontendResult<InstanceView2> {
+    pub async fn get_instance(&self, params: &GetInstanceParams) -> FrontendResult<InstanceView> {
         self.get("/api/v1/instance", Some(&params)).await
     }
 
-    pub async fn list_instances(&self) -> FrontendResult<Vec<InstanceView>> {
-        self.get("/api/v1/instance/list_views", None::<i32>).await
+    pub async fn list_instances(&self) -> FrontendResult<Vec<InstanceWithArticles>> {
+        self.get("/api/v1/instance/list", None::<i32>).await
     }
 
     pub async fn update_local_instance(

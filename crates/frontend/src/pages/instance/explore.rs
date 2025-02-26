@@ -7,7 +7,7 @@ use ibis_api_client::{
     CLIENT,
     errors::{FrontendResult, FrontendResultExt},
 };
-use ibis_database::common::{article::Article, instance::InstanceView};
+use ibis_database::common::{article::Article, instance::InstanceWithArticles};
 use leptos::prelude::*;
 use leptos_meta::Title;
 use url::Url;
@@ -44,7 +44,7 @@ pub fn Explore() -> impl IntoView {
     }
 }
 
-pub fn instance_card(i: InstanceView) -> impl IntoView {
+pub fn instance_card(i: InstanceWithArticles) -> impl IntoView {
     view! {
         <li>
             <div class="my-4 shadow card bg-base-100">
@@ -72,7 +72,9 @@ pub fn instance_card(i: InstanceView) -> impl IntoView {
 }
 
 #[component]
-fn ConnectView(res: Resource<FrontendResult<Vec<InstanceView>>, JsonSerdeCodec>) -> impl IntoView {
+fn ConnectView(
+    res: Resource<FrontendResult<Vec<InstanceWithArticles>>, JsonSerdeCodec>,
+) -> impl IntoView {
     let connect_ibis_wiki = Action::new(move |_: &()| async move {
         CLIENT
             .resolve_instance(Url::parse("https://ibis.wiki").expect("parse ibis.wiki url"))

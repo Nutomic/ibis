@@ -1,13 +1,13 @@
 use crate::{
-    DbUrl,
     common::{
-        instance::{Instance, InstanceView, InstanceView2},
+        instance::{Instance, InstanceView, InstanceWithArticles},
         newtypes::{CommentId, InstanceId},
         user::Person,
     },
     error::BackendResult,
     impls::IbisContext,
     schema::{article, comment, edit, instance, instance_follow},
+    DbUrl,
 };
 use chrono::{DateTime, Utc};
 use diesel::{
@@ -41,9 +41,8 @@ pub struct DbInstanceUpdateForm {
 
 #[derive(Debug)]
 pub enum InstanceViewQuery<'a> {
-    Local,
     Id(InstanceId),
-    ApId(&'a DbUrl),
+    Hostname(&'a str),
 }
 
 impl Instance {
@@ -87,17 +86,25 @@ impl Instance {
     pub fn read_view(
         params: InstanceViewQuery,
         context: &IbisContext,
-    ) -> BackendResult<InstanceView2> {
-        let instance = match params {
-            InstanceViewQuery::Local => Instance::read_local(context),
-            InstanceViewQuery::Id(id) => Instance::read(id, context),
-            InstanceViewQuery::ApId(url) => Instance::read_from_ap_id(url, context),
-        }?;
-        let followers = Instance::read_followers(instance.id, context)?;
+    ) -> BackendResult<InstanceView> {
+        let mut conn = context.db_pool.get()?;
+        let query = match params {
+            InstanceViewQuery::Id(id) => instance::table.find(id).into_boxed(),
+            InstanceViewQuery::Hostname(hostname) => instance::table
+                .filter(instance::domain.eq(hostname))
+                .into_boxed(),
+        };
+        let (instance, following) = query
+            .left_join(instance_follow::table)
+            .select((
+                instance::all_columns,
+                not(instance_follow::pending).nullable(),
+            ))
+            .get_result::<(Instance, Option<bool>)>(conn.deref_mut())?;
 
-        Ok(InstanceView2 {
+        Ok(InstanceView {
             instance,
-            followers,
+            following: following.unwrap_or_default(),
         })
     }
 
@@ -134,6 +141,7 @@ impl Instance {
             .select(person::all_columns)
             .get_results(conn.deref_mut())?)
     }
+
     pub fn list(context: &IbisContext) -> BackendResult<Vec<Instance>> {
         let mut conn = context.db_pool.get()?;
         Ok(instance::table
@@ -141,7 +149,7 @@ impl Instance {
             .get_results(conn.deref_mut())?)
     }
 
-    pub fn list_views(context: &IbisContext) -> BackendResult<Vec<InstanceView>> {
+    pub fn list_with_articles(context: &IbisContext) -> BackendResult<Vec<InstanceWithArticles>> {
         let mut conn = context.db_pool.get()?;
         // select all instances, with most recently edited first (pending edits are ignored)
         let instances = instance::table
@@ -165,7 +173,7 @@ impl Instance {
                 .limit(5)
                 .select(article::all_columns)
                 .get_results(conn.deref_mut())?;
-            res.push(InstanceView { instance, articles });
+            res.push(InstanceWithArticles { instance, articles });
         }
 
         Ok(res)

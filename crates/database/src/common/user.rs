@@ -1,7 +1,4 @@
-use super::{
-    instance::Instance,
-    newtypes::{LocalUserId, PersonId},
-};
+use super::newtypes::{LocalUserId, PersonId};
 use crate::DbUrl;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -18,7 +15,6 @@ use {
 pub struct LocalUserView {
     pub person: Person,
     pub local_user: LocalUser,
-    pub following: Vec<Instance>,
 }
 
 /// A user with account registered on local instance.
