@@ -36,6 +36,7 @@ pub fn render_comment_markdown(text: &str) -> String {
 fn article_markdown() -> MarkdownIt {
     let mut parser = common_markdown();
     let p = &mut parser;
+    markdown_it::plugins::cmark::inline::image::add(p);
 
     // Extensions from various authors
     markdown_it_heading_anchors::add(p);
