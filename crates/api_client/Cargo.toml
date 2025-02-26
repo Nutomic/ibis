@@ -1,0 +1,24 @@
+[package]
+name = "ibis_api_client"
+version.workspace = true
+edition.workspace = true
+
+[features]
+ssr = []
+hydrate = []
+
+[dependencies]
+ibis_database.workspace = true
+log.workspace = true
+serde.workspace = true
+leptos.workspace = true
+url.workspace = true
+http.workspace = true
+serde_urlencoded = "0.7.1"
+serde_json = "1.0.135"
+gloo-net = "0.6.0"
+send_wrapper = "0.6.0"
+
+# ssr-only deps
+[target.'cfg(not(target_family = "wasm"))'.dependencies]
+reqwest = { version = "0.12.12", features = ["json", "cookies"] }

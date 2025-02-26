@@ -1,0 +1,37 @@
+[package]
+name = "ibis_database"
+version.workspace = true
+edition.workspace = true
+
+[features]
+default = []
+ssr = []
+
+[dependencies]
+serde.workspace = true
+url.workspace = true
+chrono.workspace = true
+uuid.workspace = true
+anyhow.workspace = true
+smart-default = "0.7.1"
+
+# backend-only deps
+[target.'cfg(not(target_family = "wasm"))'.dependencies]
+diesel = { version = "2.2.6", default-features = false, features = [
+  "postgres",
+  "chrono",
+  "uuid",
+  "r2d2",
+] }
+diesel-derive-newtype = "2.1.2"
+diesel_migrations = "2.2.0"
+hex = "0.4.3"
+bcrypt.workspace = true
+config = { version = "0.15.6", features = ["toml"] }
+clokwerk = "0.4.0"
+sha2.workspace = true
+diffy.workspace = true
+axum.workspace = true
+log.workspace = true
+activitypub_federation.workspace = true
+doku.workspace = true

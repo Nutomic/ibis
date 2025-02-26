@@ -1,0 +1,22 @@
+[package]
+name = "ibis_federate"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+ibis_database = { workspace = true, features = ["ssr"] }
+enum_delegate = "0.2.0"
+async-trait = "0.1.85"
+rand = "0.8.5"
+regex = "1.11.1"
+tokio.workspace = true
+futures.workspace = true
+log.workspace = true
+serde.workspace = true
+activitypub_federation.workspace = true
+url.workspace = true
+axum.workspace = true
+axum-macros.workspace = true
+chrono.workspace = true
+diffy.workspace = true
+anyhow.workspace = true

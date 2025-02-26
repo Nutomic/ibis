@@ -1,0 +1,47 @@
+[package]
+name = "ibis_backend"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+ibis_database.workspace = true
+leptos.workspace = true
+serde.workspace = true
+chrono.workspace = true
+anyhow.workspace = true
+url.workspace = true
+log.workspace = true
+time = "0.3.37"
+
+# backend-only deps
+[target.'cfg(not(target_family = "wasm"))'.dependencies]
+ibis_federate.workspace = true
+ibis_api_client.workspace = true
+ibis_frontend = { workspace = true, features = ["ssr"] }
+axum.workspace = true
+axum-macros.workspace = true
+axum-extra = { version = "0.9.6", features = ["cookie"] }
+tokio.workspace = true
+tower-http = { version = "0.6.2", features = [
+  "cors",
+  "fs",
+  "compression-full",
+] }
+http.workspace = true
+activitypub_federation.workspace = true
+jsonwebtoken = "9.3.0"
+leptos_axum = "0.7.4"
+diffy.workspace = true
+tower = "0.5.2"
+tower-layer = "0.3.3"
+env_logger = { version = "0.11.6", default-features = false }
+include_dir = "0.7.4"
+mime_guess = "2.0.5"
+bcrypt.workspace = true
+fmtm = "0.0.3"
+moka = { version = "0.12.10", features = ["sync"] }
+doku.workspace = true
+
+[dev-dependencies]
+pretty_assertions = "1.4.1"
+retry_future = "0.4.0"

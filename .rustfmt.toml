@@ -1,4 +1,5 @@
 edition = "2021"
+style_edition = "2024"
 imports_layout = "HorizontalVertical"
 imports_granularity = "Crate"
 group_imports = "One"
