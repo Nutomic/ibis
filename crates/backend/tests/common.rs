@@ -1,7 +1,7 @@
 #![expect(clippy::unwrap_used)]
 
 use anyhow::Result;
-use ibis_api_client::{user::RegisterUserParams, ApiClient};
+use ibis_api_client::{ApiClient, user::RegisterUserParams};
 use ibis_backend::start;
 use ibis_database::{
     common::instance::Options,
@@ -14,8 +14,8 @@ use std::{
     ops::Deref,
     process::{Command, Stdio},
     sync::{
-        atomic::{AtomicI32, Ordering},
         Once,
+        atomic::{AtomicI32, Ordering},
     },
     thread::spawn,
 };

@@ -1,4 +1,5 @@
 use crate::{
+    DbUrl,
     common::{
         instance::Instance,
         newtypes::PersonId,
@@ -9,12 +10,10 @@ use crate::{
     impls::IbisContext,
     schema::{instance, instance_follow, local_user, person},
     utils::generate_keypair,
-    DbUrl,
 };
-use bcrypt::{hash, DEFAULT_COST};
+use bcrypt::{DEFAULT_COST, hash};
 use chrono::{DateTime, Utc};
 use diesel::{
-    insert_into,
     AsChangeset,
     ExpressionMethods,
     Insertable,
@@ -22,6 +21,7 @@ use diesel::{
     PgTextExpressionMethods,
     QueryDsl,
     RunQueryDsl,
+    insert_into,
 };
 use std::ops::DerefMut;
 use url::Url;

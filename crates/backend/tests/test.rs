@@ -2,7 +2,7 @@
 
 mod common;
 
-use crate::common::{TestData, TEST_ARTICLE_DEFAULT_TEXT};
+use crate::common::{TEST_ARTICLE_DEFAULT_TEXT, TestData};
 use anyhow::Result;
 use ibis_api_client::{
     article::{
@@ -266,11 +266,13 @@ async fn api_test_edit_local_article() -> Result<()> {
     let edits = beta.get_article_edits(edit_res.article.id).await.unwrap();
     assert_eq!(edit_res.article.text, edit_params.new_text);
     assert_eq!(edits.len(), 2);
-    assert!(edits[0]
-        .edit
-        .ap_id
-        .to_string()
-        .starts_with(&edit_res.article.ap_id.to_string()));
+    assert!(
+        edits[0]
+            .edit
+            .ap_id
+            .to_string()
+            .starts_with(&edit_res.article.ap_id.to_string())
+    );
 
     // edit should be federated to alpha
     let get_res = alpha.get_article(get_article_data).await.unwrap();
@@ -347,11 +349,13 @@ async fn api_test_edit_remote_article() -> Result<()> {
     let edits = alpha.get_article_edits(edit_res.article.id).await.unwrap();
     assert_eq!(2, edits.len());
     assert!(!edit_res.article.local);
-    assert!(edits[0]
-        .edit
-        .ap_id
-        .to_string()
-        .starts_with(&edit_res.article.ap_id.to_string()));
+    assert!(
+        edits[0]
+            .edit
+            .ap_id
+            .to_string()
+            .starts_with(&edit_res.article.ap_id.to_string())
+    );
 
     // edit should be federated to beta and gamma
     let get_res = beta.get_article(get_article_data_alpha).await.unwrap();
@@ -408,7 +412,10 @@ async fn api_test_local_edit_conflict() -> Result<()> {
         resolve_conflict_id: None,
     };
     let edit_res = alpha.edit_article(&edit_params).await.unwrap().unwrap();
-    assert_eq!("<<<<<<< ours\nIpsum Lorem\n||||||| original\nsome example text\n=======\nLorem Ipsum\n>>>>>>> theirs\n", edit_res.three_way_merge);
+    assert_eq!(
+        "<<<<<<< ours\nIpsum Lorem\n||||||| original\nsome example text\n=======\nLorem Ipsum\n>>>>>>> theirs\n",
+        edit_res.three_way_merge
+    );
 
     let notifications = alpha.notifications_list().await.unwrap();
     assert_eq!(1, notifications.len());
@@ -490,11 +497,13 @@ async fn api_test_federated_edit_conflict() -> Result<()> {
     assert_eq!(edit_res.article.text, edit_params.new_text);
     assert_eq!(2, alpha_edits.len());
     assert!(!edit_res.article.local);
-    assert!(alpha_edits[1]
-        .edit
-        .ap_id
-        .to_string()
-        .starts_with(&edit_res.article.ap_id.to_string()));
+    assert!(
+        alpha_edits[1]
+            .edit
+            .ap_id
+            .to_string()
+            .starts_with(&edit_res.article.ap_id.to_string())
+    );
 
     // gamma also edits, as its not the latest version there is a conflict. local version should
     // not be updated with this conflicting version, instead user needs to handle the conflict
@@ -833,9 +842,11 @@ async fn api_test_synchronize_instances() -> Result<()> {
 
     // now gamma also knows about alpha
     assert_eq!(3, gamma_instances.len());
-    assert!(gamma_instances
-        .iter()
-        .any(|i| i.instance.domain == alpha.hostname));
+    assert!(
+        gamma_instances
+            .iter()
+            .any(|i| i.instance.domain == alpha.hostname)
+    );
 
     TestData::stop(alpha, beta, gamma)
 }

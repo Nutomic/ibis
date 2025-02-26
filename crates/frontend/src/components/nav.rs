@@ -3,16 +3,16 @@ use crate::utils::{
     formatting::instance_title,
     resources::{config, is_admin, is_logged_in, my_profile, site},
 };
-use ibis_api_client::{errors::FrontendResultExt, CLIENT};
-use leptos::{component, prelude::*, view, IntoView, *};
+use ibis_api_client::{CLIENT, errors::FrontendResultExt};
+use leptos::{IntoView, component, prelude::*, view, *};
 use leptos_router::hooks::use_navigate;
 use phosphor_leptos::{
-    Icon,
     BELL_RINGING,
     CARDS,
     EXCLAMATION_MARK,
     GEAR,
     HOUSE,
+    Icon,
     MAGNIFYING_GLASS,
     PLUS,
 };

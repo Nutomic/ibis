@@ -1,5 +1,5 @@
 use anyhow::anyhow;
-use diffy::{apply, Patch};
+use diffy::{Patch, apply};
 use ibis_database::{
     common::article::{Edit, EditVersion},
     error::BackendResult,

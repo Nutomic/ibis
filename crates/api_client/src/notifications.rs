@@ -1,9 +1,9 @@
 use super::ApiClient;
 use crate::errors::FrontendResult;
 use ibis_database::common::{
+    SuccessResponse,
     newtypes::{ArticleNotifId, CommentId},
     notifications::ApiNotification,
-    SuccessResponse,
 };
 use serde::{Deserialize, Serialize};
 

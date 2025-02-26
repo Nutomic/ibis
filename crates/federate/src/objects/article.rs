@@ -16,7 +16,7 @@ use ibis_database::{
         instance::Instance,
     },
     error::BackendError,
-    impls::{article::DbArticleForm, IbisContext},
+    impls::{IbisContext, article::DbArticleForm},
 };
 use serde::{Deserialize, Serialize};
 use std::ops::Deref;

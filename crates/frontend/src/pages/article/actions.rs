@@ -7,8 +7,8 @@ use crate::{
     utils::{formatting::article_path, resources::is_admin},
 };
 use ibis_api_client::{
-    article::{ForkArticleParams, ProtectArticleParams},
     CLIENT,
+    article::{ForkArticleParams, ProtectArticleParams},
 };
 use ibis_database::common::{article::Article, newtypes::ArticleId};
 use leptos::{ev::KeyboardEvent, prelude::*};

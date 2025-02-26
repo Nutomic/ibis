@@ -1,11 +1,11 @@
 use ibis_api_client::{
+    CLIENT,
     comment::{CreateCommentParams, EditCommentParams},
     errors::{FrontendResult, FrontendResultExt},
-    CLIENT,
 };
 use ibis_database::common::{article::ArticleView, comment::Comment, newtypes::CommentId};
 use leptos::{html::Textarea, prelude::*};
-use leptos_use::{use_textarea_autosize, UseTextareaAutosizeReturn};
+use leptos_use::{UseTextareaAutosizeReturn, use_textarea_autosize};
 
 #[derive(Clone)]
 pub struct EditParams {

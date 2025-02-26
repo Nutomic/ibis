@@ -7,9 +7,9 @@ use crate::{
     },
 };
 use ibis_api_client::{
+    CLIENT,
     comment::EditCommentParams,
     errors::{FrontendResult, FrontendResultExt},
-    CLIENT,
 };
 use ibis_database::common::{
     article::ArticleView,
@@ -17,7 +17,7 @@ use ibis_database::common::{
     newtypes::CommentId,
 };
 use leptos::prelude::*;
-use phosphor_leptos::{Icon, ARROW_BEND_UP_LEFT, FEDIVERSE_LOGO, LINK, PENCIL, TRASH};
+use phosphor_leptos::{ARROW_BEND_UP_LEFT, FEDIVERSE_LOGO, Icon, LINK, PENCIL, TRASH};
 
 #[component]
 pub fn CommentView(
@@ -148,9 +148,5 @@ fn render_content(comment: Comment) -> String {
 }
 
 fn delete_restore_label(comment: Comment) -> &'static str {
-    if comment.deleted {
-        "Restore"
-    } else {
-        "Delete"
-    }
+    if comment.deleted { "Restore" } else { "Delete" }
 }

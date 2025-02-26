@@ -16,7 +16,7 @@ use chrono::Utc;
 use ibis_database::{
     common::{comment::Comment, instance::Instance, user::Person},
     error::{BackendError, BackendResult},
-    impls::{comment::DbCommentUpdateForm, IbisContext},
+    impls::{IbisContext, comment::DbCommentUpdateForm},
 };
 use serde::{Deserialize, Serialize};
 use url::Url;

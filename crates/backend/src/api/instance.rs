@@ -1,20 +1,20 @@
-use super::{empty_to_none, UserExt};
+use super::{UserExt, empty_to_none};
 use activitypub_federation::{config::Data, fetch::object_id::ObjectId};
 use anyhow::anyhow;
-use axum::{extract::Query, Form, Json};
+use axum::{Form, Json, extract::Query};
 use axum_macros::debug_handler;
 use ibis_api_client::instance::{FollowInstanceParams, GetInstanceParams, UpdateInstanceParams};
 use ibis_database::{
     common::{
-        instance::{Instance, InstanceView, InstanceView2},
-        utils::http_protocol_str,
         ResolveObjectParams,
         SuccessResponse,
+        instance::{Instance, InstanceView, InstanceView2},
+        utils::http_protocol_str,
     },
     error::BackendResult,
     impls::{
-        instance::{DbInstanceUpdateForm, InstanceViewQuery},
         IbisContext,
+        instance::{DbInstanceUpdateForm, InstanceViewQuery},
     },
 };
 use ibis_federate::{activities::follow::Follow, objects::instance::InstanceWrapper};

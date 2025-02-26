@@ -12,8 +12,8 @@ use ibis_database::{
     },
     error::BackendResult,
     impls::{
-        comment::{DbCommentInsertForm, DbCommentUpdateForm},
         IbisContext,
+        comment::{DbCommentInsertForm, DbCommentUpdateForm},
     },
 };
 use ibis_federate::{

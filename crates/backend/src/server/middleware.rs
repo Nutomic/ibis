@@ -1,9 +1,9 @@
 use crate::api::user::validate;
 use axum::{body::Body, extract::State, http::Request, middleware::Next, response::Response};
 use axum_macros::debug_middleware;
-use http::{header::COOKIE, HeaderValue};
+use http::{HeaderValue, header::COOKIE};
 use ibis_database::{
-    common::{Auth, AUTH_COOKIE},
+    common::{AUTH_COOKIE, Auth},
     impls::IbisContext,
 };
 use std::{collections::HashSet, sync::Arc};

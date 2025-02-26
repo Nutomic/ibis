@@ -1,14 +1,14 @@
 use github_slugger::Slugger;
 use markdown_it::{
+    MarkdownIt,
+    Node,
+    NodeValue,
+    Renderer,
     parser::{
         core::CoreRule,
         inline::{InlineRule, InlineState},
     },
     plugins::cmark::block::{heading::ATXHeading, lheading::SetextHeader},
-    MarkdownIt,
-    Node,
-    NodeValue,
-    Renderer,
 };
 
 #[derive(Debug, Default, Clone)]

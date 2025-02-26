@@ -32,7 +32,7 @@ use crate::{
 };
 use activitypub_federation::{
     axum::{
-        inbox::{receive_activity, ActivityData},
+        inbox::{ActivityData, receive_activity},
         json::FederationJson,
     },
     config::Data,
@@ -40,10 +40,10 @@ use activitypub_federation::{
     traits::{ActivityHandler, Actor, Collection, Object},
 };
 use axum::{
+    Router,
     extract::Path,
     response::IntoResponse,
     routing::{get, post},
-    Router,
 };
 use axum_macros::debug_handler;
 use chrono::{DateTime, Utc};

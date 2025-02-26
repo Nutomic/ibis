@@ -4,8 +4,8 @@ use crate::{
 };
 use codee::string::JsonSerdeCodec;
 use ibis_api_client::{
-    errors::{FrontendResult, FrontendResultExt},
     CLIENT,
+    errors::{FrontendResult, FrontendResultExt},
 };
 use ibis_database::common::{article::Article, instance::InstanceView};
 use leptos::prelude::*;

@@ -2,11 +2,11 @@ use super::ApiClient;
 use crate::errors::FrontendResult;
 use http::Method;
 use ibis_database::common::{
+    ResolveObjectParams,
+    SuccessResponse,
     article::Article,
     instance::{Instance, InstanceView, InstanceView2, SiteView},
     newtypes::InstanceId,
-    ResolveObjectParams,
-    SuccessResponse,
 };
 use serde::{Deserialize, Serialize};
 use url::Url;
@@ -83,7 +83,7 @@ impl ApiClient {
         &self,
         follow_instance: &str,
     ) -> FrontendResult<Instance> {
-        use ibis_database::common::{utils::http_protocol_str, ResolveObjectParams};
+        use ibis_database::common::{ResolveObjectParams, utils::http_protocol_str};
         use url::Url;
         let params = ResolveObjectParams {
             id: Url::parse(&format!("{}://{}", http_protocol_str(), follow_instance))?,

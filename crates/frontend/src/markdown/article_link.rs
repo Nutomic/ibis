@@ -1,8 +1,8 @@
 use markdown_it::{
-    parser::inline::{InlineRule, InlineState},
     Node,
     NodeValue,
     Renderer,
+    parser::inline::{InlineRule, InlineState},
 };
 
 #[derive(Debug)]

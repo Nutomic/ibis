@@ -1,9 +1,9 @@
 use crate::utils::resources::is_logged_in;
 use leptos::prelude::*;
 use leptos_router::{
-    components::{ProtectedRoute, ProtectedRouteProps},
     NestedRoute,
     SsrMode,
+    components::{ProtectedRoute, ProtectedRouteProps},
 };
 
 #[component(transparent)]

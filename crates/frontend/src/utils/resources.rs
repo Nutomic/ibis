@@ -1,4 +1,4 @@
-use ibis_api_client::{errors::FrontendResult, CLIENT};
+use ibis_api_client::{CLIENT, errors::FrontendResult};
 use ibis_database::common::{
     instance::{Options, SiteView},
     user::LocalUserView,

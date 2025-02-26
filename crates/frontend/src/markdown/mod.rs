@@ -1,7 +1,7 @@
 use article_link::ArticleLinkScanner;
 use markdown_it::{
-    plugins::cmark::block::{heading::ATXHeading, lheading::SetextHeader},
     MarkdownIt,
+    plugins::cmark::block::{heading::ATXHeading, lheading::SetextHeader},
 };
 use math_equation::MathEquationScanner;
 use std::sync::OnceLock;

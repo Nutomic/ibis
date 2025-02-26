@@ -1,5 +1,5 @@
 use crate::{components::suspense_error::SuspenseError, utils::resources::site};
-use ibis_api_client::{errors::FrontendResultExt, user::UpdateUserParams, CLIENT};
+use ibis_api_client::{CLIENT, errors::FrontendResultExt, user::UpdateUserParams};
 use leptos::prelude::*;
 use leptos_meta::Title;
 

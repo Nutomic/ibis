@@ -2,10 +2,10 @@ use super::ApiClient;
 use crate::errors::FrontendResult;
 use http::Method;
 use ibis_database::common::{
-    article::{ApiConflict, Article, ArticleView, EditVersion, EditView},
-    newtypes::{ArticleId, ConflictId, InstanceId, PersonId},
     ResolveObjectParams,
     SuccessResponse,
+    article::{ApiConflict, Article, ArticleView, EditVersion, EditView},
+    newtypes::{ArticleId, ConflictId, InstanceId, PersonId},
 };
 use serde::{Deserialize, Serialize};
 use url::Url;

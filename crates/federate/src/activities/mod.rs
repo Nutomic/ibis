@@ -10,7 +10,7 @@ use ibis_database::{
         newtypes::PersonId,
     },
     error::BackendResult,
-    impls::{edit::DbEditForm, IbisContext},
+    impls::{IbisContext, edit::DbEditForm},
 };
 
 pub mod accept;

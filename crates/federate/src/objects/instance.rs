@@ -14,7 +14,7 @@ use chrono::{DateTime, Utc};
 use ibis_database::{
     common::{instance::Instance, utils::extract_domain},
     error::{BackendError, BackendResult},
-    impls::{instance::DbInstanceForm, IbisContext},
+    impls::{IbisContext, instance::DbInstanceForm},
 };
 use serde::{Deserialize, Serialize};
 use std::{fmt::Debug, ops::Deref};

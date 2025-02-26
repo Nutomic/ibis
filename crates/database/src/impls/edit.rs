@@ -1,5 +1,6 @@
 use super::notifications::Notification;
 use crate::{
+    DbUrl,
     common::{
         article::{Article, Edit, EditVersion, EditView},
         newtypes::{ArticleId, PersonId},
@@ -8,18 +9,17 @@ use crate::{
     error::BackendResult,
     impls::IbisContext,
     schema::{article, edit, person},
-    DbUrl,
 };
 use chrono::{DateTime, Utc};
 use diesel::{
-    dsl::not,
-    insert_into,
     AsChangeset,
     BoolExpressionMethods,
     ExpressionMethods,
     Insertable,
     QueryDsl,
     RunQueryDsl,
+    dsl::not,
+    insert_into,
 };
 use diffy::create_patch;
 use std::ops::DerefMut;

@@ -3,21 +3,21 @@ use crate::utils::{
     resources::{is_admin, is_logged_in},
 };
 use ibis_api_client::{
-    errors::{FrontendResult, FrontendResultExt},
     CLIENT,
+    errors::{FrontendResult, FrontendResultExt},
 };
-use ibis_database::common::article::{can_edit_article, ArticleView};
+use ibis_database::common::article::{ArticleView, can_edit_article};
 use leptos::prelude::*;
 use leptos_meta::Title;
 use leptos_router::components::A;
 use phosphor_leptos::{
-    Icon,
     BELL,
     BELL_SLASH,
     BOOK,
     CHATS_CIRCLE,
     FEDIVERSE_LOGO,
     GEAR_SIX,
+    Icon,
     LIST,
     LOCK_SIMPLE,
     PENCIL,

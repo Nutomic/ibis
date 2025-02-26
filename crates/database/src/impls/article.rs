@@ -1,4 +1,5 @@
 use crate::{
+    DbUrl,
     common::{
         article::{Article, ArticleView, EditVersion},
         comment::Comment,
@@ -8,11 +9,8 @@ use crate::{
     error::BackendResult,
     impls::IbisContext,
     schema::{article, article_follow, edit, instance},
-    DbUrl,
 };
 use diesel::{
-    dsl::{delete, max},
-    insert_into,
     AsChangeset,
     BoolExpressionMethods,
     ExpressionMethods,
@@ -22,6 +20,8 @@ use diesel::{
     PgTextExpressionMethods,
     QueryDsl,
     RunQueryDsl,
+    dsl::{delete, max},
+    insert_into,
 };
 use std::ops::DerefMut;
 use url::Url;

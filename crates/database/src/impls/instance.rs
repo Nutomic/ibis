@@ -1,4 +1,5 @@
 use crate::{
+    DbUrl,
     common::{
         instance::{Instance, InstanceView, InstanceView2},
         newtypes::{CommentId, InstanceId},
@@ -7,7 +8,6 @@ use crate::{
     error::BackendResult,
     impls::IbisContext,
     schema::{article, comment, edit, instance, instance_follow},
-    DbUrl,
 };
 use chrono::{DateTime, Utc};
 use diesel::{

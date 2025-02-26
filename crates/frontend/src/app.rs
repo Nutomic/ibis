@@ -27,7 +27,7 @@ use crate::{
     },
     utils::{dark_mode::DarkMode, formatting::instance_title},
 };
-use ibis_api_client::{errors::ErrorPopup, CLIENT};
+use ibis_api_client::{CLIENT, errors::ErrorPopup};
 use leptos::prelude::*;
 use leptos_meta::{provide_meta_context, *};
 use leptos_router::{

@@ -18,14 +18,14 @@ use activitypub_federation::config::Data;
 use anyhow::anyhow;
 use article::{approve_article, delete_conflict, follow_article};
 use axum::{
-    extract::{rejection::ExtensionRejection, Query},
-    response::IntoResponse,
-    routing::{delete, get, patch, post},
     Extension,
     Json,
     Router,
+    extract::{Query, rejection::ExtensionRejection},
+    response::IntoResponse,
+    routing::{delete, get, patch, post},
 };
-use axum_macros::{debug_handler, FromRequestParts};
+use axum_macros::{FromRequestParts, debug_handler};
 use http::StatusCode;
 use ibis_api_client::article::GetEditList;
 use ibis_database::{
@@ -35,7 +35,7 @@ use ibis_database::{
         user::{LocalUserView, Person},
     },
     error::BackendResult,
-    impls::{edit::ViewEditParams, IbisContext},
+    impls::{IbisContext, edit::ViewEditParams},
 };
 use instance::{list_instance_views, list_instances, update_instance};
 use std::ops::Deref;

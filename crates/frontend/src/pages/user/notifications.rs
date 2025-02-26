@@ -12,8 +12,8 @@ use crate::{
 };
 use chrono::{DateTime, Utc};
 use ibis_api_client::{
-    errors::{FrontendError, FrontendResultExt},
     CLIENT,
+    errors::{FrontendError, FrontendResultExt},
 };
 use ibis_database::common::{
     article::{Article, Conflict, Edit},
@@ -24,7 +24,7 @@ use ibis_database::common::{
 };
 use leptos::{either::EitherOf4, prelude::*};
 use leptos_meta::Title;
-use phosphor_leptos::{Icon, CHECK, LINK};
+use phosphor_leptos::{CHECK, Icon, LINK};
 
 type NotificationsResource = Resource<Result<Vec<ApiNotification>, FrontendError>>;
 

@@ -14,7 +14,7 @@ use ibis_database::{
     impls::IbisContext,
 };
 use objects::{instance::InstanceWrapper, user::PersonWrapper};
-use rand::{distributions::Alphanumeric, thread_rng, Rng};
+use rand::{Rng, distributions::Alphanumeric, thread_rng};
 use routes::AnnouncableActivities;
 use serde::Serialize;
 use std::fmt::Debug;

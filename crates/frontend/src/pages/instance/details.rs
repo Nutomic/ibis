@@ -8,10 +8,10 @@ use crate::{
     },
 };
 use ibis_api_client::{
+    CLIENT,
     article::ListArticlesParams,
     errors::FrontendError,
     instance::GetInstanceParams,
-    CLIENT,
 };
 use ibis_database::common::instance::Instance;
 use leptos::prelude::*;

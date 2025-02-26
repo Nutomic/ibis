@@ -1,7 +1,7 @@
 use chrono::{Duration, Local};
 use codee::string::FromToStringCodec;
 use leptos::prelude::*;
-use leptos_use::{use_cookie_with_options, SameSite, UseCookieOptions};
+use leptos_use::{SameSite, UseCookieOptions, use_cookie_with_options};
 
 pub mod dark_mode;
 pub mod formatting;

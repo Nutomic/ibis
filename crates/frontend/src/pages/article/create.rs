@@ -2,11 +2,11 @@ use crate::{
     components::article_editor::EditorView,
     utils::resources::{config, is_admin},
 };
-use ibis_api_client::{article::CreateArticleParams, CLIENT};
+use ibis_api_client::{CLIENT, article::CreateArticleParams};
 use leptos::{html::Textarea, prelude::*};
 use leptos_meta::Title;
 use leptos_router::{components::Redirect, hooks::use_query_map};
-use leptos_use::{use_textarea_autosize, UseTextareaAutosizeReturn};
+use leptos_use::{UseTextareaAutosizeReturn, use_textarea_autosize};
 
 #[component]
 pub fn CreateArticle() -> impl IntoView {

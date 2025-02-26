@@ -2,23 +2,23 @@ use crate::api::api_routes;
 use activitypub_federation::config::{FederationConfig, FederationMiddleware};
 use assets::file_and_error_handler;
 use axum::{
+    Extension,
+    Router,
+    ServiceExt,
     body::Body,
     extract::State,
     http::Request,
     middleware::from_fn_with_state,
     response::{IntoResponse, Response},
     routing::get,
-    Extension,
-    Router,
-    ServiceExt,
 };
 use ibis_database::{common::Auth, error::BackendResult, impls::IbisContext};
 use ibis_federate::{nodeinfo, routes::federation_routes};
-use ibis_frontend::app::{shell, App};
+use ibis_frontend::app::{App, shell};
 use leptos::prelude::*;
-use leptos_axum::{generate_route_list, LeptosRoutes};
+use leptos_axum::{LeptosRoutes, generate_route_list};
 use log::info;
-use middleware::{auth_middleware, federation_routes_middleware, FEDERATION_ROUTES_PREFIX};
+use middleware::{FEDERATION_ROUTES_PREFIX, auth_middleware, federation_routes_middleware};
 use std::{net::SocketAddr, ops::Deref, sync::Arc};
 use tokio::{net::TcpListener, sync::oneshot};
 use tower_http::{compression::CompressionLayer, cors::CorsLayer};

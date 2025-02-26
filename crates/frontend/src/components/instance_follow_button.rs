@@ -1,5 +1,5 @@
 use crate::utils::resources::{my_profile, site};
-use ibis_api_client::{errors::FrontendResultExt, instance::FollowInstanceParams, CLIENT};
+use ibis_api_client::{CLIENT, errors::FrontendResultExt, instance::FollowInstanceParams};
 use ibis_database::common::{instance::Instance, newtypes::InstanceId};
 use leptos::prelude::*;
 

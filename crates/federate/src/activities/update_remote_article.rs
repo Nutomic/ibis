@@ -14,10 +14,10 @@ use activitypub_federation::{
     protocol::helpers::deserialize_one_or_many,
     traits::{ActivityHandler, Object},
 };
-use diffy::{apply, Patch};
+use diffy::{Patch, apply};
 use ibis_database::{
     common::{
-        article::{can_edit_article, Article},
+        article::{Article, can_edit_article},
         instance::Instance,
     },
     error::{BackendError, BackendResult},

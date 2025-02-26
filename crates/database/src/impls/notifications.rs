@@ -12,7 +12,6 @@ use crate::{
 };
 use chrono::{DateTime, Utc};
 use diesel::{
-    dsl::*,
     ExpressionMethods,
     Insertable,
     JoinOnDsl,
@@ -21,6 +20,7 @@ use diesel::{
     Queryable,
     RunQueryDsl,
     Selectable,
+    dsl::*,
 };
 use std::ops::DerefMut;
 

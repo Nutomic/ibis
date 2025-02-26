@@ -14,7 +14,7 @@ use chrono::{DateTime, Utc};
 use ibis_database::{
     common::{article::Article, comment::Comment, user::Person},
     error::BackendError,
-    impls::{comment::DbCommentInsertForm, IbisContext},
+    impls::{IbisContext, comment::DbCommentInsertForm},
 };
 use serde::{Deserialize, Serialize};
 use std::ops::Deref;

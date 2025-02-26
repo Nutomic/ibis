@@ -1,7 +1,7 @@
-use ibis_api_client::{article::GetArticleParams, errors::FrontendResult, CLIENT};
+use ibis_api_client::{CLIENT, article::GetArticleParams, errors::FrontendResult};
 use ibis_database::common::{
-    article::{ArticleView, EditView},
     MAIN_PAGE_NAME,
+    article::{ArticleView, EditView},
 };
 use leptos::prelude::*;
 use leptos_router::hooks::use_params_map;

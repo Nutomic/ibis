@@ -1,6 +1,6 @@
 use crate::{error::BackendResult, impls::DbPool};
 use clokwerk::{Scheduler, TimeUnits};
-use diesel::{sql_query, RunQueryDsl};
+use diesel::{RunQueryDsl, sql_query};
 use log::{error, info};
 use std::time::Duration;
 

@@ -1,5 +1,6 @@
 use super::notifications::Notification;
 use crate::{
+    DbUrl,
     common::{
         comment::{Comment, CommentView},
         newtypes::{ArticleId, CommentId, PersonId},
@@ -8,17 +9,16 @@ use crate::{
     error::BackendResult,
     impls::IbisContext,
     schema::{comment, person},
-    DbUrl,
 };
 use chrono::{DateTime, Utc};
 use diesel::{
-    dsl::insert_into,
-    update,
     AsChangeset,
     ExpressionMethods,
     Insertable,
     QueryDsl,
     RunQueryDsl,
+    dsl::insert_into,
+    update,
 };
 use std::ops::DerefMut;
 

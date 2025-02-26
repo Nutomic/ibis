@@ -7,7 +7,7 @@ use crate::{
     impls::IbisContext,
     schema::{conflict, edit},
 };
-use diesel::{delete, insert_into, ExpressionMethods, Insertable, QueryDsl, RunQueryDsl};
+use diesel::{ExpressionMethods, Insertable, QueryDsl, RunQueryDsl, delete, insert_into};
 use std::ops::DerefMut;
 
 #[derive(Debug, Clone, Insertable)]

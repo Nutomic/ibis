@@ -3,7 +3,7 @@ use crate::{
     markdown::render_article_markdown,
     utils::formatting::user_title,
 };
-use ibis_api_client::{user::GetUserParams, CLIENT};
+use ibis_api_client::{CLIENT, user::GetUserParams};
 use leptos::prelude::*;
 use leptos_meta::Title;
 use leptos_router::hooks::use_params_map;

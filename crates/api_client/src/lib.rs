@@ -71,7 +71,7 @@ impl ApiClient {
         P: Serialize + Debug,
         T: for<'de> Deserialize<'de>,
     {
-        use ibis_database::common::{Auth, AUTH_COOKIE};
+        use ibis_database::common::{AUTH_COOKIE, Auth};
         use leptos::prelude::use_context;
         use reqwest::header::HeaderName;
 

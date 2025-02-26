@@ -12,7 +12,7 @@ use ibis_database::{
         user::Person,
     },
     error::BackendError,
-    impls::{edit::DbEditForm, IbisContext},
+    impls::{IbisContext, edit::DbEditForm},
 };
 use log::warn;
 use serde::{Deserialize, Serialize};

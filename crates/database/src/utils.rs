@@ -1,7 +1,7 @@
-use crate::{error::BackendResult, DbUrl};
+use crate::{DbUrl, error::BackendResult};
 use activitypub_federation::{
     fetch::{collection_id::CollectionId, object_id::ObjectId},
-    http_signatures::{generate_actor_keypair, Keypair},
+    http_signatures::{Keypair, generate_actor_keypair},
     traits::{Collection, Object},
 };
 use diesel::{

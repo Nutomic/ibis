@@ -7,18 +7,18 @@ use crate::{
     pages::article_resource,
 };
 use chrono::{Days, Utc};
-use ibis_api_client::{article::EditArticleParams, CLIENT};
+use ibis_api_client::{CLIENT, article::EditArticleParams};
 use ibis_database::common::{
+    MAIN_PAGE_NAME,
     article::{ApiConflict, ArticleView},
     newtypes::ConflictId,
-    MAIN_PAGE_NAME,
 };
 use leptos::{html::Textarea, prelude::*};
 use leptos_router::{
     components::Redirect,
     hooks::{use_params_map, use_query_map},
 };
-use leptos_use::{use_textarea_autosize, UseTextareaAutosizeReturn};
+use leptos_use::{UseTextareaAutosizeReturn, use_textarea_autosize};
 
 #[derive(Clone, PartialEq)]
 enum EditResponse {

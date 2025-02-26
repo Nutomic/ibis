@@ -1,5 +1,5 @@
 use crate::utils::formatting::{article_path, article_title};
-use ibis_api_client::{instance::SearchArticleParams, CLIENT};
+use ibis_api_client::{CLIENT, instance::SearchArticleParams};
 use ibis_database::common::{article::Article, instance::Instance};
 use leptos::prelude::*;
 use leptos_meta::Title;

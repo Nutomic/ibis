@@ -1,7 +1,7 @@
-use super::{empty_to_none, UserExt};
+use super::{UserExt, empty_to_none};
 use activitypub_federation::config::Data;
 use anyhow::anyhow;
-use axum::{extract::Query, Form, Json};
+use axum::{Form, Json, extract::Query};
 use axum_extra::extract::cookie::{Cookie, CookieJar, Expiration, SameSite};
 use axum_macros::debug_handler;
 use bcrypt::verify;
@@ -12,23 +12,23 @@ use ibis_api_client::{
 };
 use ibis_database::{
     common::{
+        AUTH_COOKIE,
+        SuccessResponse,
         notifications::ApiNotification,
         user::{LocalUserView, Person},
-        SuccessResponse,
-        AUTH_COOKIE,
     },
     error::BackendResult,
-    impls::{notifications::Notification, read_jwt_secret, user::PersonUpdateForm, IbisContext},
+    impls::{IbisContext, notifications::Notification, read_jwt_secret, user::PersonUpdateForm},
 };
 use ibis_federate::validate::{validate_display_name, validate_user_name};
 use jsonwebtoken::{
-    decode,
-    encode,
-    get_current_timestamp,
     DecodingKey,
     EncodingKey,
     Header,
     Validation,
+    decode,
+    encode,
+    get_current_timestamp,
 };
 use serde::{Deserialize, Serialize};
 use time::{Duration, OffsetDateTime};
