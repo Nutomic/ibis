@@ -1,7 +1,7 @@
 [package]
 name = "ibis_backend"
-version = "0.2.2"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
 
 [dependencies]
 ibis_database.workspace = true
