@@ -19,7 +19,7 @@ pub mod user;
 
 pub type DbPool = Pool<ConnectionManager<PgConnection>>;
 
-const MIGRATIONS: EmbeddedMigrations = embed_migrations!("../../migrations");
+const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
 
 #[derive(Clone)]
 pub struct IbisContext {
