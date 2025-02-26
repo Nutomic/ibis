@@ -9,3 +9,6 @@ console_log = "1.0.0"
 console_error_panic_hook = "0.1.7"
 leptos = { workspace = true, features = ["hydrate"] }
 log.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]

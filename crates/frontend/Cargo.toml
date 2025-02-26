@@ -4,7 +4,6 @@ version = "0.2.2"
 edition = "2021"
 
 [features]
-default = ["ssr"]
 ssr = [
   "katex/duktape",
   "leptos-use/ssr",
@@ -45,6 +44,3 @@ phosphor-leptos = { version = "0.7.0", features = [
   "office",
   "arrows",
 ], default-features = false }
-
-[lib]
-crate-type = ["cdylib", "rlib"]
