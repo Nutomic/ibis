@@ -15,7 +15,6 @@ dependencies = [
  "bytes",
  "chrono",
  "derive_builder 0.20.2",
- "diesel",
  "dyn-clone",
  "enum_delegate",
  "futures",

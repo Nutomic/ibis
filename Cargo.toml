@@ -49,7 +49,6 @@ sha2 = "0.10.8"
 uuid = { version = "1.12.0", features = ["serde"] }
 activitypub_federation = { version = "0.6.2", features = [
   "axum",
-  "diesel",
 ], default-features = false }
 url = { version = "2.5.4", features = ["serde"] }
 diffy = "0.4.0"
