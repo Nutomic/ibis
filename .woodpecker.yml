@@ -94,16 +94,16 @@ steps:
     when:
       - event: tag
 
-  publish_release:
-    image: woodpeckerci/plugin-release
-    settings:
-      files:
-        - ibis.gz
-      title: ${CI_COMMIT_TAG##v}
-      api-key:
-        from_secret: github_token
-    when:
-      - event: tag
+#  publish_release:
+#    image: woodpeckerci/plugin-release
+#    settings:
+#      files:
+#        - ibis.gz
+#      title: ${CI_COMMIT_TAG##v}
+#      api-key:
+#        from_secret: github_token
+#    when:
+#      - event: tag
 
   publish_release_docker:
     image: woodpeckerci/plugin-docker-buildx
