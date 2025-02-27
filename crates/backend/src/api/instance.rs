@@ -18,7 +18,7 @@ use ibis_database::{
     },
 };
 use ibis_federate::{
-    activities::{follow::Follow, undo_follow::UndoFollow},
+    activities::following::{follow::Follow, undo_follow::UndoFollow},
     objects::instance::InstanceWrapper,
 };
 use moka::sync::Cache;

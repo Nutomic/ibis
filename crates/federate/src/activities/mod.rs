@@ -13,13 +13,11 @@ use ibis_database::{
     impls::{IbisContext, edit::DbEditForm},
 };
 
-pub mod accept;
 pub mod announce;
 pub mod comment;
 pub mod create_article;
-pub mod follow;
+pub mod following;
 pub mod reject;
-pub mod undo_follow;
 pub mod update_local_article;
 pub mod update_remote_article;
 

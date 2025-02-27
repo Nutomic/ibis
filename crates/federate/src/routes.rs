@@ -14,12 +14,10 @@ use super::{
 };
 use crate::{
     activities::{
-        accept::Accept,
         announce::AnnounceActivity,
         create_article::CreateArticle,
-        follow::Follow,
+        following::{accept::Accept, follow::Follow, undo_follow::UndoFollow},
         reject::RejectEdit,
-        undo_follow::UndoFollow,
         update_local_article::UpdateLocalArticle,
         update_remote_article::UpdateRemoteArticle,
     },

@@ -1,5 +1,5 @@
 use crate::{
-    activities::follow::Follow,
+    activities::following::follow::Follow,
     generate_activity_id,
     objects::instance::InstanceWrapper,
     send_activity,
