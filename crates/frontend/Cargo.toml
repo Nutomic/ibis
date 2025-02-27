@@ -13,6 +13,9 @@ ssr = [
 ]
 hydrate = ["katex/wasm-js", "leptos/hydrate", "ibis_api_client/hydrate"]
 
+[lints]
+workspace = true
+
 [dependencies]
 ibis_database.workspace = true
 ibis_api_client.workspace = true

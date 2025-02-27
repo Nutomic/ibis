@@ -55,7 +55,6 @@ impl RemoveArticle {
     ) -> BackendResult<()> {
         let local_instance: InstanceWrapper = Instance::read_local(context)?.into();
         let remove = Self::new(actor, article, context)?;
-        dbg!("send remove article");
         local_instance
             .send_to_followers(remove, vec![], context)
             .await?;
@@ -76,13 +75,11 @@ impl ActivityHandler for RemoveArticle {
     }
 
     async fn verify(&self, _context: &Data<Self::DataType>) -> Result<(), Self::Error> {
-        dbg!("verify remove article");
         verify_domains_match(self.actor.inner(), self.object.inner())?;
         Ok(())
     }
 
     async fn receive(self, context: &Data<Self::DataType>) -> Result<(), Self::Error> {
-        dbg!("receive remove article");
         let article = Article::read_from_ap_id(&self.object.into_inner().into(), context);
         if let Ok(article) = article {
             Article::update_removed(article.id, true, context)?;

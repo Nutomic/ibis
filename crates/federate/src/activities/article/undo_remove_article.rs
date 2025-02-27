@@ -47,7 +47,6 @@ impl UndoRemoveArticle {
         };
 
         let local_instance: InstanceWrapper = Instance::read_local(context)?.into();
-        dbg!("send restore article");
         local_instance
             .send_to_followers(undo, vec![], context)
             .await?;
@@ -68,13 +67,11 @@ impl ActivityHandler for UndoRemoveArticle {
     }
 
     async fn verify(&self, _context: &Data<Self::DataType>) -> Result<(), Self::Error> {
-        dbg!("verify restore article");
         verify_domains_match(self.actor.inner(), self.object.object.inner())?;
         Ok(())
     }
 
     async fn receive(self, context: &Data<Self::DataType>) -> Result<(), Self::Error> {
-        dbg!("receive restore article");
         let article = Article::read_from_ap_id(&self.object.object.into_inner().into(), context);
         if let Ok(article) = article {
             Article::update_removed(article.id, false, context)?;

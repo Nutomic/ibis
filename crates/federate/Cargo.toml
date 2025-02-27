@@ -3,6 +3,9 @@ name = "ibis_federate"
 version.workspace = true
 edition.workspace = true
 
+[lints]
+workspace = true
+
 [dependencies]
 ibis_database = { workspace = true, features = ["ssr"] }
 enum_delegate = "0.2.0"

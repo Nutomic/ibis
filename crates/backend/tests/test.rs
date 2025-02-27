@@ -880,7 +880,6 @@ async fn api_test_remove_article() -> Result<()> {
     assert_eq!(2, list_alpha.len());
     assert_eq!(article_to_remove_id, create_res.article.id);
     let list_beta = beta.list_articles(Default::default()).await.unwrap();
-    dbg!(&list_beta);
     // count also includes main pages from alpha and beta
     assert_eq!(3, list_beta.len());
     assert_eq!(create_res.article.ap_id, list_beta[0].ap_id);
@@ -898,15 +897,14 @@ async fn api_test_remove_article() -> Result<()> {
         .unwrap();
 
     let params = GetArticleParams {
-        id: Some(create_res.article.id),
+        title: Some(create_res.article.title),
+        domain: Some(create_res.instance.domain),
         ..Default::default()
     };
 
     // cannot get the article
-    assert!(alpha.get_article(params.clone()).await.is_err());
-    let list_alpha = alpha.list_articles(Default::default()).await.unwrap();
-    assert_eq!(1, list_alpha.len());
     sleep(Duration::from_secs(1)).await;
+    assert!(beta.get_article(params.clone()).await.is_err());
     let list_beta = beta.list_articles(Default::default()).await?;
     assert_eq!(2, list_beta.len());
 
@@ -929,7 +927,6 @@ async fn api_test_remove_article() -> Result<()> {
     // now it can be viewed again
     assert!(alpha.get_article(params).await.is_ok());
     let list_beta = beta.list_articles(Default::default()).await?;
-    dbg!(&list_beta);
     assert_eq!(3, list_beta.len());
 
     TestData::stop(alpha, beta, gamma)

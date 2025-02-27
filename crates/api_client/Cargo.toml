@@ -7,6 +7,9 @@ edition.workspace = true
 ssr = []
 hydrate = []
 
+[lints]
+workspace = true
+
 [dependencies]
 ibis_database.workspace = true
 log.workspace = true
