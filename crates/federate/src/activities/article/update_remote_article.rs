@@ -1,5 +1,5 @@
 use crate::{
-    activities::{reject::RejectEdit, update_local_article::UpdateLocalArticle},
+    activities::{article::update_local_article::UpdateLocalArticle, reject::RejectEdit},
     generate_activity_id,
     objects::{
         edit::{ApubEdit, EditWrapper},

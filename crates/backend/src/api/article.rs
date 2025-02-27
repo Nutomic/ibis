@@ -41,7 +41,7 @@ use ibis_database::{
     impls::{IbisContext, article::DbArticleForm, conflict::DbConflictForm, edit::DbEditForm},
 };
 use ibis_federate::{
-    activities::{create_article::CreateArticle, submit_article_update},
+    activities::{article::create_article::CreateArticle, submit_article_update},
     objects::article::ArticleWrapper,
     validate::{validate_article_title, validate_not_empty},
 };

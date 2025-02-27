@@ -15,11 +15,13 @@ use super::{
 use crate::{
     activities::{
         announce::AnnounceActivity,
-        create_article::CreateArticle,
+        article::{
+            create_article::CreateArticle,
+            update_local_article::UpdateLocalArticle,
+            update_remote_article::UpdateRemoteArticle,
+        },
         following::{accept::Accept, follow::Follow, undo_follow::UndoFollow},
         reject::RejectEdit,
-        update_local_article::UpdateLocalArticle,
-        update_remote_article::UpdateRemoteArticle,
     },
     objects::{
         article::ApubArticle,
