@@ -8,7 +8,7 @@ use activitypub_federation::{
     config::Data,
     fetch::object_id::ObjectId,
     kinds::activity::UndoType,
-    protocol::verification::verify_urls_match,
+    protocol::{helpers::deserialize_skip_error, verification::verify_urls_match},
     traits::{ActivityHandler, Actor},
 };
 use ibis_database::{
@@ -23,6 +23,9 @@ use url::Url;
 #[serde(rename_all = "camelCase")]
 pub struct UndoFollow {
     pub actor: ObjectId<PersonWrapper>,
+    /// Optional, for compatibility with platforms that always expect recipient field
+    #[serde(deserialize_with = "deserialize_skip_error", default)]
+    pub(crate) to: Option<[ObjectId<InstanceWrapper>; 1]>,
     pub(crate) object: Follow,
     #[serde(rename = "type")]
     pub(crate) kind: UndoType,
@@ -36,9 +39,11 @@ impl UndoFollow {
         context: &Data<IbisContext>,
     ) -> BackendResult<()> {
         let id = generate_activity_id(context)?;
+        let object = Follow::new(actor, to, context)?;
         let undo_follow = UndoFollow {
             actor: actor.ap_id.clone().into(),
-            object: Follow::new(actor, to, context)?,
+            to: object.to.clone(),
+            object,
             kind: Default::default(),
             id,
         };

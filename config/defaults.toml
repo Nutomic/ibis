@@ -27,3 +27,5 @@ blocklist = "evil.com,bad.org"
 # Whether users can create new accounts
 registration_open = true
 
+# Whether admins need to approve new articles
+article_approval = false

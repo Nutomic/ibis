@@ -8,7 +8,7 @@ use activitypub_federation::{
     config::Data,
     fetch::object_id::ObjectId,
     kinds::activity::FollowType,
-    protocol::verification::verify_urls_match,
+    protocol::{helpers::deserialize_skip_error, verification::verify_urls_match},
     traits::{ActivityHandler, Actor},
 };
 use ibis_database::{
@@ -23,6 +23,9 @@ use url::Url;
 #[serde(rename_all = "camelCase")]
 pub struct Follow {
     pub actor: ObjectId<PersonWrapper>,
+    /// Optional, for compatibility with platforms that always expect recipient field
+    #[serde(deserialize_with = "deserialize_skip_error", default)]
+    pub(crate) to: Option<[ObjectId<InstanceWrapper>; 1]>,
     pub object: ObjectId<InstanceWrapper>,
     #[serde(rename = "type")]
     kind: FollowType,
@@ -36,9 +39,11 @@ impl Follow {
         context: &Data<IbisContext>,
     ) -> BackendResult<Self> {
         let id = generate_activity_id(context)?;
+        let to: ObjectId<InstanceWrapper> = to.ap_id.clone().into();
         Ok(Follow {
             actor: actor.ap_id.clone().into(),
-            object: to.ap_id.clone().into(),
+            to: Some([to.clone()]),
+            object: to,
             kind: Default::default(),
             id,
         })

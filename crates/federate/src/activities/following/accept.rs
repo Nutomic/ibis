@@ -1,13 +1,14 @@
 use crate::{
     activities::following::follow::Follow,
     generate_activity_id,
-    objects::instance::InstanceWrapper,
+    objects::{instance::InstanceWrapper, user::PersonWrapper},
     send_activity,
 };
 use activitypub_federation::{
     config::Data,
     fetch::object_id::ObjectId,
     kinds::activity::AcceptType,
+    protocol::helpers::deserialize_skip_error,
     traits::{ActivityHandler, Actor},
 };
 use ibis_database::{
@@ -22,6 +23,9 @@ use url::Url;
 #[serde(rename_all = "camelCase")]
 pub struct Accept {
     actor: ObjectId<InstanceWrapper>,
+    /// Optional, for compatibility with platforms that always expect recipient field
+    #[serde(deserialize_with = "deserialize_skip_error", default)]
+    pub(crate) to: Option<[ObjectId<PersonWrapper>; 1]>,
     object: Follow,
     #[serde(rename = "type")]
     kind: AcceptType,
@@ -38,6 +42,7 @@ impl Accept {
         let follower = object.actor.dereference(context).await?;
         let accept = Accept {
             actor: local_instance.ap_id.clone().into(),
+            to: Some([follower.ap_id.clone().into()]),
             object,
             kind: Default::default(),
             id,
