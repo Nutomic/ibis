@@ -1,7 +1,4 @@
-use crate::{
-    components::article_editor::EditorView,
-    utils::resources::{config, is_admin},
-};
+use crate::components::article_editor::EditorView;
 use ibis_api_client::{CLIENT, article::CreateArticleParams};
 use leptos::{html::Textarea, prelude::*};
 use leptos_meta::Title;
@@ -56,18 +53,10 @@ pub fn CreateArticle() -> impl IntoView {
             }
         }
     });
-    let show_approval_message = Signal::derive(move || config().article_approval && !is_admin());
 
     view! {
         <Title text="Create new Article" />
         <h1 class="my-4 font-serif text-4xl font-bold">Create new Article</h1>
-        <Suspense>
-            <Show when=move || show_approval_message.get()>
-                <div class="mb-4 alert alert-warning">
-                    New articles require admin approval before being published
-                </div>
-            </Show>
-        </Suspense>
         <Show
             when=move || create_response.get().is_some()
             fallback=move || {

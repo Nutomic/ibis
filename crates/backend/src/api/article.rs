@@ -8,7 +8,6 @@ use chrono::Utc;
 use diffy::{Patch, apply, create_patch, merge};
 use ibis_api_client::{
     article::{
-        ApproveArticleParams,
         CreateArticleParams,
         DeleteConflictParams,
         EditArticleParams,
@@ -18,6 +17,7 @@ use ibis_api_client::{
         GetConflictParams,
         ListArticlesParams,
         ProtectArticleParams,
+        RemoveArticleParams,
     },
     instance::SearchArticleParams,
 };
@@ -72,7 +72,6 @@ pub(crate) async fn create_article(
         instance_id: local_instance.id,
         local: true,
         protected: false,
-        approved: !context.config.options.article_approval,
     };
     let article = Article::create(form, user.person.id, &context)?;
 
@@ -204,12 +203,15 @@ pub(crate) async fn get_article(
 
 #[debug_handler]
 pub(crate) async fn list_articles(
+    user: UserExt,
     Query(query): Query<ListArticlesParams>,
     context: Data<IbisContext>,
 ) -> BackendResult<Json<Vec<Article>>> {
+    let include_removed = user.local_user.admin && query.include_removed.unwrap_or_default();
     Ok(Json(Article::read_all(
         query.only_local,
         query.instance_id,
+        include_removed,
         &context,
     )?))
 }
@@ -241,7 +243,6 @@ pub(crate) async fn fork_article(
         instance_id: local_instance.id,
         local: true,
         protected: false,
-        approved: !context.config.options.article_approval,
     };
     let article = Article::create(form, user.person.id, &context)?;
 
@@ -309,17 +310,13 @@ pub(crate) async fn protect_article(
 }
 
 #[debug_handler]
-pub async fn approve_article(
+pub async fn remove_article(
     user: UserExt,
     context: Data<IbisContext>,
-    Form(params): Form<ApproveArticleParams>,
+    Form(params): Form<RemoveArticleParams>,
 ) -> BackendResult<Json<()>> {
     check_is_admin(&user)?;
-    if params.approve {
-        Article::update_approved(params.article_id, true, &context)?;
-    } else {
-        Article::delete(params.article_id, &context)?;
-    }
+    Article::update_removed(params.article_id, params.remove, &context)?;
     Ok(Json(()))
 }
 

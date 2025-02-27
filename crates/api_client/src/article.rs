@@ -22,6 +22,7 @@ pub struct GetArticleParams {
 pub struct ListArticlesParams {
     pub only_local: Option<bool>,
     pub instance_id: Option<InstanceId>,
+    pub include_removed: Option<bool>,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -60,9 +61,9 @@ pub struct ForkArticleParams {
 }
 
 #[derive(Deserialize, Serialize, Debug)]
-pub struct ApproveArticleParams {
+pub struct RemoveArticleParams {
     pub article_id: ArticleId,
-    pub approve: bool,
+    pub remove: bool,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug, Default)]
@@ -130,16 +131,9 @@ impl ApiClient {
             .await
     }
 
-    pub async fn approve_article(
-        &self,
-        article_id: ArticleId,
-        approve: bool,
-    ) -> FrontendResult<()> {
-        let params = ApproveArticleParams {
-            article_id,
-            approve,
-        };
-        self.post("/api/v1/article/approve", Some(&params)).await
+    pub async fn remove_article(&self, article_id: ArticleId, remove: bool) -> FrontendResult<()> {
+        let params = RemoveArticleParams { article_id, remove };
+        self.post("/api/v1/article/remove", Some(&params)).await
     }
 
     pub async fn get_conflict(&self, conflict_id: ConflictId) -> FrontendResult<ApiConflict> {

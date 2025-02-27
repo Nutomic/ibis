@@ -47,7 +47,7 @@ impl Collection for ArticleCollection {
         _owner: &Self::Owner,
         context: &Data<Self::DataType>,
     ) -> Result<Self::Kind, Self::Error> {
-        let local_articles = Article::read_all(Some(true), None, context)?;
+        let local_articles = Article::read_all(Some(true), None, false, context)?;
         let articles = try_join_all(
             local_articles
                 .into_iter()

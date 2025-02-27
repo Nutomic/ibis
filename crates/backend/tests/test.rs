@@ -30,7 +30,7 @@ use url::Url;
 
 #[tokio::test]
 async fn api_test_create_read_and_edit_local_article() -> Result<()> {
-    let TestData(alpha, beta, gamma) = TestData::start(false).await;
+    let TestData(alpha, beta, gamma) = TestData::start().await;
 
     // create article
     const TITLE: &str = "Manu_Chao";
@@ -86,6 +86,7 @@ async fn api_test_create_read_and_edit_local_article() -> Result<()> {
         .list_articles(ListArticlesParams {
             only_local: Some(false),
             instance_id: None,
+            include_removed: None,
         })
         .await
         .unwrap();
@@ -97,7 +98,7 @@ async fn api_test_create_read_and_edit_local_article() -> Result<()> {
 
 #[tokio::test]
 async fn api_test_create_duplicate_article() -> Result<()> {
-    let TestData(alpha, beta, gamma) = TestData::start(false).await;
+    let TestData(alpha, beta, gamma) = TestData::start().await;
 
     // create article
     let create_params = CreateArticleParams {
@@ -117,7 +118,7 @@ async fn api_test_create_duplicate_article() -> Result<()> {
 
 #[tokio::test]
 async fn api_test_follow_instance() -> Result<()> {
-    let TestData(alpha, beta, gamma) = TestData::start(false).await;
+    let TestData(alpha, beta, gamma) = TestData::start().await;
 
     // check initial state
     let alpha_follows = alpha.get_follows().await.unwrap();
@@ -150,7 +151,7 @@ async fn api_test_follow_instance() -> Result<()> {
 
 #[tokio::test]
 async fn api_test_synchronize_articles() -> Result<()> {
-    let TestData(alpha, beta, gamma) = TestData::start(false).await;
+    let TestData(alpha, beta, gamma) = TestData::start().await;
 
     // create article on alpha
     let create_params = CreateArticleParams {
@@ -227,7 +228,7 @@ async fn api_test_synchronize_articles() -> Result<()> {
 
 #[tokio::test]
 async fn api_test_edit_local_article() -> Result<()> {
-    let TestData(alpha, beta, gamma) = TestData::start(false).await;
+    let TestData(alpha, beta, gamma) = TestData::start().await;
 
     let beta_instance = alpha
         .follow_instance_with_resolve(&beta.hostname)
@@ -292,7 +293,7 @@ async fn api_test_edit_local_article() -> Result<()> {
 
 #[tokio::test]
 async fn api_test_edit_remote_article() -> Result<()> {
-    let TestData(alpha, beta, gamma) = TestData::start(false).await;
+    let TestData(alpha, beta, gamma) = TestData::start().await;
 
     let beta_id_on_alpha = alpha
         .follow_instance_with_resolve(&beta.hostname)
@@ -381,7 +382,7 @@ async fn api_test_edit_remote_article() -> Result<()> {
 
 #[tokio::test]
 async fn api_test_local_edit_conflict() -> Result<()> {
-    let TestData(alpha, beta, gamma) = TestData::start(false).await;
+    let TestData(alpha, beta, gamma) = TestData::start().await;
 
     // create new article
     let create_params = CreateArticleParams {
@@ -453,7 +454,7 @@ async fn api_test_local_edit_conflict() -> Result<()> {
 
 #[tokio::test]
 async fn api_test_federated_edit_conflict() -> Result<()> {
-    let TestData(alpha, beta, gamma) = TestData::start(false).await;
+    let TestData(alpha, beta, gamma) = TestData::start().await;
 
     let beta_id_on_alpha = alpha
         .follow_instance_with_resolve(&beta.hostname)
@@ -565,7 +566,7 @@ async fn api_test_federated_edit_conflict() -> Result<()> {
 
 #[tokio::test]
 async fn api_test_overlapping_edits_no_conflict() -> Result<()> {
-    let TestData(alpha, beta, gamma) = TestData::start(false).await;
+    let TestData(alpha, beta, gamma) = TestData::start().await;
 
     // Create new article
     // Need to use multiple lines to provide enough context for diff/merge.
@@ -639,7 +640,7 @@ async fn api_test_overlapping_edits_no_conflict() -> Result<()> {
 
 #[tokio::test]
 async fn api_test_fork_article() -> Result<()> {
-    let TestData(alpha, beta, gamma) = TestData::start(false).await;
+    let TestData(alpha, beta, gamma) = TestData::start().await;
 
     // create article
     let create_params = CreateArticleParams {
@@ -697,7 +698,7 @@ async fn api_test_fork_article() -> Result<()> {
 
 #[tokio::test]
 async fn api_test_user_registration_login() -> Result<()> {
-    let TestData(alpha, beta, gamma) = TestData::start(false).await;
+    let TestData(alpha, beta, gamma) = TestData::start().await;
     let username = "my_user";
     let password = "hunter2";
     let register_data = RegisterUserParams {
@@ -732,7 +733,7 @@ async fn api_test_user_registration_login() -> Result<()> {
 
 #[tokio::test]
 async fn api_test_user_profile() -> Result<()> {
-    let TestData(alpha, beta, gamma) = TestData::start(false).await;
+    let TestData(alpha, beta, gamma) = TestData::start().await;
 
     // Create an article and federate it, in order to federate the user who created it
     let create_params = CreateArticleParams {
@@ -770,7 +771,7 @@ async fn api_test_user_profile() -> Result<()> {
 
 #[tokio::test]
 async fn api_test_lock_article() -> Result<()> {
-    let TestData(alpha, beta, gamma) = TestData::start(false).await;
+    let TestData(alpha, beta, gamma) = TestData::start().await;
 
     // create article
     let create_params = CreateArticleParams {
@@ -817,7 +818,7 @@ async fn api_test_lock_article() -> Result<()> {
 
 #[tokio::test]
 async fn api_test_synchronize_instances() -> Result<()> {
-    let TestData(alpha, beta, gamma) = TestData::start(false).await;
+    let TestData(alpha, beta, gamma) = TestData::start().await;
 
     // fetch alpha instance on beta
     beta.resolve_instance(Url::parse(&format!("http://{}", &alpha.hostname))?)
@@ -858,8 +859,8 @@ async fn api_test_synchronize_instances() -> Result<()> {
 }
 
 #[tokio::test]
-async fn api_test_article_approval_required() -> Result<()> {
-    let TestData(alpha, beta, gamma) = TestData::start(true).await;
+async fn api_test_remove_article() -> Result<()> {
+    let TestData(alpha, beta, gamma) = TestData::start().await;
 
     // create article
     let create_params = CreateArticleParams {
@@ -868,47 +869,59 @@ async fn api_test_article_approval_required() -> Result<()> {
         summary: "create article".to_string(),
     };
     let create_res = alpha.create_article(&create_params).await.unwrap();
-    assert!(!create_res.article.approved);
 
     let list_all = alpha.list_articles(Default::default()).await.unwrap();
-    assert_eq!(1, list_all.len());
-    assert!(list_all.iter().all(|a| a.id != create_res.article.id));
+    let article_to_remove_id = list_all[0].id;
+    assert_eq!(2, list_all.len());
+    assert_eq!(article_to_remove_id, create_res.article.id);
 
-    // login as admin to handle approvals
+    // login as admin to remove article
     let params = LoginUserParams {
         username: "ibis".to_string(),
         password: "ibis".to_string(),
     };
     alpha.login(params).await.unwrap();
 
-    assert_eq!(1, alpha.notifications_count().await.unwrap());
-    let notifications = alpha.notifications_list().await.unwrap();
-    assert_eq!(1, notifications.len());
-    assert_eq!(ApiNotificationData::ArticleCreated, notifications[0].data);
-    assert_eq!(create_res.article.id, notifications[0].article.id);
-
     alpha
-        .approve_article(notifications[0].article.id, true)
+        .remove_article(article_to_remove_id, true)
         .await
         .unwrap();
+
     let params = GetArticleParams {
         id: Some(create_res.article.id),
         ..Default::default()
     };
-    let approved = alpha.get_article(params).await.unwrap();
-    assert_eq!(create_res.article.id, approved.article.id);
-    assert!(approved.article.approved);
 
+    // cannot get the article
+    assert!(alpha.get_article(params.clone()).await.is_err());
     let list_all = alpha.list_articles(Default::default()).await.unwrap();
+    assert_eq!(1, list_all.len());
+
+    // except as admin with include_removed
+    let list_all = alpha
+        .list_articles(ListArticlesParams {
+            include_removed: Some(true),
+            ..Default::default()
+        })
+        .await
+        .unwrap();
     assert_eq!(2, list_all.len());
-    assert!(list_all.iter().any(|a| a.id == create_res.article.id));
+
+    // restore article
+    alpha
+        .remove_article(article_to_remove_id, false)
+        .await
+        .unwrap();
+
+    // now it can be viewed again
+    assert!(alpha.get_article(params).await.is_ok());
 
     TestData::stop(alpha, beta, gamma)
 }
 
 #[tokio::test]
 async fn api_test_comment_create_edit() -> Result<()> {
-    let TestData(alpha, beta, gamma) = TestData::start(true).await;
+    let TestData(alpha, beta, gamma) = TestData::start().await;
 
     beta.follow_instance_with_resolve(&alpha.hostname)
         .await
@@ -990,7 +1003,7 @@ async fn api_test_comment_create_edit() -> Result<()> {
 
 #[tokio::test]
 async fn api_test_comment_delete_restore() -> Result<()> {
-    let TestData(alpha, beta, gamma) = TestData::start(true).await;
+    let TestData(alpha, beta, gamma) = TestData::start().await;
 
     beta.follow_instance_with_resolve(&alpha.hostname)
         .await

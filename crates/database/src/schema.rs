@@ -10,8 +10,8 @@ diesel::table! {
         instance_id -> Int4,
         local -> Bool,
         protected -> Bool,
-        approved -> Bool,
         published -> Timestamptz,
+        removed -> Bool,
     }
 }
 

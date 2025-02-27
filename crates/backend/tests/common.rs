@@ -24,7 +24,7 @@ use tokio::{join, sync::oneshot, task::JoinHandle};
 pub struct TestData(pub IbisInstance, pub IbisInstance, pub IbisInstance);
 
 impl TestData {
-    pub async fn start(article_approval: bool) -> Self {
+    pub async fn start() -> Self {
         static INIT: Once = Once::new();
         INIT.call_once(|| {
             env_logger::builder()
@@ -57,9 +57,9 @@ impl TestData {
         }
 
         let (alpha, beta, gamma) = join!(
-            IbisInstance::start(alpha_db_path, port_alpha, "alpha", article_approval),
-            IbisInstance::start(beta_db_path, port_beta, "beta", article_approval),
-            IbisInstance::start(gamma_db_path, port_gamma, "gamma", article_approval)
+            IbisInstance::start(alpha_db_path, port_alpha, "alpha"),
+            IbisInstance::start(beta_db_path, port_beta, "beta"),
+            IbisInstance::start(gamma_db_path, port_gamma, "gamma")
         );
 
         Self(alpha, beta, gamma)
@@ -106,7 +106,7 @@ impl IbisInstance {
         })
     }
 
-    async fn start(db_path: String, port: i32, username: &str, article_approval: bool) -> Self {
+    async fn start(db_path: String, port: i32, username: &str) -> Self {
         let connection_url = format!("postgresql://ibis:password@/ibis?host={db_path}");
 
         let hostname = format!("localhost:{port}");
@@ -121,7 +121,6 @@ impl IbisInstance {
             },
             options: Options {
                 registration_open: true,
-                article_approval,
             },
             ..Default::default()
         };

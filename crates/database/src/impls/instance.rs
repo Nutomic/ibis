@@ -182,6 +182,7 @@ impl Instance {
             let articles = article::table
                 .filter(article::instance_id.eq(instance.id))
                 .inner_join(edit::table)
+                .filter(not(article::removed))
                 .group_by(article::id)
                 .order_by((article::local.desc(), max(edit::published).desc()))
                 .limit(5)
