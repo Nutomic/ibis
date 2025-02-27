@@ -1,0 +1,28 @@
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "50m"
+    max-file: "4"
+
+services:
+
+  ibis:
+    image: {{ lemmy_docker_image }}
+    restart: always
+    logging: *default-logging
+    volumes:
+      - ./config.toml:/config/config.hjson:Z
+    depends_on:
+      - postgres
+      - pictrs
+
+  postgres:
+    image: docker.io/pgautoupgrade/pgautoupgrade:16-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=ibis
+      - POSTGRES_PASSWORD={your-db-password}
+      - POSTGRES_DB=ibis
+    volumes:
+      - ./volumes/postgres:/var/lib/postgresql/data:Z
+    logging: *default-logging

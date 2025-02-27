@@ -3,6 +3,10 @@ name = "ibis_backend"
 version.workspace = true
 edition.workspace = true
 
+[[bin]]
+name = "ibis"
+path = "src/main.rs"
+
 [dependencies]
 ibis_database.workspace = true
 leptos.workspace = true
