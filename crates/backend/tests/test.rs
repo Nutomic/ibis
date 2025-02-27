@@ -862,6 +862,10 @@ async fn api_test_synchronize_instances() -> Result<()> {
 async fn api_test_remove_article() -> Result<()> {
     let TestData(alpha, beta, gamma) = TestData::start().await;
 
+    beta.follow_instance_with_resolve(&alpha.hostname)
+        .await
+        .unwrap();
+
     // create article
     let create_params = CreateArticleParams {
         title: "Manu_Chao".to_string(),
@@ -870,10 +874,16 @@ async fn api_test_remove_article() -> Result<()> {
     };
     let create_res = alpha.create_article(&create_params).await.unwrap();
 
-    let list_all = alpha.list_articles(Default::default()).await.unwrap();
-    let article_to_remove_id = list_all[0].id;
-    assert_eq!(2, list_all.len());
+    let list_alpha = alpha.list_articles(Default::default()).await.unwrap();
+    let article_to_remove_id = list_alpha[0].id;
+    // count also includes auto-created main page
+    assert_eq!(2, list_alpha.len());
     assert_eq!(article_to_remove_id, create_res.article.id);
+    let list_beta = beta.list_articles(Default::default()).await.unwrap();
+    dbg!(&list_beta);
+    // count also includes main pages from alpha and beta
+    assert_eq!(3, list_beta.len());
+    assert_eq!(create_res.article.ap_id, list_beta[0].ap_id);
 
     // login as admin to remove article
     let params = LoginUserParams {
@@ -894,8 +904,11 @@ async fn api_test_remove_article() -> Result<()> {
 
     // cannot get the article
     assert!(alpha.get_article(params.clone()).await.is_err());
-    let list_all = alpha.list_articles(Default::default()).await.unwrap();
-    assert_eq!(1, list_all.len());
+    let list_alpha = alpha.list_articles(Default::default()).await.unwrap();
+    assert_eq!(1, list_alpha.len());
+    sleep(Duration::from_secs(1)).await;
+    let list_beta = beta.list_articles(Default::default()).await?;
+    assert_eq!(2, list_beta.len());
 
     // except as admin with include_removed
     let list_all = alpha
@@ -915,6 +928,9 @@ async fn api_test_remove_article() -> Result<()> {
 
     // now it can be viewed again
     assert!(alpha.get_article(params).await.is_ok());
+    let list_beta = beta.list_articles(Default::default()).await?;
+    dbg!(&list_beta);
+    assert_eq!(3, list_beta.len());
 
     TestData::stop(alpha, beta, gamma)
 }

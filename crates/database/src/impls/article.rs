@@ -171,7 +171,6 @@ impl Article {
         let mut conn = context.db_pool.get()?;
         Ok(article::table
             .filter(article::dsl::ap_id.eq(ap_id))
-            .filter(not(article::removed))
             .get_result(conn.deref_mut())?)
     }
 

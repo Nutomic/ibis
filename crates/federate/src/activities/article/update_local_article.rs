@@ -8,7 +8,7 @@ use crate::{
 use activitypub_federation::{
     config::Data,
     fetch::object_id::ObjectId,
-    kinds::activity::UpdateType,
+    kinds::{activity::UpdateType, public},
     protocol::helpers::deserialize_one_or_many,
     traits::{ActivityHandler, Object},
 };
@@ -42,11 +42,9 @@ impl UpdateLocalArticle {
         debug_assert!(article.local);
         let local_instance: InstanceWrapper = Instance::read_local(context)?.into();
         let id = generate_activity_id(context)?;
-        let mut to = local_instance.follower_ids(context)?;
-        to.extend(extra_recipients.iter().map(|i| i.ap_id.clone().into()));
         let update = UpdateLocalArticle {
             actor: local_instance.ap_id.clone().into(),
-            to,
+            to: vec![public()],
             object: article.into_json(context).await?,
             kind: Default::default(),
             id,

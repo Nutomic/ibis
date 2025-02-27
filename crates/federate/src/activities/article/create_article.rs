@@ -8,7 +8,7 @@ use crate::{
 use activitypub_federation::{
     config::Data,
     fetch::object_id::ObjectId,
-    kinds::activity::CreateType,
+    kinds::{activity::CreateType, public},
     protocol::helpers::deserialize_one_or_many,
     traits::{ActivityHandler, Object},
 };
@@ -40,10 +40,9 @@ impl CreateArticle {
         let local_instance: InstanceWrapper = Instance::read_local(context)?.into();
         let object = article.clone().into_json(context).await?;
         let id = generate_activity_id(context)?;
-        let to = local_instance.follower_ids(context)?;
         let create = CreateArticle {
             actor: local_instance.ap_id.clone().into(),
-            to,
+            to: vec![public()],
             object,
             kind: Default::default(),
             id,

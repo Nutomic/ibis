@@ -17,6 +17,8 @@ use crate::{
         announce::AnnounceActivity,
         article::{
             create_article::CreateArticle,
+            remove_article::RemoveArticle,
+            undo_remove_article::UndoRemoveArticle,
             update_local_article::UpdateLocalArticle,
             update_remote_article::UpdateRemoteArticle,
         },
@@ -153,6 +155,8 @@ pub enum InboxActivities {
     UpdateLocalArticle(UpdateLocalArticle),
     UpdateRemoteArticle(UpdateRemoteArticle),
     RejectEdit(RejectEdit),
+    RemoveArticle(RemoveArticle),
+    UndoRemoveArticle(UndoRemoveArticle),
     AnnounceActivity(AnnounceActivity),
     AnnouncableActivities(AnnouncableActivities),
 }

@@ -41,7 +41,14 @@ use ibis_database::{
     impls::{IbisContext, article::DbArticleForm, conflict::DbConflictForm, edit::DbEditForm},
 };
 use ibis_federate::{
-    activities::{article::create_article::CreateArticle, submit_article_update},
+    activities::{
+        article::{
+            create_article::CreateArticle,
+            remove_article::RemoveArticle,
+            undo_remove_article::UndoRemoveArticle,
+        },
+        submit_article_update,
+    },
     objects::article::ArticleWrapper,
     validate::{validate_article_title, validate_not_empty},
 };
@@ -316,7 +323,13 @@ pub async fn remove_article(
     Form(params): Form<RemoveArticleParams>,
 ) -> BackendResult<Json<()>> {
     check_is_admin(&user)?;
-    Article::update_removed(params.article_id, params.remove, &context)?;
+    let article = Article::update_removed(params.article_id, params.remove, &context)?;
+    let actor = user.person.ap_id.clone().into();
+    if params.remove {
+        RemoveArticle::send_to_followers(actor, article.into(), &context).await?;
+    } else {
+        UndoRemoveArticle::send_to_followers(actor, article.into(), &context).await?;
+    }
     Ok(Json(()))
 }
 
