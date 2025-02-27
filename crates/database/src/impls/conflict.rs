@@ -1,11 +1,13 @@
+use super::notifications::NotificationInsertForm;
 use crate::{
     common::{
         article::{Conflict, EditVersion},
         newtypes::{ArticleId, ConflictId, PersonId},
+        user::LocalUser,
     },
     error::BackendResult,
     impls::IbisContext,
-    schema::{conflict, edit},
+    schema::{conflict, edit, local_user, notification},
 };
 use diesel::{ExpressionMethods, Insertable, QueryDsl, RunQueryDsl, delete, insert_into};
 use std::ops::DerefMut;
@@ -24,9 +26,27 @@ pub struct DbConflictForm {
 impl Conflict {
     pub fn create(form: &DbConflictForm, context: &IbisContext) -> BackendResult<Self> {
         let mut conn = context.db_pool.get()?;
-        Ok(insert_into(conflict::table)
+        let conflict: Conflict = insert_into(conflict::table)
             .values(form)
-            .get_result(conn.deref_mut())?)
+            .get_result(conn.deref_mut())?;
+        let local_user: LocalUser = local_user::table
+            .filter(local_user::person_id.eq(conflict.creator_id))
+            .get_result(&mut conn)?;
+
+        let form = NotificationInsertForm {
+            local_user_id: local_user.id,
+            article_id: conflict.article_id,
+            creator_id: conflict.creator_id,
+            comment_id: None,
+            edit_id: None,
+            conflict_id: Some(conflict.id),
+        };
+
+        insert_into(notification::table)
+            .values(&form)
+            .execute(&mut conn)?;
+
+        Ok(conflict)
     }
 
     pub fn read(

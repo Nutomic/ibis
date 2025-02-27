@@ -19,7 +19,7 @@ use ibis_api_client::{
 };
 use ibis_database::common::{
     article::ArticleView,
-    notifications::ApiNotification,
+    notifications::ApiNotificationData,
     utils::extract_domain,
 };
 use pretty_assertions::assert_eq;
@@ -425,7 +425,7 @@ async fn api_test_local_edit_conflict() -> Result<()> {
 
     let notifications = alpha.notifications_list().await.unwrap();
     assert_eq!(1, notifications.len());
-    let ApiNotification::EditConflict(conflict, _) = &notifications[0] else {
+    let ApiNotificationData::EditConflict(conflict) = &notifications[0].data else {
         panic!()
     };
     assert_eq!(conflict.article_id, edit_res.article.id);
@@ -533,7 +533,7 @@ async fn api_test_federated_edit_conflict() -> Result<()> {
     assert_eq!(1, gamma.notifications_count().await.unwrap());
     let notifications = gamma.notifications_list().await.unwrap();
     assert_eq!(1, notifications.len());
-    let ApiNotification::EditConflict(conflict, _) = &notifications[0] else {
+    let ApiNotificationData::EditConflict(conflict) = &notifications[0].data else {
         panic!()
     };
 
@@ -884,12 +884,13 @@ async fn api_test_article_approval_required() -> Result<()> {
     assert_eq!(1, alpha.notifications_count().await.unwrap());
     let notifications = alpha.notifications_list().await.unwrap();
     assert_eq!(1, notifications.len());
-    let ApiNotification::ArticleCreated(notif) = &notifications[0] else {
-        panic!()
-    };
-    assert_eq!(create_res.article.id, notif.id);
+    assert_eq!(ApiNotificationData::ArticleCreated, notifications[0].data);
+    assert_eq!(create_res.article.id, notifications[0].article.id);
 
-    alpha.approve_article(notif.id, true).await.unwrap();
+    alpha
+        .approve_article(notifications[0].article.id, true)
+        .await
+        .unwrap();
     let params = GetArticleParams {
         id: Some(create_res.article.id),
         ..Default::default()

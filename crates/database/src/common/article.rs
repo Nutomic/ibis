@@ -24,6 +24,7 @@ use {
 pub struct Conflict {
     pub id: ConflictId,
     pub hash: EditVersion,
+    #[serde(skip)]
     pub diff: String,
     pub summary: String,
     pub creator_id: PersonId,

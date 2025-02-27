@@ -21,7 +21,7 @@ use ibis_database::common::{
 };
 use leptos::{either::EitherOf4, prelude::*};
 use leptos_meta::Title;
-use phosphor_leptos::{CHECK, Icon, LINK};
+use phosphor_leptos::{CHECK, Icon, IconData, LINK, TRASH};
 
 type NotificationsResource = Resource<Result<Vec<ApiNotification>, FrontendError>>;
 
@@ -81,7 +81,12 @@ fn edit_conflict_view(
         <li class="py-2">
             <CardTitle notif=notif.clone() />
             <div>"Edit conflict: "{conflict.summary.clone()}</div>
-            <CardActions href=href notif=notif.clone() refresh_res=refresh_res />
+            <CardActions
+                href=href
+                notif=notif.clone()
+                refresh_res=refresh_res
+                dismiss_button=("Delete", TRASH)
+            />
         </li>
     }
 }
@@ -110,7 +115,7 @@ fn comment_view(
             <CardTitle notif=notif.clone() />
             <div>"New comment: "{comment.content.clone()}</div>
             <CardActions
-                href=comment_path(&comment, &notif.article)
+                href=comment_path(comment, &notif.article)
                 notif=notif.clone()
                 refresh_res=refresh_res
             />
@@ -128,7 +133,7 @@ fn edit_view(
             <CardTitle notif=notif.clone() />
             <div>"New edit: "{edit.summary.clone()}</div>
             <CardActions
-                href=edit_path(&edit, &notif.article)
+                href=edit_path(edit, &notif.article)
                 notif=notif.clone()
                 refresh_res=refresh_res
             />
@@ -151,17 +156,20 @@ fn CardActions(
     href: String,
     notif: ApiNotification,
     refresh_res: NotificationsResource,
+    #[prop(optional)] dismiss_button: Option<(&'static str, IconData)>,
 ) -> impl IntoView {
     let id = notif.id;
-    let click_mark_as_read = Action::new(move |_: &()| async move {
-        CLIENT
-            .article_notif_mark_as_read(id)
-            .await
-            .error_popup(|_| refresh_res.refetch());
-    });
-    let mark_as_read_action = move || {
-        click_mark_as_read.dispatch(());
+    let dismiss_action = move || {
+        Action::new(move |_: &()| async move {
+            CLIENT
+                .article_notif_mark_as_read(id)
+                .await
+                .error_popup(|_| refresh_res.refetch());
+        })
+        .dispatch(());
     };
+    let dismiss_label = dismiss_button.map(|d| d.0).unwrap_or("Mark as read");
+    let dismiss_icon = dismiss_button.map(|d| d.1).unwrap_or(CHECK);
     view! {
         <div class="mt-2 card-actions">
             <a class="btn btn-sm btn-outline" href=href title="View">
@@ -169,10 +177,10 @@ fn CardActions(
             </a>
             <button
                 class="btn btn-sm btn-outline"
-                on:click=move |_| mark_as_read_action()
-                title="Mark as read"
+                on:click=move |_| dismiss_action()
+                title=dismiss_label
             >
-                <Icon icon=CHECK />
+                <Icon icon=dismiss_icon />
             </button>
         </div>
     }

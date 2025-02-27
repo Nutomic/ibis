@@ -16,7 +16,7 @@ pub struct ApiNotification {
     pub data: ApiNotificationData,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub enum ApiNotificationData {
     ArticleCreated,
     // TODO: this should only return conflict id and article name

@@ -134,6 +134,7 @@ diesel::table! {
         comment_id -> Nullable<Int4>,
         edit_id -> Nullable<Int4>,
         published -> Timestamptz,
+        conflict_id -> Nullable<Int4>,
     }
 }
 
@@ -170,6 +171,7 @@ diesel::joinable!(instance_follow -> person (follower_id));
 diesel::joinable!(local_user -> person (person_id));
 diesel::joinable!(notification -> article (article_id));
 diesel::joinable!(notification -> comment (comment_id));
+diesel::joinable!(notification -> conflict (conflict_id));
 diesel::joinable!(notification -> edit (edit_id));
 diesel::joinable!(notification -> local_user (local_user_id));
 diesel::joinable!(notification -> person (creator_id));

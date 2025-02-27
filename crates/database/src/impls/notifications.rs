@@ -2,7 +2,15 @@ use crate::{
     common::{
         article::{Article, Conflict, Edit},
         comment::Comment,
-        newtypes::{ArticleId, ArticleNotifId, CommentId, EditId, LocalUserId, PersonId},
+        newtypes::{
+            ArticleId,
+            ArticleNotifId,
+            CommentId,
+            ConflictId,
+            EditId,
+            LocalUserId,
+            PersonId,
+        },
         notifications::{ApiNotification, ApiNotificationData},
         user::{LocalUserView, Person},
     },
@@ -45,16 +53,18 @@ pub struct Notification {
     comment_id: Option<CommentId>,
     edit_id: Option<EditId>,
     pub published: DateTime<Utc>,
+    conflict_id: Option<ConflictId>,
 }
 
 #[derive(Debug, Insertable)]
 #[diesel(table_name = notification, check_for_backend(diesel::pg::Pg))]
-struct NotificationInsertForm {
-    local_user_id: LocalUserId,
-    article_id: ArticleId,
-    creator_id: PersonId,
-    comment_id: Option<CommentId>,
-    edit_id: Option<EditId>,
+pub(crate) struct NotificationInsertForm {
+    pub local_user_id: LocalUserId,
+    pub article_id: ArticleId,
+    pub creator_id: PersonId,
+    pub comment_id: Option<CommentId>,
+    pub edit_id: Option<EditId>,
+    pub conflict_id: Option<ConflictId>,
 }
 
 impl Notification {
@@ -63,29 +73,13 @@ impl Notification {
         context: &IbisContext,
     ) -> BackendResult<Vec<ApiNotification>> {
         let mut conn = context.db_pool.get()?;
-        let mut notifications: Vec<ApiNotification> = vec![];
 
-        // edit conflicts
-        let conflicts: Vec<(Conflict, Article)> = conflict::table
-            .inner_join(article::table)
-            .filter(conflict::dsl::creator_id.eq(user.person.id))
-            .select((conflict::all_columns, article::all_columns))
-            .get_results(conn.deref_mut())?;
-        // TODO
-        /*
-        notifications.extend(
-            conflicts
-                .into_iter()
-                .map(|(c, a)| ApiNotification::EditConflict(c, a)),
-        );
-        */
-
-        // new edits and comments for followed articles
         let article_notifications = notification::table
             .inner_join(article::table)
             .inner_join(person::table)
             .left_join(comment::table)
             .left_join(edit::table)
+            .left_join(conflict::table)
             .filter(notification::local_user_id.eq(user.local_user.id))
             .order_by(notification::published.desc())
             .select((
@@ -94,17 +88,27 @@ impl Notification {
                 person::all_columns,
                 comment::all_columns.nullable(),
                 edit::all_columns.nullable(),
+                conflict::all_columns.nullable(),
             ))
-            .get_results::<(Notification, Article, Person, Option<Comment>, Option<Edit>)>(
-                &mut conn,
-            )?;
-        notifications.extend(article_notifications.into_iter().map(
-            |(notif, article, creator, comment, edit)| {
+            .get_results::<(
+                Notification,
+                Article,
+                Person,
+                Option<Comment>,
+                Option<Edit>,
+                Option<Conflict>,
+            )>(&mut conn)?;
+
+        Ok(article_notifications
+            .into_iter()
+            .map(|(notif, article, creator, comment, edit, conflict)| {
                 use ApiNotificationData::*;
                 let (published, data) = if let Some(c) = comment {
-                    (c.published.clone(), Comment(c))
+                    (c.published, Comment(c))
                 } else if let Some(e) = edit {
-                    (e.published.clone(), Edit(e))
+                    (e.published, Edit(e))
+                } else if let Some(c) = conflict {
+                    (c.published, EditConflict(c))
                 } else {
                     (article.published, ArticleCreated)
                 };
@@ -115,23 +119,14 @@ impl Notification {
                     published,
                     data,
                 }
-            },
-        ));
-        Ok(notifications)
+            })
+            .collect())
     }
 
     pub fn count(user: &LocalUserView, context: &IbisContext) -> BackendResult<i64> {
         let mut conn = context.db_pool.get()?;
         let mut num = 0;
-        // edit conflicts
-        let conflicts = conflict::table
-            .filter(conflict::dsl::creator_id.eq(user.person.id))
-            .select(count(conflict::id))
-            .first::<i64>(conn.deref_mut())
-            .unwrap_or(0);
-        num += conflicts;
 
-        // new edits and comments for followed articles
         let article_notifications = notification::table
             .filter(notification::local_user_id.eq(user.local_user.id))
             .select(count(notification::id))
@@ -148,12 +143,23 @@ impl Notification {
         context: &IbisContext,
     ) -> BackendResult<()> {
         let mut conn = context.db_pool.get()?;
-        delete(
+        let notif: Notification = delete(
             notification::table
                 .filter(notification::id.eq(id))
                 .filter(notification::local_user_id.eq(user.local_user.id)),
         )
-        .execute(&mut conn)?;
+        .returning(notification::all_columns)
+        .get_result(&mut conn)?;
+
+        // if this is a conflict, delete the conflict as well
+        if let Some(conflict_id) = notif.conflict_id {
+            delete(
+                conflict::table
+                    .filter(conflict::id.eq(conflict_id))
+                    .filter(conflict::creator_id.eq(user.person.id)),
+            )
+            .execute(&mut conn)?;
+        }
         Ok(())
     }
 
@@ -184,6 +190,7 @@ impl Notification {
                 creator_id,
                 comment_id: None,
                 edit_id: None,
+                conflict_id: None,
             })
             .collect();
 
@@ -222,6 +229,7 @@ impl Notification {
                     creator_id: comment.creator_id,
                     comment_id: Some(comment.id),
                     edit_id: None,
+                    conflict_id: None,
                 };
                 insert_into(notification::table)
                     .values(&form)
@@ -240,6 +248,7 @@ impl Notification {
                 creator_id: comment.creator_id,
                 comment_id: Some(comment.id),
                 edit_id: None,
+                conflict_id: None,
             },
             context,
         )?;
@@ -257,6 +266,7 @@ impl Notification {
                 creator_id: edit.creator_id,
                 comment_id: None,
                 edit_id: Some(edit.id),
+                conflict_id: None,
             },
             context,
         )

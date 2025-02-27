@@ -113,7 +113,7 @@ impl Object for ArticleWrapper {
 
         let mut edits = json.edits.dereference(&article, context).await?.0;
         edits.sort_by_key(|e| Reverse(e.published));
-        if let Some(edit) = edits.get(0) {
+        if let Some(edit) = edits.first() {
             Notification::notify_article(&article, edit.creator_id, context)?;
         }
 

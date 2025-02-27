@@ -52,7 +52,7 @@ pub async fn setup(context: &Data<IbisContext>) -> Result<(), BackendError> {
     )?;
 
     // Admin follows local instance by default
-    Instance::follow(&admin.person.clone().into(), &instance, false, &context)?;
+    Instance::follow(&admin.person.clone(), &instance, false, context)?;
 
     // Create the main page which is shown by default
     let form = DbArticleForm {
