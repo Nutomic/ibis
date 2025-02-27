@@ -2,14 +2,14 @@ use activitypub_federation::config::Data;
 use chrono::Utc;
 use ibis_database::{
     common::{
+        MAIN_PAGE_NAME,
         article::{Article, EditVersion},
         instance::Instance,
         user::Person,
         utils::http_protocol_str,
-        MAIN_PAGE_NAME,
     },
     error::BackendError,
-    impls::{article::DbArticleForm, instance::DbInstanceForm, IbisContext},
+    impls::{IbisContext, article::DbArticleForm, instance::DbInstanceForm},
     utils::generate_keypair,
 };
 use ibis_federate::{
@@ -68,7 +68,7 @@ pub async fn setup(context: &Data<IbisContext>) -> Result<(), BackendError> {
         protected: true,
         approved: true,
     };
-    let article = Article::create(form, context)?;
+    let article = Article::create(form, admin.person.id, context)?;
     // also create an article so its included in most recently edited list
     submit_article_update(
         MAIN_PAGE_DEFAULT_TEXT.to_string(),

@@ -3,12 +3,22 @@ use crate::{
         article::{Article, Conflict, Edit},
         comment::Comment,
         newtypes::{ArticleId, ArticleNotifId, CommentId, EditId, LocalUserId, PersonId},
-        notifications::ApiNotification,
+        notifications::{ApiNotification, ApiNotificationData},
         user::{LocalUserView, Person},
     },
     error::BackendResult,
     impls::IbisContext,
-    schema::{article, article_follow, comment, conflict, edit, local_user, notification, person},
+    schema::{
+        article,
+        article_follow,
+        comment,
+        conflict,
+        edit,
+        instance_follow,
+        local_user,
+        notification,
+        person,
+    },
 };
 use chrono::{DateTime, Utc};
 use diesel::{
@@ -61,22 +71,14 @@ impl Notification {
             .filter(conflict::dsl::creator_id.eq(user.person.id))
             .select((conflict::all_columns, article::all_columns))
             .get_results(conn.deref_mut())?;
+        // TODO
+        /*
         notifications.extend(
             conflicts
                 .into_iter()
                 .map(|(c, a)| ApiNotification::EditConflict(c, a)),
         );
-
-        // new articles requiring approval
-        if user.local_user.admin {
-            let articles = article::table
-                .group_by(article::dsl::id)
-                .filter(article::dsl::approved.eq(false))
-                .select(article::all_columns)
-                .get_results(&mut conn)?
-                .into_iter();
-            notifications.extend(articles.map(ApiNotification::ArticleApprovalRequired))
-        }
+        */
 
         // new edits and comments for followed articles
         let article_notifications = notification::table
@@ -85,6 +87,7 @@ impl Notification {
             .left_join(comment::table)
             .left_join(edit::table)
             .filter(notification::local_user_id.eq(user.local_user.id))
+            .order_by(notification::published.desc())
             .select((
                 notification::all_columns,
                 article::all_columns,
@@ -95,17 +98,25 @@ impl Notification {
             .get_results::<(Notification, Article, Person, Option<Comment>, Option<Edit>)>(
                 &mut conn,
             )?;
-        notifications.extend(article_notifications.into_iter().flat_map(
+        notifications.extend(article_notifications.into_iter().map(
             |(notif, article, creator, comment, edit)| {
-                if let Some(c) = comment {
-                    Some(ApiNotification::Comment(notif.id, c, creator, article))
+                use ApiNotificationData::*;
+                let (published, data) = if let Some(c) = comment {
+                    (c.published.clone(), Comment(c))
+                } else if let Some(e) = edit {
+                    (e.published.clone(), Edit(e))
                 } else {
-                    edit.map(|e| ApiNotification::Edit(notif.id, e, creator, article))
+                    (article.published, ArticleCreated)
+                };
+                ApiNotification {
+                    id: notif.id,
+                    creator,
+                    article,
+                    published,
+                    data,
                 }
             },
         ));
-
-        notifications.sort_by(|a, b| b.published().cmp(a.published()));
         Ok(notifications)
     }
 
@@ -119,17 +130,6 @@ impl Notification {
             .first::<i64>(conn.deref_mut())
             .unwrap_or(0);
         num += conflicts;
-
-        // new articles requiring approval
-        if user.local_user.admin {
-            let articles = article::table
-                .group_by(article::dsl::id)
-                .filter(article::dsl::approved.eq(false))
-                .select(count(article::id))
-                .first::<i64>(conn.deref_mut())
-                .unwrap_or(0);
-            num += articles;
-        }
 
         // new edits and comments for followed articles
         let article_notifications = notification::table
@@ -154,6 +154,43 @@ impl Notification {
                 .filter(notification::local_user_id.eq(user.local_user.id)),
         )
         .execute(&mut conn)?;
+        Ok(())
+    }
+
+    pub fn notify_article(
+        article: &Article,
+        creator_id: PersonId,
+        context: &IbisContext,
+    ) -> BackendResult<()> {
+        let mut conn = context.db_pool.get()?;
+        let followers = instance_follow::table
+            .inner_join(person::table.inner_join(local_user::table))
+            .filter(instance_follow::instance_id.eq(article.instance_id))
+            .select((local_user::person_id, local_user::id))
+            .get_results::<(PersonId, LocalUserId)>(&mut conn)?;
+        let notifs: Vec<_> = followers
+            .into_iter()
+            // exclude creator so he doesnt get notified about his own edit/comment
+            .flat_map(|(person_id, local_user_id)| {
+                if person_id != creator_id {
+                    Some(local_user_id)
+                } else {
+                    None
+                }
+            })
+            .map(|local_user_id| NotificationInsertForm {
+                local_user_id,
+                article_id: article.id,
+                creator_id,
+                comment_id: None,
+                edit_id: None,
+            })
+            .collect();
+
+        insert_into(notification::table)
+            .values(&notifs)
+            .on_conflict_do_nothing()
+            .execute(&mut conn)?;
         Ok(())
     }
 

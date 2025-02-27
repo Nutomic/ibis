@@ -26,7 +26,7 @@ pub struct ApubEditCollection {
 }
 
 #[derive(Clone, Debug)]
-pub struct EditCollection();
+pub struct EditCollection(pub Vec<EditWrapper>);
 
 #[async_trait::async_trait]
 impl Collection for EditCollection {
@@ -72,14 +72,17 @@ impl Collection for EditCollection {
         owner: &Self::Owner,
         context: &Data<Self::DataType>,
     ) -> Result<Self, Self::Error> {
-        try_join_all(
+        let edits = try_join_all(
             apub.items
                 .into_iter()
                 .map(|i| EditWrapper::from_json(i, context)),
         )
         .await
         .map_err(|e| warn!("Failed to synchronize edits for {}: {e}", owner.ap_id))
-        .ok();
-        Ok(EditCollection())
+        .ok()
+        .into_iter()
+        .flatten()
+        .collect();
+        Ok(EditCollection(edits))
     }
 }

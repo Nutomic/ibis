@@ -74,7 +74,7 @@ pub(crate) async fn create_article(
         protected: false,
         approved: !context.config.options.article_approval,
     };
-    let article = Article::create(form, &context)?;
+    let article = Article::create(form, user.person.id, &context)?;
 
     let edit_data = EditArticleParams {
         article_id: article.id,
@@ -243,7 +243,7 @@ pub(crate) async fn fork_article(
         protected: false,
         approved: !context.config.options.article_approval,
     };
-    let article = Article::create(form, &context)?;
+    let article = Article::create(form, user.person.id, &context)?;
 
     // copy edits to new article
     // this could also be done in sql

@@ -884,7 +884,7 @@ async fn api_test_article_approval_required() -> Result<()> {
     assert_eq!(1, alpha.notifications_count().await.unwrap());
     let notifications = alpha.notifications_list().await.unwrap();
     assert_eq!(1, notifications.len());
-    let ApiNotification::ArticleApprovalRequired(notif) = &notifications[0] else {
+    let ApiNotification::ArticleCreated(notif) = &notifications[0] else {
         panic!()
     };
     assert_eq!(create_res.article.id, notif.id);

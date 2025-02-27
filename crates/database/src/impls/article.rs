@@ -1,9 +1,10 @@
+use super::notifications::Notification;
 use crate::{
     DbUrl,
     common::{
         article::{Article, ArticleView, EditVersion},
         comment::Comment,
-        newtypes::{ArticleId, InstanceId},
+        newtypes::{ArticleId, InstanceId, PersonId},
         user::LocalUserView,
     },
     error::BackendResult,
@@ -60,11 +61,18 @@ impl Article {
         Ok(Url::parse(&format!("{}/edits", self.ap_id))?.into())
     }
 
-    pub fn create(form: DbArticleForm, context: &IbisContext) -> BackendResult<Self> {
+    pub fn create(
+        form: DbArticleForm,
+        creator_id: PersonId,
+        context: &IbisContext,
+    ) -> BackendResult<Self> {
         let mut conn = context.db_pool.get()?;
-        Ok(insert_into(article::table)
+        let article = insert_into(article::table)
             .values(form)
-            .get_result(conn.deref_mut())?)
+            .get_result(conn.deref_mut())?;
+
+        Notification::notify_article(&article, creator_id, context)?;
+        Ok(article)
     }
 
     pub fn create_or_update(form: DbArticleForm, context: &IbisContext) -> BackendResult<Self> {
