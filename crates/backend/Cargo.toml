@@ -1,11 +1,7 @@
 [package]
-name = "ibis_backend"
+name = "ibis"
 version.workspace = true
 edition.workspace = true
-
-[[bin]]
-name = "ibis"
-path = "src/main.rs"
 
 [dependencies]
 ibis_database.workspace = true

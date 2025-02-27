@@ -1915,24 +1915,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "ibis_api_client"
-version = "0.2.2"
-dependencies = [
- "gloo-net",
- "http",
- "ibis_database",
- "leptos",
- "log",
- "reqwest",
- "send_wrapper",
- "serde",
- "serde_json",
- "serde_urlencoded",
- "url",
-]
-
-[[package]]
-name = "ibis_backend"
+name = "ibis"
 version = "0.2.2"
 dependencies = [
  "activitypub_federation",
@@ -1966,6 +1949,23 @@ dependencies = [
  "tower 0.5.2",
  "tower-http",
  "tower-layer",
+ "url",
+]
+
+[[package]]
+name = "ibis_api_client"
+version = "0.2.2"
+dependencies = [
+ "gloo-net",
+ "http",
+ "ibis_database",
+ "leptos",
+ "log",
+ "reqwest",
+ "send_wrapper",
+ "serde",
+ "serde_json",
+ "serde_urlencoded",
  "url",
 ]
 

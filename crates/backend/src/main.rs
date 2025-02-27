@@ -1,4 +1,4 @@
-use ibis_backend::start;
+use ibis::start;
 use ibis_database::config::IbisConfig;
 use log::LevelFilter;
 

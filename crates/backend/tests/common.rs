@@ -2,7 +2,7 @@
 
 use anyhow::Result;
 use ibis_api_client::{ApiClient, user::RegisterUserParams};
-use ibis_backend::start;
+use ibis::start;
 use ibis_database::{
     common::instance::Options,
     config::{IbisConfig, IbisConfigDatabase, IbisConfigFederation},

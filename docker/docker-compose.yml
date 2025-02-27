@@ -7,7 +7,7 @@ x-logging: &default-logging
 services:
 
   ibis:
-    image: {{ lemmy_docker_image }}
+    image: nutomic/ibis:{version}
     restart: always
     logging: *default-logging
     volumes:
