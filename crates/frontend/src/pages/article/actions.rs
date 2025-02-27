@@ -9,6 +9,7 @@ use crate::{
 use ibis_api_client::{
     CLIENT,
     article::{ForkArticleParams, ProtectArticleParams},
+    errors::FrontendResultExt,
 };
 use ibis_database::common::{article::Article, newtypes::ArticleId};
 use leptos::{ev::KeyboardEvent, prelude::*};
@@ -19,21 +20,16 @@ pub fn ArticleActions() -> impl IntoView {
     let article = article_resource();
     let (new_title, set_new_title) = signal(String::new());
     let (fork_response, set_fork_response) = signal(Option::<Article>::None);
-    let (error, set_error) = signal(None::<String>);
     let fork_action = Action::new(move |(article_id, new_title): &(ArticleId, String)| {
         let params = ForkArticleParams {
             article_id: *article_id,
             new_title: new_title.to_string(),
         };
         async move {
-            set_error.update(|e| *e = None);
-            let result = CLIENT.fork_article(&params).await;
-            match result {
-                Ok(res) => set_fork_response.set(Some(res.article)),
-                Err(err) => {
-                    set_error.update(|e| *e = Some(err.to_string()));
-                }
-            }
+            CLIENT
+                .fork_article(&params)
+                .await
+                .error_popup(|res| set_fork_response.set(Some(res.article)));
         }
     });
     let protect_action = Action::new(move |(id, protected): &(ArticleId, bool)| {
@@ -42,14 +38,19 @@ pub fn ArticleActions() -> impl IntoView {
             protected: !protected,
         };
         async move {
-            set_error.update(|e| *e = None);
-            let result = CLIENT.protect_article(&params).await;
-            match result {
-                Ok(_res) => article.refetch(),
-                Err(err) => {
-                    set_error.update(|e| *e = Some(err.to_string()));
-                }
-            }
+            CLIENT
+                .protect_article(&params)
+                .await
+                .error_popup(|_| article.refetch());
+        }
+    });
+    let remove_action = Action::new(move |(id, removed): &(ArticleId, bool)| {
+        let (id, removed) = (*id, *removed);
+        async move {
+            CLIENT
+                .remove_article(id, !removed)
+                .await
+                .error_popup(|_| article.refetch());
         }
     });
     view! {
@@ -61,24 +62,32 @@ pub fn ArticleActions() -> impl IntoView {
                     .map(|article| {
                         view! {
                             <div>
-                                {move || {
-                                    error
-                                        .get()
-                                        .map(|err| {
-                                            view! { <p class="alert">{err}</p> }
-                                        })
-                                }} <Show when=move || { is_admin() && article.article.local }>
-                                    <button
-                                        class="btn btn-secondary"
-                                        on:click=move |_| {
-                                            protect_action
-                                                .dispatch((article.article.id, article.article.protected));
-                                        }
-                                    >
-                                        Toggle Article Protection
-                                    </button>
-                                    <p>"Protect a local article so that only admins can edit it"</p>
-                                </Show> <Show when=move || !article.article.local>
+                                <Show when=move || { is_admin() && article.article.local }>
+                                    <div class="m-4">
+                                        <button
+                                            class="btn btn-secondary"
+                                            title="Protect a local article so that only admins can edit it"
+                                            on:click=move |_| {
+                                                protect_action
+                                                    .dispatch((article.article.id, article.article.protected));
+                                            }
+                                        >
+                                            Toggle Article Protection
+                                        </button>
+                                    </div>
+                                    <div class="m-4">
+                                        <button
+                                            class="btn btn-secondary"
+                                            on:click=move |_| {
+                                                remove_action
+                                                    .dispatch((article.article.id, article.article.removed));
+                                            }
+                                        >
+                                            Toggle Article Removal
+                                        </button>
+                                    </div>
+                                </Show>
+                                <Show when=move || !article.article.local>
                                     <input
                                         class="input"
                                         placeholder="New Title"
@@ -109,6 +118,5 @@ pub fn ArticleActions() -> impl IntoView {
             })}
             {fork_response.get().map(|article| view! { <Redirect path=article_path(&article) /> })}
         </SuspenseError>
-        <p>"TODO: add option for admin to delete article etc"</p>
     }
 }

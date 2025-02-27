@@ -135,8 +135,10 @@ impl Article {
                     .eq(article::id)
                     .and(article_follow::local_user_id.nullable().eq(local_user_id))),
             )
-            .filter(not(article::removed))
             .into_boxed();
+        if !user.map(|u| u.local_user.admin).unwrap_or_default() {
+            query = query.filter(not(article::removed));
+        }
         query = match params.into() {
             ArticleViewQuery::Id(id) => query.filter(article::id.eq(id)),
             ArticleViewQuery::Name(title, domain) => {
