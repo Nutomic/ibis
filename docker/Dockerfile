@@ -1,9 +1,7 @@
 FROM debian:bookworm-slim
 
-LABEL org.opencontainers.image.authors="The Lemmy Authors"
-LABEL org.opencontainers.image.source="https://github.com/LemmyNet/lemmy"
-LABEL org.opencontainers.image.licenses="AGPL-3.0-or-later"
-LABEL org.opencontainers.image.description="A link aggregator and forum for the fediverse"
+LABEL org.opencontainers.image.source="https://github.com/Nutomic/ibis"
+LABEL org.opencontainers.image.licenses="AGPL-3.0"
 
 ARG UNAME=ibis
 ARG UID=1000
