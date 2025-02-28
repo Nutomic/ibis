@@ -3,6 +3,9 @@ name = "ibis"
 version.workspace = true
 edition.workspace = true
 
+[lints]
+workspace = true
+
 [dependencies]
 ibis_database.workspace = true
 leptos.workspace = true

@@ -21,7 +21,7 @@ use diesel::{
     PgTextExpressionMethods,
     QueryDsl,
     RunQueryDsl,
-    dsl::{delete, max},
+    dsl::{delete, max, not},
     insert_into,
 };
 use std::ops::DerefMut;
@@ -36,7 +36,6 @@ pub struct DbArticleForm {
     pub instance_id: InstanceId,
     pub local: bool,
     pub protected: bool,
-    pub approved: bool,
 }
 
 #[derive(Debug)]
@@ -103,26 +102,22 @@ impl Article {
             .get_result::<Self>(conn.deref_mut())?)
     }
 
-    pub fn update_approved(
+    pub fn update_removed(
         id: ArticleId,
-        approved: bool,
+        removed: bool,
         context: &IbisContext,
     ) -> BackendResult<Self> {
         let mut conn = context.db_pool.get()?;
         Ok(diesel::update(article::dsl::article.find(id))
-            .set(article::dsl::approved.eq(approved))
+            .set(article::dsl::removed.eq(removed))
             .get_result::<Self>(conn.deref_mut())?)
-    }
-
-    pub fn delete(id: ArticleId, context: &IbisContext) -> BackendResult<Self> {
-        let mut conn = context.db_pool.get()?;
-        Ok(diesel::delete(article::dsl::article.find(id)).get_result::<Self>(conn.deref_mut())?)
     }
 
     pub fn read(id: ArticleId, context: &IbisContext) -> BackendResult<Self> {
         let mut conn = context.db_pool.get()?;
         Ok(article::table
             .find(id)
+            .filter(not(article::removed))
             .get_result::<Self>(conn.deref_mut())?)
     }
 
@@ -141,6 +136,9 @@ impl Article {
                     .and(article_follow::local_user_id.nullable().eq(local_user_id))),
             )
             .into_boxed();
+        if !user.map(|u| u.local_user.admin).unwrap_or_default() {
+            query = query.filter(not(article::removed));
+        }
         query = match params.into() {
             ArticleViewQuery::Id(id) => query.filter(article::id.eq(id)),
             ArticleViewQuery::Name(title, domain) => {
@@ -184,20 +182,23 @@ impl Article {
     pub fn read_all(
         only_local: Option<bool>,
         instance_id: Option<InstanceId>,
+        include_removed: bool,
         context: &IbisContext,
     ) -> BackendResult<Vec<Self>> {
         let mut conn = context.db_pool.get()?;
         let mut query = article::table
             .inner_join(edit::table)
             .inner_join(instance::table)
-            .filter(article::dsl::approved.eq(true))
-            .group_by(article::dsl::id)
-            .order_by(max(edit::dsl::published).desc())
+            .group_by(article::id)
+            .order_by(max(edit::published).desc())
             .select(article::all_columns)
             .into_boxed();
 
         if let Some(true) = only_local {
-            query = query.filter(article::dsl::local.eq(true));
+            query = query.filter(article::local);
+        }
+        if !include_removed {
+            query = query.filter(article::removed.eq(false));
         }
         if let Some(instance_id) = instance_id {
             query = query.filter(instance::dsl::id.eq(instance_id));
@@ -213,6 +214,7 @@ impl Article {
             .replace(' ', "%");
         let replaced = format!("%{replaced}%");
         Ok(article::table
+            .filter(not(article::removed))
             .filter(
                 article::dsl::title
                     .ilike(&replaced)

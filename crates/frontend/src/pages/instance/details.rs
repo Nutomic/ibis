@@ -43,6 +43,7 @@ pub fn InstanceDetails() -> impl IntoView {
                                     .list_articles(ListArticlesParams {
                                         only_local: None,
                                         instance_id: Some(instance_id),
+                                        include_removed: None,
                                     })
                                     .await
                             },

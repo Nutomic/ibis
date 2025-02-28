@@ -55,8 +55,8 @@ pub struct Article {
     pub instance_id: InstanceId,
     pub local: bool,
     pub protected: bool,
-    pub approved: bool,
     pub published: DateTime<Utc>,
+    pub removed: bool,
 }
 
 /// Represents a single change to the article.

@@ -72,10 +72,6 @@ pub struct Options {
     #[default = true]
     #[cfg_attr(feature = "ssr", doku(example = "true"))]
     pub registration_open: bool,
-    /// Whether admins need to approve new articles
-    #[default = false]
-    #[cfg_attr(feature = "ssr", doku(example = "false"))]
-    pub article_approval: bool,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]

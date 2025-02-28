@@ -106,7 +106,6 @@ impl Object for ArticleWrapper {
             local: false,
             instance_id: instance.id,
             protected: json.protected,
-            approved: true,
         };
         form.title = validate_article_title(&form.title)?;
         let article = Article::create_or_update(form, context)?;

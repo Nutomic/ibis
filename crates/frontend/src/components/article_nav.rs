@@ -21,6 +21,7 @@ use phosphor_leptos::{
     LIST,
     LOCK_SIMPLE,
     PENCIL,
+    TRASH,
 };
 
 #[derive(Clone, Copy)]
@@ -49,6 +50,7 @@ pub fn ArticleNav(
                         let article_link = article_path(&article_.article);
                         let article_link_ = article_link.clone();
                         let ap_id = article_.article.ap_id.to_string();
+                        let removed = article_.article.removed;
                         let protected = article_.article.protected;
                         let follow_article_action = Action::new(move |_: &()| async move {
                             CLIENT
@@ -98,7 +100,7 @@ pub fn ArticleNav(
                                     </A>
                                 </Show>
                                 <Suspense>
-                                    <Show when=is_logged_in>
+                                    <Show when=is_admin>
                                         <A
                                             href=format!("{article_link_}/actions")
                                             {..}
@@ -117,6 +119,11 @@ pub fn ArticleNav(
                                 <a href=ap_id class="mr-2">
                                     <Icon icon=FEDIVERSE_LOGO size="24px" />
                                 </a>
+                                <Show when=move || removed>
+                                    <span class="mr-2" title="Article was removed">
+                                        <Icon icon=TRASH size="24px" />
+                                    </span>
+                                </Show>
                                 <Show when=move || protected>
                                     <span
                                         class="mr-2"

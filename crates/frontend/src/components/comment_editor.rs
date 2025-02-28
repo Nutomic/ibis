@@ -1,3 +1,4 @@
+use crate::components::prevent_navigation;
 use ibis_api_client::{
     CLIENT,
     comment::{CreateCommentParams, EditCommentParams},
@@ -35,6 +36,7 @@ pub fn CommentEditorView(
     if let Some(edit_params) = &edit_params {
         set_content.set(edit_params.comment.content.clone())
     };
+    prevent_navigation(content);
 
     let submit_comment_action = Action::new(move |_: &()| {
         let edit_params = edit_params.clone();

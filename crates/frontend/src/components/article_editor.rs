@@ -1,6 +1,5 @@
-use crate::{markdown::render_article_markdown, utils::use_cookie};
-use leptos::{ev::beforeunload, html::Textarea, prelude::*};
-use leptos_use::{use_event_listener, use_window};
+use crate::{components::prevent_navigation, markdown::render_article_markdown, utils::use_cookie};
+use leptos::{html::Textarea, prelude::*};
 
 #[component]
 pub fn EditorView(
@@ -12,13 +11,7 @@ pub fn EditorView(
     let cookie = use_cookie("editor_preview");
     let show_preview = Signal::derive(move || cookie.0.get().unwrap_or(true));
 
-    // Prevent user from accidentally closing the page while editing. Doesnt prevent navigation
-    // within Ibis.
-    // https://github.com/Nutomic/ibis/issues/87
-    let _ = use_event_listener(use_window(), beforeunload, |evt| {
-        evt.stop_propagation();
-        evt.prevent_default();
-    });
+    prevent_navigation(content);
 
     view! {
         <div>
