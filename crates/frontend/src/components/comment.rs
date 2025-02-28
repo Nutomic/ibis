@@ -123,16 +123,16 @@ pub fn CommentView(
                                 <Icon icon=TRASH />
                             </a>
                         </Show>
-                        <Show when=move || show_editor.0.get() == comment.comment.id>
-                            <CommentEditorView
-                                article=article
-                                parent_id=comment.comment.id
-                                set_show_editor=show_editor.1
-                            />
-                        </Show>
                     </div>
                 </Show>
             </div>
+            <Show when=move || show_editor.0.get() == comment.comment.id>
+                <CommentEditorView
+                    article=article
+                    parent_id=comment.comment.id
+                    set_show_editor=show_editor.1
+                />
+            </Show>
             <div class="m-0 divider"></div>
         </div>
     }
