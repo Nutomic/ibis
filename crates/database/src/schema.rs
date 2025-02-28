@@ -119,7 +119,7 @@ diesel::table! {
 diesel::table! {
     local_user (id) {
         id -> Int4,
-        password_encrypted -> Text,
+        password_encrypted -> Nullable<Text>,
         person_id -> Int4,
         admin -> Bool,
     }
@@ -135,6 +135,16 @@ diesel::table! {
         edit_id -> Nullable<Int4>,
         published -> Timestamptz,
         conflict_id -> Nullable<Int4>,
+    }
+}
+
+diesel::table! {
+    oauth_account (oauth_issuer_url, local_user_id) {
+        local_user_id -> Int4,
+        oauth_issuer_url -> Text,
+        oauth_user_id -> Text,
+        published -> Timestamptz,
+        updated -> Nullable<Timestamptz>,
     }
 }
 
@@ -175,6 +185,7 @@ diesel::joinable!(notification -> conflict (conflict_id));
 diesel::joinable!(notification -> edit (edit_id));
 diesel::joinable!(notification -> local_user (local_user_id));
 diesel::joinable!(notification -> person (creator_id));
+diesel::joinable!(oauth_account -> local_user (local_user_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     article,
@@ -188,5 +199,6 @@ diesel::allow_tables_to_appear_in_same_query!(
     jwt_secret,
     local_user,
     notification,
+    oauth_account,
     person,
 );

@@ -1,14 +1,7 @@
 use crate::api::{
     article::{
-        create_article,
-        edit_article,
-        fork_article,
-        get_article,
-        get_conflict,
-        list_articles,
-        protect_article,
-        resolve_article,
-        search_article,
+        create_article, edit_article, fork_article, get_article, get_conflict, list_articles,
+        protect_article, resolve_article, search_article,
     },
     comment::{create_comment, edit_comment},
     instance::{follow_instance, get_instance, resolve_instance},
@@ -18,14 +11,12 @@ use activitypub_federation::config::Data;
 use anyhow::anyhow;
 use article::{delete_conflict, follow_article, remove_article};
 use axum::{
-    Extension,
-    Json,
-    Router,
-    extract::{Query, rejection::ExtensionRejection},
+    extract::{rejection::ExtensionRejection, Query},
     response::IntoResponse,
     routing::{delete, get, patch, post},
+    Extension, Json, Router,
 };
-use axum_macros::{FromRequestParts, debug_handler};
+use axum_macros::{debug_handler, FromRequestParts};
 use http::StatusCode;
 use ibis_api_client::article::GetEditList;
 use ibis_database::{
@@ -35,21 +26,19 @@ use ibis_database::{
         user::{LocalUserView, Person},
     },
     error::BackendResult,
-    impls::{IbisContext, edit::ViewEditParams},
+    impls::{edit::ViewEditParams, IbisContext},
 };
 use instance::{list_instance_views, update_instance};
 use std::ops::Deref;
 use user::{
-    article_notif_mark_as_read,
-    count_notifications,
-    get_user_follows,
-    list_notifications,
+    article_notif_mark_as_read, count_notifications, get_user_follows, list_notifications,
     update_user_profile,
 };
 
 mod article;
 mod comment;
 mod instance;
+mod register_user;
 pub(super) mod user;
 
 pub fn api_routes() -> Router<()> {
@@ -87,6 +76,7 @@ pub fn api_routes() -> Router<()> {
         .route("/account/login", post(login_user))
         .route("/account/logout", post(logout_user))
         .route("/account/update", post(update_user_profile))
+        .route("/oauth/authenticate", post(authenticate_with_oauth))
         .route("/site", get(site_view))
 }
 
@@ -102,11 +92,20 @@ pub(crate) async fn site_view(
     context: Data<IbisContext>,
     user: Option<UserExt>,
 ) -> BackendResult<Json<SiteView>> {
+    let oauth_providers = context
+        .config
+        .oauth_providers
+        .clone()
+        .into_iter()
+        .map(Into::into)
+        .collect();
+
     Ok(Json(SiteView {
         my_profile: user.map(|u| u.inner()),
         config: context.config.options.clone(),
         admin: Person::read_admin(&context)?,
         instance: Instance::read_local(&context)?,
+        oauth_providers,
     }))
 }
 

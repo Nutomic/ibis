@@ -24,7 +24,7 @@ pub struct LocalUserView {
 pub struct LocalUser {
     pub id: LocalUserId,
     #[serde(skip)]
-    pub password_encrypted: String,
+    pub password_encrypted: Option<String>,
     pub person_id: PersonId,
     pub admin: bool,
 }

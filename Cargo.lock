@@ -1247,6 +1247,7 @@ dependencies = [
  "doku-derive",
  "serde",
  "serde_json",
+ "url",
 ]
 
 [[package]]

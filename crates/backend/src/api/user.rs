@@ -1,7 +1,7 @@
-use super::{UserExt, empty_to_none};
+use super::{empty_to_none, UserExt};
 use activitypub_federation::config::Data;
 use anyhow::anyhow;
-use axum::{Form, Json, extract::Query};
+use axum::{extract::Query, Form, Json};
 use axum_extra::extract::cookie::{Cookie, CookieJar, Expiration, SameSite};
 use axum_macros::debug_handler;
 use bcrypt::verify;
@@ -12,24 +12,17 @@ use ibis_api_client::{
 };
 use ibis_database::{
     common::{
-        AUTH_COOKIE,
-        SuccessResponse,
         instance::InstanceFollow,
         notifications::ApiNotification,
         user::{LocalUserView, Person},
+        SuccessResponse, AUTH_COOKIE,
     },
     error::BackendResult,
-    impls::{IbisContext, notifications::Notification, read_jwt_secret, user::PersonUpdateForm},
+    impls::{notifications::Notification, read_jwt_secret, user::PersonUpdateForm, IbisContext},
 };
 use ibis_federate::validate::{validate_display_name, validate_user_name};
 use jsonwebtoken::{
-    DecodingKey,
-    EncodingKey,
-    Header,
-    Validation,
-    decode,
-    encode,
-    get_current_timestamp,
+    decode, encode, get_current_timestamp, DecodingKey, EncodingKey, Header, Validation,
 };
 use serde::{Deserialize, Serialize};
 use time::{Duration, OffsetDateTime};
@@ -92,7 +85,12 @@ pub(crate) async fn login_user(
     Form(params): Form<LoginUserParams>,
 ) -> BackendResult<(CookieJar, Json<LocalUserView>)> {
     let user = Person::read_local_from_name(&params.username, &context)?;
-    let valid = verify(&params.password, &user.local_user.password_encrypted)?;
+    let valid = user
+        .local_user
+        .password_encrypted
+        .as_ref()
+        .and_then(|pw| verify(&params.password, &pw).ok())
+        .unwrap_or(false);
     if !valid {
         return Err(anyhow!("Invalid login").into());
     }

@@ -3,6 +3,7 @@ use super::{
     newtypes::InstanceId,
     user::{LocalUserView, Person},
 };
+use crate::config::OAuthProvider;
 use crate::DbUrl;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -82,4 +83,28 @@ pub struct SiteView {
     pub config: Options,
     pub admin: Person,
     pub instance: Instance,
+    pub oauth_providers: Vec<OAuthProviderPublic>,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct OAuthProviderPublic {
+    pub issuer: Url,
+    pub display_name: String,
+    pub authorization_endpoint: Url,
+    pub client_id: String,
+    pub scopes: String,
+    pub use_pkce: bool,
+}
+
+impl From<OAuthProvider> for OAuthProviderPublic {
+    fn from(provider: OAuthProvider) -> Self {
+        Self {
+            issuer: provider.issuer,
+            display_name: provider.display_name,
+            authorization_endpoint: provider.authorization_endpoint,
+            client_id: provider.client_id,
+            scopes: provider.scopes,
+            use_pkce: provider.use_pkce,
+        }
+    }
 }

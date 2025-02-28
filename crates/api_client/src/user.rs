@@ -1,13 +1,14 @@
 use super::ApiClient;
 use crate::{article::GetEditList, errors::FrontendResult};
 use ibis_database::common::{
-    SuccessResponse,
     article::EditView,
     instance::InstanceFollow,
     newtypes::PersonId,
     user::{LocalUserView, Person},
+    SuccessResponse,
 };
 use serde::{Deserialize, Serialize};
+use url::Url;
 
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct RegisterUserParams {
@@ -31,6 +32,17 @@ pub struct GetUserParams {
 pub struct UpdateUserParams {
     pub display_name: Option<String>,
     pub bio: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+/// Logging in with an OAuth 2.0 authorization
+pub struct AuthenticateWithOauth {
+    pub code: String,
+    pub oauth_issuer: Url,
+    pub redirect_uri: Url,
+    /// Username is mandatory at registration time
+    pub username: Option<String>,
+    pub pkce_code_verifier: Option<String>,
 }
 
 impl ApiClient {
