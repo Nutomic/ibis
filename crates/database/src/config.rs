@@ -42,8 +42,8 @@ pub struct IbisConfigDatabase {
     #[doku(example = "postgres://ibis:password@localhost:5432/ibis")]
     pub connection_url: String,
     /// Database connection pool size
-    #[default(5)]
-    #[doku(example = "5")]
+    #[default(30)]
+    #[doku(example = "30")]
     pub pool_size: u32,
 }
 

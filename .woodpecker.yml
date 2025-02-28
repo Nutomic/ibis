@@ -105,6 +105,19 @@ steps:
     when:
       - event: tag
 
+  publish_release_docker:
+    image: woodpeckerci/plugin-docker-buildx
+    settings:
+      repo: nutomic/ibis
+      dockerfile: docker/Dockerfile
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
+      tag: ${CI_COMMIT_TAG}
+    when:
+      - event: tag
+
 services:
   database:
     image: postgres:16-alpine

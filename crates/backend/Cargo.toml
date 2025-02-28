@@ -1,5 +1,5 @@
 [package]
-name = "ibis_backend"
+name = "ibis"
 version.workspace = true
 edition.workspace = true
 
