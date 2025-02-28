@@ -16,5 +16,5 @@ COPY target/release/ibis /usr/local/bin/ibis
 RUN ls -la /usr/local/bin/ibis
 
 ENTRYPOINT ["ibis"]
-EXPOSE 8081
+EXPOSE 3000
 STOPSIGNAL SIGTERM
