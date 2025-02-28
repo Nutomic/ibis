@@ -8,13 +8,16 @@ services:
 
   ibis:
     image: nutomic/ibis:{version}
+    ports:
+      - "127.0.0.1:3000:3000"
     restart: always
     logging: *default-logging
+    environment:
+      - LEPTOS_SITE_ADDR=0.0.0.0:3000
     volumes:
-      - ./config.toml:/config/config.hjson:Z
+      - ./config.toml:/config.toml:Z
     depends_on:
       - postgres
-      - pictrs
 
   postgres:
     image: docker.io/pgautoupgrade/pgautoupgrade:16-alpine
