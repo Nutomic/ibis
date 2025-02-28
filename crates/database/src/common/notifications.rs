@@ -1,7 +1,7 @@
 use super::{
-    article::{Article, Conflict, Edit},
+    article::{Article, Edit},
     comment::Comment,
-    newtypes::ArticleNotifId,
+    newtypes::{ArticleNotifId, ConflictId},
     user::Person,
 };
 use chrono::{DateTime, Utc};
@@ -19,8 +19,10 @@ pub struct ApiNotification {
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub enum ApiNotificationData {
     ArticleCreated,
-    // TODO: this should only return conflict id and article name
-    EditConflict(Conflict),
+    EditConflict {
+        conflict_id: ConflictId,
+        summary: String,
+    },
     Comment(Comment),
     Edit(Edit),
 }

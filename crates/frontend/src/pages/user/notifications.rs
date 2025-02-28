@@ -15,8 +15,9 @@ use ibis_api_client::{
     errors::{FrontendError, FrontendResultExt},
 };
 use ibis_database::common::{
-    article::{Conflict, Edit},
+    article::Edit,
     comment::Comment,
+    newtypes::ConflictId,
     notifications::{ApiNotification, ApiNotificationData},
 };
 use leptos::{either::EitherOf4, prelude::*};
@@ -44,18 +45,17 @@ pub fn Notifications() -> impl IntoView {
                             n.iter()
                                 .map(|notif| {
                                     use ApiNotificationData::*;
+                                    use EitherOf4::*;
                                     let refresh_res = notifications;
                                     match &notif.data {
-                                        EditConflict(c) => {
-                                            EitherOf4::A(edit_conflict_view(notif, c, refresh_res))
+                                        EditConflict { conflict_id, summary } => {
+                                            A(
+                                                edit_conflict_view(notif, conflict_id, summary, refresh_res),
+                                            )
                                         }
-                                        ArticleCreated => {
-                                            EitherOf4::B(article_view(notif, refresh_res))
-                                        }
-                                        Comment(c) => {
-                                            EitherOf4::C(comment_view(notif, c, refresh_res))
-                                        }
-                                        Edit(e) => EitherOf4::D(edit_view(notif, e, refresh_res)),
+                                        ArticleCreated => B(article_view(notif, refresh_res)),
+                                        Comment(c) => C(comment_view(notif, c, refresh_res)),
+                                        Edit(e) => D(edit_view(notif, e, refresh_res)),
                                     }
                                 })
                                 .collect::<Vec<_>>()
@@ -69,18 +69,19 @@ pub fn Notifications() -> impl IntoView {
 
 fn edit_conflict_view(
     notif: &ApiNotification,
-    conflict: &Conflict,
+    conflict_id: &ConflictId,
+    summary: &str,
     refresh_res: NotificationsResource,
 ) -> impl IntoView {
     let href = format!(
         "{}/edit?conflict_id={}",
         article_path(&notif.article),
-        conflict.id.0,
+        conflict_id.0,
     );
     view! {
         <li class="py-2">
             <CardTitle notif=notif.clone() />
-            <div>"Edit conflict: "{conflict.summary.clone()}</div>
+            <div>"Edit conflict: "{summary.to_string()}</div>
             <CardActions
                 href=href
                 notif=notif.clone()

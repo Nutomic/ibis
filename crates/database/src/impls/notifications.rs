@@ -108,7 +108,10 @@ impl Notification {
                 } else if let Some(e) = edit {
                     (e.published, Edit(e))
                 } else if let Some(c) = conflict {
-                    (c.published, EditConflict(c))
+                    (c.published, EditConflict {
+                        conflict_id: c.id,
+                        summary: c.summary,
+                    })
                 } else {
                     (article.published, ArticleCreated)
                 };

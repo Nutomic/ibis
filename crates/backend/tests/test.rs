@@ -426,13 +426,15 @@ async fn api_test_local_edit_conflict() -> Result<()> {
 
     let notifications = alpha.notifications_list().await.unwrap();
     assert_eq!(1, notifications.len());
-    let ApiNotificationData::EditConflict(conflict) = &notifications[0].data else {
+    let ApiNotificationData::EditConflict {
+        conflict_id,
+        summary,
+    } = &notifications[0].data
+    else {
         panic!()
     };
-    assert_eq!(conflict.article_id, edit_res.article.id);
-    assert_eq!(conflict.hash, edit_res.hash);
-    assert_eq!(conflict.id, edit_res.id);
-    assert_eq!(conflict.summary, edit_res.summary);
+    assert_eq!(conflict_id, &edit_res.id);
+    assert_eq!(summary, &edit_res.summary);
 
     let edit_params = EditArticleParams {
         article_id: create_res.article.id,
@@ -534,11 +536,15 @@ async fn api_test_federated_edit_conflict() -> Result<()> {
     assert_eq!(1, gamma.notifications_count().await.unwrap());
     let notifications = gamma.notifications_list().await.unwrap();
     assert_eq!(1, notifications.len());
-    let ApiNotificationData::EditConflict(conflict) = &notifications[0].data else {
+    let ApiNotificationData::EditConflict {
+        conflict_id,
+        summary: _,
+    } = &notifications[0].data
+    else {
         panic!()
     };
 
-    let conflict = gamma.get_conflict(conflict.id).await?;
+    let conflict = gamma.get_conflict(*conflict_id).await?;
 
     // resolve the conflict
     let edit_params = EditArticleParams {
