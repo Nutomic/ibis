@@ -34,7 +34,6 @@ steps:
 
   publish_release_docker:
     image: woodpeckerci/plugin-docker-buildx
-    privileged: true
     settings:
       repo: nutomic/ibis
       dockerfile: docker/Dockerfile
