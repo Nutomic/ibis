@@ -13,7 +13,12 @@ pub fn Register() -> impl IntoView {
     let register_action = Action::new(move |(email, password): &(String, String)| {
         let username = email.to_string();
         let password = password.to_string();
-        let params = RegisterUserParams { username, password };
+        let params = RegisterUserParams {
+            username,
+            email: todo!(),
+            password,
+            password_verify: todo!(),
+        };
         info!("Try to register new account for {}", params.username);
         async move {
             set_wait_for_response.set(true);

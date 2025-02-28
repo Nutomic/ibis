@@ -1,21 +1,29 @@
 use crate::{
+    DbUrl,
     common::{
         instance::InstanceFollow,
-        newtypes::PersonId,
+        newtypes::{LocalUserId, PersonId},
         user::{LocalUser, LocalUserView, Person},
         utils::http_protocol_str,
     },
     error::BackendResult,
     impls::IbisContext,
-    schema::{instance, instance_follow, local_user, person},
+    schema::{instance, instance_follow, local_user, oauth_account, person},
     utils::generate_keypair,
-    DbUrl,
 };
-use bcrypt::{hash, DEFAULT_COST};
+use bcrypt::{DEFAULT_COST, hash};
 use chrono::{DateTime, Utc};
 use diesel::{
-    insert_into, AsChangeset, ExpressionMethods, Insertable, JoinOnDsl, PgTextExpressionMethods,
-    QueryDsl, RunQueryDsl,
+    AsChangeset,
+    ExpressionMethods,
+    Insertable,
+    JoinOnDsl,
+    PgTextExpressionMethods,
+    QueryDsl,
+    Queryable,
+    RunQueryDsl,
+    Selectable,
+    insert_into,
 };
 use std::ops::DerefMut;
 use url::Url;
@@ -23,7 +31,7 @@ use url::Url;
 #[derive(Debug, Clone, Insertable, AsChangeset)]
 #[diesel(table_name = local_user, check_for_backend(diesel::pg::Pg))]
 pub struct LocalUserForm {
-    pub password_encrypted: String,
+    pub password_encrypted: Option<String>,
     pub person_id: PersonId,
     pub admin: bool,
 }
@@ -49,6 +57,26 @@ pub struct PersonUpdateForm {
     pub bio: Option<String>,
 }
 
+#[derive(Clone, PartialEq, Eq, Debug, Queryable, Selectable)]
+#[ diesel(table_name = oauth_account)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+/// An auth account method.
+pub struct OAuthAccount {
+    pub local_user_id: LocalUserId,
+    pub oauth_issuer_url: DbUrl,
+    pub oauth_user_id: String,
+    pub published: DateTime<Utc>,
+    pub updated: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug, Clone, Insertable, AsChangeset)]
+#[ diesel(table_name = oauth_account)]
+pub struct OAuthAccountInsertForm {
+    pub local_user_id: LocalUserId,
+    pub oauth_issuer_url: DbUrl,
+    pub oauth_user_id: String,
+}
+
 impl Person {
     pub fn create(person_form: &PersonInsertForm, context: &IbisContext) -> BackendResult<Self> {
         let mut conn = context.db_pool.get()?;
@@ -72,50 +100,6 @@ impl Person {
             .filter(local_user::admin)
             .select(person::all_columns)
             .get_result(conn.deref_mut())?)
-    }
-
-    pub fn create_local(
-        username: String,
-        password: String,
-        admin: bool,
-        context: &IbisContext,
-    ) -> BackendResult<LocalUserView> {
-        let mut conn = context.db_pool.get()?;
-        let domain = &context.config.federation.domain;
-        let ap_id = Url::parse(&format!(
-            "{}://{domain}/user/{username}",
-            http_protocol_str()
-        ))?
-        .into();
-        let inbox_url = format!("{}://{domain}/inbox", http_protocol_str());
-        let keypair = generate_keypair()?;
-        let person_form = PersonInsertForm {
-            username,
-            ap_id,
-            inbox_url,
-            public_key: keypair.public_key,
-            private_key: Some(keypair.private_key),
-            last_refreshed_at: Utc::now(),
-            local: true,
-            display_name: None,
-            bio: None,
-        };
-
-        let person = insert_into(person::table)
-            .values(person_form)
-            .get_result::<Person>(conn.deref_mut())?;
-
-        let local_user_form = LocalUserForm {
-            password_encrypted: hash(password, DEFAULT_COST)?,
-            person_id: person.id,
-            admin,
-        };
-
-        let local_user = insert_into(local_user::table)
-            .values(local_user_form)
-            .get_result::<LocalUser>(conn.deref_mut())?;
-
-        Ok(LocalUserView { local_user, person })
     }
 
     pub fn read_from_ap_id(ap_id: &DbUrl, context: &IbisContext) -> BackendResult<Person> {
@@ -156,19 +140,6 @@ impl Person {
             .set(form)
             .execute(conn.deref_mut())?;
         Ok(())
-    }
-
-    pub fn read_local_from_name(
-        username: &str,
-        context: &IbisContext,
-    ) -> BackendResult<LocalUserView> {
-        let mut conn = context.db_pool.get()?;
-        let (person, local_user) = person::table
-            .inner_join(local_user::table)
-            .filter(person::dsl::local)
-            .filter(person::dsl::username.eq(username))
-            .get_result::<(Person, LocalUser)>(conn.deref_mut())?;
-        Ok(LocalUserView { person, local_user })
     }
 
     pub fn read_following(
@@ -212,5 +183,75 @@ impl Person {
             };
             Person::create(&person_form, context)
         }
+    }
+}
+
+#[derive(Debug)]
+pub enum LocalUserViewQuery<'a> {
+    LocalName(&'a str),
+    Oauth(DbUrl, String),
+}
+
+impl LocalUserView {
+    pub fn create(
+        username: String,
+        password: Option<String>,
+        admin: bool,
+        context: &IbisContext,
+    ) -> BackendResult<Self> {
+        let mut conn = context.db_pool.get()?;
+        let domain = &context.config.federation.domain;
+        let ap_id = Url::parse(&format!(
+            "{}://{domain}/user/{username}",
+            http_protocol_str()
+        ))?
+        .into();
+        let inbox_url = format!("{}://{domain}/inbox", http_protocol_str());
+        let keypair = generate_keypair()?;
+        let person_form = PersonInsertForm {
+            username,
+            ap_id,
+            inbox_url,
+            public_key: keypair.public_key,
+            private_key: Some(keypair.private_key),
+            last_refreshed_at: Utc::now(),
+            local: true,
+            display_name: None,
+            bio: None,
+        };
+
+        let person = insert_into(person::table)
+            .values(person_form)
+            .get_result::<Person>(conn.deref_mut())?;
+
+        let local_user_form = LocalUserForm {
+            password_encrypted: password.map(|p| hash(p, DEFAULT_COST)).transpose()?,
+            person_id: person.id,
+            admin,
+        };
+
+        let local_user = insert_into(local_user::table)
+            .values(local_user_form)
+            .get_result::<LocalUser>(conn.deref_mut())?;
+
+        Ok(Self { local_user, person })
+    }
+
+    pub fn read(params: LocalUserViewQuery, context: &IbisContext) -> BackendResult<LocalUserView> {
+        let mut conn = context.db_pool.get()?;
+        let mut query = local_user::table
+            .inner_join(person::table)
+            .left_join(oauth_account::table)
+            .select((person::all_columns, local_user::all_columns))
+            .into_boxed();
+        query = match params {
+            LocalUserViewQuery::LocalName(name) => query
+                .filter(person::local)
+                .filter(person::username.eq(name)),
+            LocalUserViewQuery::Oauth(issuer, user_id) => query
+                .filter(oauth_account::oauth_issuer_url.eq(issuer))
+                .filter(oauth_account::oauth_user_id.eq(user_id)),
+        };
+        Ok(query.get_result::<LocalUserView>(conn.deref_mut())?)
     }
 }

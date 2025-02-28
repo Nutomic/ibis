@@ -1,22 +1,32 @@
 use crate::api::{
     article::{
-        create_article, edit_article, fork_article, get_article, get_conflict, list_articles,
-        protect_article, resolve_article, search_article,
+        create_article,
+        edit_article,
+        fork_article,
+        get_article,
+        get_conflict,
+        list_articles,
+        protect_article,
+        resolve_article,
+        search_article,
     },
     comment::{create_comment, edit_comment},
     instance::{follow_instance, get_instance, resolve_instance},
-    user::{get_user, login_user, logout_user, register_user},
+    register_user::register_user,
+    user::{get_user, login_user, logout_user},
 };
 use activitypub_federation::config::Data;
 use anyhow::anyhow;
 use article::{delete_conflict, follow_article, remove_article};
 use axum::{
-    extract::{rejection::ExtensionRejection, Query},
+    Extension,
+    Json,
+    Router,
+    extract::{Query, rejection::ExtensionRejection},
     response::IntoResponse,
     routing::{delete, get, patch, post},
-    Extension, Json, Router,
 };
-use axum_macros::{debug_handler, FromRequestParts};
+use axum_macros::{FromRequestParts, debug_handler};
 use http::StatusCode;
 use ibis_api_client::article::GetEditList;
 use ibis_database::{
@@ -26,12 +36,16 @@ use ibis_database::{
         user::{LocalUserView, Person},
     },
     error::BackendResult,
-    impls::{edit::ViewEditParams, IbisContext},
+    impls::{IbisContext, edit::ViewEditParams},
 };
 use instance::{list_instance_views, update_instance};
+use register_user::authenticate_with_oauth;
 use std::ops::Deref;
 use user::{
-    article_notif_mark_as_read, count_notifications, get_user_follows, list_notifications,
+    article_notif_mark_as_read,
+    count_notifications,
+    get_user_follows,
+    list_notifications,
     update_user_profile,
 };
 
@@ -76,7 +90,7 @@ pub fn api_routes() -> Router<()> {
         .route("/account/login", post(login_user))
         .route("/account/logout", post(logout_user))
         .route("/account/update", post(update_user_profile))
-        .route("/oauth/authenticate", post(authenticate_with_oauth))
+        .route("/account/oauth/authenticate", post(authenticate_with_oauth))
         .route("/site", get(site_view))
 }
 

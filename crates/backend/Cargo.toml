@@ -15,9 +15,6 @@ anyhow.workspace = true
 url.workspace = true
 log.workspace = true
 time = "0.3.37"
-
-# backend-only deps
-[target.'cfg(not(target_family = "wasm"))'.dependencies]
 ibis_federate.workspace = true
 ibis_api_client.workspace = true
 ibis_frontend = { workspace = true, features = ["ssr"] }
@@ -44,6 +41,9 @@ bcrypt.workspace = true
 fmtm = "0.0.3"
 moka = { version = "0.12.10", features = ["sync"] }
 doku.workspace = true
+regex.workspace = true
+reqwest.workspace = true
+serde_json.workspace =true
 
 [dev-dependencies]
 pretty_assertions = "1.4.1"

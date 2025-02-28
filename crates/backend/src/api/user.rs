@@ -1,7 +1,7 @@
-use super::{empty_to_none, UserExt};
+use super::{UserExt, empty_to_none};
 use activitypub_federation::config::Data;
 use anyhow::anyhow;
-use axum::{extract::Query, Form, Json};
+use axum::{Form, Json, extract::Query};
 use axum_extra::extract::cookie::{Cookie, CookieJar, Expiration, SameSite};
 use axum_macros::debug_handler;
 use bcrypt::verify;
@@ -12,17 +12,29 @@ use ibis_api_client::{
 };
 use ibis_database::{
     common::{
+        AUTH_COOKIE,
+        SuccessResponse,
         instance::InstanceFollow,
         notifications::ApiNotification,
         user::{LocalUserView, Person},
-        SuccessResponse, AUTH_COOKIE,
     },
     error::BackendResult,
-    impls::{notifications::Notification, read_jwt_secret, user::PersonUpdateForm, IbisContext},
+    impls::{
+        IbisContext,
+        notifications::Notification,
+        read_jwt_secret,
+        user::{LocalUserViewQuery, PersonUpdateForm},
+    },
 };
 use ibis_federate::validate::{validate_display_name, validate_user_name};
 use jsonwebtoken::{
-    decode, encode, get_current_timestamp, DecodingKey, EncodingKey, Header, Validation,
+    DecodingKey,
+    EncodingKey,
+    Header,
+    Validation,
+    decode,
+    encode,
+    get_current_timestamp,
 };
 use serde::{Deserialize, Serialize};
 use time::{Duration, OffsetDateTime};
@@ -39,7 +51,10 @@ struct Claims {
     pub exp: u64,
 }
 
-fn generate_login_token(person: &Person, context: &Data<IbisContext>) -> BackendResult<String> {
+pub(crate) fn generate_login_token(
+    person: &Person,
+    context: &Data<IbisContext>,
+) -> BackendResult<String> {
     let hostname = context.domain().to_string();
     let claims = Claims {
         sub: person.username.clone(),
@@ -59,23 +74,7 @@ pub async fn validate(jwt: &str, context: &IbisContext) -> BackendResult<LocalUs
     let secret = read_jwt_secret(context)?;
     let key = DecodingKey::from_secret(secret.as_bytes());
     let claims = decode::<Claims>(jwt, &key, &validation)?;
-    Person::read_local_from_name(&claims.claims.sub, context)
-}
-
-#[debug_handler]
-pub(crate) async fn register_user(
-    context: Data<IbisContext>,
-    jar: CookieJar,
-    Form(params): Form<RegisterUserParams>,
-) -> BackendResult<(CookieJar, Json<LocalUserView>)> {
-    if !context.config.options.registration_open {
-        return Err(anyhow!("Registration is closed").into());
-    }
-    validate_user_name(&params.username)?;
-    let user = Person::create_local(params.username, params.password, false, &context)?;
-    let token = generate_login_token(&user.person, &context)?;
-    let jar = jar.add(create_cookie(token, &context));
-    Ok((jar, Json(user)))
+    LocalUserView::read(LocalUserViewQuery::LocalName(&claims.claims.sub), context)
 }
 
 #[debug_handler]
@@ -84,7 +83,7 @@ pub(crate) async fn login_user(
     jar: CookieJar,
     Form(params): Form<LoginUserParams>,
 ) -> BackendResult<(CookieJar, Json<LocalUserView>)> {
-    let user = Person::read_local_from_name(&params.username, &context)?;
+    let user = LocalUserView::read(LocalUserViewQuery::LocalName(&params.username), &context)?;
     let valid = user
         .local_user
         .password_encrypted
@@ -99,7 +98,7 @@ pub(crate) async fn login_user(
     Ok((jar, Json(user)))
 }
 
-fn create_cookie(jwt: String, context: &Data<IbisContext>) -> Cookie<'static> {
+pub(crate) fn create_cookie(jwt: String, context: &Data<IbisContext>) -> Cookie<'static> {
     let mut cookie = Cookie::build((AUTH_COOKIE, jwt));
 
     // Must not set cookie domain on localhost

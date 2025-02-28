@@ -5,7 +5,7 @@ use ibis_database::{
         MAIN_PAGE_NAME,
         article::{Article, EditVersion},
         instance::Instance,
-        user::Person,
+        user::{LocalUserView, Person},
         utils::http_protocol_str,
     },
     error::BackendError,
@@ -44,7 +44,7 @@ pub async fn setup(context: &Data<IbisContext>) -> Result<(), BackendError> {
     };
     let instance = Instance::create(&form, context)?;
 
-    let admin = Person::create_local(
+    let admin = LocalUserView::create(
         context.config.setup.admin_username.clone(),
         context.config.setup.admin_password.clone(),
         true,

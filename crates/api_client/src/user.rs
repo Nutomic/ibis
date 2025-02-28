@@ -1,11 +1,11 @@
 use super::ApiClient;
 use crate::{article::GetEditList, errors::FrontendResult};
 use ibis_database::common::{
+    SuccessResponse,
     article::EditView,
     instance::InstanceFollow,
     newtypes::PersonId,
     user::{LocalUserView, Person},
-    SuccessResponse,
 };
 use serde::{Deserialize, Serialize};
 use url::Url;
@@ -13,7 +13,9 @@ use url::Url;
 #[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct RegisterUserParams {
     pub username: String,
+    pub email: Option<String>,
     pub password: String,
+    pub password_verify: String,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -43,6 +45,16 @@ pub struct AuthenticateWithOauth {
     /// Username is mandatory at registration time
     pub username: Option<String>,
     pub pkce_code_verifier: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+/// Response from OAuth token endpoint
+pub struct OAuthTokenResponse {
+    pub access_token: String,
+    pub token_type: String,
+    pub expires_in: Option<i64>,
+    pub refresh_token: Option<String>,
+    pub scope: Option<String>,
 }
 
 impl ApiClient {

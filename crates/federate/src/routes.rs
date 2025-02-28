@@ -56,10 +56,10 @@ use ibis_database::{
         comment::Comment,
         instance::Instance,
         newtypes::CommentId,
-        user::Person,
+        user::{LocalUserView, Person},
     },
     error::{BackendError, BackendResult},
-    impls::IbisContext,
+    impls::{IbisContext, user::LocalUserViewQuery},
 };
 use serde::{Deserialize, Serialize};
 use url::Url;
@@ -90,7 +90,10 @@ async fn http_get_person(
     Path(name): Path<String>,
     context: Data<IbisContext>,
 ) -> BackendResult<FederationJson<WithContext<ApubUser>>> {
-    let person: PersonWrapper = Person::read_local_from_name(&name, &context)?.person.into();
+    let person: PersonWrapper =
+        LocalUserView::read(LocalUserViewQuery::LocalName(&name), &context)?
+            .person
+            .into();
     let json_person = person.into_json(&context).await?;
     Ok(FederationJson(WithContext::new_default(json_person)))
 }
