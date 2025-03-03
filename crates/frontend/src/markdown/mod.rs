@@ -8,6 +8,7 @@ use std::sync::OnceLock;
 use table_of_contents::{TocMarkerScanner, TocScanner};
 
 pub mod article_link;
+pub mod external_link;
 pub mod math_equation;
 pub mod table_of_contents;
 
@@ -60,12 +61,12 @@ fn common_markdown() -> MarkdownIt {
     {
         // Markdown-it inline core features. Image is disabled to prevent embedding external
         // images. Later we need to add proper image support using pictrs.
+        // External link uses a custom impl further down with icon.
         use markdown_it::plugins::cmark::inline::*;
         newline::add(p);
         escape::add(p);
         backticks::add(p);
         emphasis::add(p);
-        link::add(p);
         autolink::add(p);
         entity::add(p);
     }
@@ -91,6 +92,8 @@ fn common_markdown() -> MarkdownIt {
         tables::add(p);
         typographer::add(p);
     }
+
+    external_link::add(p);
 
     parser
 }
