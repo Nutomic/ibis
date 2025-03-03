@@ -49,7 +49,7 @@ async fn node_info(context: Data<IbisContext>) -> BackendResult<Json<NodeInfo>> 
             local_posts: stats.articles,
             local_comments: stats.comments,
         },
-        open_registrations: context.config.options.registration_open,
+        open_registrations: context.conf.options.registration_open,
         services: Default::default(),
         metadata: vec![],
     }))

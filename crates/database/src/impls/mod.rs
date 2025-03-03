@@ -24,7 +24,7 @@ const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
 #[derive(Clone)]
 pub struct IbisContext {
     pub db_pool: DbPool,
-    pub config: IbisConfig,
+    pub conf: IbisConfig,
 }
 
 impl IbisContext {
@@ -44,7 +44,10 @@ impl IbisContext {
             .get()?
             .run_pending_migrations(MIGRATIONS)
             .expect("run migrations");
-        Ok(IbisContext { db_pool, config })
+        Ok(IbisContext {
+            db_pool,
+            conf: config,
+        })
     }
 }
 

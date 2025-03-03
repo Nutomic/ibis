@@ -1,4 +1,5 @@
 use crate::{
+    DbUrl,
     common::{
         instance::InstanceFollow,
         newtypes::{LocalUserId, PersonId},
@@ -9,13 +10,20 @@ use crate::{
     impls::IbisContext,
     schema::{instance, instance_follow, local_user, oauth_account, person},
     utils::generate_keypair,
-    DbUrl,
 };
-use bcrypt::{hash, DEFAULT_COST};
+use bcrypt::{DEFAULT_COST, hash};
 use chrono::{DateTime, Utc};
 use diesel::{
-    insert_into, AsChangeset, ExpressionMethods, Insertable, JoinOnDsl, PgTextExpressionMethods,
-    QueryDsl, Queryable, RunQueryDsl, Selectable,
+    AsChangeset,
+    ExpressionMethods,
+    Insertable,
+    JoinOnDsl,
+    PgTextExpressionMethods,
+    QueryDsl,
+    Queryable,
+    RunQueryDsl,
+    Selectable,
+    insert_into,
 };
 use std::ops::DerefMut;
 use url::Url;
@@ -156,7 +164,7 @@ impl Person {
         if read.is_ok() {
             read
         } else {
-            let domain = &context.config.federation.domain;
+            let domain = &context.conf.federation.domain;
             let ap_id = Url::parse(&format!(
                 "{}://{domain}/user/{username}",
                 http_protocol_str()
@@ -196,7 +204,7 @@ impl LocalUserView {
         context: &IbisContext,
     ) -> BackendResult<Self> {
         let mut conn = context.db_pool.get()?;
-        let domain = &context.config.federation.domain;
+        let domain = &context.conf.federation.domain;
         let ap_id = Url::parse(&format!(
             "{}://{domain}/user/{username}",
             http_protocol_str()

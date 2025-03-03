@@ -8,7 +8,7 @@ use bcrypt::verify;
 use chrono::Utc;
 use ibis_api_client::{
     notifications::ArticleNotifMarkAsReadParams,
-    user::{GetUserParams, LoginUserParams, RegisterUserParams, UpdateUserParams},
+    user::{GetUserParams, LoginUserParams, UpdateUserParams},
 };
 use ibis_database::{
     common::{
@@ -26,7 +26,7 @@ use ibis_database::{
         user::{LocalUserViewQuery, PersonUpdateForm},
     },
 };
-use ibis_federate::validate::{validate_display_name, validate_user_name};
+use ibis_federate::validate::validate_display_name;
 use jsonwebtoken::{
     DecodingKey,
     EncodingKey,

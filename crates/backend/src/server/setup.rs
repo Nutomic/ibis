@@ -2,14 +2,14 @@ use activitypub_federation::config::Data;
 use chrono::Utc;
 use ibis_database::{
     common::{
+        MAIN_PAGE_NAME,
         article::{Article, EditVersion},
         instance::Instance,
         user::{LocalUserView, Person},
         utils::http_protocol_str,
-        MAIN_PAGE_NAME,
     },
     error::BackendError,
-    impls::{article::DbArticleForm, instance::DbInstanceForm, IbisContext},
+    impls::{IbisContext, article::DbArticleForm, instance::DbInstanceForm},
     utils::generate_keypair,
 };
 use ibis_federate::{
@@ -25,7 +25,7 @@ and to list interesting articles.
 ";
 
 pub async fn setup(context: &Data<IbisContext>) -> Result<(), BackendError> {
-    let domain = &context.config.federation.domain;
+    let domain = &context.conf.federation.domain;
     let ap_id = Url::parse(&format!("{}://{domain}", http_protocol_str()))?.into();
     let inbox_url = format!("{}://{domain}/inbox", http_protocol_str());
     let keypair = generate_keypair()?;
@@ -45,8 +45,8 @@ pub async fn setup(context: &Data<IbisContext>) -> Result<(), BackendError> {
     let instance = Instance::create(&form, context)?;
 
     let admin = LocalUserView::create(
-        context.config.setup.admin_username.clone(),
-        Some(context.config.setup.admin_password.clone()),
+        context.conf.setup.admin_username.clone(),
+        Some(context.conf.setup.admin_password.clone()),
         true,
         None,
         context,

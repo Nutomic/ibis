@@ -107,7 +107,7 @@ pub(crate) async fn site_view(
     user: Option<UserExt>,
 ) -> BackendResult<Json<SiteView>> {
     let oauth_providers = context
-        .config
+        .conf
         .oauth_providers
         .clone()
         .into_iter()
@@ -116,7 +116,7 @@ pub(crate) async fn site_view(
 
     Ok(Json(SiteView {
         my_profile: user.map(|u| u.inner()),
-        config: context.config.options.clone(),
+        config: context.conf.options.clone(),
         admin: Person::read_admin(&context)?,
         instance: Instance::read_local(&context)?,
         oauth_providers,

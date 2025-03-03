@@ -23,8 +23,8 @@ pub async fn start(
 ) -> BackendResult<()> {
     let context = IbisContext::init(config, override_hostname.is_some())?;
     let data = FederationConfig::builder()
-        .domain(context.config.federation.domain.clone())
-        .url_verifier(Box::new(VerifyUrlData(context.config.clone())))
+        .domain(context.conf.federation.domain.clone())
+        .url_verifier(Box::new(VerifyUrlData(context.conf.clone())))
         .app_data(context)
         .http_fetch_limit(1000)
         .debug(cfg!(debug_assertions))

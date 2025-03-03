@@ -56,7 +56,7 @@ use ibis_database::{
         comment::Comment,
         instance::Instance,
         newtypes::CommentId,
-        user::{LocalUserView, Person},
+        user::LocalUserView,
     },
     error::{BackendError, BackendResult},
     impls::{IbisContext, user::LocalUserViewQuery},

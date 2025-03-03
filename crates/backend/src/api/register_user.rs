@@ -1,17 +1,17 @@
 use super::user::{create_cookie, generate_login_token};
-use activitypub_federation::{config::Data, http_signatures::generate_actor_keypair};
+use activitypub_federation::config::Data;
 use anyhow::anyhow;
 use axum::{Form, Json};
 use axum_extra::extract::CookieJar;
 use axum_macros::debug_handler;
 use ibis_api_client::user::{AuthenticateWithOauth, OAuthTokenResponse, RegisterUserParams};
 use ibis_database::{
-    common::user::{LocalUserView, Person},
+    common::user::LocalUserView,
     config::OAuthProvider,
     error::{BackendError, BackendResult},
     impls::{
-        user::{LocalUserViewQuery, OAuthAccount, OAuthAccountInsertForm},
         IbisContext,
+        user::{LocalUserViewQuery, OAuthAccount, OAuthAccountInsertForm},
     },
 };
 use ibis_federate::validate::validate_user_name;
@@ -25,7 +25,7 @@ pub async fn register_user(
     jar: CookieJar,
     Form(params): Form<RegisterUserParams>,
 ) -> BackendResult<(CookieJar, Json<LocalUserView>)> {
-    if !context.config.options.registration_open {
+    if !context.conf.options.registration_open {
         return Err(anyhow!("Registration is closed").into());
     }
 
@@ -34,7 +34,7 @@ pub async fn register_user(
         Err(anyhow!("PasswordsDoNotMatch"))?;
     }
 
-    if context.config.options.email_required && params.email.is_none() {
+    if context.conf.options.email_required && params.email.is_none() {
         Err(anyhow!("EmailRequired"))?
     }
 
@@ -85,7 +85,7 @@ pub async fn authenticate_with_oauth(
 
     // Fetch the OAUTH provider and make sure it's enabled
     let oauth_provider = context
-        .config
+        .conf
         .oauth_providers
         .iter()
         .filter(|provider| provider.enabled)
@@ -120,12 +120,12 @@ pub async fn authenticate_with_oauth(
         // user has never previously registered using oauth
 
         // prevent registration if registration is closed
-        if !context.config.options.registration_open {
+        if !context.conf.options.registration_open {
             return Err(anyhow!("Registration is closed").into());
         }
 
         // prevent registration if registration is closed for OAUTH providers
-        if !context.config.options.oauth_registration_open {
+        if !context.conf.options.oauth_registration_open {
             return Err(anyhow!("OAuth registration is closed").into());
         }
 
@@ -140,7 +140,7 @@ pub async fn authenticate_with_oauth(
 
             // we only allow linking by email when email_verification is required otherwise emails cannot
             // be trusted
-            if oauth_provider.account_linking_enabled && context.config.options.email_required {
+            if oauth_provider.account_linking_enabled && context.conf.options.email_required {
                 // Link with OAUTH => Login user
                 let oauth_account_form = OAuthAccountInsertForm {
                     local_user_id: user_view.local_user.id,
