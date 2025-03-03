@@ -2,7 +2,7 @@
 
 use anyhow::Result;
 use ibis::start;
-use ibis_api_client::{user::RegisterUserParams, ApiClient};
+use ibis_api_client::{ApiClient, user::RegisterUserParams};
 use ibis_database::{
     common::instance::Options,
     config::{IbisConfig, IbisConfigDatabase, IbisConfigFederation},
@@ -14,8 +14,8 @@ use std::{
     ops::Deref,
     process::{Command, Stdio},
     sync::{
-        atomic::{AtomicI32, Ordering},
         Once,
+        atomic::{AtomicI32, Ordering},
     },
     thread::spawn,
     time::Duration,

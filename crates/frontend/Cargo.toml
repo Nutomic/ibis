@@ -27,17 +27,17 @@ url.workspace = true
 leptos_meta = "0.7.4"
 leptos_router = "0.7.4"
 markdown-it = "0.6.1"
-markdown-it-block-spoiler = "1.0.1"
+markdown-it-block-spoiler = "1.0.2"
 markdown-it-heading-anchors = "0.3.0"
 markdown-it-footnote = "0.2.0"
-markdown-it-sub = "1.0.1"
-markdown-it-sup = "1.0.1"
-leptos-use = { version = "0.15.5", features = [
+markdown-it-sub = "1.0.2"
+markdown-it-sup = "1.0.2"
+leptos-use = { version = "0.15.6", features = [
   "use_textarea_autosize",
   "use_cookie",
   "use_preferred_dark",
 ], default-features = false }
-codee = "0.2.0"
+codee = { version = "0.2.0", features = ["json_serde"] }
 katex = { version = "0.4", default-features = false }
 github-slugger = "0.1.0"
 timeago = "0.4.2"

@@ -18,7 +18,7 @@ leptos.workspace = true
 url.workspace = true
 http.workspace = true
 serde_urlencoded = "0.7.1"
-serde_json = "1.0.135"
+serde_json = "1.0.140"
 gloo-net = "0.6.0"
 send_wrapper = "0.6.0"
 
