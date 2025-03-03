@@ -3,14 +3,14 @@ use super::{
     newtypes::InstanceId,
     user::{LocalUserView, Person},
 };
-use crate::{DbUrl, config::OAuthProvider};
+use crate::DbUrl;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use smart_default::SmartDefault;
 use url::Url;
 #[cfg(feature = "ssr")]
 use {
-    crate::schema::instance,
+    crate::{config::OAuthProvider, schema::instance},
     diesel::{Identifiable, Queryable, Selectable},
     doku::Document,
 };
@@ -103,6 +103,7 @@ pub struct OAuthProviderPublic {
     pub use_pkce: bool,
 }
 
+#[cfg(feature = "ssr")]
 impl From<OAuthProvider> for OAuthProviderPublic {
     fn from(provider: OAuthProvider) -> Self {
         Self {

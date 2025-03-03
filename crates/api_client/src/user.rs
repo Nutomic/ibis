@@ -1,11 +1,11 @@
 use super::ApiClient;
 use crate::{article::GetEditList, errors::FrontendResult};
 use ibis_database::common::{
-    SuccessResponse,
     article::EditView,
     instance::InstanceFollow,
     newtypes::PersonId,
     user::{LocalUserView, Person},
+    SuccessResponse,
 };
 use serde::{Deserialize, Serialize};
 use url::Url;

@@ -1,13 +1,15 @@
-use crate::{components::credentials::*, utils::resources::site};
-use ibis_api_client::{CLIENT, user::LoginUserParams};
+use crate::utils::resources::site;
+use ibis_api_client::errors::FrontendResultExt;
+use ibis_api_client::{user::LoginUserParams, CLIENT};
 use leptos::prelude::*;
 use leptos_meta::Title;
 use leptos_router::components::Redirect;
 
 #[component]
 pub fn Login() -> impl IntoView {
+    let (password, set_password) = signal(String::new());
+    let (username, set_username) = signal(String::new());
     let (login_response, set_login_response) = signal(false);
-    let (login_error, set_login_error) = signal(None::<String>);
     let (wait_for_response, set_wait_for_response) = signal(false);
 
     let login_action = Action::new(move |(email, password): &(String, String)| {
@@ -16,24 +18,18 @@ pub fn Login() -> impl IntoView {
         let params = LoginUserParams { username, password };
         async move {
             set_wait_for_response.update(|w| *w = true);
-            let result = CLIENT.login(params).await;
+            CLIENT.login(params).await.error_popup(|_| {
+                site().refetch();
+                set_login_response.set(true);
+            });
             set_wait_for_response.update(|w| *w = false);
-            match result {
-                Ok(_res) => {
-                    site().refetch();
-                    set_login_response.set(true);
-                    set_login_error.update(|e| *e = None);
-                }
-                Err(err) => {
-                    let msg = err.to_string();
-                    log::warn!("Unable to login: {msg}");
-                    set_login_error.update(|e| *e = Some(msg));
-                }
-            }
         }
     });
+    let dispatch_action = move || login_action.dispatch((username.get(), password.get()));
 
-    let disabled = Signal::derive(move || wait_for_response.get());
+    let button_is_disabled = Signal::derive(move || {
+        wait_for_response.get() || password.get().is_empty() || username.get().is_empty()
+    });
 
     view! {
         <Title text="Login" />
@@ -41,13 +37,39 @@ pub fn Login() -> impl IntoView {
             when=move || login_response.get()
             fallback=move || {
                 view! {
-                    <CredentialsForm
-                        title="Login"
-                        action_label="Login"
-                        action=login_action
-                        error=login_error.into()
-                        disabled
-                    />
+                    <form class="form-control max-w-80" on:submit=|ev| ev.prevent_default()>
+                        <h1 class="my-4 font-serif text-4xl font-bold grow max-w-fit">Login</h1>
+
+                        <input
+                            type="text"
+                            class="input input-primary input-bordered"
+                            required
+                            placeholder="Username"
+                            bind:value=(username, set_username)
+                            prop:disabled=move || wait_for_response.get()
+                        />
+                        <div class="h-2"></div>
+                        <input
+                            type="password"
+                            class="input input-primary input-bordered"
+                            required
+                            placeholder="Password"
+                            prop:disabled=move || wait_for_response.get()
+                            bind:value=(password, set_password)
+                        />
+
+                        <div>
+                            <button
+                                class="my-2 btn btn-primary"
+                                prop:disabled=move || button_is_disabled.get()
+                                on:click=move |_| {
+                                    dispatch_action();
+                                }
+                            >
+                                Login
+                            </button>
+                        </div>
+                    </form>
                 }
             }
         >
