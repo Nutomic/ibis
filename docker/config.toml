@@ -1,0 +1,12 @@
+# See here for all options and documentation:
+# https://github.com/Nutomic/ibis/blob/master/config/defaults.toml
+
+[federation]
+domain = "{your-domain}"
+
+[database]
+connection_url = "postgres://ibis:{your-db-password}@postgres:5432/ibis"
+
+[setup]
+admin_username = "{your-name}"
+admin_password = "{your-password}"

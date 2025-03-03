@@ -43,18 +43,18 @@ ibis_database = { path = "crates/database" }
 ibis_federate = { path = "crates/federate" }
 ibis_frontend = { path = "crates/frontend" }
 ibis_api_client = { path = "crates/api_client" }
-serde = { version = "1.0.217", features = ["derive"] }
-chrono = { version = "0.4.39", features = ["serde"] }
+serde = { version = "1.0.218", features = ["derive"] }
+chrono = { version = "0.4.40", features = ["serde"] }
 sha2 = "0.10.8"
-uuid = { version = "1.12.0", features = ["serde"] }
+uuid = { version = "1.15.1", features = ["serde"] }
 activitypub_federation = { version = "0.6.2", features = [
   "axum",
 ], default-features = false }
 url = { version = "2.5.4", features = ["serde"] }
-diffy = "0.4.0"
+diffy = "0.4.2"
 axum = "0.7.9"
 axum-macros = "0.4.2"
-anyhow = "1.0.95"
+anyhow = "1.0.97"
 log = "0.4"
 bcrypt = "0.16.0"
 doku = {version = "0.21.1", features = ["url-2"]}
@@ -70,7 +70,7 @@ reqwest = { version = "0.12.12", features = ["json", "cookies"] }
 name = "ibis"
 output-name = "ibis"
 assets-dir = "assets"
-bin-package = "ibis_backend"
+bin-package = "ibis"
 lib-package = "ibis_hydrate"
 lib-profile-release = "wasm-release"
 style-file = "assets/ibis.css"

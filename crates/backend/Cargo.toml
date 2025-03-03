@@ -1,5 +1,5 @@
 [package]
-name = "ibis_backend"
+name = "ibis"
 version.workspace = true
 edition.workspace = true
 
@@ -29,7 +29,7 @@ tower-http = { version = "0.6.2", features = [
 ] }
 http.workspace = true
 activitypub_federation.workspace = true
-jsonwebtoken = "9.3.0"
+jsonwebtoken = "9.3.1"
 leptos_axum = "0.7.4"
 diffy.workspace = true
 tower = "0.5.2"

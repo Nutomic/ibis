@@ -4,7 +4,7 @@
 connection_url = "postgres://ibis:password@localhost:5432/ibis"
 
 # Database connection pool size
-pool_size = 5
+pool_size = 30
 
 # Details of the initial admin account
 [setup]
