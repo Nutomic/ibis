@@ -8,7 +8,6 @@ pub mod article_editor;
 pub mod article_nav;
 pub mod comment;
 pub mod comment_editor;
-pub mod credentials;
 pub mod edit_list;
 pub mod instance_follow_button;
 pub mod nav;

@@ -26,3 +26,56 @@ blocklist = "evil.com,bad.org"
 [options]
 # Whether users can create new accounts
 registration_open = true
+
+# Whether new users can register using OAuth
+oauth_registration_open = true
+
+# Whether new users have to provide an email address to register
+email_required = false
+
+[[oauth_providers]]
+# The OAuth 2.0 provider name displayed to the user on the Login page
+display_name = "string"
+
+# The issuer url of the OAUTH provider.
+issuer = "https://www.rust-lang.org"
+
+# The authorization endpoint is used to interact with the resource owner and obtain an
+# authorization grant. This is usually provided by the OAUTH provider.
+authorization_endpoint = "https://www.rust-lang.org"
+
+# The token endpoint is used by the client to obtain an access token by presenting its
+# authorization grant or refresh token. This is usually provided by the OAUTH provider.
+token_endpoint = "https://www.rust-lang.org"
+
+# The UserInfo Endpoint is an OAuth 2.0 Protected Resource that returns Claims about the
+# authenticated End-User. This is defined in the OIDC specification.
+userinfo_endpoint = "https://www.rust-lang.org"
+
+# The OAuth 2.0 claim containing the unique user ID returned by the provider. Usually this
+# should be set to "sub".
+id_claim = "string"
+
+# The client_id is provided by the OAuth 2.0 provider and is a unique identifier to this
+# service
+client_id = "string"
+
+# The client_secret is provided by the OAuth 2.0 provider and is used to authenticate this
+# service with the provider
+client_secret = "string"
+
+# Lists the scopes requested from users. Users will have to grant access to the requested scope
+# at sign up.
+scopes = "string"
+
+# Automatically sets email as verified on registration
+auto_verify_email = true
+
+# Allows linking an OAUTH account to an existing user account by matching emails
+account_linking_enabled = true
+
+# switch to enable or disable an oauth provider
+enabled = true
+
+# switch to enable or disable PKCE
+use_pkce = true

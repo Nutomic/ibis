@@ -1,17 +1,23 @@
 use super::user::{create_cookie, generate_login_token};
+use crate::api::empty_to_none;
 use activitypub_federation::config::Data;
 use anyhow::anyhow;
 use axum::{Form, Json};
 use axum_extra::extract::CookieJar;
 use axum_macros::debug_handler;
-use ibis_api_client::user::{AuthenticateWithOauth, OAuthTokenResponse, RegisterUserParams};
+use ibis_api_client::user::{
+    AuthenticateWithOauth,
+    OAuthTokenResponse,
+    RegisterUserParams,
+    RegistrationResponse,
+};
 use ibis_database::{
     common::user::LocalUserView,
     config::OAuthProvider,
     error::{BackendError, BackendResult},
     impls::{
-        user::{LocalUserViewQuery, OAuthAccount, OAuthAccountInsertForm},
         IbisContext,
+        user::{LocalUserViewQuery, OAuthAccount, OAuthAccountInsertForm},
     },
 };
 use ibis_federate::validate::validate_user_name;
@@ -19,23 +25,35 @@ use regex::Regex;
 use reqwest::Client;
 use std::sync::LazyLock;
 
+type RegisterReturnType = BackendResult<(CookieJar, Json<RegistrationResponse>)>;
+
 #[debug_handler]
 pub async fn register_user(
     context: Data<IbisContext>,
     jar: CookieJar,
-    Form(params): Form<RegisterUserParams>,
-) -> BackendResult<(CookieJar, Json<LocalUserView>)> {
+    Form(mut params): Form<RegisterUserParams>,
+) -> RegisterReturnType {
+    empty_to_none(&mut params.email);
     if !context.conf.options.registration_open {
         return Err(anyhow!("Registration is closed").into());
     }
 
-    // Make sure passwords match
-    if params.password != params.password_verify {
-        Err(anyhow!("PasswordsDoNotMatch"))?;
+    if params.password.len() < 8 {
+        return Err(anyhow!("Passwords must have at least 8 characters").into());
+    }
+
+    if params.password != params.confirm_password {
+        return Err(anyhow!("Passwords dont match").into());
     }
 
     if context.conf.options.email_required && params.email.is_none() {
-        Err(anyhow!("EmailRequired"))?
+        return Err(anyhow!("Email required").into());
+    }
+
+    if let Some(email) = &params.email {
+        if !email.contains('@') {
+            return Err(anyhow!("Invalid email").into());
+        }
     }
 
     check_new_user(&params.username, params.email.as_deref(), &context)?;
@@ -48,11 +66,7 @@ pub async fn register_user(
         &context,
     )?;
 
-    check_email_verified(&user, &context)?;
-
-    let token = generate_login_token(&user.person, &context)?;
-    let jar = jar.add(create_cookie(token, &context));
-    Ok((jar, Json(user)))
+    register_return(user, jar, &context)
 }
 
 #[debug_handler]
@@ -60,7 +74,7 @@ pub async fn authenticate_with_oauth(
     context: Data<IbisContext>,
     jar: CookieJar,
     Form(params): Form<AuthenticateWithOauth>,
-) -> BackendResult<(CookieJar, Json<LocalUserView>)> {
+) -> RegisterReturnType {
     let oauth_invalid_err: BackendError = anyhow!("OauthAuthorizationInvalid").into();
     // validate inputs
     if params.code.is_empty() || params.code.len() > 300 {
@@ -174,11 +188,7 @@ pub async fn authenticate_with_oauth(
         }
     };
 
-    check_email_verified(&user, &context)?;
-
-    let token = generate_login_token(&user.person, &context)?;
-    let jar = jar.add(create_cookie(token, &context));
-    Ok((jar, Json(user)))
+    register_return(user, jar, &context)
 }
 
 static REQWEST: LazyLock<Client> = LazyLock::new(|| Client::new());
@@ -266,9 +276,22 @@ fn check_new_user(username: &str, email: Option<&str>, context: &IbisContext) ->
     Ok(())
 }
 
-fn check_email_verified(user: &LocalUserView, context: &IbisContext) -> BackendResult<()> {
-    if context.conf.options.email_required && user.local_user.email_verified {
-        return Err(anyhow!("email not verified").into());
+fn register_return(
+    user: LocalUserView,
+    mut jar: CookieJar,
+    context: &Data<IbisContext>,
+) -> RegisterReturnType {
+    let email_verification_required = context.conf.options.email_required;
+    if !email_verification_required {
+        let token = generate_login_token(&user.person, context)?;
+        jar = jar.add(create_cookie(token, context));
     }
-    Ok(())
+
+    Ok((
+        jar,
+        Json(RegistrationResponse {
+            user,
+            email_verification_required,
+        }),
+    ))
 }

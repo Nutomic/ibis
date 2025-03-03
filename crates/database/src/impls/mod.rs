@@ -1,11 +1,13 @@
 use crate::{config::IbisConfig, error::BackendResult, schema::jwt_secret};
-use diesel::sql_types;
 use diesel::{
+    PgConnection,
+    QueryDsl,
+    RunQueryDsl,
     define_sql_function,
     r2d2::{ConnectionManager, Pool},
-    PgConnection, QueryDsl, RunQueryDsl,
+    sql_types,
 };
-use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
+use diesel_migrations::{EmbeddedMigrations, MigrationHarness, embed_migrations};
 use std::{env::var, ops::DerefMut};
 
 pub mod article;

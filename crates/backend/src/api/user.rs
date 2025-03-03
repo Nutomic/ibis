@@ -1,7 +1,7 @@
-use super::{empty_to_none, UserExt};
+use super::{UserExt, empty_to_none};
 use activitypub_federation::config::Data;
 use anyhow::anyhow;
-use axum::{extract::Query, Form, Json};
+use axum::{Form, Json, extract::Query};
 use axum_extra::extract::cookie::{Cookie, CookieJar, Expiration, SameSite};
 use axum_macros::debug_handler;
 use bcrypt::verify;
@@ -12,22 +12,29 @@ use ibis_api_client::{
 };
 use ibis_database::{
     common::{
+        AUTH_COOKIE,
+        SuccessResponse,
         instance::InstanceFollow,
         notifications::ApiNotification,
         user::{LocalUserView, Person},
-        SuccessResponse, AUTH_COOKIE,
     },
     error::{BackendError, BackendResult},
     impls::{
+        IbisContext,
         notifications::Notification,
         read_jwt_secret,
         user::{LocalUserViewQuery, PersonUpdateForm},
-        IbisContext,
     },
 };
 use ibis_federate::validate::validate_display_name;
 use jsonwebtoken::{
-    decode, encode, get_current_timestamp, DecodingKey, EncodingKey, Header, Validation,
+    DecodingKey,
+    EncodingKey,
+    Header,
+    Validation,
+    decode,
+    encode,
+    get_current_timestamp,
 };
 use serde::{Deserialize, Serialize};
 use time::{Duration, OffsetDateTime};
@@ -67,7 +74,10 @@ pub async fn validate(jwt: &str, context: &IbisContext) -> BackendResult<LocalUs
     let secret = read_jwt_secret(context)?;
     let key = DecodingKey::from_secret(secret.as_bytes());
     let claims = decode::<Claims>(jwt, &key, &validation)?;
-    LocalUserView::read(LocalUserViewQuery::LocalName(&claims.claims.sub), context)
+    LocalUserView::read(
+        LocalUserViewQuery::LocalNameOrEmail(&claims.claims.sub),
+        context,
+    )
 }
 
 #[debug_handler]
@@ -77,8 +87,11 @@ pub(crate) async fn login_user(
     Form(params): Form<LoginUserParams>,
 ) -> BackendResult<(CookieJar, Json<LocalUserView>)> {
     let invalid_login: BackendError = anyhow!("Invalid login").into();
-    let user = LocalUserView::read(LocalUserViewQuery::LocalName(&params.username), &context)
-        .map_err(|_| invalid_login)?;
+    let user = LocalUserView::read(
+        LocalUserViewQuery::LocalNameOrEmail(&params.username_or_email),
+        &context,
+    )
+    .map_err(|_| invalid_login)?;
     let valid = user
         .local_user
         .password_encrypted

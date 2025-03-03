@@ -1,21 +1,23 @@
 use crate::utils::resources::site;
-use ibis_api_client::errors::FrontendResultExt;
-use ibis_api_client::{user::LoginUserParams, CLIENT};
+use ibis_api_client::{CLIENT, errors::FrontendResultExt, user::LoginUserParams};
 use leptos::prelude::*;
 use leptos_meta::Title;
 use leptos_router::components::Redirect;
 
 #[component]
 pub fn Login() -> impl IntoView {
-    let (password, set_password) = signal(String::new());
-    let (username, set_username) = signal(String::new());
+    let password = signal(String::new());
+    let username_or_email = signal(String::new());
     let (login_response, set_login_response) = signal(false);
     let (wait_for_response, set_wait_for_response) = signal(false);
 
-    let login_action = Action::new(move |(email, password): &(String, String)| {
-        let username = email.to_string();
-        let password = password.to_string();
-        let params = LoginUserParams { username, password };
+    let login_action = Action::new(move |(): &()| {
+        let username_or_email = username_or_email.0.get().to_string();
+        let password = password.0.get().to_string();
+        let params = LoginUserParams {
+            username_or_email,
+            password,
+        };
         async move {
             set_wait_for_response.update(|w| *w = true);
             CLIENT.login(params).await.error_popup(|_| {
@@ -25,10 +27,12 @@ pub fn Login() -> impl IntoView {
             set_wait_for_response.update(|w| *w = false);
         }
     });
-    let dispatch_action = move || login_action.dispatch((username.get(), password.get()));
+    let dispatch_action = move || login_action.dispatch(());
 
     let button_is_disabled = Signal::derive(move || {
-        wait_for_response.get() || password.get().is_empty() || username.get().is_empty()
+        wait_for_response.get()
+            || password.0.get().is_empty()
+            || username_or_email.0.get().is_empty()
     });
 
     view! {
@@ -42,20 +46,19 @@ pub fn Login() -> impl IntoView {
 
                         <input
                             type="text"
-                            class="input input-primary input-bordered"
+                            class="input input-primary input-bordered my-1"
                             required
-                            placeholder="Username"
-                            bind:value=(username, set_username)
+                            placeholder="Username or email"
+                            bind:value=username_or_email
                             prop:disabled=move || wait_for_response.get()
                         />
-                        <div class="h-2"></div>
                         <input
                             type="password"
-                            class="input input-primary input-bordered"
+                            class="input input-primary input-bordered my-1"
                             required
                             placeholder="Password"
                             prop:disabled=move || wait_for_response.get()
-                            bind:value=(password, set_password)
+                            bind:value=password
                         />
 
                         <div>

@@ -1,64 +1,138 @@
-use crate::{components::credentials::*, utils::resources::site};
-use ibis_api_client::{CLIENT, user::RegisterUserParams};
+use crate::{components::suspense_error::SuspenseError, utils::resources::site};
+use ibis_api_client::{
+    CLIENT,
+    errors::FrontendResultExt,
+    user::{RegisterUserParams, RegistrationResponse},
+};
 use leptos::prelude::*;
 use leptos_meta::Title;
 use log::info;
 
 #[component]
 pub fn Register() -> impl IntoView {
-    let (register_response, set_register_response) = signal(false);
-    let (register_error, set_register_error) = signal(None::<String>);
+    let username = signal(String::new());
+    let email = signal(String::new());
+    let password = signal(String::new());
+    let confirm_password = signal(String::new());
+    let (register_response, set_register_response) = signal(None::<RegistrationResponse>);
     let (wait_for_response, set_wait_for_response) = signal(false);
 
-    let register_action = Action::new(move |(email, password): &(String, String)| {
-        let username = email.to_string();
-        let password = password.to_string();
+    let register_action = Action::new(move |(): &()| {
         let params = RegisterUserParams {
-            username,
-            email: todo!(),
-            password,
-            password_verify: todo!(),
+            username: username.0.get().to_string(),
+            email: Some(email.0.get().to_string()),
+            password: password.0.get().to_string(),
+            confirm_password: confirm_password.0.get().to_string(),
         };
         info!("Try to register new account for {}", params.username);
         async move {
             set_wait_for_response.set(true);
-            let result = CLIENT.register(params).await;
+            CLIENT.register(params).await.error_popup(|res| {
+                site().refetch();
+                set_register_response.set(Some(res));
+            });
             set_wait_for_response.set(false);
-            match result {
-                Ok(_res) => {
-                    site().refetch();
-                    set_register_response.set(true);
-                    set_register_error.set(None);
-                }
-                Err(err) => {
-                    let msg = err.to_string();
-                    log::warn!("Unable to register new account: {msg}");
-                    set_register_error.set(Some(msg));
-                }
-            }
         }
     });
 
-    let disabled = Signal::derive(move || wait_for_response.get());
+    let dispatch_action = move || register_action.dispatch(());
+
+    let site = site();
 
     view! {
         <Title text="Register" />
-        <Show
-            when=move || register_response.get()
-            fallback=move || {
+        <SuspenseError result=site>
+            {move || Suspend::new(async move {
+                let email_required = site
+                    .await
+                    .map(|s| s.config.email_required)
+                    .unwrap_or_default();
+                let email_placeholder = if email_required { "Email" } else { "Email (optional)" };
+                let button_is_disabled = Signal::derive(move || {
+                    let disabled = wait_for_response.get() || username.0.get().is_empty()
+                        || password.0.get().is_empty() || confirm_password.0.get().is_empty();
+                    if email_required && email.0.get().is_empty() {
+                        return false;
+                    }
+                    disabled
+                });
                 view! {
-                    <CredentialsForm
-                        title="Register"
-                        action_label="Register"
-                        action=register_action
-                        error=register_error.into()
-                        disabled
-                    />
-                }
-            }
-        >
+                    <Show
+                        when=move || register_response.get().is_some()
+                        fallback=move || {
+                            view! {
+                                <form
+                                    class="form-control max-w-80"
+                                    on:submit=|ev| ev.prevent_default()
+                                >
+                                    <h1 class="my-4 font-serif text-4xl font-bold grow max-w-fit">
+                                        Register
+                                    </h1>
 
-            <p>"You have successfully registered."</p>
-        </Show>
+                                    <input
+                                        type="text"
+                                        class="input input-primary input-bordered my-1"
+                                        required
+                                        placeholder="Username"
+                                        bind:value=username
+                                        prop:disabled=move || wait_for_response.get()
+                                    />
+                                    <input
+                                        type="text"
+                                        class="input input-primary input-bordered my-1"
+                                        required
+                                        placeholder=email_placeholder
+                                        bind:value=email
+                                        prop:disabled=move || wait_for_response.get()
+                                    />
+                                    <input
+                                        type="password"
+                                        class="input input-primary input-bordered my-1"
+                                        required
+                                        placeholder="Password"
+                                        prop:disabled=move || wait_for_response.get()
+                                        bind:value=password
+                                    />
+                                    <input
+                                        type="password"
+                                        class="input input-primary input-bordered my-1"
+                                        required
+                                        placeholder="Confirm password"
+                                        prop:disabled=move || wait_for_response.get()
+                                        bind:value=confirm_password
+                                    />
+
+                                    <div>
+                                        <button
+                                            class="my-2 btn btn-primary"
+                                            prop:disabled=move || button_is_disabled.get()
+                                            on:click=move |_| {
+                                                dispatch_action();
+                                            }
+                                        >
+                                            Register
+                                        </button>
+                                    </div>
+                                </form>
+                            }
+                        }
+                    >
+                        <Show
+                            when=move || {
+                                register_response
+                                    .get()
+                                    .map(|r| r.email_verification_required)
+                                    .unwrap_or_default()
+                            }
+                            fallback=|| {
+                                view! { <p>"You have successfully registered."</p> }
+                            }
+                        >
+                            <p>"Registration successful, now verify the email address to login"</p>
+                        </Show>
+                    </Show>
+                }
+            })}
+        </SuspenseError>
     }
 }

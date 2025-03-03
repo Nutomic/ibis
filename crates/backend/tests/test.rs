@@ -714,14 +714,14 @@ async fn api_test_user_registration_login() -> Result<()> {
     alpha.register(register_data).await.unwrap();
 
     let login_data = LoginUserParams {
-        username: username.to_string(),
+        username_or_email: username.to_string(),
         password: "asd123".to_string(),
     };
     let invalid_login = alpha.login(login_data).await;
     assert!(invalid_login.is_err());
 
     let login_data = LoginUserParams {
-        username: username.to_string(),
+        username_or_email: username.to_string(),
         password: password.to_string(),
     };
     alpha.login(login_data).await.unwrap();
@@ -798,7 +798,7 @@ async fn api_test_lock_article() -> Result<()> {
 
     // login as admin to lock article
     let params = LoginUserParams {
-        username: "ibis".to_string(),
+        username_or_email: "ibis".to_string(),
         password: "ibis".to_string(),
     };
     alpha.login(params).await.unwrap();
@@ -892,7 +892,7 @@ async fn api_test_remove_article() -> Result<()> {
 
     // login as admin to remove article
     let params = LoginUserParams {
-        username: "ibis".to_string(),
+        username_or_email: "ibis".to_string(),
         password: "ibis".to_string(),
     };
     alpha.login(params).await.unwrap();

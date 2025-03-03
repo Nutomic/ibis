@@ -1,11 +1,11 @@
 use super::ApiClient;
 use crate::{article::GetEditList, errors::FrontendResult};
 use ibis_database::common::{
+    SuccessResponse,
     article::EditView,
     instance::InstanceFollow,
     newtypes::PersonId,
     user::{LocalUserView, Person},
-    SuccessResponse,
 };
 use serde::{Deserialize, Serialize};
 use url::Url;
@@ -15,12 +15,12 @@ pub struct RegisterUserParams {
     pub username: String,
     pub email: Option<String>,
     pub password: String,
-    pub password_verify: String,
+    pub confirm_password: String,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct LoginUserParams {
-    pub username: String,
+    pub username_or_email: String,
     pub password: String,
 }
 
@@ -47,7 +47,7 @@ pub struct AuthenticateWithOauth {
     pub pkce_code_verifier: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 /// Response from OAuth token endpoint
 pub struct OAuthTokenResponse {
     pub access_token: String,
@@ -57,8 +57,17 @@ pub struct OAuthTokenResponse {
     pub scope: Option<String>,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct RegistrationResponse {
+    pub user: LocalUserView,
+    pub email_verification_required: bool,
+}
+
 impl ApiClient {
-    pub async fn register(&self, params: RegisterUserParams) -> FrontendResult<LocalUserView> {
+    pub async fn register(
+        &self,
+        params: RegisterUserParams,
+    ) -> FrontendResult<RegistrationResponse> {
         self.post("/api/v1/account/register", Some(&params)).await
     }
 

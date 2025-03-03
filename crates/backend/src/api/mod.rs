@@ -145,6 +145,8 @@ pub async fn edit_list(
 }
 
 /// Trims the string param, and converts to None if it is empty
+/// TODO: implement this as serde attribute
+///       https://github.com/serde-rs/serde/issues/1425
 fn empty_to_none(val: &mut Option<String>) {
     if let Some(val_) = val {
         *val_ = val_.trim().to_string();

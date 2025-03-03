@@ -1,4 +1,5 @@
 use crate::{
+    DbUrl,
     common::{
         instance::InstanceFollow,
         newtypes::{LocalUserId, PersonId},
@@ -6,17 +7,26 @@ use crate::{
         utils::http_protocol_str,
     },
     error::BackendResult,
-    impls::{coalesce, lower, IbisContext},
+    impls::{IbisContext, coalesce, lower},
     schema::{instance, instance_follow, local_user, oauth_account, person},
     utils::generate_keypair,
-    DbUrl,
 };
 use anyhow::anyhow;
-use bcrypt::{hash, DEFAULT_COST};
+use bcrypt::{DEFAULT_COST, hash};
 use chrono::{DateTime, Utc};
 use diesel::{
-    dsl::not, insert_into, AsChangeset, ExpressionMethods, Insertable, JoinOnDsl,
-    PgTextExpressionMethods, QueryDsl, Queryable, RunQueryDsl, Selectable,
+    AsChangeset,
+    BoolExpressionMethods,
+    ExpressionMethods,
+    Insertable,
+    JoinOnDsl,
+    PgTextExpressionMethods,
+    QueryDsl,
+    Queryable,
+    RunQueryDsl,
+    Selectable,
+    dsl::not,
+    insert_into,
 };
 use std::ops::DerefMut;
 use url::Url;
@@ -184,7 +194,7 @@ impl Person {
 
 #[derive(Debug)]
 pub enum LocalUserViewQuery<'a> {
-    LocalName(&'a str),
+    LocalNameOrEmail(&'a str),
     Oauth(DbUrl, &'a str),
     Email(&'a str),
 }
@@ -246,9 +256,11 @@ impl LocalUserView {
             .select((person::all_columns, local_user::all_columns))
             .into_boxed();
         query = match params {
-            LocalName(name) => query
-                .filter(person::local)
-                .filter(person::username.eq(name)),
+            LocalNameOrEmail(name_or_email) => query.filter(person::local).filter(
+                person::username
+                    .eq(name_or_email)
+                    .or(local_user::email.eq(name_or_email)),
+            ),
             Oauth(issuer, user_id) => query
                 .filter(oauth_account::oauth_issuer_url.eq(issuer))
                 .filter(oauth_account::oauth_user_id.eq(user_id)),
@@ -278,7 +290,7 @@ impl LocalUserView {
         ))))
         .get_result::<bool>(conn.deref_mut())?
         .then_some(())
-        .ok_or(anyhow!("Username already exists").into())
+        .ok_or(anyhow!("Email is taken").into())
     }
 }
 
