@@ -27,6 +27,7 @@ pub struct LocalUser {
     pub password_encrypted: Option<String>,
     pub person_id: PersonId,
     pub admin: bool,
+    pub email: Option<String>,
 }
 
 /// Federation related data from a local or remote user.

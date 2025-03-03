@@ -2,14 +2,14 @@ use activitypub_federation::config::Data;
 use chrono::Utc;
 use ibis_database::{
     common::{
-        MAIN_PAGE_NAME,
         article::{Article, EditVersion},
         instance::Instance,
         user::{LocalUserView, Person},
         utils::http_protocol_str,
+        MAIN_PAGE_NAME,
     },
     error::BackendError,
-    impls::{IbisContext, article::DbArticleForm, instance::DbInstanceForm},
+    impls::{article::DbArticleForm, instance::DbInstanceForm, IbisContext},
     utils::generate_keypair,
 };
 use ibis_federate::{
@@ -46,8 +46,9 @@ pub async fn setup(context: &Data<IbisContext>) -> Result<(), BackendError> {
 
     let admin = LocalUserView::create(
         context.config.setup.admin_username.clone(),
-        context.config.setup.admin_password.clone(),
+        Some(context.config.setup.admin_password.clone()),
         true,
+        None,
         context,
     )?;
 

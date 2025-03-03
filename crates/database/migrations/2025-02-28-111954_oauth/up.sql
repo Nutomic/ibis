@@ -1,5 +1,6 @@
 ALTER TABLE local_user
     ALTER COLUMN password_encrypted DROP NOT NULL;
+    alter table local_user add column email text;
     
 CREATE TABLE oauth_account (
     local_user_id int REFERENCES local_user ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,

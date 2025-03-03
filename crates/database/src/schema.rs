@@ -122,6 +122,7 @@ diesel::table! {
         password_encrypted -> Nullable<Text>,
         person_id -> Int4,
         admin -> Bool,
+        email -> Nullable<Text>,
     }
 }
 

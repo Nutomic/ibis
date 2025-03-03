@@ -10,8 +10,8 @@ use ibis_database::{
     config::OAuthProvider,
     error::{BackendError, BackendResult},
     impls::{
-        IbisContext,
         user::{LocalUserViewQuery, OAuthAccount, OAuthAccountInsertForm},
+        IbisContext,
     },
 };
 use ibis_federate::validate::validate_user_name;
@@ -42,7 +42,13 @@ pub async fn register_user(
 
     // TODO: check username/email taken
 
-    let user = LocalUserView::create(params.username, params.password, false, &context)?;
+    let user = LocalUserView::create(
+        params.username,
+        Some(params.password),
+        false,
+        params.email,
+        &context,
+    )?;
 
     // TODO: if email verification is required dont login user yet
 
@@ -101,68 +107,52 @@ pub async fn authenticate_with_oauth(
 
     // Lookup user by oauth_user_id
     let mut local_user_view = LocalUserView::read(
-        LocalUserViewQuery::Oauth(params.oauth_issuer.into(), oauth_user_id),
+        LocalUserViewQuery::Oauth(params.oauth_issuer.into(), &oauth_user_id),
         &context,
     );
 
-    let user: LocalUserView;
-    if let Ok(user_view) = local_user_view {
+    let user = if let Ok(user_view) = local_user_view {
         // TODO: check email validated
 
         // user found by oauth_user_id => Login user
-        user = user_view;
+        user_view
     } else {
         // user has never previously registered using oauth
 
         // prevent registration if registration is closed
         if !context.config.options.registration_open {
-            Err(anyhow!("Registration is closed").into())?;
+            return Err(anyhow!("Registration is closed").into());
         }
 
         // prevent registration if registration is closed for OAUTH providers
         if !context.config.options.oauth_registration_open {
-            Err(anyhow!("OAuth registration is closed").into())?;
+            return Err(anyhow!("OAuth registration is closed").into());
         }
 
         // Extract the OAUTH email claim from the returned user_info
         let email = read_user_info(&user_info, "email")?;
 
         // Lookup user by OAUTH email and link accounts
-        local_user_view = LocalUserView::find_by_email(context, &email).await;
+        local_user_view = LocalUserView::read(LocalUserViewQuery::Email(&email), &context);
 
-        let person;
         if let Ok(user_view) = local_user_view {
             // user found by email => link and login if linking is allowed
 
             // we only allow linking by email when email_verification is required otherwise emails cannot
             // be trusted
             if oauth_provider.account_linking_enabled && context.config.options.email_required {
-                // WARNING:
-                // If an admin switches the require_email_verification config from false to true,
-                // users who signed up before the switch could have accounts with unverified emails falsely
-                // marked as verified.
-                check_email_verified(&user_view, &site_view)?;
-                check_registration_application(
-                    &user_view,
-                    &site_view.local_site,
-                    &mut context.pool(),
-                )
-                .await?;
-
                 // Link with OAUTH => Login user
-                let oauth_account_form = OAuthAccountInsertForm::new(
-                    user_view.local_user.id,
-                    oauth_provider.id,
+                let oauth_account_form = OAuthAccountInsertForm {
+                    local_user_id: user_view.local_user.id,
+                    oauth_issuer_url: oauth_provider.issuer.clone().into(),
                     oauth_user_id,
-                );
+                };
 
-                OAuthAccount::create(&mut context.pool(), &oauth_account_form)
-                    .await
-                    .with_lemmy_type(LemmyErrorType::OauthLoginFailed)?;
+                OAuthAccount::create(&oauth_account_form, &context)?;
 
-                local_user = user_view.local_user.clone();
+                user_view
             } else {
-                return Err(LemmyErrorType::EmailAlreadyExists)?;
+                return Err(anyhow!("EmailAlreadyExists"))?;
             }
         } else {
             // No user was found by email => Register as new user
@@ -170,30 +160,25 @@ pub async fn authenticate_with_oauth(
             // make sure the username is provided
             let username = params
                 .username
-                .as_ref()
-                .ok_or(LemmyErrorType::RegistrationUsernameRequired)?;
+                .ok_or(anyhow!("RegistrationUsernameRequired"))?;
 
-            Person::check_username_taken(&mut context.pool(), username).await?;
+            // TODO: check username not taken
 
-            let user = LocalUserView::create(username, None, false, &context)?;
+            let user = LocalUserView::create(username, None, false, Some(email), &context)?;
 
             // Create the oauth account
             let oauth_account_form = OAuthAccountInsertForm {
                 local_user_id: user.local_user.id,
-                oauth_issuer_url: oauth_provider.issuer.into(),
+                oauth_issuer_url: oauth_provider.issuer.clone().into(),
                 oauth_user_id,
             };
 
-            OAuthAccount::create(&mut context.pool(), &oauth_account_form)
-                .await
-                .with_lemmy_type(LemmyErrorType::IncorrectLogin)?;
-
-            // Check email is verified when required
-            login_response.verify_email_sent =
-                send_verification_email_if_required(&context, &local_site, &local_user, &person)
-                    .await?;
+            OAuthAccount::create(&oauth_account_form, &context)?;
+            user
         }
-    }
+    };
+
+    // TODO: check email verified
 
     let token = generate_login_token(&user.person, &context)?;
     let jar = jar.add(create_cookie(token, &context));
