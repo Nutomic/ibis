@@ -1,5 +1,4 @@
 use crate::{
-    DbUrl,
     common::{
         instance::InstanceFollow,
         newtypes::{LocalUserId, PersonId},
@@ -7,23 +6,17 @@ use crate::{
         utils::http_protocol_str,
     },
     error::BackendResult,
-    impls::IbisContext,
+    impls::{coalesce, lower, IbisContext},
     schema::{instance, instance_follow, local_user, oauth_account, person},
     utils::generate_keypair,
+    DbUrl,
 };
-use bcrypt::{DEFAULT_COST, hash};
+use anyhow::anyhow;
+use bcrypt::{hash, DEFAULT_COST};
 use chrono::{DateTime, Utc};
 use diesel::{
-    AsChangeset,
-    ExpressionMethods,
-    Insertable,
-    JoinOnDsl,
-    PgTextExpressionMethods,
-    QueryDsl,
-    Queryable,
-    RunQueryDsl,
-    Selectable,
-    insert_into,
+    dsl::not, insert_into, AsChangeset, ExpressionMethods, Insertable, JoinOnDsl,
+    PgTextExpressionMethods, QueryDsl, Queryable, RunQueryDsl, Selectable,
 };
 use std::ops::DerefMut;
 use url::Url;
@@ -35,6 +28,7 @@ pub struct LocalUserForm {
     pub person_id: PersonId,
     pub admin: bool,
     pub email: Option<String>,
+    pub email_verified: bool,
 }
 
 #[derive(Debug, Clone, Insertable, AsChangeset)]
@@ -233,6 +227,7 @@ impl LocalUserView {
             person_id: person.id,
             admin,
             email,
+            email_verified: false,
         };
 
         let local_user = insert_into(local_user::table)
@@ -260,6 +255,30 @@ impl LocalUserView {
             Email(email) => query.filter(local_user::email.eq(email)),
         };
         Ok(query.get_result::<LocalUserView>(conn.deref_mut())?)
+    }
+
+    pub fn check_username_taken(username: &str, context: &IbisContext) -> BackendResult<()> {
+        use diesel::dsl::{exists, select};
+        let mut conn = context.db_pool.get()?;
+        select(not(exists(
+            person::table
+                .filter(person::local)
+                .filter(lower(person::username).eq(username.to_lowercase())),
+        )))
+        .get_result::<bool>(conn.deref_mut())?
+        .then_some(())
+        .ok_or(anyhow!("Email already exists").into())
+    }
+
+    pub fn check_email_taken(email: &str, context: &IbisContext) -> BackendResult<()> {
+        use diesel::dsl::{exists, select};
+        let mut conn = context.db_pool.get()?;
+        select(not(exists(local_user::table.filter(
+            lower(coalesce(local_user::email, "")).eq(email.to_lowercase()),
+        ))))
+        .get_result::<bool>(conn.deref_mut())?
+        .then_some(())
+        .ok_or(anyhow!("Username already exists").into())
     }
 }
 

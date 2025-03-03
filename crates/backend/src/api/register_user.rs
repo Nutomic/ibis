@@ -10,8 +10,8 @@ use ibis_database::{
     config::OAuthProvider,
     error::{BackendError, BackendResult},
     impls::{
-        IbisContext,
         user::{LocalUserViewQuery, OAuthAccount, OAuthAccountInsertForm},
+        IbisContext,
     },
 };
 use ibis_federate::validate::validate_user_name;
@@ -38,9 +38,7 @@ pub async fn register_user(
         Err(anyhow!("EmailRequired"))?
     }
 
-    validate_user_name(&params.username)?;
-
-    // TODO: check username/email taken
+    check_new_user(&params.username, params.email.as_deref(), &context)?;
 
     let user = LocalUserView::create(
         params.username,
@@ -50,7 +48,7 @@ pub async fn register_user(
         &context,
     )?;
 
-    // TODO: if email verification is required dont login user yet
+    check_email_verified(&user, &context)?;
 
     let token = generate_login_token(&user.person, &context)?;
     let jar = jar.add(create_cookie(token, &context));
@@ -112,8 +110,6 @@ pub async fn authenticate_with_oauth(
     );
 
     let user = if let Ok(user_view) = local_user_view {
-        // TODO: check email validated
-
         // user found by oauth_user_id => Login user
         user_view
     } else {
@@ -162,7 +158,7 @@ pub async fn authenticate_with_oauth(
                 .username
                 .ok_or(anyhow!("RegistrationUsernameRequired"))?;
 
-            // TODO: check username not taken
+            check_new_user(&username, Some(&email), &context)?;
 
             let user = LocalUserView::create(username, None, false, Some(email), &context)?;
 
@@ -178,7 +174,7 @@ pub async fn authenticate_with_oauth(
         }
     };
 
-    // TODO: check email verified
+    check_email_verified(&user, &context)?;
 
     let token = generate_login_token(&user.person, &context)?;
     let jar = jar.add(create_cookie(token, &context));
@@ -259,4 +255,20 @@ fn check_code_verifier(code_verifier: &str) -> BackendResult<()> {
     } else {
         Err(anyhow!("InvalidCodeVerifier").into())
     }
+}
+
+fn check_new_user(username: &str, email: Option<&str>, context: &IbisContext) -> BackendResult<()> {
+    validate_user_name(username)?;
+    LocalUserView::check_username_taken(username, context)?;
+    if let Some(email) = email {
+        LocalUserView::check_email_taken(email, context)?;
+    }
+    Ok(())
+}
+
+fn check_email_verified(user: &LocalUserView, context: &IbisContext) -> BackendResult<()> {
+    if context.conf.options.email_required && user.local_user.email_verified {
+        return Err(anyhow!("email not verified").into());
+    }
+    Ok(())
 }

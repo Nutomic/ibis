@@ -1,11 +1,11 @@
 use crate::{config::IbisConfig, error::BackendResult, schema::jwt_secret};
+use diesel::sql_types;
 use diesel::{
-    PgConnection,
-    QueryDsl,
-    RunQueryDsl,
+    define_sql_function,
     r2d2::{ConnectionManager, Pool},
+    PgConnection, QueryDsl, RunQueryDsl,
 };
-use diesel_migrations::{EmbeddedMigrations, MigrationHarness, embed_migrations};
+use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 use std::{env::var, ops::DerefMut};
 
 pub mod article;
@@ -57,3 +57,7 @@ pub fn read_jwt_secret(context: &IbisContext) -> BackendResult<String> {
         .select(jwt_secret::dsl::secret)
         .first(conn.deref_mut())?)
 }
+
+define_sql_function!(fn lower(x: sql_types::Text) -> sql_types::Text);
+
+define_sql_function!(fn coalesce<T: sql_types::SqlType + sql_types::SingleValue>(x: sql_types::Nullable<T>, y: T) -> T);

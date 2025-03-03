@@ -123,6 +123,7 @@ diesel::table! {
         person_id -> Int4,
         admin -> Bool,
         email -> Nullable<Text>,
+        email_verified -> Bool,
     }
 }
 

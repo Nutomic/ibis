@@ -28,6 +28,7 @@ pub struct LocalUser {
     pub person_id: PersonId,
     pub admin: bool,
     pub email: Option<String>,
+    pub email_verified: bool,
 }
 
 /// Federation related data from a local or remote user.
