@@ -2,7 +2,7 @@
 
 use anyhow::Result;
 use ibis::start;
-use ibis_api_client::{ApiClient, user::RegisterUserParams};
+use ibis_api_client::{user::RegisterUserParams, ApiClient};
 use ibis_database::{
     common::instance::Options,
     config::{IbisConfig, IbisConfigDatabase, IbisConfigFederation},
@@ -14,14 +14,17 @@ use std::{
     ops::Deref,
     process::{Command, Stdio},
     sync::{
-        Once,
         atomic::{AtomicI32, Ordering},
+        Once,
     },
     thread::spawn,
+    time::Duration,
 };
-use tokio::{join, sync::oneshot, task::JoinHandle};
+use tokio::{join, sync::oneshot, task::JoinHandle, time::sleep};
 
 pub struct TestData(pub IbisInstance, pub IbisInstance, pub IbisInstance);
+
+static ACTIVE: AtomicI32 = AtomicI32::new(0);
 
 impl TestData {
     pub async fn start() -> Self {
@@ -33,6 +36,12 @@ impl TestData {
                 //.filter_module("ibis", LevelFilter::Info)
                 .init();
         });
+
+        // Limit number of concurrent tests, otherwise it can throw errors about too many open files
+        while ACTIVE.load(Ordering::Relaxed) > 20 {
+            sleep(Duration::from_secs(1)).await;
+        }
+        ACTIVE.fetch_add(1, Ordering::Relaxed);
 
         // Run things on different ports and db paths to allow parallel tests
         static COUNTER: AtomicI32 = AtomicI32::new(0);
@@ -69,6 +78,7 @@ impl TestData {
         for j in [alpha.stop(), beta.stop(), gamma.stop()] {
             j.join().unwrap();
         }
+        ACTIVE.fetch_sub(1, Ordering::Relaxed);
         Ok(())
     }
 }
