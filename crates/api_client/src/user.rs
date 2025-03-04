@@ -63,6 +63,11 @@ pub struct RegistrationResponse {
     pub email_verification_required: bool,
 }
 
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct VerifyEmailParams {
+    pub token: String,
+}
+
 impl ApiClient {
     pub async fn register(
         &self,
@@ -100,5 +105,11 @@ impl ApiClient {
             ..Default::default()
         };
         self.get("/api/v1/edit/list", Some(data)).await
+    }
+
+    pub async fn verify_email(&self, token: String) -> FrontendResult<SuccessResponse> {
+        let params = VerifyEmailParams { token };
+        self.post("/api/v1/account/verify_email", Some(params))
+            .await
     }
 }

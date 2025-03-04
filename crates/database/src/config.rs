@@ -1,4 +1,5 @@
 use crate::{common::instance::Options, error::BackendResult};
+use anyhow::anyhow;
 use config::Config;
 use doku::Document;
 use serde::Deserialize;
@@ -15,6 +16,7 @@ pub struct IbisConfig {
     pub setup: IbisConfigSetup,
     pub federation: IbisConfigFederation,
     pub options: Options,
+    pub email: Option<IbisConfigEmail>,
     pub oauth_providers: Vec<OAuthProvider>,
 }
 
@@ -25,13 +27,17 @@ impl IbisConfig {
         } else {
             "config.toml"
         };
-        let config = Config::builder()
+        let config: Self = Config::builder()
             .add_source(config::File::with_name(config_file))
             // Cant use _ as separator due to https://github.com/mehcode/config-rs/issues/391
             .add_source(config::Environment::with_prefix("IBIS").separator("__"))
-            .build()?;
+            .build()?
+            .try_deserialize()?;
 
-        Ok(config.try_deserialize()?)
+        if config.options.email_required && config.email.is_none() {
+            return Err(anyhow!("Email is required but no email send config provided").into());
+        }
+        Ok(config)
     }
 }
 
@@ -47,6 +53,18 @@ pub struct IbisConfigDatabase {
     #[default(30)]
     #[doku(example = "30")]
     pub pool_size: u32,
+}
+
+#[derive(Debug, Deserialize, PartialEq, Eq, Clone, Document)]
+#[serde(deny_unknown_fields)]
+pub struct IbisConfigEmail {
+    /// Connection parameters for email transport
+    /// https://docs.rs/lettre/0.11.14/lettre/transport/smtp/struct.AsyncSmtpTransport.html#method.from_url
+    #[doku(example = "smtps://user:pass@hostname:port")]
+    pub connection_url: String,
+    /// Sender address for email sent by ibis
+    #[doku(example = "ibis@example.com")]
+    pub from_address: String,
 }
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone, Document, SmartDefault)]

@@ -12,3 +12,11 @@ CREATE TABLE oauth_account (
     UNIQUE (oauth_issuer_url, oauth_user_id),
     PRIMARY KEY (oauth_issuer_url, local_user_id)
 );
+
+create table email_verification (
+  id serial primary key,
+    local_user_id int REFERENCES local_user ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
+  email text not null,
+   verification_token text not null,
+   published timestamp with time zone not null default now()
+);

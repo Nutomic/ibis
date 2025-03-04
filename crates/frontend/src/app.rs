@@ -23,6 +23,7 @@ use crate::{
             notifications::Notifications,
             profile::UserProfile,
             register::Register,
+            verify_email::VerifyEmail,
         },
     },
     utils::{dark_mode::DarkMode, formatting::instance_title, resources::site},
@@ -105,16 +106,25 @@ pub fn App() -> impl IntoView {
                         />
                         <Route path=path!("/article/:title/diff/:hash") view=EditDiff />
                         <IbisProtectedRoute path=path!("/create-article") view=CreateArticle />
+
                         <Route path=path!("/explore") view=Explore />
                         <Route path=path!("/instance/:hostname") view=InstanceDetails />
+                        <IbisProtectedRoute
+                            path=path!("/instance/settings")
+                            view=InstanceSettings
+                        />
                         <Route path=path!("/about") view=About />
+                        <Route path=path!("/search") view=Search />
+
                         <Route path=path!("/user/:name") view=UserProfile />
                         <Route path=path!("/login") view=Login />
                         <Route path=path!("/register") view=Register />
-                        <Route path=path!("/search") view=Search />
-                        <IbisProtectedRoute path=path!("/edit_profile") view=UserEditProfile />
+                        <Route path=path!("/account/verify_email") view=VerifyEmail />
+                        <IbisProtectedRoute
+                            path=path!("/account/edit_profile")
+                            view=UserEditProfile
+                        />
                         <IbisProtectedRoute path=path!("/notifications") view=Notifications />
-                        <IbisProtectedRoute path=path!("/settings") view=InstanceSettings />
                     </Routes>
                 </main>
             </Router>

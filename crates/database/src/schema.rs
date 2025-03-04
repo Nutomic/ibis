@@ -23,6 +23,14 @@ diesel::table! {
 }
 
 diesel::table! {
+    category (id) {
+        id -> Int4,
+        #[max_length = 100]
+        name -> Varchar,
+    }
+}
+
+diesel::table! {
     comment (id) {
         id -> Int4,
         creator_id -> Int4,
@@ -36,6 +44,49 @@ diesel::table! {
         deleted -> Bool,
         published -> Timestamptz,
         updated -> Nullable<Timestamptz>,
+    }
+}
+
+diesel::table! {
+    community (id) {
+        id -> Int4,
+        #[max_length = 20]
+        name -> Varchar,
+        #[max_length = 100]
+        title -> Varchar,
+        description -> Nullable<Text>,
+        category_id -> Int4,
+        creator_id -> Int4,
+        removed -> Bool,
+        published -> Timestamp,
+        updated -> Nullable<Timestamp>,
+    }
+}
+
+diesel::table! {
+    community_follower (id) {
+        id -> Int4,
+        community_id -> Int4,
+        user_id -> Int4,
+        published -> Timestamp,
+    }
+}
+
+diesel::table! {
+    community_moderator (id) {
+        id -> Int4,
+        community_id -> Int4,
+        user_id -> Int4,
+        published -> Timestamp,
+    }
+}
+
+diesel::table! {
+    community_user_ban (id) {
+        id -> Int4,
+        community_id -> Int4,
+        user_id -> Int4,
+        published -> Timestamp,
     }
 }
 
@@ -65,6 +116,16 @@ diesel::table! {
         previous_version_id -> Uuid,
         published -> Timestamptz,
         pending -> Bool,
+    }
+}
+
+diesel::table! {
+    email_verification (id) {
+        id -> Int4,
+        local_user_id -> Int4,
+        email -> Text,
+        verification_token -> Text,
+        published -> Timestamptz,
     }
 }
 
@@ -169,15 +230,107 @@ diesel::table! {
     }
 }
 
+diesel::table! {
+    post (id) {
+        id -> Int4,
+        #[max_length = 100]
+        name -> Varchar,
+        url -> Nullable<Text>,
+        body -> Nullable<Text>,
+        creator_id -> Int4,
+        community_id -> Int4,
+        removed -> Bool,
+        locked -> Bool,
+        published -> Timestamp,
+        updated -> Nullable<Timestamp>,
+    }
+}
+
+diesel::table! {
+    post_like (id) {
+        id -> Int4,
+        post_id -> Int4,
+        user_id -> Int4,
+        score -> Int2,
+        published -> Timestamp,
+    }
+}
+
+diesel::table! {
+    post_read (id) {
+        id -> Int4,
+        post_id -> Int4,
+        user_id -> Int4,
+        published -> Timestamp,
+    }
+}
+
+diesel::table! {
+    post_saved (id) {
+        id -> Int4,
+        post_id -> Int4,
+        user_id -> Int4,
+        published -> Timestamp,
+    }
+}
+
+diesel::table! {
+    site (id) {
+        id -> Int4,
+        #[max_length = 20]
+        name -> Varchar,
+        description -> Nullable<Text>,
+        creator_id -> Int4,
+        published -> Timestamp,
+        updated -> Nullable<Timestamp>,
+    }
+}
+
+diesel::table! {
+    user_ (id) {
+        id -> Int4,
+        #[max_length = 20]
+        name -> Varchar,
+        #[max_length = 40]
+        fedi_name -> Varchar,
+        #[max_length = 20]
+        preferred_username -> Nullable<Varchar>,
+        password_encrypted -> Text,
+        email -> Nullable<Text>,
+        icon -> Nullable<Bytea>,
+        admin -> Bool,
+        banned -> Bool,
+        published -> Timestamp,
+        updated -> Nullable<Timestamp>,
+    }
+}
+
+diesel::table! {
+    user_ban (id) {
+        id -> Int4,
+        user_id -> Int4,
+        published -> Timestamp,
+    }
+}
+
 diesel::joinable!(article -> instance (instance_id));
 diesel::joinable!(article_follow -> article (article_id));
 diesel::joinable!(article_follow -> local_user (local_user_id));
 diesel::joinable!(comment -> article (article_id));
 diesel::joinable!(comment -> person (creator_id));
+diesel::joinable!(community -> category (category_id));
+diesel::joinable!(community -> user_ (creator_id));
+diesel::joinable!(community_follower -> community (community_id));
+diesel::joinable!(community_follower -> user_ (user_id));
+diesel::joinable!(community_moderator -> community (community_id));
+diesel::joinable!(community_moderator -> user_ (user_id));
+diesel::joinable!(community_user_ban -> community (community_id));
+diesel::joinable!(community_user_ban -> user_ (user_id));
 diesel::joinable!(conflict -> article (article_id));
 diesel::joinable!(conflict -> person (creator_id));
 diesel::joinable!(edit -> article (article_id));
 diesel::joinable!(edit -> person (creator_id));
+diesel::joinable!(email_verification -> local_user (local_user_id));
 diesel::joinable!(instance_follow -> instance (instance_id));
 diesel::joinable!(instance_follow -> person (follower_id));
 diesel::joinable!(local_user -> person (person_id));
@@ -188,13 +341,29 @@ diesel::joinable!(notification -> edit (edit_id));
 diesel::joinable!(notification -> local_user (local_user_id));
 diesel::joinable!(notification -> person (creator_id));
 diesel::joinable!(oauth_account -> local_user (local_user_id));
+diesel::joinable!(post -> community (community_id));
+diesel::joinable!(post -> user_ (creator_id));
+diesel::joinable!(post_like -> post (post_id));
+diesel::joinable!(post_like -> user_ (user_id));
+diesel::joinable!(post_read -> post (post_id));
+diesel::joinable!(post_read -> user_ (user_id));
+diesel::joinable!(post_saved -> post (post_id));
+diesel::joinable!(post_saved -> user_ (user_id));
+diesel::joinable!(site -> user_ (creator_id));
+diesel::joinable!(user_ban -> user_ (user_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     article,
     article_follow,
+    category,
     comment,
+    community,
+    community_follower,
+    community_moderator,
+    community_user_ban,
     conflict,
     edit,
+    email_verification,
     instance,
     instance_follow,
     instance_stats,
@@ -203,4 +372,11 @@ diesel::allow_tables_to_appear_in_same_query!(
     notification,
     oauth_account,
     person,
+    post,
+    post_like,
+    post_read,
+    post_saved,
+    site,
+    user_,
+    user_ban,
 );

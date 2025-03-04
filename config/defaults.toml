@@ -32,6 +32,15 @@ oauth_registration_open = true
 
 # Whether new users have to provide an email address to register
 email_required = false
+# Optional
+
+[email]
+# Connection parameters for email transport
+# https://docs.rs/lettre/0.11.14/lettre/transport/smtp/struct.AsyncSmtpTransport.html#method.from_url
+connection_url = "smtps://user:pass@hostname:port"
+
+# Sender address for email sent by ibis
+from_address = "ibis@example.com"
 
 [[oauth_providers]]
 # The OAuth 2.0 provider name displayed to the user on the Login page

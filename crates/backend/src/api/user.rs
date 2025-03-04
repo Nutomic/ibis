@@ -7,8 +7,8 @@ use axum_macros::debug_handler;
 use bcrypt::verify;
 use chrono::Utc;
 use ibis_api_client::{
-    notifications::ArticleNotifMarkAsReadParams,
-    user::{GetUserParams, LoginUserParams, UpdateUserParams},
+    notifications::MarkAsReadParams,
+    user::{GetUserParams, LoginUserParams, UpdateUserParams, VerifyEmailParams},
 };
 use ibis_database::{
     common::{
@@ -18,6 +18,7 @@ use ibis_database::{
         notifications::ApiNotification,
         user::{LocalUserView, Person},
     },
+    email::set_email_verified,
     error::{BackendError, BackendResult},
     impls::{
         IbisContext,
@@ -96,7 +97,7 @@ pub(crate) async fn login_user(
         .local_user
         .password_encrypted
         .as_ref()
-        .and_then(|pw| verify(&params.password, &pw).ok())
+        .and_then(|pw| verify(&params.password, pw).ok())
         .unwrap_or(false);
     if !valid {
         return Err(anyhow!("Invalid login").into());
@@ -196,8 +197,17 @@ pub(crate) async fn count_notifications(
 pub(crate) async fn article_notif_mark_as_read(
     user: UserExt,
     context: Data<IbisContext>,
-    Form(params): Form<ArticleNotifMarkAsReadParams>,
+    Form(params): Form<MarkAsReadParams>,
 ) -> BackendResult<Json<SuccessResponse>> {
     Notification::mark_as_read(params.id, &user, &context)?;
+    Ok(Json(SuccessResponse::default()))
+}
+
+#[debug_handler]
+pub(crate) async fn verify_email(
+    context: Data<IbisContext>,
+    Form(params): Form<VerifyEmailParams>,
+) -> BackendResult<Json<SuccessResponse>> {
+    set_email_verified(&params.token, &context)?;
     Ok(Json(SuccessResponse::default()))
 }

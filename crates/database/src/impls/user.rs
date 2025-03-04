@@ -279,7 +279,7 @@ impl LocalUserView {
         )))
         .get_result::<bool>(conn.deref_mut())?
         .then_some(())
-        .ok_or(anyhow!("Email already exists").into())
+        .ok_or(anyhow!("Username already exists").into())
     }
 
     pub fn check_email_taken(email: &str, context: &IbisContext) -> BackendResult<()> {

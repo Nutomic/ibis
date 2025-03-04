@@ -38,3 +38,9 @@ axum.workspace = true
 log.workspace = true
 activitypub_federation.workspace = true
 doku.workspace = true
+lettre = {version = "0.11.14", default-features = false,  features = [
+  "builder",
+  "smtp-transport",
+  "tokio1-rustls-tls","pool"
+] }
+html2text = "0.14.1"

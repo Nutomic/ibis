@@ -4,3 +4,4 @@ alter table local_user drop column email;
 alter table local_user drop column email_verified;
     
 drop table oauth_account;
+drop table email_verification

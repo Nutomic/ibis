@@ -14,6 +14,7 @@ use ibis_api_client::user::{
 use ibis_database::{
     common::user::LocalUserView,
     config::OAuthProvider,
+    email::send_validation_email,
     error::{BackendError, BackendResult},
     impls::{
         IbisContext,
@@ -50,21 +51,20 @@ pub async fn register_user(
         return Err(anyhow!("Email required").into());
     }
 
-    if let Some(email) = &params.email {
-        if !email.contains('@') {
-            return Err(anyhow!("Invalid email").into());
-        }
-    }
-
     check_new_user(&params.username, params.email.as_deref(), &context)?;
 
+    // dont pass the email here, it needs to be validated first
     let user = LocalUserView::create(
         params.username,
         Some(params.password),
         false,
-        params.email,
+        None,
         &context,
     )?;
+
+    if let Some(email) = &params.email {
+        send_validation_email(&user, email, &context).await?;
+    }
 
     register_return(user, jar, &context)
 }
@@ -105,7 +105,7 @@ pub async fn authenticate_with_oauth(
         .ok_or(oauth_invalid_err)?;
 
     let token_response = oauth_request_access_token(
-        &oauth_provider,
+        oauth_provider,
         &params.code,
         params.pkce_code_verifier.as_deref(),
         redirect_uri.as_str(),
@@ -113,7 +113,7 @@ pub async fn authenticate_with_oauth(
     .await?;
 
     let user_info =
-        oidc_get_user_info(&oauth_provider, token_response.access_token.as_str()).await?;
+        oidc_get_user_info(oauth_provider, token_response.access_token.as_str()).await?;
 
     let oauth_user_id = read_user_info(&user_info, oauth_provider.id_claim.as_str())?;
 
@@ -191,7 +191,7 @@ pub async fn authenticate_with_oauth(
     register_return(user, jar, &context)
 }
 
-static REQWEST: LazyLock<Client> = LazyLock::new(|| Client::new());
+static REQWEST: LazyLock<Client> = LazyLock::new(Client::new);
 
 async fn oauth_request_access_token(
     oauth_provider: &OAuthProvider,
@@ -271,6 +271,9 @@ fn check_new_user(username: &str, email: Option<&str>, context: &IbisContext) ->
     validate_user_name(username)?;
     LocalUserView::check_username_taken(username, context)?;
     if let Some(email) = email {
+        if !email.contains('@') {
+            return Err(anyhow!("Invalid email").into());
+        }
         LocalUserView::check_email_taken(email, context)?;
     }
     Ok(())

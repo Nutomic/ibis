@@ -47,6 +47,7 @@ use user::{
     get_user_follows,
     list_notifications,
     update_user_profile,
+    verify_email,
 };
 
 mod article;
@@ -91,6 +92,7 @@ pub fn api_routes() -> Router<()> {
         .route("/account/logout", post(logout_user))
         .route("/account/update", post(update_user_profile))
         .route("/account/oauth/authenticate", post(authenticate_with_oauth))
+        .route("/account/verify_email", post(verify_email))
         .route("/site", get(site_view))
 }
 

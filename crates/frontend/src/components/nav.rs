@@ -93,7 +93,7 @@ pub fn Nav() -> impl IntoView {
                             </Show>
                             <Show when=is_admin>
                                 <li>
-                                    <a href="/settings">
+                                    <a href="/instance/settings">
                                         <Icon icon=GEAR />
                                         "Settings"
                                     </a>
@@ -160,7 +160,10 @@ pub fn Nav() -> impl IntoView {
                                                 {my_profile.person.username}
                                             </a>
                                         </p>
-                                        <a class="self-center py-2 link" href="/edit_profile">
+                                        <a
+                                            class="self-center py-2 link"
+                                            href="/account/edit_profile"
+                                        >
                                             Edit Profile
                                         </a>
                                         <button

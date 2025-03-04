@@ -3,3 +3,4 @@ pub mod login;
 pub mod notifications;
 pub mod profile;
 pub mod register;
+pub mod verify_email;

@@ -6,6 +6,8 @@ pub mod common;
 #[cfg(feature = "ssr")]
 pub mod config;
 #[cfg(feature = "ssr")]
+pub mod email;
+#[cfg(feature = "ssr")]
 pub mod error;
 #[cfg(feature = "ssr")]
 pub mod impls;
