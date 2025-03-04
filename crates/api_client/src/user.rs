@@ -1,11 +1,11 @@
 use super::ApiClient;
 use crate::{article::GetEditList, errors::FrontendResult};
 use ibis_database::common::{
+    SuccessResponse,
     article::EditView,
     instance::InstanceFollow,
     newtypes::PersonId,
     user::{LocalUserView, Person},
-    SuccessResponse,
 };
 use serde::{Deserialize, Serialize};
 use url::Url;
@@ -69,6 +69,13 @@ pub struct VerifyEmailParams {
     pub token: String,
 }
 
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct ChangePasswordParams {
+    pub new_password: String,
+    pub confirm_new_password: String,
+    pub old_password: String,
+}
+
 impl ApiClient {
     pub async fn register(
         &self,
@@ -98,6 +105,13 @@ impl ApiClient {
         data: UpdateUserParams,
     ) -> FrontendResult<SuccessResponse> {
         self.post("/api/v1/account/update", Some(data)).await
+    }
+    pub async fn change_password(
+        &self,
+        data: ChangePasswordParams,
+    ) -> FrontendResult<SuccessResponse> {
+        self.post("/api/v1/account/change_password", Some(data))
+            .await
     }
 
     pub async fn get_person_edits(&self, person_id: PersonId) -> FrontendResult<Vec<EditView>> {

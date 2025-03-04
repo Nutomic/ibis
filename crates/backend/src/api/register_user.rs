@@ -39,13 +39,7 @@ pub async fn register_user(
         return Err(anyhow!("Registration is closed").into());
     }
 
-    if params.password.len() < 8 {
-        return Err(anyhow!("Passwords must have at least 8 characters").into());
-    }
-
-    if params.password != params.confirm_password {
-        return Err(anyhow!("Passwords dont match").into());
-    }
+    validate_new_password(&params.password, &params.confirm_password)?;
 
     if context.conf.options.email_required && params.email.is_none() {
         return Err(anyhow!("Email required").into());
@@ -275,4 +269,15 @@ fn register_return(
             email_verification_required,
         }),
     ))
+}
+
+pub(super) fn validate_new_password(password: &str, confirm_password: &str) -> BackendResult<()> {
+    if password.len() < 8 {
+        return Err(anyhow!("Passwords must have at least 8 characters").into());
+    }
+
+    if password != confirm_password {
+        return Err(anyhow!("Passwords dont match").into());
+    }
+    Ok(())
 }

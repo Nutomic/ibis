@@ -1,4 +1,5 @@
 use crate::{
+    DbUrl,
     common::{
         instance::InstanceFollow,
         newtypes::{LocalUserId, PersonId},
@@ -6,17 +7,26 @@ use crate::{
         utils::http_protocol_str,
     },
     error::BackendResult,
-    impls::{coalesce, lower, IbisContext},
+    impls::{IbisContext, coalesce, lower},
     schema::{instance, instance_follow, local_user, oauth_account, person},
     utils::generate_keypair,
-    DbUrl,
 };
 use anyhow::anyhow;
-use bcrypt::{hash, DEFAULT_COST};
+use bcrypt::{DEFAULT_COST, hash};
 use chrono::{DateTime, Utc};
 use diesel::{
-    dsl::not, insert_into, AsChangeset, BoolExpressionMethods, ExpressionMethods, Insertable,
-    JoinOnDsl, PgTextExpressionMethods, QueryDsl, Queryable, RunQueryDsl, Selectable,
+    AsChangeset,
+    BoolExpressionMethods,
+    ExpressionMethods,
+    Insertable,
+    JoinOnDsl,
+    PgTextExpressionMethods,
+    QueryDsl,
+    Queryable,
+    RunQueryDsl,
+    Selectable,
+    dsl::not,
+    insert_into,
 };
 use std::ops::DerefMut;
 use url::Url;
@@ -281,6 +291,18 @@ impl LocalUserView {
         .get_result::<bool>(conn.deref_mut())?
         .then_some(())
         .ok_or(anyhow!("Email is taken").into())
+    }
+
+    pub fn update_password(
+        password: String,
+        id: LocalUserId,
+        context: &IbisContext,
+    ) -> BackendResult<()> {
+        let mut conn = context.db_pool.get()?;
+        diesel::update(local_user::table.find(id))
+            .set(local_user::password_encrypted.eq(hash(password, DEFAULT_COST)?))
+            .execute(conn.deref_mut())?;
+        Ok(())
     }
 }
 

@@ -43,6 +43,7 @@ use register_user::authenticate_with_oauth;
 use std::ops::Deref;
 use user::{
     article_notif_mark_as_read,
+    change_password,
     count_notifications,
     get_user_follows,
     list_notifications,
@@ -93,6 +94,7 @@ pub fn api_routes() -> Router<()> {
         .route("/account/update", post(update_user_profile))
         .route("/account/oauth/authenticate", post(authenticate_with_oauth))
         .route("/account/verify_email", post(verify_email))
+        .route("/account/change_password", post(change_password))
         .route("/site", get(site_view))
 }
 

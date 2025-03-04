@@ -139,6 +139,5 @@ pub async fn send_email(
         ))?;
 
     mailer.send(email).await?;
-
     Ok(())
 }

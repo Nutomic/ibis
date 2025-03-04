@@ -1,5 +1,9 @@
 use crate::{components::suspense_error::SuspenseError, utils::resources::site};
-use ibis_api_client::{errors::FrontendResultExt, user::UpdateUserParams, CLIENT};
+use ibis_api_client::{
+    CLIENT,
+    errors::FrontendResultExt,
+    user::{ChangePasswordParams, UpdateUserParams},
+};
 use leptos::prelude::*;
 use leptos_meta::Title;
 
@@ -10,7 +14,16 @@ pub fn UserEditProfile() -> impl IntoView {
     let submit_action = Action::new(move |params: &UpdateUserParams| {
         let params = params.clone();
         async move {
-            dbg!(CLIENT.update_user_profile(params).await).error_popup(|_| {
+            CLIENT.update_user_profile(params).await.error_popup(|_| {
+                set_saved.set(true);
+                site().refetch();
+            });
+        }
+    });
+    let change_password_action = Action::new(move |params: &ChangePasswordParams| {
+        let params = params.clone();
+        async move {
+            CLIENT.change_password(params).await.error_popup(|_| {
                 set_saved.set(true);
                 site().refetch();
             });
@@ -33,12 +46,17 @@ pub fn UserEditProfile() -> impl IntoView {
                         );
                         let bio = signal(my_profile.person.bio.clone().unwrap_or_default());
                         let email = signal(my_profile.local_user.email.clone().unwrap_or_default());
+                        let new_password = signal(String::new());
+                        let confirm_new_password = signal(String::new());
+                        let old_password = signal(String::new());
                         view! {
                             <h1 class="flex-auto my-6 font-serif text-4xl font-bold grow">
                                 Edit Profile
                             </h1>
                             <div class="flex flex-row mb-2">
-                                <label class="block w-40">Displayname</label>
+                                <label class="block w-40" for="displayname">
+                                    Displayname
+                                </label>
                                 <input
                                     type="text"
                                     id="displayname"
@@ -59,7 +77,9 @@ pub fn UserEditProfile() -> impl IntoView {
                                 </textarea>
                             </div>
                             <div class="flex flex-row mb-2">
-                                <label class="block w-40">Email</label>
+                                <label class="block w-40" for="email">
+                                    Email
+                                </label>
                                 <input
                                     type="text"
                                     id="email"
@@ -79,6 +99,58 @@ pub fn UserEditProfile() -> impl IntoView {
                                 }
                             >
                                 Submit
+                            </button>
+
+                            <div class="divider"></div>
+
+                            <h2 class="flex-auto my-6 font-serif text-2xl font-bold grow">
+                                Change Password
+                            </h2>
+                            <div class="flex flex-row mb-2">
+                                <label class="block w-40" for="new_password">
+                                    New password
+                                </label>
+                                <input
+                                    type="password"
+                                    id="new_password"
+                                    class="w-80 input input-secondary input-bordered"
+                                    bind:value=new_password
+                                />
+                            </div>
+                            <div class="flex flex-row mb-2">
+                                <label class="block w-40" for="confirm_new_password">
+                                    Confirm new password
+                                </label>
+                                <input
+                                    type="password"
+                                    id="confirm_new_password"
+                                    class="w-80 input input-secondary input-bordered"
+                                    bind:value=confirm_new_password
+                                />
+                            </div>
+                            <div class="flex flex-row mb-2">
+                                <label class="block w-40" for="old_password">
+                                    Old password
+                                </label>
+                                <input
+                                    type="password"
+                                    id="old_password"
+                                    class="w-80 input input-secondary input-bordered"
+                                    bind:value=old_password
+                                />
+                            </div>
+                            <button
+                                class="btn btn-primary"
+                                on:click=move |_| {
+                                    let form = ChangePasswordParams {
+                                        new_password: new_password.0.get(),
+                                        confirm_new_password: confirm_new_password.0.get(),
+                                        old_password: old_password.0.get(),
+                                    };
+                                    change_password_action.dispatch(form);
+                                }
+                            >
+                                Save
                             </button>
 
                             <Show when=move || saved.get()>

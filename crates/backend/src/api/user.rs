@@ -1,34 +1,48 @@
-use super::{empty_to_none, UserExt};
+use super::{UserExt, empty_to_none};
+use crate::api::register_user::validate_new_password;
 use activitypub_federation::config::Data;
 use anyhow::anyhow;
-use axum::{extract::Query, Form, Json};
+use axum::{Form, Json, extract::Query};
 use axum_extra::extract::cookie::{Cookie, CookieJar, Expiration, SameSite};
 use axum_macros::debug_handler;
 use bcrypt::verify;
 use chrono::Utc;
 use ibis_api_client::{
     notifications::MarkAsReadParams,
-    user::{GetUserParams, LoginUserParams, UpdateUserParams, VerifyEmailParams},
+    user::{
+        ChangePasswordParams,
+        GetUserParams,
+        LoginUserParams,
+        UpdateUserParams,
+        VerifyEmailParams,
+    },
 };
 use ibis_database::{
     common::{
+        AUTH_COOKIE,
+        SuccessResponse,
         instance::InstanceFollow,
         notifications::ApiNotification,
         user::{LocalUserView, Person},
-        SuccessResponse, AUTH_COOKIE,
     },
     email::{send_validation_email, set_email_verified},
     error::{BackendError, BackendResult},
     impls::{
+        IbisContext,
         notifications::Notification,
         read_jwt_secret,
         user::{LocalUserViewQuery, PersonUpdateForm},
-        IbisContext,
     },
 };
 use ibis_federate::validate::{validate_display_name, validate_email};
 use jsonwebtoken::{
-    decode, encode, get_current_timestamp, DecodingKey, EncodingKey, Header, Validation,
+    DecodingKey,
+    EncodingKey,
+    Header,
+    Validation,
+    decode,
+    encode,
+    get_current_timestamp,
 };
 use serde::{Deserialize, Serialize};
 use time::{Duration, OffsetDateTime};
@@ -74,6 +88,19 @@ pub async fn validate(jwt: &str, context: &IbisContext) -> BackendResult<LocalUs
     )
 }
 
+fn validate_password(user: &LocalUserView, password: &str) -> BackendResult<()> {
+    let valid = user
+        .local_user
+        .password_encrypted
+        .as_ref()
+        .and_then(|pw| verify(password, pw).ok())
+        .unwrap_or(false);
+    if !valid {
+        return Err(anyhow!("Invalid login").into());
+    }
+    Ok(())
+}
+
 #[debug_handler]
 pub(crate) async fn login_user(
     context: Data<IbisContext>,
@@ -86,15 +113,7 @@ pub(crate) async fn login_user(
         &context,
     )
     .map_err(|_| invalid_login)?;
-    let valid = user
-        .local_user
-        .password_encrypted
-        .as_ref()
-        .and_then(|pw| verify(&params.password, pw).ok())
-        .unwrap_or(false);
-    if !valid {
-        return Err(anyhow!("Invalid login").into());
-    }
+    validate_password(&user, &params.password)?;
     let token = generate_login_token(&user.person, &context)?;
     let jar = jar.add(create_cookie(token, &context));
     Ok((jar, Json(user)))
@@ -210,5 +229,17 @@ pub(crate) async fn verify_email(
     Form(params): Form<VerifyEmailParams>,
 ) -> BackendResult<Json<SuccessResponse>> {
     set_email_verified(&params.token, &context)?;
+    Ok(Json(SuccessResponse::default()))
+}
+
+#[debug_handler]
+pub(crate) async fn change_password(
+    user: UserExt,
+    context: Data<IbisContext>,
+    Form(params): Form<ChangePasswordParams>,
+) -> BackendResult<Json<SuccessResponse>> {
+    validate_password(&user, &params.old_password)?;
+    validate_new_password(&params.new_password, &params.confirm_new_password)?;
+    LocalUserView::update_password(params.new_password, user.local_user.id, &context)?;
     Ok(Json(SuccessResponse::default()))
 }
