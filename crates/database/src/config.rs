@@ -127,12 +127,6 @@ pub struct OAuthProvider {
     /// Lists the scopes requested from users. Users will have to grant access to the requested scope
     /// at sign up.
     pub scopes: String,
-    /// Automatically sets email as verified on registration
-    pub auto_verify_email: bool,
-    /// Allows linking an OAUTH account to an existing user account by matching emails
-    pub account_linking_enabled: bool,
-    /// switch to enable or disable an oauth provider
-    pub enabled: bool,
     /// switch to enable or disable PKCE
     pub use_pkce: bool,
 }

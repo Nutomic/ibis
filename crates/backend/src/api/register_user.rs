@@ -66,7 +66,7 @@ pub async fn register_user(
         send_validation_email(&user, email, &context).await?;
     }
 
-    register_return(user, jar, &context)
+    register_return(user, jar, context.conf.options.email_required, &context)
 }
 
 #[debug_handler]
@@ -95,12 +95,11 @@ pub async fn authenticate_with_oauth(
         check_code_verifier(code_verifier)?;
     }
 
-    // Fetch the OAUTH provider and make sure it's enabled
+    // Fetch the OAUTH providers
     let oauth_provider = context
         .conf
         .oauth_providers
         .iter()
-        .filter(|provider| provider.enabled)
         .find(|provider| provider.issuer == params.oauth_issuer)
         .ok_or(oauth_invalid_err)?;
 
@@ -129,41 +128,22 @@ pub async fn authenticate_with_oauth(
     } else {
         // user has never previously registered using oauth
 
-        // prevent registration if registration is closed
-        if !context.conf.options.registration_open {
-            return Err(anyhow!("Registration is closed").into());
-        }
-
-        // prevent registration if registration is closed for OAUTH providers
-        if !context.conf.options.oauth_registration_open {
-            return Err(anyhow!("OAuth registration is closed").into());
-        }
-
         // Extract the OAUTH email claim from the returned user_info
         let email = read_user_info(&user_info, "email")?;
 
         // Lookup user by OAUTH email and link accounts
         local_user_view = LocalUserView::read(LocalUserViewQuery::Email(&email), &context);
 
-        if let Ok(user_view) = local_user_view {
-            // user found by email => link and login if linking is allowed
+        if let Ok(user) = local_user_view {
+            // user found by email => link and login
+            let oauth_account_form = OAuthAccountInsertForm {
+                local_user_id: user.local_user.id,
+                oauth_issuer_url: oauth_provider.issuer.clone().into(),
+                oauth_user_id,
+            };
+            OAuthAccount::create(&oauth_account_form, &context)?;
 
-            // we only allow linking by email when email_verification is required otherwise emails cannot
-            // be trusted
-            if oauth_provider.account_linking_enabled && context.conf.options.email_required {
-                // Link with OAUTH => Login user
-                let oauth_account_form = OAuthAccountInsertForm {
-                    local_user_id: user_view.local_user.id,
-                    oauth_issuer_url: oauth_provider.issuer.clone().into(),
-                    oauth_user_id,
-                };
-
-                OAuthAccount::create(&oauth_account_form, &context)?;
-
-                user_view
-            } else {
-                return Err(anyhow!("EmailAlreadyExists"))?;
-            }
+            user
         } else {
             // No user was found by email => Register as new user
 
@@ -173,7 +153,6 @@ pub async fn authenticate_with_oauth(
                 .ok_or(anyhow!("RegistrationUsernameRequired"))?;
 
             check_new_user(&username, Some(&email), &context)?;
-
             let user = LocalUserView::create(username, None, false, Some(email), &context)?;
 
             // Create the oauth account
@@ -182,13 +161,14 @@ pub async fn authenticate_with_oauth(
                 oauth_issuer_url: oauth_provider.issuer.clone().into(),
                 oauth_user_id,
             };
-
             OAuthAccount::create(&oauth_account_form, &context)?;
+
             user
         }
     };
 
-    register_return(user, jar, &context)
+    // dont require any email validation for oauth
+    register_return(user, jar, false, &context)
 }
 
 static REQWEST: LazyLock<Client> = LazyLock::new(Client::new);
@@ -282,9 +262,9 @@ fn check_new_user(username: &str, email: Option<&str>, context: &IbisContext) ->
 fn register_return(
     user: LocalUserView,
     mut jar: CookieJar,
+    email_verification_required: bool,
     context: &Data<IbisContext>,
 ) -> RegisterReturnType {
-    let email_verification_required = context.conf.options.email_required;
     if !email_verification_required {
         let token = generate_login_token(&user.person, context)?;
         jar = jar.add(create_cookie(token, context));

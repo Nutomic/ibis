@@ -77,14 +77,5 @@ client_secret = "string"
 # at sign up.
 scopes = "string"
 
-# Automatically sets email as verified on registration
-auto_verify_email = true
-
-# Allows linking an OAUTH account to an existing user account by matching emails
-account_linking_enabled = true
-
-# switch to enable or disable an oauth provider
-enabled = true
-
 # switch to enable or disable PKCE
 use_pkce = true
