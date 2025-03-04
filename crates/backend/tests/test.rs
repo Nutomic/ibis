@@ -706,10 +706,12 @@ async fn api_test_fork_article() -> Result<()> {
 async fn api_test_user_registration_login() -> Result<()> {
     let TestData(alpha, beta, gamma) = TestData::start().await;
     let username = "my_user";
-    let password = "hunter2";
+    let password = "hunter22";
     let register_data = RegisterUserParams {
         username: username.to_string(),
         password: password.to_string(),
+        email: None,
+        confirm_password: password.to_string(),
     };
     alpha.register(register_data).await.unwrap();
 

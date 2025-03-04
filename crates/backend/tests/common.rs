@@ -131,6 +131,7 @@ impl IbisInstance {
             },
             options: Options {
                 registration_open: true,
+                email_required: false,
             },
             ..Default::default()
         };
@@ -146,7 +147,9 @@ impl IbisInstance {
         rx.await.unwrap();
         let params = RegisterUserParams {
             username: username.to_string(),
-            password: "hunter2".to_string(),
+            password: "hunter22".to_string(),
+            email: None,
+            confirm_password: "hunter22".to_string(),
         };
         api_client.register(params).await.unwrap();
         Self {

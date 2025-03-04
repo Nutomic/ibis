@@ -72,10 +72,6 @@ pub struct Options {
     #[default = true]
     #[cfg_attr(feature = "ssr", doku(example = "true"))]
     pub registration_open: bool,
-    /// Whether new users can register using OAuth
-    #[default = true]
-    #[cfg_attr(feature = "ssr", doku(example = "true"))]
-    pub oauth_registration_open: bool,
     /// Whether new users have to provide an email address to register
     #[default = false]
     #[cfg_attr(feature = "ssr", doku(example = "false"))]
