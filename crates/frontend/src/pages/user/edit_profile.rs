@@ -1,5 +1,5 @@
 use crate::{components::suspense_error::SuspenseError, utils::resources::site};
-use ibis_api_client::{CLIENT, errors::FrontendResultExt, user::UpdateUserParams};
+use ibis_api_client::{errors::FrontendResultExt, user::UpdateUserParams, CLIENT};
 use leptos::prelude::*;
 use leptos_meta::Title;
 
@@ -10,30 +10,29 @@ pub fn UserEditProfile() -> impl IntoView {
     let submit_action = Action::new(move |params: &UpdateUserParams| {
         let params = params.clone();
         async move {
-            CLIENT.update_user_profile(params).await.error_popup(|_| {
+            dbg!(CLIENT.update_user_profile(params).await).error_popup(|_| {
                 set_saved.set(true);
                 site().refetch();
             });
         }
     });
+    let site = site();
 
     // TODO: It would make sense to use a table for the labels and inputs, but for some reason
     //       that completely breaks reactivity.
     view! {
         <Title text="Edit Profile" />
-        <SuspenseError result=site()>
+        <SuspenseError result=site>
             {Suspend::new(async move {
-                site()
-                    .await
+                site.await
                     .ok()
                     .and_then(|site| site.my_profile)
                     .map(|my_profile| {
-                        let (display_name, set_display_name) = signal(
+                        let display_name = signal(
                             my_profile.person.display_name.clone().unwrap_or_default(),
                         );
-                        let (bio, set_bio) = signal(
-                            my_profile.person.bio.clone().unwrap_or_default(),
-                        );
+                        let bio = signal(my_profile.person.bio.clone().unwrap_or_default());
+                        let email = signal(my_profile.local_user.email.clone().unwrap_or_default());
                         view! {
                             <h1 class="flex-auto my-6 font-serif text-4xl font-bold grow">
                                 Edit Profile
@@ -44,7 +43,7 @@ pub fn UserEditProfile() -> impl IntoView {
                                     type="text"
                                     id="displayname"
                                     class="w-80 input input-secondary input-bordered"
-                                    bind:value=(display_name, set_display_name)
+                                    bind:value=display_name
                                 />
                             </div>
                             <div class="flex flex-row mb-2">
@@ -54,17 +53,27 @@ pub fn UserEditProfile() -> impl IntoView {
                                 <textarea
                                     id="bio"
                                     class="w-80 text-base textarea textarea-secondary"
-                                    bind:value=(bio, set_bio)
+                                    bind:value=bio
                                 >
-                                    bio.get()
+                                    bio.0.get()
                                 </textarea>
+                            </div>
+                            <div class="flex flex-row mb-2">
+                                <label class="block w-40">Email</label>
+                                <input
+                                    type="text"
+                                    id="email"
+                                    class="w-80 input input-secondary input-bordered"
+                                    bind:value=email
+                                />
                             </div>
                             <button
                                 class="btn btn-primary"
                                 on:click=move |_| {
                                     let form = UpdateUserParams {
-                                        display_name: Some(display_name.get()),
-                                        bio: Some(bio.get()),
+                                        display_name: Some(display_name.0.get()),
+                                        bio: Some(bio.0.get()),
+                                        email: Some(email.0.get()),
                                     };
                                     submit_action.dispatch(form);
                                 }

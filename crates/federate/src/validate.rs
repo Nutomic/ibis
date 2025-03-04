@@ -25,6 +25,12 @@ pub fn validate_user_name(name: &str) -> BackendResult<()> {
         Err(anyhow!("Invalid username").into())
     }
 }
+pub fn validate_email(email: &str) -> BackendResult<()> {
+    if !email.contains('@') {
+        return Err(anyhow!("Invalid email").into());
+    }
+    Ok(())
+}
 
 pub fn validate_display_name(name: &Option<String>) -> BackendResult<()> {
     if let Some(name) = name {

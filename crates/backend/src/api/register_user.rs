@@ -21,7 +21,7 @@ use ibis_database::{
         user::{LocalUserViewQuery, OAuthAccount, OAuthAccountInsertForm},
     },
 };
-use ibis_federate::validate::validate_user_name;
+use ibis_federate::validate::{validate_email, validate_user_name};
 use regex::Regex;
 use reqwest::Client;
 use std::sync::LazyLock;
@@ -251,9 +251,7 @@ fn check_new_user(username: &str, email: Option<&str>, context: &IbisContext) ->
     validate_user_name(username)?;
     LocalUserView::check_username_taken(username, context)?;
     if let Some(email) = email {
-        if !email.contains('@') {
-            return Err(anyhow!("Invalid email").into());
-        }
+        validate_email(email)?;
         LocalUserView::check_email_taken(email, context)?;
     }
     Ok(())

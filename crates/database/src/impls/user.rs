@@ -1,5 +1,4 @@
 use crate::{
-    DbUrl,
     common::{
         instance::InstanceFollow,
         newtypes::{LocalUserId, PersonId},
@@ -7,33 +6,24 @@ use crate::{
         utils::http_protocol_str,
     },
     error::BackendResult,
-    impls::{IbisContext, coalesce, lower},
+    impls::{coalesce, lower, IbisContext},
     schema::{instance, instance_follow, local_user, oauth_account, person},
     utils::generate_keypair,
+    DbUrl,
 };
 use anyhow::anyhow;
-use bcrypt::{DEFAULT_COST, hash};
+use bcrypt::{hash, DEFAULT_COST};
 use chrono::{DateTime, Utc};
 use diesel::{
-    AsChangeset,
-    BoolExpressionMethods,
-    ExpressionMethods,
-    Insertable,
-    JoinOnDsl,
-    PgTextExpressionMethods,
-    QueryDsl,
-    Queryable,
-    RunQueryDsl,
-    Selectable,
-    dsl::not,
-    insert_into,
+    dsl::not, insert_into, AsChangeset, BoolExpressionMethods, ExpressionMethods, Insertable,
+    JoinOnDsl, PgTextExpressionMethods, QueryDsl, Queryable, RunQueryDsl, Selectable,
 };
 use std::ops::DerefMut;
 use url::Url;
 
 #[derive(Debug, Clone, Insertable, AsChangeset)]
 #[diesel(table_name = local_user, check_for_backend(diesel::pg::Pg))]
-pub struct LocalUserForm {
+pub struct LocalUserInsertForm {
     pub password_encrypted: Option<String>,
     pub person_id: PersonId,
     pub admin: bool,
@@ -232,7 +222,7 @@ impl LocalUserView {
             .values(person_form)
             .get_result::<Person>(conn.deref_mut())?;
 
-        let local_user_form = LocalUserForm {
+        let local_user_form = LocalUserInsertForm {
             password_encrypted: password.map(|p| hash(p, DEFAULT_COST)).transpose()?,
             person_id: person.id,
             admin,

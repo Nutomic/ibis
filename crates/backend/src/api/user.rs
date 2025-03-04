@@ -1,7 +1,7 @@
-use super::{UserExt, empty_to_none};
+use super::{empty_to_none, UserExt};
 use activitypub_federation::config::Data;
 use anyhow::anyhow;
-use axum::{Form, Json, extract::Query};
+use axum::{extract::Query, Form, Json};
 use axum_extra::extract::cookie::{Cookie, CookieJar, Expiration, SameSite};
 use axum_macros::debug_handler;
 use bcrypt::verify;
@@ -12,30 +12,23 @@ use ibis_api_client::{
 };
 use ibis_database::{
     common::{
-        AUTH_COOKIE,
-        SuccessResponse,
         instance::InstanceFollow,
         notifications::ApiNotification,
         user::{LocalUserView, Person},
+        SuccessResponse, AUTH_COOKIE,
     },
-    email::set_email_verified,
+    email::{send_validation_email, set_email_verified},
     error::{BackendError, BackendResult},
     impls::{
-        IbisContext,
         notifications::Notification,
         read_jwt_secret,
         user::{LocalUserViewQuery, PersonUpdateForm},
+        IbisContext,
     },
 };
-use ibis_federate::validate::validate_display_name;
+use ibis_federate::validate::{validate_display_name, validate_email};
 use jsonwebtoken::{
-    DecodingKey,
-    EncodingKey,
-    Header,
-    Validation,
-    decode,
-    encode,
-    get_current_timestamp,
+    decode, encode, get_current_timestamp, DecodingKey, EncodingKey, Header, Validation,
 };
 use serde::{Deserialize, Serialize};
 use time::{Duration, OffsetDateTime};
@@ -164,12 +157,20 @@ pub(crate) async fn update_user_profile(
 ) -> BackendResult<Json<SuccessResponse>> {
     empty_to_none(&mut params.display_name);
     empty_to_none(&mut params.bio);
+    empty_to_none(&mut params.email);
     validate_display_name(&params.display_name)?;
-    let form = PersonUpdateForm {
+    let person_form = PersonUpdateForm {
         display_name: params.display_name,
         bio: params.bio,
     };
-    Person::update_profile(&form, user.person.id, &context)?;
+    // update, ignoring empty query errors
+    Person::update_profile(&person_form, user.person.id, &context).ok();
+
+    // send validation email, which stores the address and applies it to user once verified
+    if let Some(email) = params.email {
+        validate_email(&email)?;
+        send_validation_email(&user, &email, &context).await?;
+    }
     Ok(Json(SuccessResponse::default()))
 }
 
