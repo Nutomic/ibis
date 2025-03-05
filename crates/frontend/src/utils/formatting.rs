@@ -31,27 +31,6 @@ pub fn article_link(article: &Article) -> impl IntoView {
     }
 }
 
-pub fn article_title(article: &Article) -> String {
-    let title = article.title.replace('_', " ");
-    if article.local {
-        title
-    } else {
-        format!("{}@{}", title, extract_domain(article.ap_id.inner()))
-    }
-}
-
-pub fn user_title(person: &Person) -> String {
-    let name = person
-        .display_name
-        .clone()
-        .unwrap_or(person.username.clone());
-    if person.local {
-        format!("@{name}")
-    } else {
-        format!("@{}@{}", name, extract_domain(person.ap_id.inner()))
-    }
-}
-
 pub fn user_link(person: &Person) -> impl IntoView {
     let creator_path = if person.local {
         format!("/user/{}", person.username)
@@ -64,7 +43,7 @@ pub fn user_link(person: &Person) -> impl IntoView {
     };
     view! {
         <a class="link" href=creator_path>
-            {user_title(person)}
+            {person.title()}
         </a>
     }
 }

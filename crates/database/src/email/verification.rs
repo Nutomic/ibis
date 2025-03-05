@@ -1,6 +1,6 @@
 use super::send_email;
 use crate::{
-    common::{newtypes::LocalUserId, user::LocalUserView},
+    common::{newtypes::LocalUserId, user::LocalUser},
     error::BackendResult,
     impls::IbisContext,
     schema::{email_verification, local_user},
@@ -33,14 +33,14 @@ pub struct EmailVerificationForm {
 }
 
 pub async fn send_verification_email(
-    to_user: &LocalUserView,
+    to_user: &LocalUser,
     new_email: &str,
     context: &IbisContext,
 ) -> BackendResult<()> {
     let mut conn = context.db_pool.get()?;
     let domain = &context.conf.federation.domain;
     let form = EmailVerificationForm {
-        local_user_id: to_user.local_user.id,
+        local_user_id: to_user.id,
         email: new_email.to_string(),
         verification_token: uuid::Uuid::new_v4().to_string(),
     };
@@ -53,8 +53,8 @@ pub async fn send_verification_email(
         .execute(conn.deref_mut())?;
 
     let body = format!(
-        r#"Please click the link below to verify your email address for the account @{}@{}. Ignore this email if the account isn't yours.<br><br>, <a href=\"{verify_link}\">Verify your email</a>"#,
-        to_user.person.username, domain
+        r#"Please click the link below to verify your email address for the account on {}. Ignore this email if the account isn't yours.<br><br>, <a href="{verify_link}">Verify your email</a>"#,
+        domain
     );
 
     send_email("Registration for Ibis", to_user, body, context).await?;

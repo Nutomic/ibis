@@ -1,5 +1,5 @@
 use super::newtypes::{LocalUserId, PersonId};
-use crate::DbUrl;
+use crate::{DbUrl, common::utils::extract_domain};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use url::Url;
@@ -55,5 +55,14 @@ pub struct Person {
 impl Person {
     pub fn inbox_url(&self) -> Url {
         Url::parse(&self.inbox_url).expect("can parse inbox url")
+    }
+
+    pub fn title(&self) -> String {
+        let name = self.display_name.clone().unwrap_or(self.username.clone());
+        if self.local {
+            format!("@{name}")
+        } else {
+            format!("@{}@{}", name, extract_domain(self.ap_id.inner()))
+        }
     }
 }

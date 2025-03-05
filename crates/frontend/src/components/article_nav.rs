@@ -1,5 +1,5 @@
 use crate::utils::{
-    formatting::{article_path, article_title},
+    formatting::article_path,
     resources::{is_admin, is_logged_in},
 };
 use ibis_api_client::{
@@ -46,7 +46,7 @@ pub fn ArticleNav(
                 article
                     .await
                     .map(|article_| {
-                        let title = article_title(&article_.article);
+                        let title = article_.article.title();
                         let article_link = article_path(&article_.article);
                         let article_link_ = article_link.clone();
                         let ap_id = article_.article.ap_id.to_string();

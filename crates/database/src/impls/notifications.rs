@@ -4,16 +4,17 @@ use crate::{
         comment::Comment,
         newtypes::{
             ArticleId,
-            ArticleNotifId,
             CommentId,
             ConflictId,
             EditId,
             LocalUserId,
+            NotificationId,
             PersonId,
         },
         notifications::{ApiNotification, ApiNotificationData},
-        user::{LocalUserView, Person},
+        user::{LocalUser, LocalUserView, Person},
     },
+    email::notification::send_notification_email,
     error::BackendResult,
     impls::IbisContext,
     schema::{
@@ -46,7 +47,7 @@ use std::ops::DerefMut;
 #[diesel(table_name = notification, check_for_backend(diesel::pg::Pg))]
 #[allow(dead_code)]
 pub struct Notification {
-    id: ArticleNotifId,
+    pub(crate) id: NotificationId,
     local_user_id: LocalUserId,
     article_id: ArticleId,
     creator_id: PersonId,
@@ -67,47 +68,59 @@ pub(crate) struct NotificationInsertForm {
     pub conflict_id: Option<ConflictId>,
 }
 
+#[derive(Queryable, Debug)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+pub(crate) struct NotificationData {
+    pub(crate) notification: Notification,
+    pub(crate) article: Article,
+    pub(crate) creator: Person,
+    pub(crate) local_user: LocalUser,
+    pub(crate) comment: Option<Comment>,
+    pub(crate) edit: Option<Edit>,
+    pub(crate) conflict: Option<Conflict>,
+}
+
 impl Notification {
+    #[diesel::dsl::auto_type(no_type_alias)]
+    pub(crate) fn joins() -> _ {
+        notification::table
+            .inner_join(article::table)
+            .inner_join(person::table)
+            .inner_join(local_user::table)
+            .left_join(comment::table)
+            .left_join(edit::table)
+            .left_join(conflict::table)
+    }
+
+    pub(crate) fn read_data(
+        id: NotificationId,
+        context: &IbisContext,
+    ) -> BackendResult<NotificationData> {
+        let mut conn = context.db_pool.get()?;
+        Ok(Notification::joins()
+            .filter(notification::id.eq(id))
+            .get_result(&mut conn)?)
+    }
     pub async fn list(
         user: &LocalUserView,
         context: &IbisContext,
     ) -> BackendResult<Vec<ApiNotification>> {
         let mut conn = context.db_pool.get()?;
 
-        let article_notifications = notification::table
-            .inner_join(article::table)
-            .inner_join(person::table)
-            .left_join(comment::table)
-            .left_join(edit::table)
-            .left_join(conflict::table)
+        let article_notifications = Self::joins()
             .filter(notification::local_user_id.eq(user.local_user.id))
             .order_by(notification::published.desc())
-            .select((
-                notification::all_columns,
-                article::all_columns,
-                person::all_columns,
-                comment::all_columns.nullable(),
-                edit::all_columns.nullable(),
-                conflict::all_columns.nullable(),
-            ))
-            .get_results::<(
-                Notification,
-                Article,
-                Person,
-                Option<Comment>,
-                Option<Edit>,
-                Option<Conflict>,
-            )>(&mut conn)?;
+            .get_results::<NotificationData>(&mut conn)?;
 
         Ok(article_notifications
             .into_iter()
-            .map(|(notif, article, creator, comment, edit, conflict)| {
+            .map(|n| {
                 use ApiNotificationData::*;
-                let (published, data) = if let Some(c) = comment {
+                let (published, data) = if let Some(c) = n.comment {
                     (c.published, Comment(c))
-                } else if let Some(e) = edit {
+                } else if let Some(e) = n.edit {
                     (e.published, Edit(e))
-                } else if let Some(c) = conflict {
+                } else if let Some(c) = n.conflict {
                     (
                         c.published,
                         EditConflict {
@@ -116,12 +129,12 @@ impl Notification {
                         },
                     )
                 } else {
-                    (article.published, ArticleCreated)
+                    (n.article.published, ArticleCreated)
                 };
                 ApiNotification {
-                    id: notif.id,
-                    creator,
-                    article,
+                    id: n.notification.id,
+                    creator: n.creator,
+                    article: n.article,
                     published,
                     data,
                 }
@@ -144,7 +157,7 @@ impl Notification {
     }
 
     pub fn mark_as_read(
-        id: ArticleNotifId,
+        id: NotificationId,
         user: &LocalUserView,
         context: &IbisContext,
     ) -> BackendResult<()> {
@@ -169,7 +182,7 @@ impl Notification {
         Ok(())
     }
 
-    pub fn notify_article(
+    pub async fn notify_article(
         article: &Article,
         creator_id: PersonId,
         context: &IbisContext,
@@ -200,14 +213,15 @@ impl Notification {
             })
             .collect();
 
-        insert_into(notification::table)
+        let notifs = insert_into(notification::table)
             .values(&notifs)
             .on_conflict_do_nothing()
-            .execute(&mut conn)?;
+            .get_results(&mut conn)?;
+        send_notification_email(notifs, context).await?;
         Ok(())
     }
 
-    pub(super) fn notify_comment(comment: &Comment, context: &IbisContext) -> BackendResult<()> {
+    pub async fn notify_comment(comment: &Comment, context: &IbisContext) -> BackendResult<()> {
         let mut conn = context.db_pool.get()?;
 
         // notify author of parent comment
@@ -257,12 +271,13 @@ impl Notification {
                 conflict_id: None,
             },
             context,
-        )?;
+        )
+        .await?;
 
         Ok(())
     }
 
-    pub(super) fn notify_edit(edit: &Edit, context: &IbisContext) -> BackendResult<()> {
+    pub async fn notify_edit(edit: &Edit, context: &IbisContext) -> BackendResult<()> {
         Self::notify(
             edit.article_id,
             edit.creator_id,
@@ -276,9 +291,11 @@ impl Notification {
             },
             context,
         )
+        .await?;
+        Ok(())
     }
 
-    fn notify<F>(
+    async fn notify<F>(
         article_id: ArticleId,
         creator_id: PersonId,
         map_fn: F,
@@ -308,10 +325,11 @@ impl Notification {
             .map(map_fn)
             .collect();
         // insert all of them
-        insert_into(notification::table)
+        let notifs = insert_into(notification::table)
             .values(&notifs)
             .on_conflict_do_nothing()
-            .execute(&mut conn)?;
+            .get_results(&mut conn)?;
+        send_notification_email(notifs, context).await?;
         Ok(())
     }
 }

@@ -47,7 +47,7 @@ pub struct DbCommentUpdateForm {
 }
 
 impl Comment {
-    pub fn create(form: DbCommentInsertForm, context: &IbisContext) -> BackendResult<Self> {
+    pub async fn create(form: DbCommentInsertForm, context: &IbisContext) -> BackendResult<Self> {
         let mut conn = context.db_pool.get()?;
         let comment: Comment = insert_into(comment::table)
             .values(&form)
@@ -56,7 +56,7 @@ impl Comment {
             .set(&form)
             .get_result(conn.deref_mut())?;
 
-        Notification::notify_comment(&comment, context)?;
+        Notification::notify_comment(&comment, context).await?;
         Ok(comment)
     }
 

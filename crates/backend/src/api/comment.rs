@@ -58,7 +58,7 @@ pub(crate) async fn create_comment(
         published: Utc::now(),
         updated: None,
     };
-    let comment = Comment::create(form, &context)?;
+    let comment = Comment::create(form, &context).await?;
 
     // Set the ap_id which contains db id (so it is not know before inserting)
     let proto = http_protocol_str();

@@ -27,14 +27,16 @@ use std::{sync::LazyLock, time::Duration};
 /// Retrieve details about an instance. If no id is provided, return local instance.
 #[debug_handler]
 pub(crate) async fn get_instance(
+    user: Option<UserExt>,
     context: Data<IbisContext>,
     Form(params): Form<GetInstanceParams>,
 ) -> BackendResult<Json<InstanceView>> {
     use InstanceViewQuery::*;
+    let person_id = user.map(|u| u.person.id);
     let instance = match (params.id, params.hostname) {
-        (Some(id), None) => Instance::read_view(Id(id), &context)?,
+        (Some(id), None) => Instance::read_view(Id(id), person_id, &context)?,
         (None, Some(hostname)) => {
-            if let Ok(i) = Instance::read_view(Hostname(&hostname), &context) {
+            if let Ok(i) = Instance::read_view(Hostname(&hostname), person_id, &context) {
                 i
             } else {
                 let id = ObjectId::<InstanceWrapper>::parse(&format!(
@@ -44,7 +46,7 @@ pub(crate) async fn get_instance(
                 .dereference(&context)
                 .await?
                 .id;
-                Instance::read_view(Id(id), &context)?
+                Instance::read_view(Id(id), person_id, &context)?
             }
         }
         _ => return Err(anyhow!("invalid params").into()),

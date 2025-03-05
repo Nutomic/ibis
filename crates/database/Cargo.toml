@@ -20,6 +20,7 @@ smart-default = "0.7.1"
 
 # backend-only deps
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
+ibis_markdown.workspace = true
 diesel = { version = "2.2.7", default-features = false, features = [
   "postgres",
   "chrono",
@@ -38,9 +39,10 @@ axum.workspace = true
 log.workspace = true
 activitypub_federation.workspace = true
 doku.workspace = true
-lettre = {version = "0.11.14", default-features = false,  features = [
+lettre = { version = "0.11.14", default-features = false, features = [
   "builder",
   "smtp-transport",
-  "tokio1-rustls-tls","pool"
+  "tokio1-rustls-tls",
+  "pool",
 ] }
 html2text = "0.14.1"

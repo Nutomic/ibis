@@ -1,14 +1,6 @@
 use crate::{
     components::suspense_error::SuspenseError,
-    utils::formatting::{
-        article_link,
-        article_path,
-        article_title,
-        comment_path,
-        edit_path,
-        time_ago,
-        user_link,
-    },
+    utils::formatting::{article_link, article_path, comment_path, edit_path, time_ago, user_link},
 };
 use ibis_api_client::{
     CLIENT,
@@ -96,7 +88,7 @@ fn article_view(notif: &ApiNotification, refresh_res: NotificationsResource) -> 
     view! {
         <li class="py-2">
             <CardTitle notif=notif.clone() />
-            <div>"New Article: "{article_title(&notif.article)}</div>
+            <div>"New Article: "{notif.article.title()}</div>
             <CardActions
                 href=article_path(&notif.article)
                 notif=notif.clone()

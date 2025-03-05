@@ -57,7 +57,7 @@ pub async fn register_user(
     )?;
 
     if let Some(email) = &params.email {
-        send_verification_email(&user, email, &context).await?;
+        send_verification_email(&user.local_user, email, &context).await?;
     }
 
     register_return(user, jar, context.conf.options.email_required, &context)

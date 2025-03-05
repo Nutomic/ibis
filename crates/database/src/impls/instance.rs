@@ -2,7 +2,7 @@ use crate::{
     DbUrl,
     common::{
         instance::{Instance, InstanceView, InstanceWithArticles},
-        newtypes::{CommentId, InstanceId},
+        newtypes::{CommentId, InstanceId, PersonId},
         user::Person,
     },
     error::BackendResult,
@@ -85,17 +85,20 @@ impl Instance {
 
     pub fn read_view(
         params: InstanceViewQuery,
+        person_id: Option<PersonId>,
         context: &IbisContext,
     ) -> BackendResult<InstanceView> {
         let mut conn = context.db_pool.get()?;
-        let query = match params {
-            InstanceViewQuery::Id(id) => instance::table.find(id).into_boxed(),
-            InstanceViewQuery::Hostname(hostname) => instance::table
-                .filter(instance::domain.eq(hostname))
-                .into_boxed(),
+        let mut query = instance::table
+            .left_join(
+                instance_follow::table.on(instance_follow::follower_id.nullable().eq(person_id)),
+            )
+            .into_boxed();
+        query = match params {
+            InstanceViewQuery::Id(id) => query.filter(instance::id.eq(id)),
+            InstanceViewQuery::Hostname(hostname) => query.filter(instance::domain.eq(hostname)),
         };
         let (instance, following) = query
-            .left_join(instance_follow::table)
             .select((
                 instance::all_columns,
                 not(instance_follow::pending).nullable(),
@@ -138,10 +141,9 @@ impl Instance {
     ) -> BackendResult<()> {
         use instance_follow::dsl::{follower_id, instance_id};
         let mut conn = context.db_pool.get()?;
-        let rows = delete(instance_follow::table)
+        delete(instance_follow::table)
             .filter(instance_id.eq(instance.id).and(follower_id.eq(follower.id)))
             .execute(conn.deref_mut())?;
-        debug_assert_eq!(1, rows);
         Ok(())
     }
 

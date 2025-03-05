@@ -1,11 +1,6 @@
 use crate::{
     components::{instance_follow_button::InstanceFollowButton, suspense_error::SuspenseError},
-    utils::formatting::{
-        article_path,
-        article_title,
-        instance_title_with_domain,
-        instance_updated,
-    },
+    utils::formatting::{article_path, instance_title_with_domain, instance_updated},
 };
 use ibis_api_client::{
     CLIENT,
@@ -72,7 +67,7 @@ pub fn InstanceDetails() -> impl IntoView {
                                                             view! {
                                                                 <li>
                                                                     <a class="text-lg link" href=article_path(&a)>
-                                                                        {article_title(&a)}
+                                                                        {a.title()}
                                                                     </a>
                                                                 </li>
                                                             }

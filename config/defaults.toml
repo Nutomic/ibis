@@ -27,9 +27,6 @@ blocklist = "evil.com,bad.org"
 # Whether users can create new accounts
 registration_open = true
 
-# Whether new users can register using OAuth
-oauth_registration_open = true
-
 # Whether new users have to provide an email address to register
 email_required = false
 # Optional

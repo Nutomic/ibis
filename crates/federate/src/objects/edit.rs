@@ -123,7 +123,7 @@ impl Object for EditWrapper {
             published: json.published,
             pending: false,
         };
-        let edit = Edit::create(&form, context)?;
+        let edit = Edit::create(&form, context).await?;
         Ok(edit.into())
     }
 }

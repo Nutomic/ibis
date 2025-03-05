@@ -80,7 +80,7 @@ pub(crate) async fn create_article(
         local: true,
         protected: false,
     };
-    let article = Article::create(form, user.person.id, &context)?;
+    let article = Article::create(form, user.person.id, &context).await?;
 
     let edit_data = EditArticleParams {
         article_id: article.id,
@@ -251,7 +251,7 @@ pub(crate) async fn fork_article(
         local: true,
         protected: false,
     };
-    let article = Article::create(form, user.person.id, &context)?;
+    let article = Article::create(form, user.person.id, &context).await?;
 
     // copy edits to new article
     // this could also be done in sql
@@ -270,7 +270,7 @@ pub(crate) async fn fork_article(
             published: Utc::now(),
             pending: false,
         };
-        Edit::create(&form, &context)?;
+        Edit::create(&form, &context).await?;
     }
 
     Article::follow(article.id, &user, &context)?;

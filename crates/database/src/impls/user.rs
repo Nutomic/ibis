@@ -203,6 +203,7 @@ pub enum LocalUserViewQuery<'a> {
     LocalNameOrEmail(&'a str),
     Oauth(DbUrl, &'a str),
     Email(&'a str),
+    Id(LocalUserId),
 }
 
 impl LocalUserView {
@@ -271,6 +272,7 @@ impl LocalUserView {
                 .filter(oauth_account::oauth_issuer_url.eq(issuer))
                 .filter(oauth_account::oauth_user_id.eq(user_id)),
             Email(email) => query.filter(local_user::email.eq(email)),
+            Id(id) => query.filter(local_user::id.eq(id)),
         };
         Ok(query.get_result::<LocalUserView>(conn.deref_mut())?)
     }

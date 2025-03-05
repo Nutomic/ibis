@@ -36,14 +36,14 @@ pub async fn submit_article_update(
         false,
     )?;
     if original_article.local {
-        let edit = Edit::create(&form, context)?;
+        let edit = Edit::create(&form, context).await?;
         let updated_article = Article::update_text(edit.article_id, &new_text, context)?;
 
         UpdateLocalArticle::send(updated_article.into(), vec![], context).await?;
     } else {
         // insert edit as pending, so only the creator can see it
         form.pending = true;
-        let edit = Edit::create(&form, context)?;
+        let edit = Edit::create(&form, context).await?;
         let instance = Instance::read(original_article.instance_id, context)?;
         UpdateRemoteArticle::send(edit.into(), instance, context).await?;
     }

@@ -192,7 +192,7 @@ pub(crate) async fn update_user_profile(
     // send validation email, which stores the address and applies it to user once verified
     if let Some(email) = params.email {
         validate_email(&email)?;
-        send_verification_email(&user, &email, &context).await?;
+        send_verification_email(&user.local_user, &email, &context).await?;
     }
     Ok(Json(SuccessResponse::default()))
 }

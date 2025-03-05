@@ -11,7 +11,7 @@ members = [
   "crates/frontend",
   "crates/hydrate",
   "crates/backend",
-  "crates/markdown"
+  "crates/markdown",
 ]
 
 # This profile significantly speeds up build time. If debug info is needed you can comment the line
@@ -59,7 +59,7 @@ axum-macros = "0.4.2"
 anyhow = "1.0.97"
 log = "0.4"
 bcrypt = "0.16.0"
-doku = {version = "0.21.1", features = ["url-2"]}
+doku = { version = "0.21.1", features = ["url-2"] }
 futures = "0.3.31"
 tokio = { version = "1.43.0", default-features = false }
 leptos = "0.7.4"

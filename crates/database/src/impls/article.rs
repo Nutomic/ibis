@@ -60,7 +60,7 @@ impl Article {
         Ok(Url::parse(&format!("{}/edits", self.ap_id))?.into())
     }
 
-    pub fn create(
+    pub async fn create(
         form: DbArticleForm,
         creator_id: PersonId,
         context: &IbisContext,
@@ -70,7 +70,7 @@ impl Article {
             .values(form)
             .get_result(conn.deref_mut())?;
 
-        Notification::notify_article(&article, creator_id, context)?;
+        Notification::notify_article(&article, creator_id, context).await?;
         Ok(article)
     }
 

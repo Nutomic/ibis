@@ -59,7 +59,7 @@ impl InlineRule for ArticleLinkScanner {
 
 #[cfg(test)]
 mod test {
-    use crate::markdown::render_article_markdown;
+    use crate::render_article_markdown;
 
     #[test]
     fn test_markdown_article_link() {

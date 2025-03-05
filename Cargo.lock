@@ -2122,6 +2122,7 @@ dependencies = [
  "doku",
  "hex",
  "html2text",
+ "ibis_markdown",
  "lettre",
  "log",
  "serde",

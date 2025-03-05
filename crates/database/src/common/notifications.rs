@@ -1,7 +1,7 @@
 use super::{
     article::{Article, Edit},
     comment::Comment,
-    newtypes::{ArticleNotifId, ConflictId},
+    newtypes::{ConflictId, NotificationId},
     user::Person,
 };
 use chrono::{DateTime, Utc};
@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ApiNotification {
-    pub id: ArticleNotifId,
+    pub id: NotificationId,
     pub creator: Person,
     pub article: Article,
     pub published: DateTime<Utc>,

@@ -127,6 +127,6 @@ impl Object for CommentWrapper {
             depth,
         };
 
-        Ok(Comment::create(form, context)?.into())
+        Ok(Comment::create(form, context).await?.into())
     }
 }

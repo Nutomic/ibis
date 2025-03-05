@@ -2,14 +2,14 @@ use super::ApiClient;
 use crate::errors::FrontendResult;
 use ibis_database::common::{
     SuccessResponse,
-    newtypes::ArticleNotifId,
+    newtypes::NotificationId,
     notifications::ApiNotification,
 };
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct MarkAsReadParams {
-    pub id: ArticleNotifId,
+    pub id: NotificationId,
 }
 
 impl ApiClient {
@@ -25,7 +25,7 @@ impl ApiClient {
 
     pub async fn article_notif_mark_as_read(
         &self,
-        id: ArticleNotifId,
+        id: NotificationId,
     ) -> FrontendResult<SuccessResponse> {
         let params = MarkAsReadParams { id };
         self.post("/api/v1/user/notifications/mark_as_read", Some(params))

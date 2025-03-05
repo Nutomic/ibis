@@ -43,7 +43,7 @@ moka = { version = "0.12.10", features = ["sync"] }
 doku.workspace = true
 regex.workspace = true
 reqwest.workspace = true
-serde_json.workspace =true
+serde_json.workspace = true
 
 [dev-dependencies]
 pretty_assertions = "1.4.1"

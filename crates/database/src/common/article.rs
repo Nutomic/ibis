@@ -4,7 +4,7 @@ use super::{
     newtypes::{ArticleId, ConflictId, EditId, InstanceId, PersonId},
     user::Person,
 };
-use crate::DbUrl;
+use crate::{DbUrl, common::utils::extract_domain};
 use anyhow::anyhow;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -59,6 +59,16 @@ pub struct Article {
     pub removed: bool,
 }
 
+impl Article {
+    pub fn title(&self) -> String {
+        let title = self.title.replace('_', " ");
+        if self.local {
+            title
+        } else {
+            format!("{}@{}", title, extract_domain(self.ap_id.inner()))
+        }
+    }
+}
 /// Represents a single change to the article.
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 #[cfg_attr(feature = "ssr", derive(Queryable, Selectable))]

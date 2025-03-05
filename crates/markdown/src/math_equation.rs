@@ -1,4 +1,3 @@
-use katex;
 use markdown_it::{
     Node,
     NodeValue,
@@ -58,7 +57,7 @@ impl InlineRule for MathEquationScanner {
 
 #[cfg(test)]
 mod test {
-    use crate::markdown::render_article_markdown;
+    use crate::render_article_markdown;
 
     #[test]
     #[expect(clippy::unwrap_used)]

@@ -1,4 +1,4 @@
-use crate::utils::formatting::{article_path, article_title};
+use crate::utils::formatting::article_path;
 use ibis_api_client::{CLIENT, instance::SearchArticleParams};
 use ibis_database::common::{article::Article, instance::Instance};
 use leptos::prelude::*;
@@ -107,7 +107,7 @@ pub fn Search() -> impl IntoView {
                                             view! {
                                                 <li>
                                                     <a class="text-lg link" href=article_path(a)>
-                                                        {article_title(a)}
+                                                        {a.title()}
                                                     </a>
                                                 </li>
                                             }

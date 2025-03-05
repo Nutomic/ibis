@@ -68,7 +68,7 @@ pub async fn setup(context: &Data<IbisContext>) -> Result<(), BackendError> {
         local: true,
         protected: true,
     };
-    let article = Article::create(form, admin.person.id, context)?;
+    let article = Article::create(form, admin.person.id, context).await?;
     // also create an article so its included in most recently edited list
     submit_article_update(
         MAIN_PAGE_DEFAULT_TEXT.to_string(),

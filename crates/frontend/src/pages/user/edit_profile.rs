@@ -96,7 +96,7 @@ pub fn UserEditProfile() -> impl IntoView {
                                     type="checkbox"
                                     id="email_notifications"
                                     class="checkbox"
-                                    bind:value=email_notifications
+                                    bind:checked=email_notifications
                                 />
                             </div>
                             <button

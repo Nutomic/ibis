@@ -4,7 +4,7 @@ use crate::{
         suspense_error::SuspenseError,
     },
     pages::{article_edits_resource, article_resource},
-    utils::formatting::{article_title, render_date_time, user_link},
+    utils::formatting::{render_date_time, user_link},
 };
 use leptos::{either::Either, prelude::*};
 use leptos_meta::Title;
@@ -20,10 +20,7 @@ pub fn EditDiff() -> impl IntoView {
         <SuspenseError result=article>
             {move || Suspend::new(async move {
                 let edits = article_edits_resource(article).await;
-                let article_title = article
-                    .await
-                    .map(|a| article_title(&a.article))
-                    .unwrap_or_default();
+                let article_title = article.await.map(|a| a.article.title()).unwrap_or_default();
                 edits
                     .await
                     .map(|edits| {
