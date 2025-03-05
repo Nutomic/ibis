@@ -25,7 +25,7 @@ use ibis_database::{
         notifications::ApiNotification,
         user::{LocalUser, LocalUserView, Person},
     },
-    email::{send_validation_email, set_email_verified},
+    email::verification::{send_verification_email, set_email_verified},
     error::{BackendError, BackendResult},
     impls::{
         IbisContext,
@@ -189,12 +189,10 @@ pub(crate) async fn update_user_profile(
     Person::update(&person_form, user.person.id, &context).ok();
     LocalUser::update(&local_user_form, user.local_user.id, &context).ok();
 
-    // TODO: then actually send notifs
-
     // send validation email, which stores the address and applies it to user once verified
     if let Some(email) = params.email {
         validate_email(&email)?;
-        send_validation_email(&user, &email, &context).await?;
+        send_verification_email(&user, &email, &context).await?;
     }
     Ok(Json(SuccessResponse::default()))
 }

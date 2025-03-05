@@ -14,7 +14,7 @@ use ibis_api_client::user::{
 use ibis_database::{
     common::user::{LocalUser, LocalUserView},
     config::OAuthProvider,
-    email::send_validation_email,
+    email::verification::send_verification_email,
     error::{BackendError, BackendResult},
     impls::{
         IbisContext,
@@ -57,7 +57,7 @@ pub async fn register_user(
     )?;
 
     if let Some(email) = &params.email {
-        send_validation_email(&user, email, &context).await?;
+        send_verification_email(&user, email, &context).await?;
     }
 
     register_return(user, jar, context.conf.options.email_required, &context)
