@@ -2048,7 +2048,7 @@ dependencies = [
 
 [[package]]
 name = "ibis"
-version = "0.2.2"
+version = "0.3.0-alpha.0"
 dependencies = [
  "activitypub_federation",
  "anyhow",
@@ -2089,7 +2089,7 @@ dependencies = [
 
 [[package]]
 name = "ibis_api_client"
-version = "0.2.2"
+version = "0.3.0-alpha.0"
 dependencies = [
  "gloo-net",
  "http",
@@ -2106,7 +2106,7 @@ dependencies = [
 
 [[package]]
 name = "ibis_database"
-version = "0.2.2"
+version = "0.3.0-alpha.0"
 dependencies = [
  "activitypub_federation",
  "anyhow",
@@ -2134,7 +2134,7 @@ dependencies = [
 
 [[package]]
 name = "ibis_federate"
-version = "0.2.2"
+version = "0.3.0-alpha.0"
 dependencies = [
  "activitypub_federation",
  "anyhow",
@@ -2156,7 +2156,7 @@ dependencies = [
 
 [[package]]
 name = "ibis_frontend"
-version = "0.2.2"
+version = "0.3.0-alpha.0"
 dependencies = [
  "chrono",
  "codee",
@@ -2176,7 +2176,7 @@ dependencies = [
 
 [[package]]
 name = "ibis_hydrate"
-version = "0.2.2"
+version = "0.3.0-alpha.0"
 dependencies = [
  "console_error_panic_hook",
  "console_log",
@@ -2187,7 +2187,7 @@ dependencies = [
 
 [[package]]
 name = "ibis_markdown"
-version = "0.2.2"
+version = "0.3.0-alpha.0"
 dependencies = [
  "github-slugger",
  "katex",
