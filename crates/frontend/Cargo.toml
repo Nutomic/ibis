@@ -5,13 +5,13 @@ edition.workspace = true
 
 [features]
 ssr = [
-  "katex/duktape",
+  "ibis_markdown/ssr",
   "leptos-use/ssr",
   "leptos-use/axum",
   "leptos/ssr",
   "ibis_api_client/ssr",
 ]
-hydrate = ["katex/wasm-js", "leptos/hydrate", "ibis_api_client/hydrate"]
+hydrate = ["ibis_markdown/hydrate", "leptos/hydrate", "ibis_api_client/hydrate"]
 
 [lints]
 workspace = true
@@ -19,31 +19,19 @@ workspace = true
 [dependencies]
 ibis_database.workspace = true
 ibis_api_client.workspace = true
+ibis_markdown.workspace = true
 leptos.workspace = true
 log.workspace = true
 serde.workspace = true
 chrono.workspace = true
 url.workspace = true
+phosphor-leptos.workspace = true
 leptos_meta = "0.7.4"
 leptos_router = "0.7.4"
-markdown-it = "0.6.1"
-markdown-it-block-spoiler = "1.0.2"
-markdown-it-heading-anchors = "0.3.0"
-markdown-it-footnote = "0.2.0"
-markdown-it-sub = "1.0.2"
-markdown-it-sup = "1.0.2"
 leptos-use = { version = "0.15.6", features = [
   "use_textarea_autosize",
   "use_cookie",
   "use_preferred_dark",
 ], default-features = false }
 codee = { version = "0.2.0", features = ["json_serde"] }
-katex = { version = "0.4", default-features = false }
-github-slugger = "0.1.0"
 timeago = "0.4.2"
-phosphor-leptos = { version = "0.7.0", features = [
-  "system",
-  "communication",
-  "office",
-  "arrows",
-], default-features = false }

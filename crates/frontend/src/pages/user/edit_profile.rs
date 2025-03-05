@@ -46,6 +46,7 @@ pub fn UserEditProfile() -> impl IntoView {
                         );
                         let bio = signal(my_profile.person.bio.clone().unwrap_or_default());
                         let email = signal(my_profile.local_user.email.clone().unwrap_or_default());
+                        let email_notifications = signal(my_profile.local_user.email_notifications);
                         let new_password = signal(String::new());
                         let confirm_new_password = signal(String::new());
                         let old_password = signal(String::new());
@@ -87,6 +88,17 @@ pub fn UserEditProfile() -> impl IntoView {
                                     bind:value=email
                                 />
                             </div>
+                            <div class="flex flex-row mb-2">
+                                <label class="block w-40" for="email_notifications">
+                                    Send email notifications
+                                </label>
+                                <input
+                                    type="checkbox"
+                                    id="email_notifications"
+                                    class="checkbox"
+                                    bind:value=email_notifications
+                                />
+                            </div>
                             <button
                                 class="btn btn-primary"
                                 on:click=move |_| {
@@ -94,6 +106,7 @@ pub fn UserEditProfile() -> impl IntoView {
                                         display_name: Some(display_name.0.get()),
                                         bio: Some(bio.0.get()),
                                         email: Some(email.0.get()),
+                                        email_notifications: Some(email_notifications.0.get()),
                                     };
                                     submit_action.dispatch(form);
                                 }

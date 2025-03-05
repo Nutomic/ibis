@@ -35,6 +35,7 @@ pub struct UpdateUserParams {
     pub display_name: Option<String>,
     pub bio: Option<String>,
     pub email: Option<String>,
+    pub email_notifications: Option<bool>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

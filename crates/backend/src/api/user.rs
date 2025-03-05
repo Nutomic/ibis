@@ -23,7 +23,7 @@ use ibis_database::{
         SuccessResponse,
         instance::InstanceFollow,
         notifications::ApiNotification,
-        user::{LocalUserView, Person},
+        user::{LocalUser, LocalUserView, Person},
     },
     email::{send_validation_email, set_email_verified},
     error::{BackendError, BackendResult},
@@ -31,7 +31,7 @@ use ibis_database::{
         IbisContext,
         notifications::Notification,
         read_jwt_secret,
-        user::{LocalUserViewQuery, PersonUpdateForm},
+        user::{LocalUserUpdateForm, LocalUserViewQuery, PersonUpdateForm},
     },
 };
 use ibis_federate::validate::{validate_display_name, validate_email};
@@ -182,8 +182,14 @@ pub(crate) async fn update_user_profile(
         display_name: params.display_name,
         bio: params.bio,
     };
+    let local_user_form = LocalUserUpdateForm {
+        email_notifications: params.email_notifications,
+    };
     // update, ignoring empty query errors
-    Person::update_profile(&person_form, user.person.id, &context).ok();
+    Person::update(&person_form, user.person.id, &context).ok();
+    LocalUser::update(&local_user_form, user.local_user.id, &context).ok();
+
+    // TODO: then actually send notifs
 
     // send validation email, which stores the address and applies it to user once verified
     if let Some(email) = params.email {
@@ -240,6 +246,6 @@ pub(crate) async fn change_password(
 ) -> BackendResult<Json<SuccessResponse>> {
     validate_password(&user, &params.old_password)?;
     validate_new_password(&params.new_password, &params.confirm_new_password)?;
-    LocalUserView::update_password(params.new_password, user.local_user.id, &context)?;
+    LocalUser::update_password(params.new_password, user.local_user.id, &context)?;
     Ok(Json(SuccessResponse::default()))
 }

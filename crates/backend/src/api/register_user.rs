@@ -12,7 +12,7 @@ use ibis_api_client::user::{
     RegistrationResponse,
 };
 use ibis_database::{
-    common::user::LocalUserView,
+    common::user::{LocalUser, LocalUserView},
     config::OAuthProvider,
     email::send_validation_email,
     error::{BackendError, BackendResult},
@@ -243,10 +243,10 @@ fn check_code_verifier(code_verifier: &str) -> BackendResult<()> {
 
 fn check_new_user(username: &str, email: Option<&str>, context: &IbisContext) -> BackendResult<()> {
     validate_user_name(username)?;
-    LocalUserView::check_username_taken(username, context)?;
+    LocalUser::check_username_taken(username, context)?;
     if let Some(email) = email {
         validate_email(email)?;
-        LocalUserView::check_email_taken(email, context)?;
+        LocalUser::check_email_taken(email, context)?;
     }
     Ok(())
 }

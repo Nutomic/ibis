@@ -7,10 +7,10 @@ use math_equation::MathEquationScanner;
 use std::sync::OnceLock;
 use table_of_contents::{TocMarkerScanner, TocScanner};
 
-pub mod article_link;
-pub mod external_link;
-pub mod math_equation;
-pub mod table_of_contents;
+mod article_link;
+mod external_link;
+mod math_equation;
+mod table_of_contents;
 
 pub fn render_article_markdown(text: &str) -> String {
     static INSTANCE: OnceLock<MarkdownIt> = OnceLock::new();

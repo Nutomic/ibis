@@ -1128,9 +1128,9 @@ dependencies = [
 
 [[package]]
 name = "derive_more"
-version = "0.99.18"
+version = "0.99.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5f33878137e4dafd7fa914ad4e259e18a4e8e532b9617a2d0150262bf53abfce"
+checksum = "3da29a38df43d6f156149c9b43ded5e018ddff2a855cf2cfd62e8cd7d079c69f"
 dependencies = [
  "convert_case 0.4.0",
  "proc-macro2",
@@ -2159,21 +2159,14 @@ version = "0.2.2"
 dependencies = [
  "chrono",
  "codee",
- "github-slugger",
  "ibis_api_client",
  "ibis_database",
- "katex",
+ "ibis_markdown",
  "leptos",
  "leptos-use",
  "leptos_meta",
  "leptos_router",
  "log",
- "markdown-it",
- "markdown-it-block-spoiler",
- "markdown-it-footnote",
- "markdown-it-heading-anchors",
- "markdown-it-sub",
- "markdown-it-sup",
  "phosphor-leptos",
  "serde",
  "timeago",
@@ -2189,6 +2182,21 @@ dependencies = [
  "ibis_frontend",
  "leptos",
  "log",
+]
+
+[[package]]
+name = "ibis_markdown"
+version = "0.2.2"
+dependencies = [
+ "github-slugger",
+ "katex",
+ "markdown-it",
+ "markdown-it-block-spoiler",
+ "markdown-it-footnote",
+ "markdown-it-heading-anchors",
+ "markdown-it-sub",
+ "markdown-it-sup",
+ "phosphor-leptos",
 ]
 
 [[package]]
@@ -3950,9 +3958,9 @@ dependencies = [
 
 [[package]]
 name = "readonly"
-version = "0.2.12"
+version = "0.2.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a25d631e41bfb5fdcde1d4e2215f62f7f0afa3ff11e26563765bd6ea1d229aeb"
+checksum = "f2a62d85ed81ca5305dc544bd42c8804c5060b78ffa5ad3c64b0fb6a8c13d062"
 dependencies = [
  "proc-macro2",
  "quote",

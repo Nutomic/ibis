@@ -1,9 +1,9 @@
 use crate::{
     components::{edit_list::EditList, suspense_error::SuspenseError},
-    markdown::render_article_markdown,
     utils::formatting::user_title,
 };
 use ibis_api_client::{CLIENT, user::GetUserParams};
+use ibis_markdown::render_article_markdown;
 use leptos::prelude::*;
 use leptos_meta::Title;
 use leptos_router::hooks::use_params_map;

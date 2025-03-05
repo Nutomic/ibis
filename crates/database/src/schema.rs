@@ -185,6 +185,7 @@ diesel::table! {
         admin -> Bool,
         email -> Nullable<Text>,
         email_verified -> Bool,
+        email_notifications -> Bool,
     }
 }
 

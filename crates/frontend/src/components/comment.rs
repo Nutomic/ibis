@@ -1,6 +1,5 @@
 use crate::{
     components::comment_editor::{CommentEditorView, EditParams},
-    markdown::render_comment_markdown,
     utils::{
         formatting::{comment_path, time_ago, user_link},
         resources::my_profile,
@@ -16,6 +15,7 @@ use ibis_database::common::{
     comment::{Comment, CommentView},
     newtypes::CommentId,
 };
+use ibis_markdown::render_comment_markdown;
 use leptos::prelude::*;
 use phosphor_leptos::{ARROW_BEND_UP_LEFT, FEDIVERSE_LOGO, Icon, LINK, PENCIL, TRASH};
 

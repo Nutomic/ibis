@@ -20,3 +20,5 @@ create table email_verification (
    verification_token text not null,
    published timestamp with time zone not null default now()
 );
+
+alter table local_user add column email_notifications bool not null default false;

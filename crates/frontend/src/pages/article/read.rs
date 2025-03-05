@@ -3,9 +3,9 @@ use crate::{
         article_nav::{ActiveTab, ArticleNav},
         suspense_error::SuspenseError,
     },
-    markdown::render_article_markdown,
     pages::article_resource,
 };
+use ibis_markdown::render_article_markdown;
 use leptos::{either::Either, prelude::*};
 use leptos_router::hooks::use_query_map;
 

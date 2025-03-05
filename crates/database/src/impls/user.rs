@@ -42,6 +42,12 @@ pub struct LocalUserInsertForm {
 }
 
 #[derive(Debug, Clone, Insertable, AsChangeset)]
+#[diesel(table_name = local_user, check_for_backend(diesel::pg::Pg))]
+pub struct LocalUserUpdateForm {
+    pub email_notifications: Option<bool>,
+}
+
+#[derive(Debug, Clone, Insertable, AsChangeset)]
 #[diesel(table_name = person, check_for_backend(diesel::pg::Pg))]
 pub struct PersonInsertForm {
     pub username: String,
@@ -136,7 +142,7 @@ impl Person {
         Ok(query.get_result(conn.deref_mut())?)
     }
 
-    pub fn update_profile(
+    pub fn update(
         form: &PersonUpdateForm,
         id: PersonId,
         context: &IbisContext,
@@ -268,7 +274,9 @@ impl LocalUserView {
         };
         Ok(query.get_result::<LocalUserView>(conn.deref_mut())?)
     }
+}
 
+impl LocalUser {
     pub fn check_username_taken(username: &str, context: &IbisContext) -> BackendResult<()> {
         use diesel::dsl::{exists, select};
         let mut conn = context.db_pool.get()?;
@@ -301,6 +309,18 @@ impl LocalUserView {
         let mut conn = context.db_pool.get()?;
         diesel::update(local_user::table.find(id))
             .set(local_user::password_encrypted.eq(hash(password, DEFAULT_COST)?))
+            .execute(conn.deref_mut())?;
+        Ok(())
+    }
+
+    pub fn update(
+        form: &LocalUserUpdateForm,
+        id: LocalUserId,
+        context: &IbisContext,
+    ) -> BackendResult<()> {
+        let mut conn = context.db_pool.get()?;
+        diesel::update(local_user::table.find(id))
+            .set(form)
             .execute(conn.deref_mut())?;
         Ok(())
     }

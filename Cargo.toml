@@ -11,6 +11,7 @@ members = [
   "crates/frontend",
   "crates/hydrate",
   "crates/backend",
+  "crates/markdown"
 ]
 
 # This profile significantly speeds up build time. If debug info is needed you can comment the line
@@ -43,6 +44,7 @@ ibis_database = { path = "crates/database" }
 ibis_federate = { path = "crates/federate" }
 ibis_frontend = { path = "crates/frontend" }
 ibis_api_client = { path = "crates/api_client" }
+ibis_markdown = { path = "crates/markdown" }
 serde = { version = "1.0.218", features = ["derive"] }
 chrono = { version = "0.4.40", features = ["serde"] }
 sha2 = "0.10.8"
@@ -65,6 +67,12 @@ http = "1.2.0"
 regex = "1.11.1"
 serde_json = "1.0.135"
 reqwest = { version = "0.12.12", features = ["json", "cookies"] }
+phosphor-leptos = { version = "0.7.0", features = [
+  "system",
+  "communication",
+  "office",
+  "arrows",
+], default-features = false }
 
 [[workspace.metadata.leptos]]
 name = "ibis"
