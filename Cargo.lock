@@ -2074,7 +2074,6 @@ dependencies = [
  "mime_guess",
  "moka",
  "pretty_assertions",
- "regex",
  "reqwest",
  "retry_future",
  "serde",
@@ -2170,8 +2169,10 @@ dependencies = [
  "log",
  "phosphor-leptos",
  "serde",
+ "serde_json",
  "timeago",
  "url",
+ "uuid",
 ]
 
 [[package]]
@@ -5368,7 +5369,9 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e0f540e3240398cce6128b64ba83fdbdd86129c16a3aa1a3a252efd66eb3d587"
 dependencies = [
  "getrandom 0.3.1",
+ "js-sys",
  "serde",
+ "wasm-bindgen",
 ]
 
 [[package]]

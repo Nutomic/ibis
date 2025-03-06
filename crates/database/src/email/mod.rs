@@ -7,7 +7,7 @@ use lettre::{
     message::*,
     transport::smtp::extension::ClientId,
 };
-use log::warn;
+use log::{info, warn};
 use std::{str::FromStr, sync::OnceLock};
 use uuid::Uuid;
 
@@ -37,6 +37,7 @@ async fn send_email(
     let Some(to_email) = &to_user.email else {
         return Ok(());
     };
+    info!("sending email to {to_email}");
 
     // use usize::MAX as the line wrap length, since lettre handles the wrapping for us
     let plain_text = html2text::from_read(html.as_bytes(), usize::MAX)?;

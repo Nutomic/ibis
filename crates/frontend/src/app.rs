@@ -21,6 +21,7 @@ use crate::{
             edit_profile::UserEditProfile,
             login::Login,
             notifications::Notifications,
+            oauth_callback::OauthCallback,
             profile::UserProfile,
             register::Register,
             verify_email::VerifyEmail,
@@ -120,6 +121,7 @@ pub fn App() -> impl IntoView {
                         <Route path=path!("/login") view=Login />
                         <Route path=path!("/register") view=Register />
                         <Route path=path!("/account/verify_email") view=VerifyEmail />
+                        <Route path=path!("/account/oauth_callback") view=OauthCallback />
                         <IbisProtectedRoute
                             path=path!("/account/edit_profile")
                             view=UserEditProfile

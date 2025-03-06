@@ -10,3 +10,7 @@ connection_url = "postgres://ibis:{your-db-password}@postgres:5432/ibis"
 [setup]
 admin_username = "{your-name}"
 admin_password = "{your-password}"
+
+[email]
+connection_url = "smtp://postfix:25"
+from_address = "{email-sender-address}"

@@ -115,9 +115,6 @@ pub struct OAuthProvider {
     /// The UserInfo Endpoint is an OAuth 2.0 Protected Resource that returns Claims about the
     /// authenticated End-User. This is defined in the OIDC specification.
     pub userinfo_endpoint: Url,
-    /// The OAuth 2.0 claim containing the unique user ID returned by the provider. Usually this
-    /// should be set to "sub".
-    pub id_claim: String,
     /// The client_id is provided by the OAuth 2.0 provider and is a unique identifier to this
     /// service
     pub client_id: String,
@@ -127,6 +124,4 @@ pub struct OAuthProvider {
     /// Lists the scopes requested from users. Users will have to grant access to the requested scope
     /// at sign up.
     pub scopes: String,
-    /// switch to enable or disable PKCE
-    pub use_pkce: bool,
 }

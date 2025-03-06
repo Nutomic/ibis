@@ -26,6 +26,8 @@ serde.workspace = true
 chrono.workspace = true
 url.workspace = true
 phosphor-leptos.workspace = true
+serde_json.workspace = true
+uuid = { workspace = true, features = ["v4", "js"] }
 leptos_meta = "0.7.4"
 leptos_router = "0.7.4"
 leptos-use = { version = "0.15.6", features = [

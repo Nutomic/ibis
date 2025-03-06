@@ -1,4 +1,4 @@
-use leptos::prelude::*;
+use leptos::{prelude::*, wasm_bindgen::JsValue};
 use log::warn;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -27,6 +27,7 @@ pub trait FrontendResultExt<T> {
     fn error_popup<F>(self, on_success: F)
     where
         F: FnOnce(T);
+    fn error_popup_(self);
 }
 
 impl<T> FrontendResultExt<T> for FrontendResult<T> {
@@ -41,6 +42,9 @@ impl<T> FrontendResultExt<T> for FrontendResult<T> {
                 ErrorPopup::set(e.0);
             }
         }
+    }
+    fn error_popup_(self) {
+        self.error_popup(|_| {});
     }
 }
 
@@ -104,5 +108,11 @@ impl From<serde_urlencoded::ser::Error> for FrontendError {
 impl From<ParseIntError> for FrontendError {
     fn from(value: ParseIntError) -> Self {
         Self(value.to_string())
+    }
+}
+
+impl From<JsValue> for FrontendError {
+    fn from(value: JsValue) -> Self {
+        Self(format!("{:?}", value))
     }
 }

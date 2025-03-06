@@ -11,6 +11,7 @@ pub mod comment_editor;
 pub mod edit_list;
 pub mod instance_follow_button;
 pub mod nav;
+pub mod oauth_login_button;
 pub mod protected_route;
 pub mod suspense_error;
 

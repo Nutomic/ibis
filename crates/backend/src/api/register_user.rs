@@ -22,7 +22,6 @@ use ibis_database::{
     },
 };
 use ibis_federate::validate::{validate_email, validate_user_name};
-use regex::Regex;
 use reqwest::Client;
 use std::sync::LazyLock;
 
@@ -78,15 +77,12 @@ pub async fn authenticate_with_oauth(
     // validate the redirect_uri
     let redirect_uri = &params.redirect_uri;
     if redirect_uri.host_str().unwrap_or("").is_empty()
-        || !redirect_uri.path().eq(&String::from("/oauth/callback"))
+        || !redirect_uri
+            .path()
+            .eq(&String::from("/account/oauth_callback"))
         || !redirect_uri.query().unwrap_or("").is_empty()
     {
         return Err(oauth_invalid_err);
-    }
-
-    // validate the PKCE challenge
-    if let Some(code_verifier) = &params.pkce_code_verifier {
-        check_code_verifier(code_verifier)?;
     }
 
     // Fetch the OAUTH providers
@@ -97,18 +93,13 @@ pub async fn authenticate_with_oauth(
         .find(|provider| provider.issuer == params.oauth_issuer)
         .ok_or(oauth_invalid_err)?;
 
-    let token_response = oauth_request_access_token(
-        oauth_provider,
-        &params.code,
-        params.pkce_code_verifier.as_deref(),
-        redirect_uri.as_str(),
-    )
-    .await?;
+    let token_response =
+        oauth_request_access_token(oauth_provider, &params.code, redirect_uri.as_str()).await?;
 
     let user_info =
         oidc_get_user_info(oauth_provider, token_response.access_token.as_str()).await?;
 
-    let oauth_user_id = read_user_info(&user_info, oauth_provider.id_claim.as_str())?;
+    let oauth_user_id = read_user_info(&user_info, "sub")?;
 
     // Lookup user by oauth_user_id
     let mut local_user_view = LocalUserView::read(
@@ -170,20 +161,15 @@ static REQWEST: LazyLock<Client> = LazyLock::new(Client::new);
 async fn oauth_request_access_token(
     oauth_provider: &OAuthProvider,
     code: &str,
-    pkce_code_verifier: Option<&str>,
     redirect_uri: &str,
 ) -> BackendResult<OAuthTokenResponse> {
-    let mut form = vec![
+    let form = [
         ("client_id", &*oauth_provider.client_id),
         ("client_secret", &*oauth_provider.client_secret),
         ("code", code),
         ("grant_type", "authorization_code"),
         ("redirect_uri", redirect_uri),
     ];
-
-    if let Some(code_verifier) = pkce_code_verifier {
-        form.push(("code_verifier", code_verifier));
-    }
 
     // Request an Access Token from the OAUTH provider
     let response = REQWEST
@@ -225,20 +211,6 @@ fn read_user_info(user_info: &serde_json::Value, key: &str) -> BackendResult<Str
         return Ok(result);
     }
     Err(anyhow!("OauthLoginFailed"))?
-}
-
-#[allow(clippy::expect_used)]
-fn check_code_verifier(code_verifier: &str) -> BackendResult<()> {
-    static VALID_CODE_VERIFIER_REGEX: LazyLock<Regex> =
-        LazyLock::new(|| Regex::new(r"^[a-zA-Z0-9\-._~]{43,128}$").expect("compile regex"));
-
-    let check = VALID_CODE_VERIFIER_REGEX.is_match(code_verifier);
-
-    if check {
-        Ok(())
-    } else {
-        Err(anyhow!("InvalidCodeVerifier").into())
-    }
 }
 
 fn check_new_user(username: &str, email: Option<&str>, context: &IbisContext) -> BackendResult<()> {

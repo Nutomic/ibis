@@ -96,7 +96,6 @@ pub struct OAuthProviderPublic {
     pub authorization_endpoint: Url,
     pub client_id: String,
     pub scopes: String,
-    pub use_pkce: bool,
 }
 
 #[cfg(feature = "ssr")]
@@ -108,7 +107,6 @@ impl From<OAuthProvider> for OAuthProviderPublic {
             authorization_endpoint: provider.authorization_endpoint,
             client_id: provider.client_id,
             scopes: provider.scopes,
-            use_pkce: provider.use_pkce,
         }
     }
 }

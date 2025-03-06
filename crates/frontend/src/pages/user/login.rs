@@ -1,4 +1,7 @@
-use crate::utils::resources::site;
+use crate::{
+    components::{oauth_login_button::oauth_login_button, suspense_error::SuspenseError},
+    utils::resources::site,
+};
 use ibis_api_client::{CLIENT, errors::FrontendResultExt, user::LoginUserParams};
 use leptos::prelude::*;
 use leptos_meta::Title;
@@ -34,50 +37,85 @@ pub fn Login() -> impl IntoView {
             || password.0.get().is_empty()
             || username_or_email.0.get().is_empty()
     });
+    let site = site();
 
     view! {
         <Title text="Login" />
-        <Show
-            when=move || login_response.get()
-            fallback=move || {
+        <SuspenseError result=site>
+            {move || Suspend::new(async move {
+                let site = site.await;
                 view! {
-                    <form class="form-control max-w-80" on:submit=|ev| ev.prevent_default()>
-                        <h1 class="my-4 font-serif text-4xl font-bold grow max-w-fit">Login</h1>
+                    <Show
+                        when=move || login_response.get()
+                        fallback=move || {
+                            let oauth_providers: Vec<_> = site
+                                .as_ref()
+                                .ok()
+                                .map(|s| s.oauth_providers.clone())
+                                .into_iter()
+                                .flatten()
+                                .collect();
+                            let has_oauth_providers = !oauth_providers.is_empty();
+                            view! {
+                                <form
+                                    class="form-control max-w-80"
+                                    on:submit=|ev| ev.prevent_default()
+                                >
+                                    <h1 class="my-4 font-serif text-4xl font-bold grow max-w-fit">
+                                        Login
+                                    </h1>
 
-                        <input
-                            type="text"
-                            class="input input-primary input-bordered my-1"
-                            required
-                            placeholder="Username or email"
-                            bind:value=username_or_email
-                            prop:disabled=move || wait_for_response.get()
-                        />
-                        <input
-                            type="password"
-                            class="input input-primary input-bordered my-1"
-                            required
-                            placeholder="Password"
-                            prop:disabled=move || wait_for_response.get()
-                            bind:value=password
-                        />
+                                    <input
+                                        type="text"
+                                        class="input input-primary input-bordered my-1"
+                                        required
+                                        placeholder="Username or email"
+                                        bind:value=username_or_email
+                                        prop:disabled=move || wait_for_response.get()
+                                    />
+                                    <input
+                                        type="password"
+                                        class="input input-primary input-bordered my-1"
+                                        required
+                                        placeholder="Password"
+                                        prop:disabled=move || wait_for_response.get()
+                                        bind:value=password
+                                    />
 
-                        <div>
-                            <button
-                                class="my-2 btn btn-primary"
-                                prop:disabled=move || button_is_disabled.get()
-                                on:click=move |_| {
-                                    dispatch_action();
-                                }
-                            >
-                                Login
-                            </button>
-                        </div>
-                    </form>
+                                    <div>
+                                        <button
+                                            class="my-2 btn btn-primary"
+                                            prop:disabled=move || button_is_disabled.get()
+                                            on:click=move |_| {
+                                                dispatch_action();
+                                            }
+                                        >
+                                            Login
+                                        </button>
+                                    </div>
+                                </form>
+                                <Show when=move || { has_oauth_providers }>
+                                    <h2 class="my-4 font-serif text-xl font-bold grow max-w-fit">
+                                        Or Register with SSO Provider
+                                    </h2>
+                                    {oauth_providers
+                                        .iter()
+                                        .map(|o| {
+                                            oauth_login_button(
+                                                o.clone(),
+                                                Some(username_or_email.0.get()),
+                                            )
+                                        })
+                                        .collect::<Vec<_>>()}
+                                </Show>
+                            }
+                        }
+                    >
+
+                        <Redirect path="/" />
+                    </Show>
                 }
-            }
-        >
-
-            <Redirect path="/" />
-        </Show>
+            })}
+        </SuspenseError>
     }
 }

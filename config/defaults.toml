@@ -58,10 +58,6 @@ token_endpoint = "https://www.rust-lang.org"
 # authenticated End-User. This is defined in the OIDC specification.
 userinfo_endpoint = "https://www.rust-lang.org"
 
-# The OAuth 2.0 claim containing the unique user ID returned by the provider. Usually this
-# should be set to "sub".
-id_claim = "string"
-
 # The client_id is provided by the OAuth 2.0 provider and is a unique identifier to this
 # service
 client_id = "string"
@@ -73,6 +69,3 @@ client_secret = "string"
 # Lists the scopes requested from users. Users will have to grant access to the requested scope
 # at sign up.
 scopes = "string"
-
-# switch to enable or disable PKCE
-use_pkce = true
