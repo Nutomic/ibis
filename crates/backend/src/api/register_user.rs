@@ -22,6 +22,7 @@ use ibis_database::{
     },
 };
 use ibis_federate::validate::{validate_email, validate_user_name};
+use log::debug;
 use reqwest::Client;
 use std::sync::LazyLock;
 
@@ -177,11 +178,14 @@ async fn oauth_request_access_token(
         .header("Accept", "application/json")
         .form(&form[..])
         .send()
-        .await?
-        .error_for_status()?;
+        .await?;
+    // TODO
+    let text = response.text().await?;
+    debug!("oauth token res: {text}");
+    //response.error_for_status()?;
 
     // Extract the access token
-    let token_response = response.json::<OAuthTokenResponse>().await?;
+    let token_response: OAuthTokenResponse = serde_json::from_str(&text)?;
 
     Ok(token_response)
 }
