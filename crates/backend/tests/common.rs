@@ -38,7 +38,7 @@ impl TestData {
         });
 
         // Limit number of concurrent tests, otherwise it can throw errors about too many open files
-        while ACTIVE.load(Ordering::Relaxed) > 20 {
+        while ACTIVE.load(Ordering::Relaxed) > 10 {
             sleep(Duration::from_secs(1)).await;
         }
         ACTIVE.fetch_add(1, Ordering::Relaxed);
