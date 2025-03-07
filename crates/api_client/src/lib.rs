@@ -154,13 +154,13 @@ impl ApiClient {
         T: for<'de> Deserialize<'de>,
     {
         let json = serde_json::from_str(&text).map_err(|e| {
-            info!("Failed to deserialize api response: {e} from {text} on {url}");
+            info!(r#"Failed to deserialize api response: "{e}" from "{text}" on "{url}""#);
             FrontendError::new(&text)
         })?;
         if status == StatusCode::OK {
             Ok(json)
         } else {
-            info!("API error: {text} on {url} status {status}");
+            info!(r#"API error: "{text}" on "{url}" status {status}"#);
             Err(FrontendError::new(text))
         }
     }

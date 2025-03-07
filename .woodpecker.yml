@@ -109,7 +109,7 @@ steps:
     image: woodpeckerci/plugin-docker-buildx
     settings:
       repo: nutomic/ibis
-      dockerfile: docker/Dockerfile
+      dockerfile: docker/Dockerfile_ci
       username:
         from_secret: docker_username
       password:

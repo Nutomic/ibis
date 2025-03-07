@@ -22,7 +22,7 @@ use ibis_database::{
     },
 };
 use ibis_federate::validate::{validate_email, validate_user_name};
-use log::debug;
+use log::info;
 use reqwest::Client;
 use std::sync::LazyLock;
 
@@ -171,17 +171,25 @@ async fn oauth_request_access_token(
         ("grant_type", "authorization_code"),
         ("redirect_uri", redirect_uri),
     ];
+    dbg!(&form);
 
     // Request an Access Token from the OAUTH provider
-    let response = REQWEST
-        .post(oauth_provider.token_endpoint.as_str())
-        .header("Accept", "application/json")
-        .form(&form[..])
-        .send()
-        .await?;
+    let response = dbg!(
+        REQWEST
+            .post(oauth_provider.token_endpoint.as_str())
+            .header("Accept", "application/json")
+            .form(&form[..])
+    )
+    .send()
+    .await;
     // TODO
+    dbg!(&response);
+    let response = response?;
+    dbg!(&response);
+    let status = response.status();
     let text = response.text().await?;
-    debug!("oauth token res: {text}");
+    dbg!(&text);
+    info!("oauth token res: status {status}, text {text}");
     //response.error_for_status()?;
 
     // Extract the access token

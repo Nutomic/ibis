@@ -1,0 +1,4 @@
+# It should be possible to get rid of this file using `COPY --exclude`, but thats not working
+# https://stackoverflow.com/a/78110854
+
+target
