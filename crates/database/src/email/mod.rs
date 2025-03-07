@@ -1,4 +1,4 @@
-use crate::{common::user::LocalUser, error::BackendResult, impls::IbisContext};
+use crate::{error::BackendResult, impls::IbisContext};
 use lettre::{
     Address,
     AsyncSmtpTransport,
@@ -7,7 +7,7 @@ use lettre::{
     message::*,
     transport::smtp::extension::ClientId,
 };
-use log::{info, warn};
+use log::{debug, warn};
 use std::{str::FromStr, sync::OnceLock};
 use uuid::Uuid;
 
@@ -16,7 +16,7 @@ pub mod verification;
 
 async fn send_email(
     subject: &str,
-    to_user: &LocalUser,
+    to_email: &str,
     html: String,
     context: &IbisContext,
 ) -> BackendResult<()> {
@@ -34,10 +34,7 @@ async fn send_email(
             .build()
     });
 
-    let Some(to_email) = &to_user.email else {
-        return Ok(());
-    };
-    info!("sending email to {to_email}");
+    debug!("sending email to {to_email}");
 
     // use usize::MAX as the line wrap length, since lettre handles the wrapping for us
     let plain_text = html2text::from_read(html.as_bytes(), usize::MAX)?;

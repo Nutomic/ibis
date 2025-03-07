@@ -12,8 +12,7 @@ use crate::api::{
     },
     comment::{create_comment, edit_comment},
     instance::{follow_instance, get_instance, resolve_instance},
-    register_user::register_user,
-    user::{get_user, login_user, logout_user},
+    user::{get_user, login_user, logout_user, register::register_user},
 };
 use activitypub_federation::config::Data;
 use anyhow::anyhow;
@@ -39,7 +38,6 @@ use ibis_database::{
     impls::{IbisContext, edit::ViewEditParams},
 };
 use instance::{list_instance_views, update_instance};
-use register_user::authenticate_with_oauth;
 use std::ops::Deref;
 use user::{
     article_notif_mark_as_read,
@@ -47,6 +45,7 @@ use user::{
     count_notifications,
     get_user_follows,
     list_notifications,
+    register::authenticate_with_oauth,
     update_user_profile,
     verify_email,
 };
@@ -54,7 +53,6 @@ use user::{
 mod article;
 mod comment;
 mod instance;
-mod register_user;
 pub(super) mod user;
 
 pub fn api_routes() -> Router<()> {

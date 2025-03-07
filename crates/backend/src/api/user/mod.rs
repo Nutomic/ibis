@@ -1,5 +1,4 @@
 use super::{UserExt, empty_to_none};
-use crate::api::register_user::validate_new_password;
 use activitypub_federation::config::Data;
 use anyhow::anyhow;
 use axum::{Form, Json, extract::Query};
@@ -44,8 +43,11 @@ use jsonwebtoken::{
     encode,
     get_current_timestamp,
 };
+use register::validate_new_password;
 use serde::{Deserialize, Serialize};
 use time::{Duration, OffsetDateTime};
+
+pub mod register;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Claims {

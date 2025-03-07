@@ -38,6 +38,7 @@ diffy.workspace = true
 axum.workspace = true
 log.workspace = true
 activitypub_federation.workspace = true
+reqwest.workspace = true
 doku.workspace = true
 lettre = { version = "0.11.14", default-features = false, features = [
   "builder",

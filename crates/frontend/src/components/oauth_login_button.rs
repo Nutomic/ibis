@@ -1,8 +1,11 @@
-use crate::utils::use_cookie;
+use crate::{
+    components::suspense_error::SuspenseError,
+    utils::{resources::site, use_cookie},
+};
 use ibis_database::common::instance::OAuthProviderPublic;
-use leptos::prelude::*;
+use leptos::{ev::MouseEvent, prelude::*};
 use serde::{Deserialize, Serialize};
-use std::{ops::Deref, str::FromStr, sync::Arc};
+use std::str::FromStr;
 use url::Url;
 use uuid::Uuid;
 
@@ -28,14 +31,49 @@ impl ToString for OauthCookie {
     }
 }
 
-pub fn oauth_login_button(
-    provider: OAuthProviderPublic,
-    username: Option<String>,
-) -> impl IntoView {
-    let provider_ = Arc::new(provider.clone());
-    let username = Arc::new(username.clone());
+#[component]
+pub fn OauthLoginButtons(username: ReadSignal<String>) -> impl IntoView {
+    let site = site();
+    view! {
+        <SuspenseError result=site>
+            {move || Suspend::new(async move {
+                let site = site.await;
+                let providers: Vec<_> = site
+                    .as_ref()
+                    .ok()
+                    .map(|s| s.oauth_providers.clone())
+                    .into_iter()
+                    .flatten()
+                    .collect();
+                let has_oauth_providers = !providers.is_empty();
+                view! {
+                    <Show when=move || { has_oauth_providers }>
+                        <h2 class="my-4 font-serif text-xl font-bold grow max-w-fit">
+                            Or Register with SSO Provider
+                        </h2>
+                        {providers
+                            .iter()
+                            .map(|p| {
+                                view! {
+                                    <button
+                                        class="m-2 btn btn-secondary"
+                                        on:click=on_click(p.clone(), username)
+                                    >
+                                        {p.display_name.clone()}
+                                    </button>
+                                }
+                            })
+                            .collect::<Vec<_>>()}
+                    </Show>
+                }
+            })}
+        </SuspenseError>
+    }
+}
+
+fn on_click(provider: OAuthProviderPublic, username: ReadSignal<String>) -> impl Fn(MouseEvent) {
     let oauth_cookie = use_cookie("oauth_state");
-    let on_click = move |_| {
+    move |_| {
         let redirect_uri = Url::parse(&format!(
             "{}/account/oauth_callback",
             location().origin().expect("get location")
@@ -45,17 +83,17 @@ pub fn oauth_login_button(
 
         oauth_cookie.1.set(Some(OauthCookie {
             state: state.clone(),
-            issuer_url: provider_.issuer.clone(),
+            issuer_url: provider.issuer.clone(),
             redirect_url: redirect_uri.clone(),
-            username: username.deref().clone(),
+            username: Some(username.get()),
         }));
 
-        let mut oauth_redirect = provider_.authorization_endpoint.clone();
+        let mut oauth_redirect = provider.authorization_endpoint.clone();
         oauth_redirect
             .query_pairs_mut()
-            .append_pair("client_id", &provider_.client_id)
+            .append_pair("client_id", &provider.client_id)
             .append_pair("response_type", "code")
-            .append_pair("scope", &provider_.scopes)
+            .append_pair("scope", &provider.scopes)
             .append_pair("redirect_uri", redirect_uri.as_str())
             .append_pair("state", &state)
             .finish();
@@ -63,11 +101,5 @@ pub fn oauth_login_button(
             .location()
             .set_href(oauth_redirect.as_str())
             .expect("set location")
-    };
-
-    view! {
-        <button class="my-2 btn btn-secondary" on:click=on_click>
-            {provider.display_name.clone()}
-        </button>
     }
 }

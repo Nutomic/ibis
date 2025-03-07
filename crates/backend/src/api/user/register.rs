@@ -1,5 +1,7 @@
-use super::user::{create_cookie, generate_login_token};
-use crate::api::empty_to_none;
+use crate::api::{
+    empty_to_none,
+    user::{create_cookie, generate_login_token},
+};
 use activitypub_federation::config::Data;
 use anyhow::anyhow;
 use axum::{Form, Json};
@@ -22,9 +24,7 @@ use ibis_database::{
     },
 };
 use ibis_federate::validate::{validate_email, validate_user_name};
-use log::info;
-use reqwest::Client;
-use std::sync::LazyLock;
+use serde::{Deserialize, Serialize};
 
 type RegisterReturnType = BackendResult<(CookieJar, Json<RegistrationResponse>)>;
 
@@ -69,7 +69,7 @@ pub async fn authenticate_with_oauth(
     jar: CookieJar,
     Form(params): Form<AuthenticateWithOauth>,
 ) -> RegisterReturnType {
-    let oauth_invalid_err: BackendError = anyhow!("OauthAuthorizationInvalid").into();
+    let oauth_invalid_err: BackendError = anyhow!("Oauth Authorization is invalid").into();
     // validate inputs
     if params.code.is_empty() || params.code.len() > 300 {
         return Err(oauth_invalid_err);
@@ -94,13 +94,22 @@ pub async fn authenticate_with_oauth(
         .find(|provider| provider.issuer == params.oauth_issuer)
         .ok_or(oauth_invalid_err)?;
 
-    let token_response =
-        oauth_request_access_token(oauth_provider, &params.code, redirect_uri.as_str()).await?;
+    let token_response = oauth_request_access_token(
+        oauth_provider,
+        &params.code,
+        redirect_uri.as_str(),
+        &context,
+    )
+    .await?;
 
-    let user_info =
-        oidc_get_user_info(oauth_provider, token_response.access_token.as_str()).await?;
-
-    let oauth_user_id = read_user_info(&user_info, "sub")?;
+    let user_info = oauth_get_user_info(
+        oauth_provider,
+        token_response.access_token.as_str(),
+        &context,
+    )
+    .await?;
+    let oauth_user_id = user_info.sub;
+    let email = user_info.email;
 
     // Lookup user by oauth_user_id
     let mut local_user_view = LocalUserView::read(
@@ -114,14 +123,12 @@ pub async fn authenticate_with_oauth(
     } else {
         // user has never previously registered using oauth
 
-        // Extract the OAUTH email claim from the returned user_info
-        let email = read_user_info(&user_info, "email")?;
-
         // Lookup user by OAUTH email and link accounts
         local_user_view = LocalUserView::read(LocalUserViewQuery::Email(&email), &context);
 
         if let Ok(user) = local_user_view {
             // user found by email => link and login
+
             let oauth_account_form = OAuthAccountInsertForm {
                 local_user_id: user.local_user.id,
                 oauth_issuer_url: oauth_provider.issuer.clone().into(),
@@ -133,10 +140,9 @@ pub async fn authenticate_with_oauth(
         } else {
             // No user was found by email => Register as new user
 
-            // make sure the username is provided
             let username = params
                 .username
-                .ok_or(anyhow!("RegistrationUsernameRequired"))?;
+                .ok_or(anyhow!("Username is required to register new account"))?;
 
             check_new_user(&username, Some(&email), &context)?;
             let user = LocalUserView::create(username, None, false, Some(email), &context)?;
@@ -157,12 +163,11 @@ pub async fn authenticate_with_oauth(
     register_return(user, jar, false, &context)
 }
 
-static REQWEST: LazyLock<Client> = LazyLock::new(Client::new);
-
 async fn oauth_request_access_token(
     oauth_provider: &OAuthProvider,
     code: &str,
     redirect_uri: &str,
+    context: &IbisContext,
 ) -> BackendResult<OAuthTokenResponse> {
     let form = [
         ("client_id", &*oauth_provider.client_id),
@@ -171,39 +176,28 @@ async fn oauth_request_access_token(
         ("grant_type", "authorization_code"),
         ("redirect_uri", redirect_uri),
     ];
-    dbg!(&form);
 
     // Request an Access Token from the OAUTH provider
-    let response = dbg!(
-        REQWEST
-            .post(oauth_provider.token_endpoint.as_str())
-            .header("Accept", "application/json")
-            .form(&form[..])
-    )
-    .send()
-    .await;
-    // TODO
-    dbg!(&response);
-    let response = response?;
-    dbg!(&response);
-    let status = response.status();
-    let text = response.text().await?;
-    dbg!(&text);
-    info!("oauth token res: status {status}, text {text}");
-    //response.error_for_status()?;
+    let response = context
+        .client
+        .post(oauth_provider.token_endpoint.as_str())
+        .header("Accept", "application/json")
+        .form(&form[..])
+        .send()
+        .await?
+        .error_for_status()?;
 
-    // Extract the access token
-    let token_response: OAuthTokenResponse = serde_json::from_str(&text)?;
-
-    Ok(token_response)
+    Ok(response.json().await?)
 }
 
-async fn oidc_get_user_info(
+async fn oauth_get_user_info(
     oauth_provider: &OAuthProvider,
     access_token: &str,
-) -> BackendResult<serde_json::Value> {
+    context: &IbisContext,
+) -> BackendResult<OauthUserInfo> {
     // Request the user info from the OAUTH provider
-    let response = REQWEST
+    let response = context
+        .client
         .get(oauth_provider.userinfo_endpoint.as_str())
         .header("Accept", "application/json")
         .bearer_auth(access_token)
@@ -211,18 +205,13 @@ async fn oidc_get_user_info(
         .await?
         .error_for_status()?;
 
-    // Extract the OAUTH user_id claim from the returned user_info
-    let user_info = response.json::<serde_json::Value>().await?;
-
-    Ok(user_info)
+    Ok(response.json().await?)
 }
 
-fn read_user_info(user_info: &serde_json::Value, key: &str) -> BackendResult<String> {
-    if let Some(value) = user_info.get(key) {
-        let result = serde_json::from_value::<String>(value.clone())?;
-        return Ok(result);
-    }
-    Err(anyhow!("OauthLoginFailed"))?
+#[derive(Serialize, Deserialize)]
+struct OauthUserInfo {
+    sub: String,
+    email: String,
 }
 
 fn check_new_user(username: &str, email: Option<&str>, context: &IbisContext) -> BackendResult<()> {

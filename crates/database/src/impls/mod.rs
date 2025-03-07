@@ -8,6 +8,7 @@ use diesel::{
     sql_types,
 };
 use diesel_migrations::{EmbeddedMigrations, MigrationHarness, embed_migrations};
+use reqwest::Client;
 use std::{env::var, ops::DerefMut};
 
 pub mod article;
@@ -27,6 +28,7 @@ const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations");
 pub struct IbisContext {
     pub db_pool: DbPool,
     pub conf: IbisConfig,
+    pub client: Client,
 }
 
 impl IbisContext {
@@ -46,9 +48,12 @@ impl IbisContext {
             .get()?
             .run_pending_migrations(MIGRATIONS)
             .expect("run migrations");
+        let client = Client::builder().user_agent("ibis").build()?;
+
         Ok(IbisContext {
             db_pool,
             conf: config,
+            client,
         })
     }
 }
