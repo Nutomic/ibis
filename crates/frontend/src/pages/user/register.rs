@@ -15,7 +15,7 @@ pub fn Register() -> impl IntoView {
     let password = signal(String::new());
     let confirm_password = signal(String::new());
     let (register_response, set_register_response) = signal(None::<RegistrationResponse>);
-    let (wait_for_response, set_wait_for_response) = signal(false);
+    let (loading, set_loading) = signal(false);
 
     let register_action = Action::new(move |(): &()| {
         let params = RegisterUserParams {
@@ -26,12 +26,12 @@ pub fn Register() -> impl IntoView {
         };
         info!("Try to register new account for {}", params.username);
         async move {
-            set_wait_for_response.set(true);
+            set_loading.set(true);
             CLIENT.register(params).await.error_popup(|res| {
                 site().refetch();
                 set_register_response.set(Some(res));
             });
-            set_wait_for_response.set(false);
+            set_loading.set(false);
         }
     });
 
@@ -49,7 +49,7 @@ pub fn Register() -> impl IntoView {
                     .unwrap_or_default();
                 let email_placeholder = if email_required { "Email" } else { "Email (optional)" };
                 let button_is_disabled = Signal::derive(move || {
-                    let disabled = wait_for_response.get() || username.0.get().is_empty()
+                    let disabled = loading.get() || username.0.get().is_empty()
                         || password.0.get().is_empty() || confirm_password.0.get().is_empty();
                     if email_required && email.0.get().is_empty() {
                         return false;
@@ -61,75 +61,74 @@ pub fn Register() -> impl IntoView {
                         when=move || register_response.get().is_some()
                         fallback=move || {
                             view! {
-                                <form
-                                    class="form-control max-w-80"
-                                    on:submit=|ev| ev.prevent_default()
+                                <Show
+                                    when=move || {
+                                        register_response
+                                            .get()
+                                            .map(|r| r.email_verification_required)
+                                            .unwrap_or_default()
+                                    }
+                                    fallback=|| {
+                                        view! { <p>"You have successfully registered."</p> }
+                                    }
                                 >
-                                    <h1 class="my-4 font-serif text-4xl font-bold grow max-w-fit">
-                                        Register
-                                    </h1>
-
-                                    <input
-                                        type="text"
-                                        class="input input-primary input-bordered my-1"
-                                        required
-                                        placeholder="Username"
-                                        bind:value=username
-                                        prop:disabled=move || wait_for_response.get()
-                                    />
-                                    <input
-                                        type="text"
-                                        class="input input-primary input-bordered my-1"
-                                        required
-                                        placeholder=email_placeholder
-                                        bind:value=email
-                                        prop:disabled=move || wait_for_response.get()
-                                    />
-                                    <input
-                                        type="password"
-                                        class="input input-primary input-bordered my-1"
-                                        required
-                                        placeholder="Password"
-                                        prop:disabled=move || wait_for_response.get()
-                                        bind:value=password
-                                    />
-                                    <input
-                                        type="password"
-                                        class="input input-primary input-bordered my-1"
-                                        required
-                                        placeholder="Confirm password"
-                                        prop:disabled=move || wait_for_response.get()
-                                        bind:value=confirm_password
-                                    />
-
-                                    <div>
-                                        <button
-                                            class="my-2 btn btn-primary"
-                                            prop:disabled=move || button_is_disabled.get()
-                                            on:click=move |_| {
-                                                dispatch_action();
-                                            }
-                                        >
-                                            Register
-                                        </button>
-                                    </div>
-                                </form>
+                                    <p>
+                                        "Registration successful, now verify the email address to login"
+                                    </p>
+                                </Show>
                             }
                         }
                     >
-                        <Show
-                            when=move || {
-                                register_response
-                                    .get()
-                                    .map(|r| r.email_verification_required)
-                                    .unwrap_or_default()
-                            }
-                            fallback=|| {
-                                view! { <p>"You have successfully registered."</p> }
-                            }
-                        >
-                            <p>"Registration successful, now verify the email address to login"</p>
-                        </Show>
+                        <form class="form-control max-w-80" on:submit=|ev| ev.prevent_default()>
+                            <h1 class="my-4 font-serif text-4xl font-bold grow max-w-fit">
+                                Register
+                            </h1>
+
+                            <input
+                                type="text"
+                                class="input input-primary input-bordered my-1"
+                                required
+                                placeholder="Username"
+                                bind:value=username
+                                prop:disabled=move || loading.get()
+                            />
+                            <input
+                                type="text"
+                                class="input input-primary input-bordered my-1"
+                                required
+                                placeholder=email_placeholder
+                                bind:value=email
+                                prop:disabled=move || loading.get()
+                            />
+                            <input
+                                type="password"
+                                class="input input-primary input-bordered my-1"
+                                required
+                                placeholder="Password"
+                                prop:disabled=move || loading.get()
+                                bind:value=password
+                            />
+                            <input
+                                type="password"
+                                class="input input-primary input-bordered my-1"
+                                required
+                                placeholder="Confirm password"
+                                prop:disabled=move || loading.get()
+                                bind:value=confirm_password
+                            />
+
+                            <div>
+                                <button
+                                    class="my-2 btn btn-primary"
+                                    prop:disabled=move || button_is_disabled.get()
+                                    on:click=move |_| {
+                                        dispatch_action();
+                                    }
+                                >
+                                    Register
+                                </button>
+                            </div>
+                        </form>
                     </Show>
                 }
             })}

@@ -76,6 +76,18 @@ pub struct ChangePasswordParams {
     pub old_password: String,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
+pub struct PasswordReset {
+    pub email: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, Default, PartialEq, Eq, Hash)]
+pub struct ChangePasswordAfterReset {
+    pub token: String,
+    pub password: String,
+    pub confirm_password: String,
+}
+
 impl ApiClient {
     pub async fn register(
         &self,
@@ -133,6 +145,22 @@ impl ApiClient {
         params: AuthenticateWithOauth,
     ) -> FrontendResult<RegistrationResponse> {
         self.post("/api/v1/account/oauth/authenticate", Some(params))
+            .await
+    }
+
+    pub async fn request_password_reset(
+        &self,
+        params: PasswordReset,
+    ) -> FrontendResult<SuccessResponse> {
+        self.post("/api/v1/account/request_reset_password", Some(params))
+            .await
+    }
+
+    pub async fn change_password_after_reset(
+        &self,
+        params: ChangePasswordAfterReset,
+    ) -> FrontendResult<SuccessResponse> {
+        self.post("/api/v1/account/change_password_after_reset", Some(params))
             .await
     }
 }

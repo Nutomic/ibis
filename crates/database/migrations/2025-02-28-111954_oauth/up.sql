@@ -22,3 +22,11 @@ create table email_verification (
 );
 
 alter table local_user add column email_notifications bool not null default false;
+
+CREATE TABLE password_reset_request (
+    id serial PRIMARY KEY,
+    local_user_id int REFERENCES local_user ON UPDATE CASCADE ON DELETE CASCADE NOT NULL,
+    token text NOT NULL,
+    published timestamp with time zone NOT NULL DEFAULT now()
+);
+

@@ -162,6 +162,15 @@ diesel::table! {
 }
 
 diesel::table! {
+    password_reset_request (id) {
+        id -> Int4,
+        local_user_id -> Int4,
+        token -> Text,
+        published -> Timestamptz,
+    }
+}
+
+diesel::table! {
     person (id) {
         id -> Int4,
         username -> Text,
@@ -200,6 +209,7 @@ diesel::joinable!(notification -> edit (edit_id));
 diesel::joinable!(notification -> local_user (local_user_id));
 diesel::joinable!(notification -> person (creator_id));
 diesel::joinable!(oauth_account -> local_user (local_user_id));
+diesel::joinable!(password_reset_request -> local_user (local_user_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     article,
@@ -215,5 +225,6 @@ diesel::allow_tables_to_appear_in_same_query!(
     local_user,
     notification,
     oauth_account,
+    password_reset_request,
     person,
 );

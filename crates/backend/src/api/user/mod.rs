@@ -9,9 +9,11 @@ use chrono::Utc;
 use ibis_api_client::{
     notifications::MarkAsReadParams,
     user::{
+        ChangePasswordAfterReset,
         ChangePasswordParams,
         GetUserParams,
         LoginUserParams,
+        PasswordReset,
         UpdateUserParams,
         VerifyEmailParams,
     },
@@ -24,7 +26,10 @@ use ibis_database::{
         notifications::ApiNotification,
         user::{LocalUser, LocalUserView, Person},
     },
-    email::verification::{send_verification_email, set_email_verified},
+    email::{
+        reset_password::PasswordResetRequest,
+        verification::{send_verification_email, set_email_verified},
+    },
     error::{BackendError, BackendResult},
     impls::{
         IbisContext,
@@ -43,6 +48,7 @@ use jsonwebtoken::{
     encode,
     get_current_timestamp,
 };
+use log::warn;
 use register::validate_new_password;
 use serde::{Deserialize, Serialize};
 use time::{Duration, OffsetDateTime};
@@ -247,5 +253,33 @@ pub(crate) async fn change_password(
     validate_password(&user, &params.old_password)?;
     validate_new_password(&params.new_password, &params.confirm_new_password)?;
     LocalUser::update_password(params.new_password, user.local_user.id, &context)?;
+    Ok(Json(SuccessResponse::default()))
+}
+
+#[debug_handler]
+pub async fn request_reset_password(
+    context: Data<IbisContext>,
+    Form(params): Form<PasswordReset>,
+) -> BackendResult<Json<SuccessResponse>> {
+    let email = params.email.to_lowercase();
+    // Errors are not returned to avoid revealing registered user's emails.
+    if let Err(e) = PasswordResetRequest::create(&email, &context).await {
+        warn!("Failed to send password reset email: {e}");
+    }
+    Ok(Json(SuccessResponse::default()))
+}
+
+#[debug_handler]
+pub async fn change_password_after_reset(
+    context: Data<IbisContext>,
+    Form(params): Form<ChangePasswordAfterReset>,
+) -> BackendResult<Json<SuccessResponse>> {
+    let local_user_id =
+        PasswordResetRequest::read_and_delete(&params.token, &context)?.local_user_id;
+
+    validate_new_password(&params.password, &params.confirm_password)?;
+
+    LocalUser::update_password(params.password, local_user_id, &context)?;
+
     Ok(Json(SuccessResponse::default()))
 }

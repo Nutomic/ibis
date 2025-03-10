@@ -24,6 +24,8 @@ use crate::{
             oauth_callback::OauthCallback,
             profile::UserProfile,
             register::Register,
+            request_password_reset::RequestPasswordReset,
+            reset_password::ResetPassword,
             verify_email::VerifyEmail,
         },
     },
@@ -126,6 +128,11 @@ pub fn App() -> impl IntoView {
                             path=path!("/account/edit_profile")
                             view=UserEditProfile
                         />
+                        <Route
+                            path=path!("/account/request_password_reset")
+                            view=RequestPasswordReset
+                        />
+                        <Route path=path!("/account/reset_password") view=ResetPassword />
                         <IbisProtectedRoute path=path!("/notifications") view=Notifications />
                     </Routes>
                 </main>

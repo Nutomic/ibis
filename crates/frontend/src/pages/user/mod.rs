@@ -4,4 +4,6 @@ pub mod notifications;
 pub mod oauth_callback;
 pub mod profile;
 pub mod register;
+pub mod request_password_reset;
+pub mod reset_password;
 pub mod verify_email;

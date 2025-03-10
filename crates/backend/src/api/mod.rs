@@ -42,10 +42,12 @@ use std::ops::Deref;
 use user::{
     article_notif_mark_as_read,
     change_password,
+    change_password_after_reset,
     count_notifications,
     get_user_follows,
     list_notifications,
     register::authenticate_with_oauth,
+    request_reset_password,
     update_user_profile,
     verify_email,
 };
@@ -93,6 +95,14 @@ pub fn api_routes() -> Router<()> {
         .route("/account/oauth/authenticate", post(authenticate_with_oauth))
         .route("/account/verify_email", post(verify_email))
         .route("/account/change_password", post(change_password))
+        .route(
+            "/account/request_reset_password",
+            post(request_reset_password),
+        )
+        .route(
+            "/account/change_password_after_reset",
+            post(change_password_after_reset),
+        )
         .route("/site", get(site_view))
 }
 

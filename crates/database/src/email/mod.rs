@@ -12,6 +12,7 @@ use std::{str::FromStr, sync::OnceLock};
 use uuid::Uuid;
 
 pub mod notification;
+pub mod reset_password;
 pub mod verification;
 
 async fn send_email(
@@ -21,6 +22,7 @@ async fn send_email(
     context: &IbisContext,
 ) -> BackendResult<()> {
     static MAILER: OnceLock<AsyncSmtpTransport<Tokio1Executor>> = OnceLock::new();
+    debug!("Sending email to {to_email} with content {html}");
     let conf = &context.conf;
     let Some(email_conf) = conf.email.clone() else {
         warn!("Email not configured");
@@ -33,8 +35,6 @@ async fn send_email(
             .hello_name(ClientId::Domain(conf.federation.domain.clone()))
             .build()
     });
-
-    debug!("sending email to {to_email}");
 
     // use usize::MAX as the line wrap length, since lettre handles the wrapping for us
     let plain_text = html2text::from_read(html.as_bytes(), usize::MAX)?;
