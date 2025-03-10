@@ -49,7 +49,7 @@ serde = { version = "1.0.218", features = ["derive"] }
 chrono = { version = "0.4.40", features = ["serde"] }
 sha2 = "0.10.8"
 uuid = { version = "1.15.1", features = ["serde"] }
-activitypub_federation = { version = "0.6.2", features = [
+activitypub_federation = { version = "0.6.3", features = [
   "axum",
 ], default-features = false }
 url = { version = "2.5.4", features = ["serde"] }
@@ -88,3 +88,8 @@ lib-profile-release = "wasm-release"
 style-file = "assets/ibis.css"
 tailwind-input-file = "assets/ibis.css"
 tailwind-config-file = "tailwind.config.js"
+
+# Speedup RSA key generation
+# https://github.com/RustCrypto/RSA/blob/master/README.md#example
+[profile.dev.package.num-bigint-dig]
+opt-level = 3
