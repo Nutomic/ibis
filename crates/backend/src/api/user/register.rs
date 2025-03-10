@@ -24,6 +24,7 @@ use ibis_database::{
     },
 };
 use ibis_federate::validate::{validate_email, validate_user_name};
+use log::debug;
 use serde::{Deserialize, Serialize};
 
 type RegisterReturnType = BackendResult<(CookieJar, Json<RegistrationResponse>)>;
@@ -163,6 +164,7 @@ pub async fn authenticate_with_oauth(
     register_return(user, jar, false, &context)
 }
 
+/// Request an Access Token from the OAUTH provider
 async fn oauth_request_access_token(
     oauth_provider: &OAuthProvider,
     code: &str,
@@ -177,35 +179,38 @@ async fn oauth_request_access_token(
         ("redirect_uri", redirect_uri),
     ];
 
-    // Request an Access Token from the OAUTH provider
     let response = context
         .client
         .post(oauth_provider.token_endpoint.as_str())
         .header("Accept", "application/json")
         .form(&form[..])
         .send()
-        .await?
-        .error_for_status()?;
+        .await?;
+    let status = response.status();
+    let text = response.text().await?;
+    debug!("Oauth request access token response: status {status}, text {text}");
 
-    Ok(response.json().await?)
+    Ok(serde_json::from_str(&text)?)
 }
 
+/// Request the user info from the OAUTH provider
 async fn oauth_get_user_info(
     oauth_provider: &OAuthProvider,
     access_token: &str,
     context: &IbisContext,
 ) -> BackendResult<OauthUserInfo> {
-    // Request the user info from the OAUTH provider
     let response = context
         .client
         .get(oauth_provider.userinfo_endpoint.as_str())
         .header("Accept", "application/json")
         .bearer_auth(access_token)
         .send()
-        .await?
-        .error_for_status()?;
+        .await?;
+    let status = response.status();
+    let text = response.text().await?;
+    debug!("Oauth get user info response: status {status}, text {text}");
 
-    Ok(response.json().await?)
+    Ok(serde_json::from_str(&text)?)
 }
 
 #[derive(Serialize, Deserialize)]

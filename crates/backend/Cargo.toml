@@ -17,6 +17,7 @@ log.workspace = true
 time = "0.3.37"
 ibis_federate.workspace = true
 ibis_api_client.workspace = true
+serde_json.workspace = true
 ibis_frontend = { workspace = true, features = ["ssr"] }
 axum.workspace = true
 axum-macros.workspace = true

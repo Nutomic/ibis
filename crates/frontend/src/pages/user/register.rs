@@ -58,7 +58,7 @@ pub fn Register() -> impl IntoView {
                 });
                 view! {
                     <Show
-                        when=move || register_response.get().is_some()
+                        when=move || register_response.get().is_none()
                         fallback=move || {
                             view! {
                                 <Show
