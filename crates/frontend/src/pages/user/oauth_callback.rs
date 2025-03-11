@@ -1,9 +1,9 @@
-use crate::{components::oauth_login_button::OauthCookie, utils::use_cookie};
 use ibis_api_client::{
     CLIENT,
     errors::{ErrorPopup, FrontendResultExt},
     user::AuthenticateWithOauth,
 };
+use ibis_frontend_components::{oauth_login_button::OauthCookie, utils::use_cookie};
 use leptos::{prelude::*, task::Executor};
 use leptos_router::hooks::use_query_map;
 

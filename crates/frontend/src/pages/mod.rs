@@ -3,17 +3,12 @@ use ibis_database::common::{
     MAIN_PAGE_NAME,
     article::{ArticleView, EditView},
 };
+use ibis_frontend_components::suspense_error::article_title_param;
 use leptos::prelude::*;
-use leptos_router::hooks::use_params_map;
 
 pub mod article;
 pub mod instance;
 pub mod user;
-
-pub fn article_title_param() -> Option<String> {
-    let params = use_params_map();
-    params.get().get("title").clone()
-}
 
 fn article_resource() -> Resource<FrontendResult<ArticleView>> {
     Resource::new(article_title_param, move |title| async move {

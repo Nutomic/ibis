@@ -1,5 +1,5 @@
 use crate::{
-    components::suspense_error::SuspenseError,
+    suspense_error::SuspenseError,
     utils::{resources::site, use_cookie},
 };
 use ibis_database::common::instance::OAuthProviderPublic;
@@ -10,11 +10,11 @@ use url::Url;
 use uuid::Uuid;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub(crate) struct OauthCookie {
-    pub(crate) state: String,
-    pub(crate) issuer_url: Url,
-    pub(crate) redirect_url: Url,
-    pub(crate) username: Option<String>,
+pub struct OauthCookie {
+    pub state: String,
+    pub issuer_url: Url,
+    pub redirect_url: Url,
+    pub username: Option<String>,
 }
 
 impl FromStr for OauthCookie {

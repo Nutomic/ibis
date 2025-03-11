@@ -1,9 +1,7 @@
-use crate::{
-    components::{
-        article_nav::{ActiveTab, ArticleNav},
-        suspense_error::SuspenseError,
-    },
-    pages::article_resource,
+use crate::pages::article_resource;
+use ibis_frontend_components::{
+    article_nav::{ActiveTab, ArticleNav},
+    suspense_error::SuspenseError,
 };
 use ibis_markdown::render_article_markdown;
 use leptos::{either::Either, prelude::*};

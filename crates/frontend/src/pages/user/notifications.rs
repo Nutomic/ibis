@@ -1,7 +1,3 @@
-use crate::{
-    components::suspense_error::SuspenseError,
-    utils::formatting::{article_link, article_path, comment_path, edit_path, time_ago, user_link},
-};
 use ibis_api_client::{
     CLIENT,
     errors::{FrontendError, FrontendResultExt},
@@ -11,6 +7,10 @@ use ibis_database::common::{
     comment::Comment,
     newtypes::ConflictId,
     notifications::{ApiNotification, ApiNotificationData},
+};
+use ibis_frontend_components::{
+    suspense_error::SuspenseError,
+    utils::formatting::{article_link, article_path, comment_path, edit_path, time_ago, user_link},
 };
 use leptos::{either::EitherOf4, prelude::*};
 use leptos_meta::Title;

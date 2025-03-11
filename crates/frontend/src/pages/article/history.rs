@@ -1,10 +1,8 @@
-use crate::{
-    components::{
-        article_nav::{ActiveTab, ArticleNav},
-        edit_list::EditList,
-        suspense_error::SuspenseError,
-    },
-    pages::{article_edits_resource, article_resource},
+use crate::pages::{article_edits_resource, article_resource};
+use ibis_frontend_components::{
+    article_nav::{ActiveTab, ArticleNav},
+    edit_list::EditList,
+    suspense_error::SuspenseError,
 };
 use leptos::prelude::*;
 

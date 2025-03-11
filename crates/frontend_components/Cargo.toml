@@ -1,5 +1,5 @@
 [package]
-name = "ibis_frontend"
+name = "ibis_frontend_components"
 version.workspace = true
 edition.workspace = true
 
@@ -20,13 +20,13 @@ workspace = true
 ibis_database.workspace = true
 ibis_api_client.workspace = true
 ibis_markdown.workspace = true
-ibis_frontend_components.workspace = true
 leptos.workspace = true
-log.workspace = true
 serde.workspace = true
 chrono.workspace = true
 url.workspace = true
 phosphor-leptos.workspace = true
+serde_json.workspace = true
+uuid = { workspace = true, features = ["v4", "js"] }
 leptos_meta = "0.7.4"
 leptos_router = "0.7.4"
 leptos-use = { version = "0.15.6", features = [
@@ -35,3 +35,4 @@ leptos-use = { version = "0.15.6", features = [
   "use_preferred_dark",
 ], default-features = false }
 codee = { version = "0.2.0", features = ["json_serde"] }
+timeago = "0.4.2"

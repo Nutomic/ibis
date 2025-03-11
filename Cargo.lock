@@ -2084,12 +2084,31 @@ dependencies = [
  "codee",
  "ibis_api_client",
  "ibis_database",
+ "ibis_frontend_components",
  "ibis_markdown",
  "leptos",
  "leptos-use",
  "leptos_meta",
  "leptos_router",
  "log",
+ "phosphor-leptos",
+ "serde",
+ "url",
+]
+
+[[package]]
+name = "ibis_frontend_components"
+version = "0.3.0-alpha.2"
+dependencies = [
+ "chrono",
+ "codee",
+ "ibis_api_client",
+ "ibis_database",
+ "ibis_markdown",
+ "leptos",
+ "leptos-use",
+ "leptos_meta",
+ "leptos_router",
  "phosphor-leptos",
  "serde",
  "serde_json",

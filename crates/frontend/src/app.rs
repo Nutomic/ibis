@@ -1,37 +1,38 @@
-use crate::{
-    components::{nav::Nav, protected_route::IbisProtectedRoute},
-    pages::{
-        article::{
-            actions::ArticleActions,
-            create::CreateArticle,
-            diff::EditDiff,
-            discussion::ArticleDiscussion,
-            edit::EditArticle,
-            history::ArticleHistory,
-            read::ReadArticle,
-        },
-        instance::{
-            about::About,
-            details::InstanceDetails,
-            explore::Explore,
-            search::Search,
-            settings::InstanceSettings,
-        },
-        user::{
-            edit_profile::UserEditProfile,
-            login::Login,
-            notifications::Notifications,
-            oauth_callback::OauthCallback,
-            profile::UserProfile,
-            register::Register,
-            request_password_reset::RequestPasswordReset,
-            reset_password::ResetPassword,
-            verify_email::VerifyEmail,
-        },
+use crate::pages::{
+    article::{
+        actions::ArticleActions,
+        create::CreateArticle,
+        diff::EditDiff,
+        discussion::ArticleDiscussion,
+        edit::EditArticle,
+        history::ArticleHistory,
+        read::ReadArticle,
     },
-    utils::{dark_mode::DarkMode, formatting::instance_title, resources::site},
+    instance::{
+        about::About,
+        details::InstanceDetails,
+        explore::Explore,
+        search::Search,
+        settings::InstanceSettings,
+    },
+    user::{
+        edit_profile::UserEditProfile,
+        login::Login,
+        notifications::Notifications,
+        oauth_callback::OauthCallback,
+        profile::UserProfile,
+        register::Register,
+        request_password_reset::RequestPasswordReset,
+        reset_password::ResetPassword,
+        verify_email::VerifyEmail,
+    },
 };
 use ibis_api_client::{CLIENT, errors::ErrorPopup};
+use ibis_frontend_components::{
+    nav::Nav,
+    protected_route::IbisProtectedRoute,
+    utils::{dark_mode::DarkMode, formatting::instance_title, resources::site},
+};
 use leptos::prelude::*;
 use leptos_meta::{provide_meta_context, *};
 use leptos_router::{

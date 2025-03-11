@@ -1,9 +1,9 @@
-use crate::{components::suspense_error::SuspenseError, utils::resources::site};
 use ibis_api_client::{
     CLIENT,
     errors::FrontendResultExt,
     user::{RegisterUserParams, RegistrationResponse},
 };
+use ibis_frontend_components::{suspense_error::SuspenseError, utils::resources::site};
 use leptos::prelude::*;
 use leptos_meta::Title;
 use log::info;

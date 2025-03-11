@@ -1,4 +1,4 @@
-use crate::components::suspense_error::SuspenseError;
+use crate::suspense_error::SuspenseError;
 use ibis_api_client::{
     CLIENT,
     errors::{FrontendResult, FrontendResultExt},

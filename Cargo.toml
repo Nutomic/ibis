@@ -9,6 +9,7 @@ members = [
   "crates/database",
   "crates/federate",
   "crates/frontend",
+  "crates/frontend_components",
   "crates/hydrate",
   "crates/backend",
   "crates/markdown",
@@ -43,6 +44,7 @@ suspicious = { level = "deny", priority = -1 }
 ibis_database = { path = "crates/database" }
 ibis_federate = { path = "crates/federate" }
 ibis_frontend = { path = "crates/frontend" }
+ibis_frontend_components = { path = "crates/frontend_components" }
 ibis_api_client = { path = "crates/api_client" }
 ibis_markdown = { path = "crates/markdown" }
 serde = { version = "1.0.218", features = ["derive"] }

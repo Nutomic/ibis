@@ -1,5 +1,5 @@
-use crate::{
-    components::suspense_error::SuspenseError,
+use ibis_frontend_components::{
+    suspense_error::SuspenseError,
     utils::{formatting::user_link, resources::site},
 };
 use leptos::prelude::*;

@@ -1,6 +1,12 @@
-use crate::{pages::article_title_param, utils::resources::is_logged_in};
+use crate::utils::resources::is_logged_in;
 use ibis_api_client::errors::FrontendResult;
 use leptos::{either::Either, prelude::*};
+use leptos_router::hooks::use_params_map;
+
+pub fn article_title_param() -> Option<String> {
+    let params = use_params_map();
+    params.get().get("title").clone()
+}
 
 #[component]
 pub fn SuspenseError<T>(children: ChildrenFn, result: Resource<FrontendResult<T>>) -> impl IntoView

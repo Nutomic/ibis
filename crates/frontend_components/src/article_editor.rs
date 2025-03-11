@@ -1,4 +1,4 @@
-use crate::{components::prevent_navigation, utils::use_cookie};
+use crate::{prevent_navigation, utils::use_cookie};
 use ibis_markdown::render_article_markdown;
 use leptos::{html::Textarea, prelude::*};
 

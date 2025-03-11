@@ -1,5 +1,5 @@
-use crate::components::article_editor::EditorView;
 use ibis_api_client::{CLIENT, article::CreateArticleParams};
+use ibis_frontend_components::article_editor::EditorView;
 use leptos::{html::Textarea, prelude::*};
 use leptos_meta::Title;
 use leptos_router::{components::Redirect, hooks::use_query_map};

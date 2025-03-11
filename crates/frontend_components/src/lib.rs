@@ -14,6 +14,7 @@ pub mod nav;
 pub mod oauth_login_button;
 pub mod protected_route;
 pub mod suspense_error;
+pub mod utils;
 
 fn prevent_navigation(signal: Signal<String>) {
     // Prevent user from accidentally closing the page while editing. Doesnt prevent navigation

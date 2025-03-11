@@ -1,5 +1,5 @@
-use crate::{components::oauth_login_button::OauthLoginButtons, utils::resources::site};
 use ibis_api_client::{CLIENT, errors::FrontendResultExt, user::LoginUserParams};
+use ibis_frontend_components::{oauth_login_button::OauthLoginButtons, utils::resources::site};
 use leptos::prelude::*;
 use leptos_meta::Title;
 use leptos_router::components::Redirect;

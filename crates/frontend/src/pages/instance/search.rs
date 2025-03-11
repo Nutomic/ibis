@@ -1,6 +1,6 @@
-use crate::utils::formatting::article_path;
 use ibis_api_client::{CLIENT, instance::SearchArticleParams};
 use ibis_database::common::{article::Article, instance::Instance};
+use ibis_frontend_components::utils::formatting::article_path;
 use leptos::prelude::*;
 use leptos_meta::Title;
 use leptos_router::hooks::use_query_map;

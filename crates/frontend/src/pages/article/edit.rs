@@ -1,17 +1,15 @@
-use crate::{
-    components::{
-        article_editor::EditorView,
-        article_nav::{ActiveTab, ArticleNav},
-        suspense_error::SuspenseError,
-    },
-    pages::article_resource,
-};
+use crate::pages::article_resource;
 use chrono::{Days, Utc};
 use ibis_api_client::{CLIENT, article::EditArticleParams};
 use ibis_database::common::{
     MAIN_PAGE_NAME,
     article::{ApiConflict, ArticleView},
     newtypes::ConflictId,
+};
+use ibis_frontend_components::{
+    article_editor::EditorView,
+    article_nav::{ActiveTab, ArticleNav},
+    suspense_error::SuspenseError,
 };
 use leptos::{html::Textarea, prelude::*};
 use leptos_router::{

@@ -1,5 +1,5 @@
 use crate::{
-    components::comment_editor::{CommentEditorView, EditParams},
+    comment_editor::{CommentEditorView, EditParams},
     utils::{
         formatting::{comment_path, time_ago, user_link},
         resources::my_profile,

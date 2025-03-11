@@ -1,4 +1,4 @@
-use crate::components::prevent_navigation;
+use crate::prevent_navigation;
 use ibis_api_client::{
     CLIENT,
     comment::{CreateCommentParams, EditCommentParams},
