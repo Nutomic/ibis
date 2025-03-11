@@ -21,12 +21,8 @@ smart-default = "0.7.1"
 # backend-only deps
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
 ibis_markdown.workspace = true
-diesel = { version = "2.2.7", default-features = false, features = [
-  "postgres",
-  "chrono",
-  "uuid",
-  "r2d2",
-] }
+ibis_database_schema = { path = "../database_schema" }
+diesel.workspace = true
 diesel-derive-newtype = "2.1.2"
 diesel_migrations = "2.2.0"
 hex = "0.4.3"

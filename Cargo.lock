@@ -2043,6 +2043,7 @@ dependencies = [
  "doku",
  "hex",
  "html2text",
+ "ibis_database_schema",
  "ibis_markdown",
  "lettre",
  "log",
@@ -2052,6 +2053,13 @@ dependencies = [
  "smart-default",
  "url",
  "uuid",
+]
+
+[[package]]
+name = "ibis_database_schema"
+version = "0.3.0-alpha.2"
+dependencies = [
+ "diesel",
 ]
 
 [[package]]

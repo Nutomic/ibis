@@ -3,7 +3,6 @@ use crate::{
     common::{newtypes::LocalUserId, user::LocalUserView},
     error::BackendResult,
     impls::{IbisContext, user::LocalUserViewQuery},
-    schema::password_reset_request,
 };
 use anyhow::anyhow;
 use chrono::{DateTime, Utc};
@@ -12,6 +11,7 @@ use diesel::{
     sql_types::Timestamptz,
     *,
 };
+use ibis_database_schema::password_reset_request;
 use uuid::Uuid;
 
 #[derive(PartialEq, Eq, Debug, Queryable, Selectable, Identifiable)]

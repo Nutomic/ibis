@@ -7,9 +7,9 @@ use crate::{
     },
     error::BackendResult,
     impls::IbisContext,
-    schema::{conflict, edit, local_user, notification},
 };
 use diesel::{ExpressionMethods, Insertable, QueryDsl, RunQueryDsl, delete, insert_into};
+use ibis_database_schema::{conflict, edit, local_user, notification};
 use std::ops::DerefMut;
 
 #[derive(Debug, Clone, Insertable)]

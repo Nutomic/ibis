@@ -14,8 +14,6 @@ pub mod impls;
 #[cfg(feature = "ssr")]
 pub mod scheduled_tasks;
 #[cfg(feature = "ssr")]
-mod schema;
-#[cfg(feature = "ssr")]
 pub mod utils;
 
 #[repr(transparent)]

@@ -8,7 +8,6 @@ use crate::{
     },
     error::BackendResult,
     impls::IbisContext,
-    schema::{article, edit, person},
 };
 use chrono::{DateTime, Utc};
 use diesel::{
@@ -22,6 +21,7 @@ use diesel::{
     insert_into,
 };
 use diffy::create_patch;
+use ibis_database_schema::{article, edit, person};
 use std::ops::DerefMut;
 use url::Url;
 

@@ -1,4 +1,4 @@
-use crate::{config::IbisConfig, error::BackendResult, schema::jwt_secret};
+use crate::{config::IbisConfig, error::BackendResult};
 use diesel::{
     PgConnection,
     QueryDsl,
@@ -8,6 +8,7 @@ use diesel::{
     sql_types,
 };
 use diesel_migrations::{EmbeddedMigrations, MigrationHarness, embed_migrations};
+use ibis_database_schema::jwt_secret;
 use reqwest::Client;
 use std::{env::var, ops::DerefMut};
 

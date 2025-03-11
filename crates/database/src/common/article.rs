@@ -11,8 +11,8 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 #[cfg(feature = "ssr")]
 use {
-    crate::schema::{article, conflict, edit},
     diesel::{Identifiable, Queryable, Selectable},
+    ibis_database_schema::{article, conflict, edit},
     sha2::{Digest, Sha256},
 };
 

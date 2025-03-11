@@ -9,7 +9,6 @@ use crate::{
     },
     error::BackendResult,
     impls::IbisContext,
-    schema::{article, article_follow, edit, instance},
 };
 use diesel::{
     AsChangeset,
@@ -24,6 +23,7 @@ use diesel::{
     dsl::{delete, max, not},
     insert_into,
 };
+use ibis_database_schema::{article, article_follow, edit, instance};
 use std::ops::DerefMut;
 use url::Url;
 

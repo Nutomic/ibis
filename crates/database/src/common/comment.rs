@@ -7,8 +7,8 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "ssr")]
 use {
-    crate::schema::comment,
     diesel::{Identifiable, Queryable, Selectable},
+    ibis_database_schema::comment,
 };
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]

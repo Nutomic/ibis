@@ -1,5 +1,6 @@
-use crate::{error::BackendResult, impls::IbisContext, schema::instance_stats};
+use crate::{error::BackendResult, impls::IbisContext};
 use diesel::{Queryable, RunQueryDsl, Selectable, query_dsl::methods::FindDsl};
+use ibis_database_schema::instance_stats;
 use std::ops::DerefMut;
 
 #[derive(Queryable, Selectable)]

@@ -5,8 +5,8 @@ use serde::{Deserialize, Serialize};
 use url::Url;
 #[cfg(feature = "ssr")]
 use {
-    crate::schema::{local_user, person},
     diesel::{Identifiable, Queryable, Selectable},
+    ibis_database_schema::{local_user, person},
 };
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]

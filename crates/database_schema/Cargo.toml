@@ -1,0 +1,10 @@
+[package]
+name = "ibis_database_schema"
+version.workspace = true
+edition.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+diesel.workspace = true

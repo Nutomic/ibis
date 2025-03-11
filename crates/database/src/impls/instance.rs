@@ -7,13 +7,13 @@ use crate::{
     },
     error::BackendResult,
     impls::IbisContext,
-    schema::{article, comment, edit, instance, instance_follow},
 };
 use chrono::{DateTime, Utc};
 use diesel::{
     dsl::{max, not},
     *,
 };
+use ibis_database_schema::{article, comment, edit, instance, instance_follow};
 use std::{fmt::Debug, ops::DerefMut};
 
 #[derive(Debug, Clone, Insertable, AsChangeset)]
@@ -148,7 +148,7 @@ impl Instance {
     }
 
     pub fn read_followers(id_: InstanceId, context: &IbisContext) -> BackendResult<Vec<Person>> {
-        use crate::schema::person;
+        use ibis_database_schema::person;
         use instance_follow::dsl::{follower_id, instance_id};
         let mut conn = context.db_pool.get()?;
         Ok(instance_follow::table

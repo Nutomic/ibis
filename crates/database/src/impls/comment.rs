@@ -8,7 +8,6 @@ use crate::{
     },
     error::BackendResult,
     impls::IbisContext,
-    schema::{comment, person},
 };
 use chrono::{DateTime, Utc};
 use diesel::{
@@ -20,6 +19,7 @@ use diesel::{
     dsl::insert_into,
     update,
 };
+use ibis_database_schema::{comment, person};
 use std::ops::DerefMut;
 
 #[derive(Insertable, AsChangeset, Debug)]

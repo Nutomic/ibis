@@ -17,17 +17,6 @@ use crate::{
     email::notification::send_notification_email,
     error::BackendResult,
     impls::IbisContext,
-    schema::{
-        article,
-        article_follow,
-        comment,
-        conflict,
-        edit,
-        instance_follow,
-        local_user,
-        notification,
-        person,
-    },
 };
 use chrono::{DateTime, Utc};
 use diesel::{
@@ -40,6 +29,17 @@ use diesel::{
     RunQueryDsl,
     Selectable,
     dsl::*,
+};
+use ibis_database_schema::{
+    article,
+    article_follow,
+    comment,
+    conflict,
+    edit,
+    instance_follow,
+    local_user,
+    notification,
+    person,
 };
 use std::ops::DerefMut;
 

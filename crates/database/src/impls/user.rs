@@ -8,7 +8,6 @@ use crate::{
     },
     error::BackendResult,
     impls::{IbisContext, coalesce, lower},
-    schema::{instance, instance_follow, local_user, oauth_account, person},
     utils::generate_keypair,
 };
 use anyhow::anyhow;
@@ -28,6 +27,7 @@ use diesel::{
     dsl::not,
     insert_into,
 };
+use ibis_database_schema::{instance, instance_follow, local_user, oauth_account, person};
 use std::ops::DerefMut;
 use url::Url;
 

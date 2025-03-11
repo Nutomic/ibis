@@ -10,9 +10,10 @@ use smart_default::SmartDefault;
 use url::Url;
 #[cfg(feature = "ssr")]
 use {
-    crate::{config::OAuthProvider, schema::instance},
+    crate::config::OAuthProvider,
     diesel::{Identifiable, Queryable, Selectable},
     doku::Document,
+    ibis_database_schema::instance,
 };
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]

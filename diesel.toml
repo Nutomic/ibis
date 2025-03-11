@@ -2,7 +2,7 @@
 # see https://diesel.rs/guides/configuring-diesel-cli
 
 [print_schema]
-file = "crates/database/src/schema.rs"
+file = "crates/database_schema/src/lib.rs"
 custom_type_derives = ["diesel::query_builder::QueryId"]
 
 [migrations_directory]

@@ -7,6 +7,7 @@ resolver = "2"
 members = [
   "crates/api_client",
   "crates/database",
+  "crates/database_schema",
   "crates/federate",
   "crates/frontend",
   "crates/frontend_components",
@@ -44,7 +45,6 @@ suspicious = { level = "deny", priority = -1 }
 ibis_database = { path = "crates/database" }
 ibis_federate = { path = "crates/federate" }
 ibis_frontend = { path = "crates/frontend" }
-ibis_frontend_components = { path = "crates/frontend_components" }
 ibis_api_client = { path = "crates/api_client" }
 ibis_markdown = { path = "crates/markdown" }
 serde = { version = "1.0.218", features = ["derive"] }
@@ -79,6 +79,12 @@ phosphor-leptos = { version = "0.7.0", features = [
   "office",
   "arrows",
 ], default-features = false }
+diesel = { version = "2.2.7", default-features = false, features = [
+  "postgres",
+  "chrono",
+  "uuid",
+  "r2d2",
+] }
 
 [[workspace.metadata.leptos]]
 name = "ibis"

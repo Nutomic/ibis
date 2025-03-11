@@ -3,7 +3,6 @@ use crate::{
     common::{newtypes::LocalUserId, user::LocalUser},
     error::BackendResult,
     impls::IbisContext,
-    schema::{email_verification, local_user},
 };
 use chrono::{DateTime, Utc};
 use diesel::{
@@ -11,6 +10,7 @@ use diesel::{
     sql_types::Timestamptz,
     *,
 };
+use ibis_database_schema::{email_verification, local_user};
 use std::ops::DerefMut;
 
 #[derive(Clone, Queryable, Selectable, Identifiable, Debug)]

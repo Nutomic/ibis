@@ -20,7 +20,7 @@ workspace = true
 ibis_database.workspace = true
 ibis_api_client.workspace = true
 ibis_markdown.workspace = true
-ibis_frontend_components.workspace = true
+ibis_frontend_components = { path = "../frontend_components" }
 leptos.workspace = true
 log.workspace = true
 serde.workspace = true
