@@ -47,10 +47,19 @@ ibis_federate = { path = "crates/federate" }
 ibis_frontend = { path = "crates/frontend" }
 ibis_api_client = { path = "crates/api_client" }
 ibis_markdown = { path = "crates/markdown" }
+leptos = "0.7.4"
+leptos_meta = "0.7.4"
+leptos_router = "0.7.4"
+leptos-use = { version = "0.15.6", features = [
+  "use_textarea_autosize",
+  "use_cookie",
+  "use_preferred_dark",
+], default-features = false }
+codee = { version = "0.2.0", features = ["json_serde"] }
 serde = { version = "1.0.218", features = ["derive"] }
 chrono = { version = "0.4.40", features = ["serde"] }
 sha2 = "0.10.8"
-uuid = { version = "1.15.1", features = ["serde"] }
+uuid = { version = "1.15.1", features = ["v4", "serde"] }
 activitypub_federation = { version = "0.6.3", features = [
   "axum",
 ], default-features = false }
@@ -64,7 +73,6 @@ bcrypt = "0.16.0"
 doku = { version = "0.21.1", features = ["url-2"] }
 futures = "0.3.31"
 tokio = { version = "1.43.0", default-features = false }
-leptos = "0.7.4"
 http = "1.2.0"
 regex = "1.11.1"
 serde_json = "1.0.135"

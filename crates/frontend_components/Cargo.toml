@@ -11,7 +11,12 @@ ssr = [
   "leptos/ssr",
   "ibis_api_client/ssr",
 ]
-hydrate = ["ibis_markdown/hydrate", "leptos/hydrate", "ibis_api_client/hydrate"]
+hydrate = [
+  "ibis_markdown/hydrate",
+  "leptos/hydrate",
+  "ibis_api_client/hydrate",
+  "uuid/js",
+]
 
 [lints]
 workspace = true
@@ -26,13 +31,9 @@ chrono.workspace = true
 url.workspace = true
 phosphor-leptos.workspace = true
 serde_json.workspace = true
-uuid = { workspace = true, features = ["v4", "js"] }
-leptos_meta = "0.7.4"
-leptos_router = "0.7.4"
-leptos-use = { version = "0.15.6", features = [
-  "use_textarea_autosize",
-  "use_cookie",
-  "use_preferred_dark",
-], default-features = false }
-codee = { version = "0.2.0", features = ["json_serde"] }
+uuid.workspace = true
+leptos_meta.workspace = true
+leptos_router.workspace = true
+leptos-use.workspace = true
+codee.workspace = true
 timeago = "0.4.2"
