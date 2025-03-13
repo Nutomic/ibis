@@ -22,21 +22,19 @@ pub fn Explore() -> impl IntoView {
         <SuspenseError result=instances>
             {move || Suspend::new(async move {
                 let instances_ = instances.await;
-                let is_empty = instances_.as_ref().map(|i| i.is_empty()).unwrap_or(true);
+                let is_empty = instances_.as_ref().map(|i| i.len() <= 1).unwrap_or(true);
                 view! {
-                    <Show
-                        when=move || !is_empty
-                        fallback=move || view! { <ConnectView res=instances /> }
-                    >
-                        <ul class="my-4 list-none">
-                            {instances_
-                                .clone()
-                                .ok()
-                                .into_iter()
-                                .flatten()
-                                .map(instance_card)
-                                .collect::<Vec<_>>()}
-                        </ul>
+                    <ul class="my-4 list-none">
+                        {instances_
+                            .clone()
+                            .ok()
+                            .into_iter()
+                            .flatten()
+                            .map(instance_card)
+                            .collect::<Vec<_>>()}
+                    </ul>
+                    <Show when=move || is_empty fallback=move || view! {}>
+                        <ConnectView res=instances />
                     </Show>
                 }
             })}
@@ -83,7 +81,7 @@ fn ConnectView(
     });
 
     view! {
-        <div class="flex justify-center h-screen">
+        <div class="my-16 flex justify-center">
             <button
                 class="place-self-center btn btn-primary"
                 on:click=move |_| {
