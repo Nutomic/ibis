@@ -1,5 +1,10 @@
-use super::{articles_collection::ArticleCollection, instance_collection::InstanceCollection};
-use crate::send_activity;
+use crate::{
+    collections::{
+        articles_collection::ArticleCollection,
+        instance_collection::InstanceCollection,
+    },
+    send_activity,
+};
 use activitypub_federation::{
     config::Data,
     fetch::{collection_id::CollectionId, object_id::ObjectId},

@@ -1,4 +1,4 @@
-use super::instance::{ApubInstance, InstanceWrapper};
+use crate::objects::article::{ApubArticle, ArticleWrapper};
 use activitypub_federation::{
     config::Data,
     fetch::collection_id::CollectionId,
@@ -6,9 +6,9 @@ use activitypub_federation::{
     protocol::verification::verify_domains_match,
     traits::{Collection, Object},
 };
-use futures::future::{self, join_all};
+use futures::future::{join_all, try_join_all};
 use ibis_database::{
-    common::{instance::Instance, utils::http_protocol_str},
+    common::{article::Article, utils::http_protocol_str},
     error::{BackendError, BackendResult},
     impls::IbisContext,
 };
@@ -18,49 +18,48 @@ use url::Url;
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct ApubInstanceCollection {
+pub struct ApubArticleCollection {
     pub r#type: CollectionType,
     pub id: Url,
     pub total_items: i32,
-    pub items: Vec<ApubInstance>,
+    pub items: Vec<ApubArticle>,
 }
 
 #[derive(Clone, Debug)]
-pub struct InstanceCollection(());
+pub struct ArticleCollection(());
 
-pub fn linked_instances_url(domain: &str) -> BackendResult<CollectionId<InstanceCollection>> {
+pub fn local_articles_url(domain: &str) -> BackendResult<CollectionId<ArticleCollection>> {
     Ok(CollectionId::parse(&format!(
-        "{}://{domain}/linked_instances",
+        "{}://{domain}/all_articles",
         http_protocol_str()
     ))?)
 }
 
 #[async_trait::async_trait]
-impl Collection for InstanceCollection {
+impl Collection for ArticleCollection {
     type Owner = ();
     type DataType = IbisContext;
-    type Kind = ApubInstanceCollection;
+    type Kind = ApubArticleCollection;
     type Error = BackendError;
 
     async fn read_local(
         _owner: &Self::Owner,
         context: &Data<Self::DataType>,
     ) -> Result<Self::Kind, Self::Error> {
-        let instances = Instance::list(context)?;
-        let instances = future::try_join_all(
-            instances
+        let local_articles = Article::read_all(Some(true), None, false, context)?;
+        let articles = try_join_all(
+            local_articles
                 .into_iter()
-                .filter(|i| !i.local)
-                .map(InstanceWrapper)
-                .map(|i| i.into_json(context))
+                .map(ArticleWrapper)
+                .map(|a| a.into_json(context))
                 .collect::<Vec<_>>(),
         )
         .await?;
-        let collection = ApubInstanceCollection {
+        let collection = ApubArticleCollection {
             r#type: Default::default(),
-            id: linked_instances_url(&context.conf.federation.domain)?.into(),
-            total_items: instances.len() as i32,
-            items: instances,
+            id: local_articles_url(&context.conf.federation.domain)?.into(),
+            total_items: articles.len() as i32,
+            items: articles,
         };
         Ok(collection)
     }
@@ -79,20 +78,20 @@ impl Collection for InstanceCollection {
         _owner: &Self::Owner,
         context: &Data<Self::DataType>,
     ) -> Result<Self, Self::Error> {
-        let instances = apub
+        let articles = apub
             .items
             .into_iter()
             .filter(|i| !i.id.is_local(context))
-            .map(|instance| async {
-                let id = instance.id.clone();
-                let res = InstanceWrapper::from_json(instance, context).await;
+            .map(|article| async {
+                let id = article.id.clone();
+                let res = ArticleWrapper::from_json(article, context).await;
                 if let Err(e) = &res {
                     warn!("Failed to synchronize article {id}: {e}");
                 }
                 res
             });
-        join_all(instances).await;
+        join_all(articles).await;
 
-        Ok(InstanceCollection(()))
+        Ok(ArticleCollection(()))
     }
 }

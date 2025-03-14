@@ -1,17 +1,3 @@
-use super::{
-    activities::comment::{
-        create_or_update_comment::CreateOrUpdateComment,
-        delete_comment::DeleteComment,
-        undo_delete_comment::UndoDeleteComment,
-    },
-    objects::{
-        article::ArticleWrapper,
-        comment::{ApubComment, CommentWrapper},
-        instance::InstanceWrapper,
-        instance_collection::{ApubInstanceCollection, InstanceCollection},
-        user::PersonWrapper,
-    },
-};
 use crate::{
     activities::{
         announce::AnnounceActivity,
@@ -22,15 +8,24 @@ use crate::{
             update_local_article::UpdateLocalArticle,
             update_remote_article::UpdateRemoteArticle,
         },
+        comment::{
+            create_or_update_comment::CreateOrUpdateComment,
+            delete_comment::DeleteComment,
+            undo_delete_comment::UndoDeleteComment,
+        },
         following::{accept::Accept, follow::Follow, undo_follow::UndoFollow},
         reject::RejectEdit,
     },
-    objects::{
-        article::ApubArticle,
+    collections::{
         articles_collection::{ApubArticleCollection, ArticleCollection},
         edits_collection::{ApubEditCollection, EditCollection},
-        instance::ApubInstance,
-        user::ApubUser,
+        instance_collection::{ApubInstanceCollection, InstanceCollection},
+    },
+    objects::{
+        article::{ApubArticle, ArticleWrapper},
+        comment::{ApubComment, CommentWrapper},
+        instance::{ApubInstance, InstanceWrapper},
+        user::{ApubUser, PersonWrapper},
     },
 };
 use activitypub_federation::{

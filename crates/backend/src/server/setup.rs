@@ -14,7 +14,10 @@ use ibis_database::{
 };
 use ibis_federate::{
     activities::submit_article_update,
-    objects::{articles_collection::local_articles_url, instance_collection::linked_instances_url},
+    collections::{
+        articles_collection::local_articles_url,
+        instance_collection::linked_instances_url,
+    },
 };
 use url::Url;
 
