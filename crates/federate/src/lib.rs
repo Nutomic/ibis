@@ -25,6 +25,7 @@ pub mod nodeinfo;
 pub mod objects;
 pub mod routes;
 pub mod validate;
+pub mod webfinger;
 
 pub async fn send_activity<Activity, ActorType: Actor>(
     actor: &ActorType,

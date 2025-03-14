@@ -33,7 +33,7 @@ pub fn Explore() -> impl IntoView {
                             .map(instance_card)
                             .collect::<Vec<_>>()}
                     </ul>
-                    <Show when=move || is_empty fallback=move || view! {}>
+                    <Show when=move || is_empty>
                         <ConnectView res=instances />
                     </Show>
                 }

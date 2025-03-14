@@ -13,7 +13,7 @@ use axum::{
     routing::get,
 };
 use ibis_database::{common::Auth, error::BackendResult, impls::IbisContext};
-use ibis_federate::{nodeinfo, routes::federation_routes};
+use ibis_federate::{nodeinfo, routes::federation_routes, webfinger};
 use ibis_frontend::app::{App, shell};
 use leptos::prelude::*;
 use leptos_axum::{LeptosRoutes, generate_route_list};
@@ -48,6 +48,7 @@ pub(super) async fn start_server(
         .nest(FEDERATION_ROUTES_PREFIX, federation_routes())
         .nest("/api/v1", api_routes())
         .nest("", nodeinfo::config())
+        .nest("", webfinger::config())
         .layer(FederationMiddleware::new(context))
         .layer(CorsLayer::permissive())
         .layer(CompressionLayer::new())
