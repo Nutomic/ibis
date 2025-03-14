@@ -8,7 +8,7 @@ use crate::{
 use activitypub_federation::{
     config::Data,
     fetch::{collection_id::CollectionId, object_id::ObjectId},
-    kinds::actor::ServiceType,
+    kinds::actor::GroupType,
     protocol::{
         public_key::PublicKey,
         verification::{verify_domains_match, verify_is_remote_object},
@@ -29,14 +29,17 @@ use url::Url;
 #[serde(rename_all = "camelCase")]
 pub struct ApubInstance {
     #[serde(rename = "type")]
-    kind: ServiceType,
+    kind: GroupType,
     pub id: ObjectId<InstanceWrapper>,
+    preferred_username: String,
+    /// displayname
     name: Option<String>,
     summary: Option<String>,
     articles: Option<CollectionId<ArticleCollection>>,
     instances: Option<CollectionId<InstanceCollection>>,
     inbox: Url,
     public_key: PublicKey,
+    outbox: String,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -118,6 +121,8 @@ impl Object for InstanceWrapper {
             inbox: Url::parse(&self.inbox_url)?,
             public_key: self.public_key(),
             name: self.name.clone(),
+            preferred_username: "wiki".to_string(),
+            outbox: format!("{}/outbox", &self.ap_id),
         })
     }
 

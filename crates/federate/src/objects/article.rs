@@ -1,3 +1,4 @@
+use super::{Source, read_from_string_or_source};
 use crate::{
     collections::edits_collection::EditCollection,
     objects::instance::InstanceWrapper,
@@ -8,7 +9,8 @@ use activitypub_federation::{
     fetch::{collection_id::CollectionId, object_id::ObjectId},
     kinds::{object::ArticleType, public},
     protocol::{
-        helpers::deserialize_one_or_many,
+        helpers::{deserialize_one_or_many, deserialize_skip_error},
+        values::MediaTypeMarkdownOrHtml,
         verification::{verify_domains_match, verify_is_remote_object},
     },
     traits::Object,
@@ -21,6 +23,7 @@ use ibis_database::{
     error::BackendError,
     impls::{IbisContext, article::DbArticleForm, notifications::Notification},
 };
+use ibis_markdown::render_article_markdown;
 use serde::{Deserialize, Serialize};
 use std::{cmp::Reverse, ops::Deref};
 use url::Url;
@@ -39,6 +42,9 @@ pub struct ApubArticle {
     content: String,
     name: String,
     protected: bool,
+    pub(crate) media_type: Option<MediaTypeMarkdownOrHtml>,
+    #[serde(deserialize_with = "deserialize_skip_error", default)]
+    pub(crate) source: Option<Source>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -81,9 +87,11 @@ impl Object for ArticleWrapper {
             to: vec![public(), local_instance.followers_url()?],
             edits: self.edits_id()?.into(),
             latest_version: self.latest_edit_version(context)?,
-            content: self.text.clone(),
+            content: render_article_markdown(&self.text),
             name: self.title.clone(),
             protected: self.protected,
+            media_type: Some(MediaTypeMarkdownOrHtml::Html),
+            source: Some(Source::new(self.text.clone())),
         })
     }
 
@@ -102,9 +110,10 @@ impl Object for ArticleWrapper {
         context: &Data<Self::DataType>,
     ) -> Result<Self, Self::Error> {
         let instance = json.attributed_to.dereference(context).await?;
+        let text = read_from_string_or_source(&json.content, &json.media_type, &json.source);
         let mut form = DbArticleForm {
             title: json.name,
-            text: json.content,
+            text,
             ap_id: json.id.into(),
             local: false,
             instance_id: instance.id,

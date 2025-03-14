@@ -1,11 +1,17 @@
-use super::{article_or_comment::DbArticleOrComment, user::PersonWrapper};
+use super::{
+    Source,
+    article_or_comment::DbArticleOrComment,
+    read_from_string_or_source,
+    user::PersonWrapper,
+};
 use crate::validate::validate_comment_max_depth;
 use activitypub_federation::{
     config::Data,
     fetch::object_id::ObjectId,
     kinds::{object::NoteType, public},
     protocol::{
-        helpers::deserialize_one_or_many,
+        helpers::{deserialize_one_or_many, deserialize_skip_error},
+        values::MediaTypeMarkdownOrHtml,
         verification::{verify_domains_match, verify_is_remote_object},
     },
     traits::Object,
@@ -16,6 +22,7 @@ use ibis_database::{
     error::BackendError,
     impls::{IbisContext, comment::DbCommentInsertForm},
 };
+use ibis_markdown::render_comment_markdown;
 use serde::{Deserialize, Serialize};
 use std::ops::Deref;
 use url::Url;
@@ -33,6 +40,9 @@ pub struct ApubComment {
     pub in_reply_to: ObjectId<DbArticleOrComment>,
     pub published: Option<DateTime<Utc>>,
     pub updated: Option<DateTime<Utc>>,
+    pub(crate) media_type: Option<MediaTypeMarkdownOrHtml>,
+    #[serde(deserialize_with = "deserialize_skip_error", default)]
+    pub(crate) source: Option<Source>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -81,10 +91,12 @@ impl Object for CommentWrapper {
             id: self.ap_id.clone().into(),
             attributed_to: creator.ap_id.into(),
             to: vec![public()],
-            content: self.content.clone(),
+            content: render_comment_markdown(&self.content),
             in_reply_to,
             published: Some(self.published),
             updated: self.updated,
+            media_type: Some(MediaTypeMarkdownOrHtml::Html),
+            source: Some(Source::new(self.content.clone())),
         })
     }
 
@@ -113,6 +125,7 @@ impl Object for CommentWrapper {
         };
         let creator = json.attributed_to.dereference(context).await?;
         validate_comment_max_depth(depth)?;
+        let content = read_from_string_or_source(&json.content, &json.media_type, &json.source);
 
         let form = DbCommentInsertForm {
             article_id,
@@ -123,7 +136,7 @@ impl Object for CommentWrapper {
             deleted: false,
             published: json.published.unwrap_or_else(Utc::now),
             updated: json.updated,
-            content: json.content,
+            content,
             depth,
         };
 

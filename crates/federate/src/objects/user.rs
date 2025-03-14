@@ -1,8 +1,14 @@
+use super::{Source, read_from_string_or_source_opt};
 use activitypub_federation::{
     config::Data,
     fetch::object_id::ObjectId,
     kinds::actor::PersonType,
-    protocol::{public_key::PublicKey, verification::verify_domains_match},
+    protocol::{
+        helpers::deserialize_skip_error,
+        public_key::PublicKey,
+        values::MediaTypeMarkdownOrHtml,
+        verification::verify_domains_match,
+    },
     traits::{Actor, Object},
 };
 use chrono::{DateTime, Utc};
@@ -11,6 +17,7 @@ use ibis_database::{
     error::BackendError,
     impls::{IbisContext, user::PersonInsertForm},
 };
+use ibis_markdown::render_article_markdown;
 use serde::{Deserialize, Serialize};
 use std::{fmt::Debug, ops::Deref};
 use url::Url;
@@ -27,6 +34,11 @@ pub struct ApubUser {
     summary: Option<String>,
     inbox: Url,
     public_key: PublicKey,
+    /// mandatory in activitypub, we serve an empty one
+    outbox: String,
+    pub(crate) media_type: Option<MediaTypeMarkdownOrHtml>,
+    #[serde(deserialize_with = "deserialize_skip_error", default)]
+    pub(crate) source: Option<Source>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -73,7 +85,10 @@ impl Object for PersonWrapper {
             inbox: Url::parse(&self.inbox_url)?,
             public_key: self.public_key(),
             name: self.display_name.clone(),
-            summary: self.bio.clone(),
+            summary: self.bio.as_ref().map(|b| render_article_markdown(b)),
+            outbox: format!("{}/outbox", &self.ap_id),
+            media_type: Some(MediaTypeMarkdownOrHtml::Html),
+            source: self.bio.clone().map(|b| Source::new(b)),
         })
     }
 
@@ -90,6 +105,7 @@ impl Object for PersonWrapper {
         json: Self::Kind,
         context: &Data<Self::DataType>,
     ) -> Result<Self, Self::Error> {
+        let bio = read_from_string_or_source_opt(&json.summary, &json.media_type, &json.source);
         let form = PersonInsertForm {
             username: json.preferred_username,
             ap_id: json.id.into(),
@@ -99,7 +115,7 @@ impl Object for PersonWrapper {
             last_refreshed_at: Utc::now(),
             local: false,
             display_name: json.name,
-            bio: json.summary,
+            bio,
         };
         Person::create(&form, context).map(Into::into)
     }

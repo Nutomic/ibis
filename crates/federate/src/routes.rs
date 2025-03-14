@@ -17,13 +17,14 @@ use crate::{
         reject::RejectEdit,
     },
     collections::{
-        articles_collection::{ApubArticleCollection, ArticleCollection},
-        edits_collection::{ApubEditCollection, EditCollection},
-        instance_collection::{ApubInstanceCollection, InstanceCollection},
+        articles_collection::ArticleCollection,
+        edits_collection::EditCollection,
+        empty_outbox::EmptyOutbox,
+        instance_collection::InstanceCollection,
     },
     objects::{
-        article::{ApubArticle, ArticleWrapper},
-        comment::{ApubComment, CommentWrapper},
+        article::ArticleWrapper,
+        comment::CommentWrapper,
         instance::{ApubInstance, InstanceWrapper},
         user::{ApubUser, PersonWrapper},
     },
@@ -62,7 +63,9 @@ use url::Url;
 pub fn federation_routes() -> Router<()> {
     Router::new()
         .route("/", get(http_get_instance))
+        .route("/outbox", get(http_get_instance_outbox))
         .route("/user/:name", get(http_get_person))
+        .route("/user/:name/outbox", get(http_get_person_outbox))
         .route("/all_articles", get(http_get_all_articles))
         .route("/linked_instances", get(http_get_linked_instances))
         .route("/article/:title", get(http_get_article))
@@ -72,36 +75,47 @@ pub fn federation_routes() -> Router<()> {
 }
 
 #[debug_handler]
-async fn http_get_instance(
-    context: Data<IbisContext>,
-) -> BackendResult<FederationJson<WithContext<ApubInstance>>> {
+async fn http_get_instance(context: Data<IbisContext>) -> BackendResult<impl IntoResponse> {
     let local_instance: InstanceWrapper = Instance::read_local(&context)?.into();
     let json_instance = local_instance.into_json(&context).await?;
     Ok(FederationJson(WithContext::new_default(json_instance)))
 }
 
 #[debug_handler]
+async fn http_get_instance_outbox(
+    context: Data<IbisContext>,
+) -> BackendResult<FederationJson<WithContext<ApubInstance>>> {
+    todo!()
+}
+
+#[debug_handler]
 async fn http_get_person(
     Path(name): Path<String>,
     context: Data<IbisContext>,
-) -> BackendResult<FederationJson<WithContext<ApubUser>>> {
+) -> BackendResult<impl IntoResponse> {
     let person: PersonWrapper = Person::read_from_name(&name, &None, &context)?.into();
     let json_person = person.into_json(&context).await?;
     Ok(FederationJson(WithContext::new_default(json_person)))
 }
 
 #[debug_handler]
-async fn http_get_all_articles(
+async fn http_get_person_outbox(
+    Path(name): Path<String>,
     context: Data<IbisContext>,
-) -> BackendResult<FederationJson<WithContext<ApubArticleCollection>>> {
+) -> BackendResult<impl IntoResponse> {
+    let person = Person::read_from_name(&name, &None, &context)?;
+    let outbox = EmptyOutbox::new(format!("{}/outbox", person.ap_id));
+    Ok(FederationJson(WithContext::new_default(outbox)))
+}
+
+#[debug_handler]
+async fn http_get_all_articles(context: Data<IbisContext>) -> BackendResult<impl IntoResponse> {
     let collection = ArticleCollection::read_local(&(), &context).await?;
     Ok(FederationJson(WithContext::new_default(collection)))
 }
 
 #[debug_handler]
-async fn http_get_linked_instances(
-    context: Data<IbisContext>,
-) -> BackendResult<FederationJson<WithContext<ApubInstanceCollection>>> {
+async fn http_get_linked_instances(context: Data<IbisContext>) -> BackendResult<impl IntoResponse> {
     let collection = InstanceCollection::read_local(&(), &context).await?;
     Ok(FederationJson(WithContext::new_default(collection)))
 }
@@ -110,7 +124,7 @@ async fn http_get_linked_instances(
 async fn http_get_article(
     Path(title): Path<String>,
     context: Data<IbisContext>,
-) -> BackendResult<FederationJson<WithContext<ApubArticle>>> {
+) -> BackendResult<impl IntoResponse> {
     let article: ArticleWrapper = Article::read_view((&title, None), None, &context)?
         .article
         .into();
@@ -122,7 +136,7 @@ async fn http_get_article(
 async fn http_get_article_edits(
     Path(title): Path<String>,
     context: Data<IbisContext>,
-) -> BackendResult<FederationJson<WithContext<ApubEditCollection>>> {
+) -> BackendResult<impl IntoResponse> {
     let article = Article::read_view((&title, None), None, &context)?;
     let json = EditCollection::read_local(&article.article, &context).await?;
     Ok(FederationJson(WithContext::new_default(json)))
@@ -132,7 +146,7 @@ async fn http_get_article_edits(
 async fn http_get_comment(
     Path(id): Path<i32>,
     context: Data<IbisContext>,
-) -> BackendResult<FederationJson<WithContext<ApubComment>>> {
+) -> BackendResult<impl IntoResponse> {
     let comment: CommentWrapper = Comment::read(CommentId(id), &context)?.into();
     let json = comment.into_json(&context).await?;
     Ok(FederationJson(WithContext::new_default(json)))
