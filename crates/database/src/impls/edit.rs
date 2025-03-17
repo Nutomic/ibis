@@ -11,14 +11,8 @@ use crate::{
 };
 use chrono::{DateTime, Utc};
 use diesel::{
-    AsChangeset,
-    BoolExpressionMethods,
-    ExpressionMethods,
-    Insertable,
-    QueryDsl,
-    RunQueryDsl,
-    dsl::not,
-    insert_into,
+    AsChangeset, BoolExpressionMethods, ExpressionMethods, Insertable, QueryDsl, RunQueryDsl,
+    dsl::not, insert_into,
 };
 use diffy::create_patch;
 use ibis_database_schema::{article, edit, person};
@@ -90,6 +84,15 @@ impl Edit {
             .get_result(conn.deref_mut())?)
     }
 
+    pub fn read_view(version: &EditVersion, context: &IbisContext) -> BackendResult<EditView> {
+        let mut conn = context.db_pool.get()?;
+        Ok(edit::table
+            .filter(edit::dsl::hash.eq(version))
+            .inner_join(article::table)
+            .inner_join(person::table)
+            .get_result(conn.deref_mut())?)
+    }
+
     pub fn read_from_ap_id(ap_id: &DbUrl, context: &IbisContext) -> BackendResult<Self> {
         let mut conn = context.db_pool.get()?;
         Ok(edit::table
@@ -105,7 +108,7 @@ impl Edit {
             .get_results(conn.deref_mut())?)
     }
 
-    pub fn view(
+    pub fn list_views(
         params: ViewEditParams,
         user: &Option<LocalUserView>,
         context: &IbisContext,

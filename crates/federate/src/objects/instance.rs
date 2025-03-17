@@ -1,7 +1,6 @@
 use crate::{
     collections::{
-        articles_collection::ArticleCollection,
-        instance_collection::InstanceCollection,
+        articles_collection::ArticleCollection, instance_collection::InstanceCollection,
     },
     send_activity,
 };
@@ -35,11 +34,10 @@ pub struct ApubInstance {
     /// displayname
     name: Option<String>,
     summary: Option<String>,
-    articles: Option<CollectionId<ArticleCollection>>,
+    outbox: Option<CollectionId<ArticleCollection>>,
     instances: Option<CollectionId<InstanceCollection>>,
     inbox: Url,
     public_key: PublicKey,
-    outbox: String,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -60,10 +58,6 @@ impl From<Instance> for InstanceWrapper {
 }
 
 impl InstanceWrapper {
-    pub fn followers_url(&self) -> BackendResult<Url> {
-        Ok(Url::parse(&format!("{}/followers", self.ap_id))?)
-    }
-
     pub fn follower_ids(&self, context: &Data<IbisContext>) -> BackendResult<Vec<Url>> {
         Ok(Instance::read_followers(self.id, context)?
             .into_iter()
@@ -116,13 +110,12 @@ impl Object for InstanceWrapper {
             kind: Default::default(),
             id: self.ap_id.clone().into(),
             summary: self.topic.clone(),
-            articles: self.articles_url.clone().map(Into::into),
+            outbox: self.articles_url.clone().map(Into::into),
             instances: self.instances_url.clone().map(Into::into),
             inbox: Url::parse(&self.inbox_url)?,
             public_key: self.public_key(),
             name: self.name.clone(),
             preferred_username: "wiki".to_string(),
-            outbox: format!("{}/outbox", &self.ap_id),
         })
     }
 
@@ -145,7 +138,7 @@ impl Object for InstanceWrapper {
             domain,
             ap_id: json.id.into(),
             topic: json.summary,
-            articles_url: json.articles.map(Into::into),
+            articles_url: json.outbox.map(Into::into),
             instances_url: json.instances.map(Into::into),
             inbox_url: json.inbox.to_string(),
             public_key: json.public_key.public_key_pem,

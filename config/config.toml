@@ -1,2 +1,2 @@
 [federation]
-domain = "127.0.0.1:8080"
+domain = "ibis-alpha:3000"

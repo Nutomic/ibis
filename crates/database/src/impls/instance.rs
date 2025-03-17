@@ -10,7 +10,7 @@ use crate::{
 };
 use chrono::{DateTime, Utc};
 use diesel::{
-    dsl::{max, not},
+    dsl::{count, max, not},
     *,
 };
 use ibis_database_schema::{article, comment, edit, instance, instance_follow};
@@ -156,6 +156,17 @@ impl Instance {
             .filter(instance_id.eq(id_))
             .select(person::all_columns)
             .get_results(conn.deref_mut())?)
+    }
+
+    pub fn read_local_followers_count(
+        context: &IbisContext,
+    ) -> BackendResult<i64> {
+        let mut conn = context.db_pool.get()?;
+        Ok(instance_follow::table
+            .inner_join(instance::table)
+            .filter(instance::local)
+            .select(count(instance_follow::id))
+            .first(conn.deref_mut())?)
     }
 
     pub fn list(context: &IbisContext) -> BackendResult<Vec<Instance>> {

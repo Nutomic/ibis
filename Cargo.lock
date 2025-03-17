@@ -2116,6 +2116,7 @@ dependencies = [
  "html2md",
  "ibis_database",
  "ibis_markdown",
+ "itertools 0.14.0",
  "log",
  "rand",
  "regex",

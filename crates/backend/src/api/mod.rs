@@ -1,14 +1,7 @@
 use crate::api::{
     article::{
-        create_article,
-        edit_article,
-        fork_article,
-        get_article,
-        get_conflict,
-        list_articles,
-        protect_article,
-        resolve_article,
-        search_article,
+        create_article, edit_article, fork_article, get_article, get_conflict, list_articles,
+        protect_article, resolve_article, search_article,
     },
     comment::{create_comment, edit_comment},
     instance::{follow_instance, get_instance, resolve_instance},
@@ -18,9 +11,7 @@ use activitypub_federation::config::Data;
 use anyhow::anyhow;
 use article::{delete_conflict, follow_article, remove_article};
 use axum::{
-    Extension,
-    Json,
-    Router,
+    Extension, Json, Router,
     extract::{Query, rejection::ExtensionRejection},
     response::IntoResponse,
     routing::{delete, get, patch, post},
@@ -40,16 +31,9 @@ use ibis_database::{
 use instance::{list_instance_views, update_instance};
 use std::ops::Deref;
 use user::{
-    article_notif_mark_as_read,
-    change_password,
-    change_password_after_reset,
-    count_notifications,
-    get_user_follows,
-    list_notifications,
-    register::authenticate_with_oauth,
-    request_reset_password,
-    update_user_profile,
-    verify_email,
+    article_notif_mark_as_read, change_password, change_password_after_reset, count_notifications,
+    get_user_follows, list_notifications, register::authenticate_with_oauth,
+    request_reset_password, update_user_profile, verify_email,
 };
 
 mod article;
@@ -149,7 +133,7 @@ pub async fn edit_list(
     } else {
         return Err(anyhow!("Must provide article_id or person_id").into());
     };
-    Ok(Json(Edit::view(
+    Ok(Json(Edit::list_views(
         params,
         &user.map(|u| u.inner()),
         &context,

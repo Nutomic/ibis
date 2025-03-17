@@ -2,25 +2,21 @@ use crate::{
     activities::{
         announce::AnnounceActivity,
         article::{
-            create_article::CreateArticle,
-            remove_article::RemoveArticle,
-            undo_remove_article::UndoRemoveArticle,
-            update_local_article::UpdateLocalArticle,
+            create_article::CreateArticle, remove_article::RemoveArticle,
+            undo_remove_article::UndoRemoveArticle, update_local_article::UpdateLocalArticle,
             update_remote_article::UpdateRemoteArticle,
         },
         comment::{
-            create_or_update_comment::CreateOrUpdateComment,
-            delete_comment::DeleteComment,
+            create_or_update_comment::CreateOrUpdateComment, delete_comment::DeleteComment,
             undo_delete_comment::UndoDeleteComment,
         },
         following::{accept::Accept, follow::Follow, undo_follow::UndoFollow},
         reject::RejectEdit,
     },
     collections::{
-        articles_collection::ArticleCollection,
-        edits_collection::EditCollection,
-        empty_outbox::EmptyOutbox,
-        instance_collection::InstanceCollection,
+        articles_collection::ArticleCollection, edits_collection::EditCollection,
+        empty_outbox::EmptyOutbox, instance_collection::InstanceCollection,
+        instance_follower::InstanceFollower,
     },
     objects::{
         article::ArticleWrapper,
@@ -48,11 +44,7 @@ use axum_macros::debug_handler;
 use chrono::{DateTime, Utc};
 use ibis_database::{
     common::{
-        article::Article,
-        comment::Comment,
-        instance::Instance,
-        newtypes::CommentId,
-        user::Person,
+        article::Article, comment::Comment, instance::Instance, newtypes::CommentId, user::Person,
     },
     error::{BackendError, BackendResult},
     impls::IbisContext,
@@ -64,6 +56,7 @@ pub fn federation_routes() -> Router<()> {
     Router::new()
         .route("/", get(http_get_instance))
         .route("/outbox", get(http_get_instance_outbox))
+        .route("/followers", get(http_get_instance_followers))
         .route("/user/:name", get(http_get_person))
         .route("/user/:name/outbox", get(http_get_person_outbox))
         .route("/all_articles", get(http_get_all_articles))
@@ -82,10 +75,17 @@ async fn http_get_instance(context: Data<IbisContext>) -> BackendResult<impl Int
 }
 
 #[debug_handler]
-async fn http_get_instance_outbox(
+async fn http_get_instance_outbox(context: Data<IbisContext>) -> BackendResult<impl IntoResponse> {
+    let articles = ArticleCollection::read_local(&(), &context).await?;
+    Ok(FederationJson(WithContext::new_default(articles)))
+}
+
+#[debug_handler]
+async fn http_get_instance_followers(
     context: Data<IbisContext>,
-) -> BackendResult<FederationJson<WithContext<ApubInstance>>> {
-    todo!()
+) -> BackendResult<impl IntoResponse> {
+    let followers = InstanceFollower::read_local(&(), &context).await?;
+    Ok(FederationJson(WithContext::new_default(followers)))
 }
 
 #[debug_handler]
