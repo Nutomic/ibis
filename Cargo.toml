@@ -47,15 +47,15 @@ ibis_federate = { path = "crates/federate" }
 ibis_frontend = { path = "crates/frontend" }
 ibis_api_client = { path = "crates/api_client" }
 ibis_markdown = { path = "crates/markdown" }
-leptos = "0.7.4"
-leptos_meta = "0.7.4"
-leptos_router = "0.7.4"
-leptos-use = { version = "0.15.6", features = [
+leptos = "0.7.8"
+leptos_meta = "0.7.8"
+leptos_router = "0.7.8"
+leptos-use = { version = "0.15.7", features = [
   "use_textarea_autosize",
   "use_cookie",
   "use_preferred_dark",
 ], default-features = false }
-codee = { version = "0.2.0", features = ["json_serde"] }
+codee = { version = "0.3.0", features = ["json_serde"] }
 serde = { version = "1.0.218", features = ["derive"] }
 chrono = { version = "0.4.40", features = ["serde"] }
 sha2 = "0.10.8"
