@@ -1,5 +1,5 @@
 use super::{UserExt, check_is_admin};
-use crate::utils::generate_article_version;
+use crate::utils::{generate_article_ap_id, generate_article_version};
 use activitypub_federation::{config::Data, fetch::object_id::ObjectId};
 use anyhow::anyhow;
 use axum::{Form, Json, extract::Query};
@@ -8,34 +8,19 @@ use chrono::Utc;
 use diffy::{Patch, apply, create_patch, merge};
 use ibis_api_client::{
     article::{
-        CreateArticleParams,
-        DeleteConflictParams,
-        EditArticleParams,
-        FollowArticleParams,
-        ForkArticleParams,
-        GetArticleParams,
-        GetConflictParams,
-        ListArticlesParams,
-        ProtectArticleParams,
-        RemoveArticleParams,
+        CreateArticleParams, DeleteConflictParams, EditArticleParams, FollowArticleParams,
+        ForkArticleParams, GetArticleParams, GetConflictParams, ListArticlesParams,
+        ProtectArticleParams, RemoveArticleParams,
     },
     instance::SearchArticleParams,
 };
 use ibis_database::{
     common::{
-        ResolveObjectParams,
-        SuccessResponse,
+        ResolveObjectParams, SuccessResponse,
         article::{
-            ApiConflict,
-            Article,
-            ArticleView,
-            Conflict,
-            Edit,
-            EditVersion,
-            can_edit_article,
+            ApiConflict, Article, ArticleView, Conflict, Edit, EditVersion, can_edit_article,
         },
         instance::Instance,
-        utils::{extract_domain, http_protocol_str},
     },
     error::BackendResult,
     impls::{IbisContext, article::DbArticleForm, conflict::DbConflictForm, edit::DbEditForm},
@@ -43,8 +28,7 @@ use ibis_database::{
 use ibis_federate::{
     activities::{
         article::{
-            create_article::CreateArticle,
-            remove_article::RemoveArticle,
+            create_article::CreateArticle, remove_article::RemoveArticle,
             undo_remove_article::UndoRemoveArticle,
         },
         submit_article_update,
@@ -52,26 +36,19 @@ use ibis_federate::{
     objects::article::ArticleWrapper,
     validate::{validate_article_title, validate_not_empty},
 };
-use url::Url;
 
 /// Create a new article with empty text, and federate it to followers.
 #[debug_handler]
 pub(crate) async fn create_article(
     user: UserExt,
     context: Data<IbisContext>,
-    Form(mut params): Form<CreateArticleParams>,
+    Form(params): Form<CreateArticleParams>,
 ) -> BackendResult<Json<ArticleView>> {
-    params.title = validate_article_title(&params.title)?;
+    validate_article_title(&params.title)?;
     validate_not_empty(&params.text)?;
 
     let local_instance = Instance::read_local(&context)?;
-    let ap_id = Url::parse(&format!(
-        "{}://{}/article/{}",
-        http_protocol_str(),
-        extract_domain(&local_instance.ap_id.into()),
-        params.title
-    ))?
-    .into();
+    let ap_id = generate_article_ap_id(&params.title, &local_instance)?;
     let form = DbArticleForm {
         title: params.title,
         text: String::new(),
@@ -229,20 +206,14 @@ pub(crate) async fn list_articles(
 pub(crate) async fn fork_article(
     user: UserExt,
     context: Data<IbisContext>,
-    Form(mut params): Form<ForkArticleParams>,
+    Form(params): Form<ForkArticleParams>,
 ) -> BackendResult<Json<ArticleView>> {
     // TODO: lots of code duplicated from create_article(), can move it into helper
     let original_article = Article::read_view(params.article_id, Some(&user), &context)?;
-    params.new_title = validate_article_title(&params.new_title)?;
+    validate_article_title(&params.new_title)?;
 
     let local_instance = Instance::read_local(&context)?;
-    let ap_id = Url::parse(&format!(
-        "{}://{}/article/{}",
-        http_protocol_str(),
-        extract_domain(&local_instance.ap_id.into()),
-        &params.new_title
-    ))?
-    .into();
+    let ap_id = generate_article_ap_id(&params.new_title, &local_instance)?;
     let form = DbArticleForm {
         title: params.new_title,
         text: original_article.article.text.clone(),

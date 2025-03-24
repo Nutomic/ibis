@@ -1,14 +1,12 @@
 use crate::{
-    generate_activity_id,
-    objects::instance::InstanceWrapper,
-    routes::AnnouncableActivities,
+    generate_activity_id, objects::instance::InstanceWrapper, routes::AnnouncableActivities,
     send_activity,
 };
 use activitypub_federation::{
     config::Data,
     fetch::object_id::ObjectId,
     kinds::{activity::AnnounceType, public},
-    protocol::{context::WithContext, helpers::deserialize_one_or_many},
+    protocol::helpers::deserialize_one_or_many,
     traits::{ActivityHandler, Actor},
 };
 use ibis_database::{

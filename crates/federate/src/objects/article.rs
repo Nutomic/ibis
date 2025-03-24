@@ -1,7 +1,6 @@
 use super::{Source, read_from_string_or_source, user::PersonWrapper};
 use crate::{
-    collections::edits_collection::EditCollection,
-    objects::instance::InstanceWrapper,
+    collections::edits_collection::EditCollection, objects::instance::InstanceWrapper,
     validate::validate_article_title,
 };
 use activitypub_federation::{
@@ -128,7 +127,7 @@ impl Object for ArticleWrapper {
             }
         };
         let text = read_from_string_or_source(&json.content, &json.media_type, &json.source);
-        let mut form = DbArticleForm {
+        let form = DbArticleForm {
             title: json.name,
             text,
             ap_id: json.id.into(),
@@ -136,7 +135,7 @@ impl Object for ArticleWrapper {
             instance_id: instance.id,
             protected: json.protected,
         };
-        form.title = validate_article_title(&form.title)?;
+        validate_article_title(&form.title)?;
         let article = Article::create_or_update(form, context)?;
 
         let mut edits = json.edits.dereference(&article, context).await?.0;

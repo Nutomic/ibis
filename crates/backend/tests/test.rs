@@ -33,7 +33,7 @@ async fn api_test_create_read_and_edit_local_article() -> Result<()> {
     let TestData(alpha, beta, gamma) = TestData::start().await;
 
     // create article
-    const TITLE: &str = "Manu_Chao";
+    const TITLE: &str = "Manu Chao";
     let create_params = CreateArticleParams {
         title: "Manu Chao".to_string(),
         text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
@@ -102,7 +102,7 @@ async fn api_test_create_duplicate_article() -> Result<()> {
 
     // create article
     let create_params = CreateArticleParams {
-        title: "Manu_Chao".to_string(),
+        title: "Manu Chao".to_string(),
         text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
         summary: "create article".to_string(),
     };
@@ -155,7 +155,7 @@ async fn api_test_synchronize_articles() -> Result<()> {
 
     // create article on alpha
     let create_params = CreateArticleParams {
-        title: "Manu_Chao".to_string(),
+        title: "Manu Chao".to_string(),
         text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
         summary: "create article".to_string(),
     };
@@ -237,7 +237,7 @@ async fn api_test_edit_local_article() -> Result<()> {
 
     // create new article
     let create_params = CreateArticleParams {
-        title: "Manu_Chao".to_string(),
+        title: "Manu Chao".to_string(),
         text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
         summary: "create article".to_string(),
     };
@@ -306,7 +306,7 @@ async fn api_test_edit_remote_article() -> Result<()> {
 
     // create new article
     let create_params = CreateArticleParams {
-        title: "Manu_Chao".to_string(),
+        title: "Manu Chao".to_string(),
         text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
         summary: "create article".to_string(),
     };
@@ -386,7 +386,7 @@ async fn api_test_local_edit_conflict() -> Result<()> {
 
     // create new article
     let create_params = CreateArticleParams {
-        title: "Manu_Chao".to_string(),
+        title: "Manu Chao".to_string(),
         text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
         summary: "create article".to_string(),
     };
@@ -465,7 +465,7 @@ async fn api_test_federated_edit_conflict() -> Result<()> {
 
     // create new article
     let create_params = CreateArticleParams {
-        title: "Manu_Chao".to_string(),
+        title: "Manu Chao".to_string(),
         text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
         summary: "create article".to_string(),
     };
@@ -523,6 +523,7 @@ async fn api_test_federated_edit_conflict() -> Result<()> {
         previous_version_id: create_res.latest_version,
         resolve_conflict_id: None,
     };
+    dbg!(&edit_params, &resolve_res);
     let edit_res = gamma
         .edit_article_without_conflict(&edit_params)
         .await
@@ -578,7 +579,7 @@ async fn api_test_overlapping_edits_no_conflict() -> Result<()> {
     // Need to use multiple lines to provide enough context for diff/merge.
     // Also need to use long lines so that markdown paramsatting doesnt change line breaks.
     let create_params = CreateArticleParams {
-        title: "Manu_Chao".to_string(),
+        title: "Manu Chao".to_string(),
         text: r#"1 Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod.
 2 Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod.
 3 Lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod.
@@ -650,7 +651,7 @@ async fn api_test_fork_article() -> Result<()> {
 
     // create article
     let create_params = CreateArticleParams {
-        title: "Manu_Chao".to_string(),
+        title: "Manu Chao".to_string(),
         text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
         summary: "create article".to_string(),
     };
@@ -745,7 +746,7 @@ async fn api_test_user_profile() -> Result<()> {
 
     // Create an article and federate it, in order to federate the user who created it
     let create_params = CreateArticleParams {
-        title: "Manu_Chao".to_string(),
+        title: "Manu Chao".to_string(),
         text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
         summary: "create article".to_string(),
     };
@@ -783,7 +784,7 @@ async fn api_test_lock_article() -> Result<()> {
 
     // create article
     let create_params = CreateArticleParams {
-        title: "Manu_Chao".to_string(),
+        title: "Manu Chao".to_string(),
         text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
         summary: "create article".to_string(),
     };
@@ -876,7 +877,7 @@ async fn api_test_remove_article() -> Result<()> {
 
     // create article
     let create_params = CreateArticleParams {
-        title: "Manu_Chao".to_string(),
+        title: "Manu Chao".to_string(),
         text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
         summary: "create article".to_string(),
     };
@@ -954,7 +955,7 @@ async fn api_test_comment_create_edit() -> Result<()> {
 
     // create article
     let params = CreateArticleParams {
-        title: "Manu_Chao".to_string(),
+        title: "Manu Chao".to_string(),
         text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
         summary: "create article".to_string(),
     };
@@ -1032,7 +1033,7 @@ async fn api_test_comment_delete_restore() -> Result<()> {
 
     // create article and comment
     let params = CreateArticleParams {
-        title: "Manu_Chao".to_string(),
+        title: "Manu Chao".to_string(),
         text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
         summary: "create article".to_string(),
     };

@@ -134,6 +134,7 @@ async fn http_get_article(
     Path(title): Path<String>,
     context: Data<IbisContext>,
 ) -> BackendResult<impl IntoResponse> {
+    let title = title.replace("_", " ");
     let article: ArticleWrapper = Article::read_view((&title, None), None, &context)?
         .article
         .into();
@@ -146,6 +147,7 @@ async fn http_get_article_edits(
     Path(title): Path<String>,
     context: Data<IbisContext>,
 ) -> BackendResult<impl IntoResponse> {
+    let title = title.replace("_", " ");
     let article = Article::read_view((&title, None), None, &context)?;
     let json = EditCollection::read_local(&article.article, &context).await?;
     Ok(FederationJson(WithContext::new_default(json)))

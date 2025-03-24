@@ -15,11 +15,12 @@ use ibis_database::{
 use ibis_federate::{
     activities::submit_article_update,
     collections::{
-        articles_collection::local_articles_url,
-        instance_collection::linked_instances_url,
+        articles_collection::local_articles_url, instance_collection::linked_instances_url,
     },
 };
 use url::Url;
+
+use crate::utils::generate_article_ap_id;
 
 const MAIN_PAGE_DEFAULT_TEXT: &str = "Welcome to Ibis, the federated Wikipedia alternative!
 
@@ -62,11 +63,7 @@ pub async fn setup(context: &Data<IbisContext>) -> Result<(), BackendError> {
     let form = DbArticleForm {
         title: MAIN_PAGE_NAME.to_string(),
         text: String::new(),
-        ap_id: Url::parse(&format!(
-            "{}://{domain}/article/{MAIN_PAGE_NAME}",
-            http_protocol_str()
-        ))?
-        .into(),
+        ap_id: generate_article_ap_id(&MAIN_PAGE_NAME, &instance)?,
         instance_id: instance.id,
         local: true,
         protected: true,
