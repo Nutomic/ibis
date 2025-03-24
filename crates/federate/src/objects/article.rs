@@ -1,6 +1,7 @@
 use super::{Source, read_from_string_or_source, user::PersonWrapper};
 use crate::{
-    collections::edits_collection::EditCollection, objects::instance::InstanceWrapper,
+    collections::edits_collection::EditCollection,
+    objects::instance::InstanceWrapper,
     validate::validate_article_title,
 };
 use activitypub_federation::{

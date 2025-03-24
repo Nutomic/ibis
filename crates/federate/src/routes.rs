@@ -2,20 +2,25 @@ use crate::{
     activities::{
         announce::AnnounceActivity,
         article::{
-            create_article::CreateArticle, remove_article::RemoveArticle,
-            undo_remove_article::UndoRemoveArticle, update_local_article::UpdateLocalArticle,
+            create_article::CreateArticle,
+            remove_article::RemoveArticle,
+            undo_remove_article::UndoRemoveArticle,
+            update_local_article::UpdateLocalArticle,
             update_remote_article::UpdateRemoteArticle,
         },
         comment::{
-            create_or_update_comment::CreateOrUpdateComment, delete_comment::DeleteComment,
+            create_or_update_comment::CreateOrUpdateComment,
+            delete_comment::DeleteComment,
             undo_delete_comment::UndoDeleteComment,
         },
         following::{accept::Accept, follow::Follow, undo_follow::UndoFollow},
         reject::RejectEdit,
     },
     collections::{
-        articles_collection::ArticleCollection, edits_collection::EditCollection,
-        empty_outbox::EmptyOutbox, instance_collection::InstanceCollection,
+        articles_collection::ArticleCollection,
+        edits_collection::EditCollection,
+        empty_outbox::EmptyOutbox,
+        instance_collection::InstanceCollection,
         instance_follower::InstanceFollower,
     },
     objects::{
@@ -44,7 +49,11 @@ use axum_macros::debug_handler;
 use chrono::{DateTime, Utc};
 use ibis_database::{
     common::{
-        article::Article, comment::Comment, instance::Instance, newtypes::CommentId, user::Person,
+        article::Article,
+        comment::Comment,
+        instance::Instance,
+        newtypes::CommentId,
+        user::Person,
     },
     error::{BackendError, BackendResult},
     impls::IbisContext,

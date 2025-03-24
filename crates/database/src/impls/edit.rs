@@ -11,8 +11,14 @@ use crate::{
 };
 use chrono::{DateTime, Utc};
 use diesel::{
-    AsChangeset, BoolExpressionMethods, ExpressionMethods, Insertable, QueryDsl, RunQueryDsl,
-    dsl::not, insert_into,
+    AsChangeset,
+    BoolExpressionMethods,
+    ExpressionMethods,
+    Insertable,
+    QueryDsl,
+    RunQueryDsl,
+    dsl::not,
+    insert_into,
 };
 use diffy::create_patch;
 use ibis_database_schema::{article, edit, person};

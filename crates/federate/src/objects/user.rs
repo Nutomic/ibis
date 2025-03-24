@@ -1,4 +1,4 @@
-use super::{Source, read_from_string_or_source_opt};
+use super::{Endpoints, Source, read_from_string_or_source_opt};
 use activitypub_federation::{
     config::Data,
     fetch::object_id::ObjectId,
@@ -39,6 +39,7 @@ pub struct ApubUser {
     pub(crate) media_type: Option<MediaTypeMarkdownOrHtml>,
     #[serde(deserialize_with = "deserialize_skip_error", default)]
     pub(crate) source: Option<Source>,
+    pub(crate) endpoints: Option<Endpoints>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -89,6 +90,7 @@ impl Object for PersonWrapper {
             outbox: format!("{}/outbox", &self.ap_id),
             media_type: Some(MediaTypeMarkdownOrHtml::Html),
             source: self.bio.clone().map(|b| Source::new(b)),
+            endpoints: None,
         })
     }
 
@@ -106,10 +108,11 @@ impl Object for PersonWrapper {
         context: &Data<Self::DataType>,
     ) -> Result<Self, Self::Error> {
         let bio = read_from_string_or_source_opt(&json.summary, &json.media_type, &json.source);
+        let inbox_url = json.endpoints.map(|e| e.shared_inbox).unwrap_or(json.inbox);
         let form = PersonInsertForm {
             username: json.preferred_username,
             ap_id: json.id.into(),
-            inbox_url: json.inbox.to_string(),
+            inbox_url: inbox_url.to_string(),
             public_key: json.public_key.public_key_pem,
             private_key: None,
             last_refreshed_at: Utc::now(),

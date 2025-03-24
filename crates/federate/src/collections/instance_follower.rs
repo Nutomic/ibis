@@ -1,5 +1,7 @@
 use activitypub_federation::{
-    config::Data, kinds::collection::CollectionType, protocol::verification::verify_domains_match,
+    config::Data,
+    kinds::collection::CollectionType,
+    protocol::verification::verify_domains_match,
     traits::Collection,
 };
 use ibis_database::{common::instance::Instance, error::BackendError, impls::IbisContext};

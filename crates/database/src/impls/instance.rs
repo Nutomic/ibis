@@ -158,9 +158,7 @@ impl Instance {
             .get_results(conn.deref_mut())?)
     }
 
-    pub fn read_local_followers_count(
-        context: &IbisContext,
-    ) -> BackendResult<i64> {
+    pub fn read_local_followers_count(context: &IbisContext) -> BackendResult<i64> {
         let mut conn = context.db_pool.get()?;
         Ok(instance_follow::table
             .inner_join(instance::table)

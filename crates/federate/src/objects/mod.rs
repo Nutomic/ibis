@@ -1,6 +1,7 @@
 use activitypub_federation::protocol::values::{MediaTypeMarkdown, MediaTypeMarkdownOrHtml};
 use html2md::parse_html;
 use serde::{Deserialize, Serialize};
+use url::Url;
 
 pub mod article;
 mod article_or_comment;
@@ -50,4 +51,10 @@ pub(crate) fn read_from_string_or_source_opt(
     content
         .as_ref()
         .map(|content| read_from_string_or_source(content, media_type, source))
+}
+
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct Endpoints {
+    pub shared_inbox: Url,
 }

@@ -1,6 +1,8 @@
+use super::Endpoints;
 use crate::{
     collections::{
-        articles_collection::ArticleCollection, instance_collection::InstanceCollection,
+        articles_collection::ArticleCollection,
+        instance_collection::InstanceCollection,
     },
     send_activity,
 };
@@ -38,6 +40,7 @@ pub struct ApubInstance {
     instances: Option<CollectionId<InstanceCollection>>,
     inbox: Url,
     public_key: PublicKey,
+    endpoints: Option<Endpoints>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -116,6 +119,7 @@ impl Object for InstanceWrapper {
             public_key: self.public_key(),
             name: self.name.clone(),
             preferred_username: "wiki".to_string(),
+            endpoints: None,
         })
     }
 
@@ -134,13 +138,14 @@ impl Object for InstanceWrapper {
         context: &Data<Self::DataType>,
     ) -> Result<Self, Self::Error> {
         let domain = extract_domain(json.id.inner());
+        let inbox_url = json.endpoints.map(|e| e.shared_inbox).unwrap_or(json.inbox);
         let form = DbInstanceForm {
             domain,
             ap_id: json.id.into(),
             topic: json.summary,
             articles_url: json.outbox.map(Into::into),
             instances_url: json.instances.map(Into::into),
-            inbox_url: json.inbox.to_string(),
+            inbox_url: inbox_url.to_string(),
             public_key: json.public_key.public_key_pem,
             private_key: None,
             last_refreshed_at: Utc::now(),

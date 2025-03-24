@@ -47,7 +47,7 @@ impl AnnounceActivity {
         };
 
         // Send to followers of instance
-        let follower_inboxes = Instance::read_followers(instance.id, context)?
+        let follower_inboxes: Vec<_> = Instance::read_followers(instance.id, context)?
             .into_iter()
             .map(|f| f.inbox_url())
             .collect();
