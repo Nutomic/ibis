@@ -8,7 +8,7 @@ use activitypub_federation::{
     config::Data,
     fetch::object_id::ObjectId,
     kinds::{activity::AnnounceType, public},
-    protocol::helpers::deserialize_one_or_many,
+    protocol::{context::WithContext, helpers::deserialize_one_or_many},
     traits::{ActivityHandler, Actor},
 };
 use ibis_database::{
@@ -25,6 +25,8 @@ pub struct AnnounceActivity {
     pub(crate) actor: ObjectId<InstanceWrapper>,
     #[serde(deserialize_with = "deserialize_one_or_many")]
     pub(crate) to: Vec<Url>,
+    #[serde(deserialize_with = "deserialize_one_or_many")]
+    pub(crate) cc: Vec<Url>,
     pub(crate) object: AnnouncableActivities,
     #[serde(rename = "type")]
     pub(crate) kind: AnnounceType,
@@ -41,6 +43,7 @@ impl AnnounceActivity {
         let announce = AnnounceActivity {
             actor: instance.id().into(),
             to: vec![public()],
+            cc: vec![],
             object,
             kind: AnnounceType::Announce,
             id,
