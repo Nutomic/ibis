@@ -1,3 +1,4 @@
+use crate::utils::generate_article_ap_id;
 use activitypub_federation::config::Data;
 use chrono::Utc;
 use ibis_database::{
@@ -15,12 +16,11 @@ use ibis_database::{
 use ibis_federate::{
     activities::submit_article_update,
     collections::{
-        articles_collection::local_articles_url, instance_collection::linked_instances_url,
+        articles_collection::local_articles_url,
+        instance_collection::linked_instances_url,
     },
 };
 use url::Url;
-
-use crate::utils::generate_article_ap_id;
 
 const MAIN_PAGE_DEFAULT_TEXT: &str = "Welcome to Ibis, the federated Wikipedia alternative!
 
@@ -37,7 +37,7 @@ pub async fn setup(context: &Data<IbisContext>) -> Result<(), BackendError> {
         domain: domain.to_string(),
         ap_id,
         articles_url: Some(local_articles_url(domain)?.into()),
-        instances_url: Some(linked_instances_url(domain)?.into()),
+        instances_url: linked_instances_url(domain)?.into(),
         inbox_url,
         public_key: keypair.public_key,
         private_key: Some(keypair.private_key),
@@ -63,7 +63,7 @@ pub async fn setup(context: &Data<IbisContext>) -> Result<(), BackendError> {
     let form = DbArticleForm {
         title: MAIN_PAGE_NAME.to_string(),
         text: String::new(),
-        ap_id: generate_article_ap_id(&MAIN_PAGE_NAME, &instance)?,
+        ap_id: generate_article_ap_id(MAIN_PAGE_NAME, &instance)?,
         instance_id: instance.id,
         local: true,
         protected: true,

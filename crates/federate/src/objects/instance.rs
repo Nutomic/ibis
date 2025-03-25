@@ -37,7 +37,8 @@ pub struct ApubInstance {
     name: Option<String>,
     summary: Option<String>,
     outbox: Option<CollectionId<ArticleCollection>>,
-    instances: Option<CollectionId<InstanceCollection>>,
+    // This field is mandatory to prevent fetching communities from Lemmy etc
+    instances: CollectionId<InstanceCollection>,
     inbox: Url,
     public_key: PublicKey,
     endpoints: Option<Endpoints>,
@@ -114,7 +115,7 @@ impl Object for InstanceWrapper {
             id: self.ap_id.clone().into(),
             summary: self.topic.clone(),
             outbox: self.articles_url.clone().map(Into::into),
-            instances: self.instances_url.clone().map(Into::into),
+            instances: self.instances_url.clone().into(),
             inbox: Url::parse(&self.inbox_url)?,
             public_key: self.public_key(),
             name: self.name.clone(),
@@ -144,7 +145,7 @@ impl Object for InstanceWrapper {
             ap_id: json.id.into(),
             topic: json.summary,
             articles_url: json.outbox.map(Into::into),
-            instances_url: json.instances.map(Into::into),
+            instances_url: json.instances.into(),
             inbox_url: inbox_url.to_string(),
             public_key: json.public_key.public_key_pem,
             private_key: None,
@@ -165,12 +166,10 @@ impl Object for InstanceWrapper {
                     log::warn!("error in spawn: {e}");
                 }
             }
-            if let Some(instances_url) = instance_.instances_url {
-                let instances_url: CollectionId<InstanceCollection> = instances_url.into();
-                let res = instances_url.dereference(&(), &context_).await;
-                if let Err(e) = res {
-                    log::warn!("error in spawn: {e}");
-                }
+            let instances_url: CollectionId<InstanceCollection> = instance_.instances_url.into();
+            let res = instances_url.dereference(&(), &context_).await;
+            if let Err(e) = res {
+                log::warn!("error in spawn: {e}");
             }
         });
 

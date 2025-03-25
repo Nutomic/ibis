@@ -1,5 +1,7 @@
 use crate::{
-    generate_activity_id, objects::instance::InstanceWrapper, routes::AnnouncableActivities,
+    generate_activity_id,
+    objects::instance::InstanceWrapper,
+    routes::AnnouncableActivities,
     send_activity,
 };
 use activitypub_federation::{

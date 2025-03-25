@@ -28,7 +28,7 @@ pub struct DbInstanceForm {
     pub private_key: Option<String>,
     pub last_refreshed_at: DateTime<Utc>,
     pub local: bool,
-    pub instances_url: Option<DbUrl>,
+    pub instances_url: DbUrl,
     pub name: Option<String>,
 }
 

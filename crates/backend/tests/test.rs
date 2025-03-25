@@ -523,7 +523,6 @@ async fn api_test_federated_edit_conflict() -> Result<()> {
         previous_version_id: create_res.latest_version,
         resolve_conflict_id: None,
     };
-    dbg!(&edit_params, &resolve_res);
     let edit_res = gamma
         .edit_article_without_conflict(&edit_params)
         .await

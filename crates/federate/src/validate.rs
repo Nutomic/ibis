@@ -6,8 +6,8 @@ use std::sync::LazyLock;
 pub fn validate_article_title(title: &str) -> BackendResult<()> {
     #[expect(clippy::expect_used)]
     static TITLE_REGEX: LazyLock<Regex> =
-        LazyLock::new(|| Regex::new(r"^[a-zA-Z0-9_ ]{3,100}$").expect("compile regex"));
-    if !TITLE_REGEX.is_match(&title) {
+        LazyLock::new(|| Regex::new(r"^[a-zA-Z0-9 ]{3,100}$").expect("compile regex"));
+    if !TITLE_REGEX.is_match(title) {
         return Err(anyhow!("Invalid title").into());
     }
     Ok(())
@@ -55,7 +55,6 @@ pub fn validate_not_empty(text: &str) -> BackendResult<()> {
 }
 
 #[test]
-#[expect(clippy::unwrap_used)]
 fn test_validate_article_title() {
     assert!(validate_article_title("With space 123").is_ok());
     assert!(validate_article_title(&"long".to_string().repeat(100)).is_err());

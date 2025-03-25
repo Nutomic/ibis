@@ -94,7 +94,7 @@ diesel::table! {
         last_refreshed_at -> Timestamptz,
         local -> Bool,
         #[max_length = 255]
-        instances_url -> Nullable<Varchar>,
+        instances_url -> Varchar,
         name -> Nullable<Text>,
     }
 }

@@ -1,6 +1,7 @@
 use super::{Source, read_from_string_or_source, user::PersonWrapper};
 use crate::{
-    collections::edits_collection::EditCollection, objects::instance::InstanceWrapper,
+    collections::edits_collection::EditCollection,
+    objects::instance::InstanceWrapper,
     validate::validate_article_title,
 };
 use activitypub_federation::{
@@ -83,7 +84,7 @@ impl Object for ArticleWrapper {
 
     async fn into_json(self, context: &Data<Self::DataType>) -> Result<Self::Kind, Self::Error> {
         let latest_version = self.latest_edit_version(context)?;
-        let initial_edit = Edit::read_view(&latest_version, &context)?;
+        let initial_edit = Edit::read_view(&latest_version, context)?;
         let local_instance: InstanceWrapper = Instance::read_local(context)?.into();
         Ok(ApubArticle {
             kind: Default::default(),
