@@ -5,11 +5,13 @@ export PGHOST="$1"
 export PGDATA="$1/dev_pgdata"
 
 # If cluster exists, stop the backend
-if [ -d "$PGDATA" ]
+if [ -d "$PGHOST" ]
 then
   # Prevent `stop` from failing if backend already stopped
-  #pg_ctl restart > /dev/null
-  pg_ctl stop
+  #pg_ctl restart > /dev/null 
+  pg_ctl stop --mode immediate --silent
+  rm -r "$PGHOST"
+  sleep 5
 fi
 
 # Create cluster
@@ -18,7 +20,7 @@ initdb --username=postgres --auth=trust --no-instructions
 touch "$PGHOST/.s.PGSQL.5432"
 
 # Start backend that only listens to socket in current directory
-pg_ctl start --options="-c listen_addresses= -c unix_socket_directories=$PGHOST"
+pg_ctl start --options="-c listen_addresses= -c unix_socket_directories=$PGHOST" --silent
 
 # Setup database
 psql -c "CREATE USER ibis WITH PASSWORD 'password' SUPERUSER;" -U postgres

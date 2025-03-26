@@ -1,9 +1,11 @@
 use crate::{
+    activities::announce::AnnounceActivity,
     generate_activity_id,
     objects::{
         article::{ApubArticle, ArticleWrapper},
         instance::InstanceWrapper,
     },
+    routes::AnnouncableActivities,
 };
 use activitypub_federation::{
     config::Data,
@@ -13,16 +15,15 @@ use activitypub_federation::{
     traits::{ActivityHandler, Object},
 };
 use ibis_database::{
-    common::instance::Instance,
     error::{BackendError, BackendResult},
     impls::IbisContext,
 };
 use serde::{Deserialize, Serialize};
 use url::Url;
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct UpdateLocalArticle {
+pub struct UpdateArticle {
     pub actor: ObjectId<InstanceWrapper>,
     #[serde(deserialize_with = "deserialize_one_or_many")]
     pub to: Vec<Url>,
@@ -32,32 +33,28 @@ pub struct UpdateLocalArticle {
     pub id: Url,
 }
 
-impl UpdateLocalArticle {
+impl UpdateArticle {
     /// Sent from article origin instance
     pub async fn send(
         article: ArticleWrapper,
-        extra_recipients: Vec<InstanceWrapper>,
+        local_instance: &InstanceWrapper,
         context: &Data<IbisContext>,
     ) -> BackendResult<()> {
-        debug_assert!(article.local);
-        let local_instance: InstanceWrapper = Instance::read_local(context)?.into();
         let id = generate_activity_id(context)?;
-        let update = UpdateLocalArticle {
+        let update = UpdateArticle {
             actor: local_instance.ap_id.clone().into(),
-            to: vec![public()],
+            to: vec![local_instance.ap_id.clone().into(), public()],
             object: article.into_json(context).await?,
             kind: Default::default(),
             id,
         };
-        local_instance
-            .send_to_followers(update, extra_recipients, context)
-            .await?;
+        AnnounceActivity::send(AnnouncableActivities::UpdateArticle(update), context).await?;
         Ok(())
     }
 }
 
 #[async_trait::async_trait]
-impl ActivityHandler for UpdateLocalArticle {
+impl ActivityHandler for UpdateArticle {
     type DataType = IbisContext;
     type Error = BackendError;
 
@@ -73,10 +70,8 @@ impl ActivityHandler for UpdateLocalArticle {
         Ok(())
     }
 
-    /// Received on article follower instances (where article is always remote)
-    async fn receive(self, context: &Data<Self::DataType>) -> Result<(), Self::Error> {
-        ArticleWrapper::from_json(self.object, context).await?;
-
+    /// Ignored by Ibis, this is for other platforms
+    async fn receive(self, _context: &Data<Self::DataType>) -> Result<(), Self::Error> {
         Ok(())
     }
 }

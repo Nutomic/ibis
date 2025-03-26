@@ -3,10 +3,10 @@ use crate::{
         announce::AnnounceActivity,
         article::{
             create_article::CreateArticle,
+            edit_article::EditArticle,
             remove_article::RemoveArticle,
             undo_remove_article::UndoRemoveArticle,
-            update_local_article::UpdateLocalArticle,
-            update_remote_article::UpdateRemoteArticle,
+            update_article::UpdateArticle,
         },
         comment::{
             create_or_update_comment::CreateOrUpdateComment,
@@ -172,8 +172,6 @@ pub enum InboxActivities {
     UndoFollow(UndoFollow),
     Accept(Accept),
     CreateArticle(CreateArticle),
-    UpdateLocalArticle(UpdateLocalArticle),
-    UpdateRemoteArticle(UpdateRemoteArticle),
     RejectEdit(RejectEdit),
     RemoveArticle(RemoveArticle),
     UndoRemoveArticle(UndoRemoveArticle),
@@ -188,6 +186,8 @@ pub enum AnnouncableActivities {
     CreateOrUpdateComment(CreateOrUpdateComment),
     DeleteComment(DeleteComment),
     UndoDeleteComment(UndoDeleteComment),
+    EditArticle(EditArticle),
+    UpdateArticle(UpdateArticle),
 }
 
 #[debug_handler]

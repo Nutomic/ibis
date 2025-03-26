@@ -139,7 +139,6 @@ pub(crate) async fn edit_article(
 
     // Markdown formatting
     let new_text = fmtm::format(&params.new_text, Some(80))?;
-
     if params.previous_version_id == original_article.latest_version {
         // No intermediate changes, simply submit new version
         submit_article_update(
