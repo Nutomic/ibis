@@ -316,9 +316,9 @@ pub async fn remove_article(
     let article = Article::update_removed(params.article_id, params.remove, &context)?;
     let actor = user.person.ap_id.clone().into();
     if params.remove {
-        RemoveArticle::send_to_followers(actor, article.into(), &context).await?;
+        RemoveArticle::send(actor, article.into(), &context).await?;
     } else {
-        UndoRemoveArticle::send_to_followers(actor, article.into(), &context).await?;
+        UndoRemoveArticle::send(actor, article.into(), &context).await?;
     }
     Ok(Json(()))
 }

@@ -171,8 +171,6 @@ pub enum InboxActivities {
     UndoFollow(UndoFollow),
     Accept(Accept),
     RejectEdit(RejectEdit),
-    RemoveArticle(RemoveArticle),
-    UndoRemoveArticle(UndoRemoveArticle),
     AnnounceActivity(AnnounceActivity),
     AnnouncableActivities(AnnouncableActivities),
 }
@@ -181,11 +179,13 @@ pub enum InboxActivities {
 #[serde(untagged)]
 #[enum_delegate::implement(ActivityHandler)]
 pub enum AnnouncableActivities {
+    EditArticle(EditArticle),
+    UpdateArticle(UpdateArticle),
+    RemoveArticle(RemoveArticle),
+    UndoRemoveArticle(UndoRemoveArticle),
     CreateOrUpdateComment(CreateOrUpdateComment),
     DeleteComment(DeleteComment),
     UndoDeleteComment(UndoDeleteComment),
-    EditArticle(EditArticle),
-    UpdateArticle(UpdateArticle),
 }
 
 #[debug_handler]

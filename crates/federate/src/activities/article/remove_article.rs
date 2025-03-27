@@ -1,6 +1,7 @@
 use crate::{
     generate_activity_id,
     objects::{article::ArticleWrapper, instance::InstanceWrapper, user::PersonWrapper},
+    routes::AnnouncableActivities,
 };
 use activitypub_federation::{
     config::Data,
@@ -48,15 +49,16 @@ impl RemoveArticle {
             summary: "Removed by admin".to_string(),
         })
     }
-    pub async fn send_to_followers(
+    pub async fn send(
         actor: ObjectId<PersonWrapper>,
         article: ArticleWrapper,
         context: &Data<IbisContext>,
     ) -> BackendResult<()> {
         let local_instance: InstanceWrapper = Instance::read_local(context)?.into();
         let remove = Self::new(actor, article, context)?;
+        let announce = AnnouncableActivities::RemoveArticle(remove);
         local_instance
-            .send_to_followers(remove, vec![], context)
+            .send_to_followers(announce, vec![], context)
             .await?;
         Ok(())
     }
