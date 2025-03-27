@@ -3,6 +3,7 @@ use crate::{
     objects::{
         article::{ApubArticle, ArticleWrapper},
         instance::InstanceWrapper,
+        user::PersonWrapper,
     },
 };
 use activitypub_federation::{
@@ -23,9 +24,11 @@ use url::Url;
 #[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateArticle {
-    pub actor: ObjectId<InstanceWrapper>,
+    pub actor: ObjectId<PersonWrapper>,
     #[serde(deserialize_with = "deserialize_one_or_many")]
     pub to: Vec<Url>,
+    #[serde(deserialize_with = "deserialize_one_or_many")]
+    pub cc: Vec<Url>,
     pub object: ApubArticle,
     #[serde(rename = "type")]
     pub kind: UpdateType,
@@ -34,6 +37,7 @@ pub struct UpdateArticle {
 
 impl UpdateArticle {
     pub async fn send(
+        actor: PersonWrapper,
         article: ArticleWrapper,
         local_instance: &InstanceWrapper,
         context: &Data<IbisContext>,
@@ -41,8 +45,9 @@ impl UpdateArticle {
         let object = article.clone().into_json(context).await?;
         let id = generate_activity_id(context)?;
         let create = UpdateArticle {
-            actor: local_instance.ap_id.clone().into(),
+            actor: actor.ap_id.clone().into(),
             to: vec![public()],
+            cc: vec![],
             object,
             kind: Default::default(),
             id,

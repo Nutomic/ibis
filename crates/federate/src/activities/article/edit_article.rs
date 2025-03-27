@@ -6,6 +6,7 @@ use crate::{
     objects::{
         edit::{ApubEdit, EditWrapper},
         instance::InstanceWrapper,
+        user::PersonWrapper,
     },
     routes::AnnouncableActivities,
     send_activity,
@@ -33,7 +34,7 @@ use url::Url;
 #[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct EditArticle {
-    pub actor: ObjectId<InstanceWrapper>,
+    pub actor: ObjectId<PersonWrapper>,
     #[serde(deserialize_with = "deserialize_one_or_many")]
     pub to: Vec<Url>,
     pub object: ApubEdit,
@@ -51,13 +52,13 @@ pub enum EditType {
 impl EditArticle {
     pub async fn new(
         edit: EditWrapper,
-        from_instance: &InstanceWrapper,
+        from: &PersonWrapper,
         to_instance: &InstanceWrapper,
         context: &Data<IbisContext>,
     ) -> BackendResult<Self> {
         let id = generate_activity_id(context)?;
         Ok(EditArticle {
-            actor: from_instance.ap_id.clone().into(),
+            actor: from.ap_id.clone().into(),
             to: vec![to_instance.ap_id.clone().into(), public()],
             object: edit.into_json(context).await?,
             kind: Default::default(),
@@ -66,12 +67,12 @@ impl EditArticle {
     }
     pub async fn send(
         self,
-        from_instance: &InstanceWrapper,
+        from: &PersonWrapper,
         to_instance: &InstanceWrapper,
         context: &Data<IbisContext>,
     ) -> BackendResult<()> {
         send_activity(
-            from_instance,
+            from,
             self,
             vec![Url::parse(&to_instance.inbox_url)?],
             context,
@@ -104,6 +105,7 @@ impl ActivityHandler for EditArticle {
     async fn receive(self, context: &Data<Self::DataType>) -> Result<(), Self::Error> {
         let article = Article::read_from_ap_id(&self.object.object.clone().into(), context)?;
         let patch = Patch::from_str(&self.object.content)?;
+        let actor = self.actor.dereference(context).await?;
 
         match apply(&article.text, &patch) {
             Ok(applied) => {
@@ -113,12 +115,11 @@ impl ActivityHandler for EditArticle {
                     AnnounceActivity::send(AnnouncableActivities::EditArticle(self), context)
                         .await?;
                     let local_instance: InstanceWrapper = Instance::read_local(context)?.into();
-                    UpdateArticle::send(article.into(), &local_instance, context).await?;
+                    UpdateArticle::send(actor, article.into(), &local_instance, context).await?;
                 }
             }
             Err(_e) if article.local => {
-                let user_instance = self.actor.dereference(context).await?;
-                RejectEdit::send(self.object.clone(), user_instance, context).await?;
+                RejectEdit::send(self.object.clone(), actor, context).await?;
             }
             Err(e) => {
                 warn!("Failed to apply federated edit: {e}")

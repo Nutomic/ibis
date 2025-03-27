@@ -35,6 +35,7 @@ use ibis_database::{
             can_edit_article,
         },
         instance::Instance,
+        user::Person,
     },
     error::BackendResult,
     impls::{IbisContext, article::DbArticleForm, conflict::DbConflictForm, edit::DbEditForm},
@@ -96,6 +97,7 @@ pub(crate) async fn create_article(
     // allow reading unapproved article here
     let article_view = Article::read_view(article.id, Some(&user), &context)?;
     UpdateArticle::send(
+        user.person.clone().into(),
         article_view.article.clone().into(),
         &local_instance.into(),
         &context,
@@ -151,7 +153,7 @@ pub(crate) async fn edit_article(
             params.summary.clone(),
             params.previous_version_id,
             &original_article.article,
-            user.person.id,
+            user.person.clone().into(),
             &context,
         )
         .await?;
@@ -265,7 +267,13 @@ pub(crate) async fn fork_article(
 
     Article::follow(article.id, &user, &context)?;
 
-    UpdateArticle::send(article.clone().into(), &local_instance.into(), &context).await?;
+    UpdateArticle::send(
+        user.person.clone().into(),
+        article.clone().into(),
+        &local_instance.into(),
+        &context,
+    )
+    .await?;
 
     Ok(Json(Article::read_view(article.id, Some(&user), &context)?))
 }
@@ -383,13 +391,14 @@ pub async fn db_conflict_to_api_conflict(
     let ours = apply(&ancestor, &patch)?;
     match merge(&ancestor, &ours, &original_article.text) {
         Ok(new_text) => {
+            let person = Person::read(conflict.creator_id, context)?.into();
             // patch applies cleanly so we are done, federate the change
             submit_article_update(
                 new_text,
                 conflict.summary.clone(),
                 conflict.previous_version_id.clone(),
                 &original_article,
-                conflict.creator_id,
+                person,
                 context,
             )
             .await?;

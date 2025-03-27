@@ -1,6 +1,6 @@
 use crate::{
     activities::article::edit_article::EditArticle,
-    objects::instance::InstanceWrapper,
+    objects::{instance::InstanceWrapper, user::PersonWrapper},
     routes::AnnouncableActivities,
 };
 use activitypub_federation::config::Data;
@@ -10,7 +10,6 @@ use ibis_database::{
     common::{
         article::{Article, Edit, EditVersion},
         instance::Instance,
-        newtypes::PersonId,
     },
     error::BackendResult,
     impls::{IbisContext, edit::DbEditForm},
@@ -27,12 +26,12 @@ pub async fn submit_article_update(
     summary: String,
     previous_version: EditVersion,
     article: &Article,
-    creator_id: PersonId,
+    person: PersonWrapper,
     context: &Data<IbisContext>,
 ) -> BackendResult<()> {
     let mut form = DbEditForm::new(
         article,
-        creator_id,
+        person.id,
         &new_text,
         summary,
         previous_version,
@@ -45,17 +44,16 @@ pub async fn submit_article_update(
 
     let local_instance: InstanceWrapper = Instance::read_local(context)?.into();
     let article_instance: InstanceWrapper = Instance::read(article.instance_id, context)?.into();
-    let edit_activity =
-        EditArticle::new(edit.into(), &local_instance, &article_instance, context).await?;
+    let edit_activity = EditArticle::new(edit.into(), &person, &article_instance, context).await?;
 
     if article_instance.local {
         let updated_article = Article::update_text(article.id, &new_text, context)?;
 
-        UpdateArticle::send(updated_article.into(), &local_instance, context).await?;
+        UpdateArticle::send(person, updated_article.into(), &local_instance, context).await?;
         AnnounceActivity::send(AnnouncableActivities::EditArticle(edit_activity), context).await?;
     } else {
         edit_activity
-            .send(&local_instance, &article_instance, context)
+            .send(&person, &article_instance, context)
             .await?;
     }
     Ok(())

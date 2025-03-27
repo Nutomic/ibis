@@ -75,7 +75,7 @@ pub async fn setup(context: &Data<IbisContext>) -> Result<(), BackendError> {
         "Default main page".to_string(),
         EditVersion::default(),
         &article,
-        admin.person.id,
+        admin.person.into(),
         context,
     )
     .await?;
