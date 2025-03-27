@@ -1,9 +1,4 @@
-use super::{
-    Source,
-    article_or_comment::DbArticleOrComment,
-    read_from_string_or_source,
-    user::PersonWrapper,
-};
+use super::{DbArticleOrComment, Source, read_from_string_or_source, user::PersonWrapper};
 use crate::validate::validate_comment_max_depth;
 use activitypub_federation::{
     config::Data,
@@ -116,8 +111,8 @@ impl Object for CommentWrapper {
     ) -> Result<Self, Self::Error> {
         let parent = json.in_reply_to.dereference(context).await?;
         let (article_id, parent_id, depth) = match parent {
-            DbArticleOrComment::Article(db_article) => (db_article.id, None, 0),
-            DbArticleOrComment::Comment(db_comment) => (
+            DbArticleOrComment::Left(db_article) => (db_article.id, None, 0),
+            DbArticleOrComment::Right(db_comment) => (
                 db_comment.article_id,
                 Some(db_comment.id),
                 db_comment.depth + 1,

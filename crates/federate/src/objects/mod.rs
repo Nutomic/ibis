@@ -1,14 +1,18 @@
 use activitypub_federation::protocol::values::{MediaTypeMarkdown, MediaTypeMarkdownOrHtml};
+use article::ArticleWrapper;
+use comment::CommentWrapper;
+use either::Either;
 use html2md::parse_html;
 use serde::{Deserialize, Serialize};
 use url::Url;
 
 pub mod article;
-mod article_or_comment;
 pub mod comment;
 pub mod edit;
 pub mod instance;
 pub mod user;
+
+type DbArticleOrComment = Either<ArticleWrapper, CommentWrapper>;
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
