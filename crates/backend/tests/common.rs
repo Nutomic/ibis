@@ -103,9 +103,9 @@ pub struct IbisInstance {
 impl IbisInstance {
     fn prepare_db(db_path: String) -> std::thread::JoinHandle<()> {
         // stop any db leftover from previous run
-        Self::stop_internal(db_path.clone());
+        Self::stop_internal(db_path.clone()).join().ok();
         // remove old db
-        remove_dir_all(&db_path).unwrap();
+        remove_dir_all(&db_path).ok();
         spawn(move || {
             Command::new("./scripts/start_test_db.sh")
                 .arg(&db_path)

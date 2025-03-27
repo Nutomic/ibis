@@ -4,16 +4,6 @@ set -ex
 export PGHOST="$1"
 export PGDATA="$1/dev_pgdata"
 
-# If cluster exists, stop the backend
-if [ -d "$PGHOST" ]
-then
-  # Prevent `stop` from failing if backend already stopped
-  #pg_ctl restart > /dev/null 
-  pg_ctl stop --mode immediate --silent
-  rm -r "$PGHOST"
-  sleep 5
-fi
-
 # Create cluster
 initdb --username=postgres --auth=trust --no-instructions
 
