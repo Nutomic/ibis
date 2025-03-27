@@ -42,9 +42,9 @@ use ibis_database::{
 use ibis_federate::{
     activities::{
         article::{
-            create_article::CreateArticle,
             remove_article::RemoveArticle,
             undo_remove_article::UndoRemoveArticle,
+            update_article::UpdateArticle,
         },
         submit_article_update,
     },
@@ -95,7 +95,12 @@ pub(crate) async fn create_article(
 
     // allow reading unapproved article here
     let article_view = Article::read_view(article.id, Some(&user), &context)?;
-    CreateArticle::send_to_followers(article_view.article.clone().into(), &context).await?;
+    UpdateArticle::send(
+        article_view.article.clone().into(),
+        &local_instance.into(),
+        &context,
+    )
+    .await?;
 
     Ok(Json(article_view))
 }
@@ -260,7 +265,7 @@ pub(crate) async fn fork_article(
 
     Article::follow(article.id, &user, &context)?;
 
-    CreateArticle::send_to_followers(article.clone().into(), &context).await?;
+    UpdateArticle::send(article.clone().into(), &local_instance.into(), &context).await?;
 
     Ok(Json(Article::read_view(article.id, Some(&user), &context)?))
 }

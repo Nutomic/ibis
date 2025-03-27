@@ -2,7 +2,6 @@ use crate::{
     activities::{
         announce::AnnounceActivity,
         article::{
-            create_article::CreateArticle,
             edit_article::EditArticle,
             remove_article::RemoveArticle,
             undo_remove_article::UndoRemoveArticle,
@@ -171,7 +170,6 @@ pub enum InboxActivities {
     Follow(Follow),
     UndoFollow(UndoFollow),
     Accept(Accept),
-    CreateArticle(CreateArticle),
     RejectEdit(RejectEdit),
     RemoveArticle(RemoveArticle),
     UndoRemoveArticle(UndoRemoveArticle),

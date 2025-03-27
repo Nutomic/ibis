@@ -1,11 +1,9 @@
 use crate::{
-    activities::announce::AnnounceActivity,
     generate_activity_id,
     objects::{
         article::{ApubArticle, ArticleWrapper},
         instance::InstanceWrapper,
     },
-    routes::AnnouncableActivities,
 };
 use activitypub_federation::{
     config::Data,
@@ -15,6 +13,7 @@ use activitypub_federation::{
     traits::{ActivityHandler, Object},
 };
 use ibis_database::{
+    common::instance::Instance,
     error::{BackendError, BackendResult},
     impls::IbisContext,
 };
@@ -34,25 +33,26 @@ pub struct UpdateArticle {
 }
 
 impl UpdateArticle {
-    /// Sent from article origin instance
     pub async fn send(
         article: ArticleWrapper,
         local_instance: &InstanceWrapper,
         context: &Data<IbisContext>,
     ) -> BackendResult<()> {
+        let object = article.clone().into_json(context).await?;
         let id = generate_activity_id(context)?;
-        let update = UpdateArticle {
+        let create = UpdateArticle {
             actor: local_instance.ap_id.clone().into(),
-            to: vec![local_instance.ap_id.clone().into(), public()],
-            object: article.into_json(context).await?,
+            to: vec![public()],
+            object,
             kind: Default::default(),
             id,
         };
-        AnnounceActivity::send(AnnouncableActivities::UpdateArticle(update), context).await?;
+        local_instance
+            .send_to_followers(create, vec![], context)
+            .await?;
         Ok(())
     }
 }
-
 #[async_trait::async_trait]
 impl ActivityHandler for UpdateArticle {
     type DataType = IbisContext;
@@ -70,8 +70,14 @@ impl ActivityHandler for UpdateArticle {
         Ok(())
     }
 
-    /// Ignored by Ibis, this is for other platforms
-    async fn receive(self, _context: &Data<Self::DataType>) -> Result<(), Self::Error> {
+    async fn receive(self, context: &Data<Self::DataType>) -> Result<(), Self::Error> {
+        let article = ArticleWrapper::from_json(self.object.clone(), context).await?;
+        if article.local {
+            let local_instance: InstanceWrapper = Instance::read_local(context)?.into();
+            local_instance
+                .send_to_followers(self, vec![], context)
+                .await?;
+        }
         Ok(())
     }
 }

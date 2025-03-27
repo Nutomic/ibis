@@ -1,10 +1,11 @@
 use crate::{
-    activities::article::{edit_article::EditArticle, update_article::UpdateArticle},
+    activities::article::edit_article::EditArticle,
     objects::instance::InstanceWrapper,
     routes::AnnouncableActivities,
 };
 use activitypub_federation::config::Data;
 use announce::AnnounceActivity;
+use article::update_article::UpdateArticle;
 use ibis_database::{
     common::{
         article::{Article, Edit, EditVersion},
