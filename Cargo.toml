@@ -60,7 +60,7 @@ serde = { version = "1.0.218", features = ["derive"] }
 chrono = { version = "0.4.40", features = ["serde"] }
 sha2 = "0.10.8"
 uuid = { version = "1.15.1", features = ["v4", "serde"] }
-activitypub_federation = { git = "https://github.com/LemmyNet/activitypub-federation-rust.git", branch = "object-either-fixes", features = [
+activitypub_federation = { version = "0.6.5", features = [
   "axum",
 ] }
 url = { version = "2.5.4", features = ["serde"] }
