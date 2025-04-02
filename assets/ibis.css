@@ -4,15 +4,22 @@
 
 /* anchor links in markdown headings */
 .anchor svg {
-    display: inline;
+  display: inline;
 }
 
 /* comment actions */
 .link svg {
-    display: inline;
+  display: inline;
 }
 
 /* article nav */
 .tab svg {
-    margin-right: 6px;
+  margin-right: 6px;
+}
+
+/* disable quotes added to blockquote */
+.prose blockquote {
+  quotes: none;
+  font-style: normal;
+  font-weight: 400;
 }
