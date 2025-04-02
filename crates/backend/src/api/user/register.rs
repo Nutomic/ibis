@@ -1,7 +1,4 @@
-use crate::api::{
-    empty_to_none,
-    user::{create_cookie, generate_login_token},
-};
+use crate::api::{empty_to_none, user::add_login_cookie};
 use activitypub_federation::config::Data;
 use anyhow::anyhow;
 use axum::{Form, Json};
@@ -236,8 +233,7 @@ fn register_return(
     context: &Data<IbisContext>,
 ) -> RegisterReturnType {
     if !email_verification_required {
-        let token = generate_login_token(&user.person, context)?;
-        jar = jar.add(create_cookie(token, context));
+        jar = add_login_cookie(&user.person, jar, context)?;
     }
 
     Ok((

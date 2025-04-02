@@ -67,24 +67,6 @@ struct Claims {
     pub exp: u64,
 }
 
-pub(crate) fn generate_login_token(
-    person: &Person,
-    context: &Data<IbisContext>,
-) -> BackendResult<String> {
-    let hostname = context.domain().to_string();
-    let claims = Claims {
-        sub: person.username.clone(),
-        iss: hostname,
-        iat: Utc::now().timestamp(),
-        exp: get_current_timestamp() + 60 * 60 * 24 * 365,
-    };
-
-    let secret = read_jwt_secret(context)?;
-    let key = EncodingKey::from_secret(secret.as_bytes());
-    let jwt = encode(&Header::default(), &claims, &key)?;
-    Ok(jwt)
-}
-
 pub async fn validate(jwt: &str, context: &IbisContext) -> BackendResult<LocalUserView> {
     let validation = Validation::default();
     let secret = read_jwt_secret(context)?;
@@ -122,17 +104,35 @@ pub(crate) async fn login_user(
     )
     .map_err(|_| invalid_login)?;
     validate_password(&user, &params.password)?;
-    let token = generate_login_token(&user.person, &context)?;
-    let jar = jar.add(create_cookie(token, &context));
+    let jar = add_login_cookie(&user.person, jar, &context)?;
     Ok((jar, Json(user)))
 }
 
-pub(crate) fn create_cookie(jwt: String, context: &Data<IbisContext>) -> Cookie<'static> {
+pub(crate) fn add_login_cookie(
+    person: &Person,
+    jar: CookieJar,
+    context: &Data<IbisContext>,
+) -> BackendResult<CookieJar> {
+    let claims = Claims {
+        sub: person.username.clone(),
+        iss: context.conf.domain.clone(),
+        iat: Utc::now().timestamp(),
+        exp: get_current_timestamp() + 60 * 60 * 24 * 365,
+    };
+
+    let secret = read_jwt_secret(context)?;
+    let key = EncodingKey::from_secret(secret.as_bytes());
+    let jwt = encode(&Header::default(), &claims, &key)?;
+    let cookie = create_cookie(jwt, &context);
+    Ok(jar.add(cookie))
+}
+
+pub fn create_cookie(jwt: String, context: &Data<IbisContext>) -> Cookie<'static> {
     let mut cookie = Cookie::build((AUTH_COOKIE, jwt));
 
     // Must not set cookie domain on localhost
     // https://stackoverflow.com/a/1188145
-    let domain = context.domain().to_string();
+    let domain = context.conf.domain.clone();
     if !domain.starts_with("localhost") && !domain.starts_with("127.0.0.1") {
         cookie = cookie.domain(domain);
     }

@@ -14,6 +14,8 @@ pub struct IbisConfig {
     pub database: IbisConfigDatabase,
     /// Details of the initial admin account
     pub setup: IbisConfigSetup,
+    /// Domain for HTTP and frontend
+    pub domain: String,
     pub federation: IbisConfigFederation,
     pub options: Options,
     pub email: Option<IbisConfigEmail>,
@@ -83,7 +85,7 @@ pub struct IbisConfigSetup {
 #[serde(default)]
 #[serde(deny_unknown_fields)]
 pub struct IbisConfigFederation {
-    /// Domain name of the instance, mandatory for federation
+    /// Domain used for federation
     #[default("example.com")]
     #[doku(example = "example.com")]
     pub domain: String,

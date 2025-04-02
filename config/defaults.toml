@@ -1,3 +1,6 @@
+# Domain for HTTP and frontend
+domain = "string"
+
 # Details about the PostgreSQL database connection
 [database]
 # Database connection url
@@ -12,7 +15,7 @@ admin_username = "ibis"
 admin_password = "ibis"
 
 [federation]
-# Domain name of the instance, mandatory for federation
+# Domain used for federation
 domain = "example.com"
 
 # Comma separated list of instances which are allowed for federation. If set, federation

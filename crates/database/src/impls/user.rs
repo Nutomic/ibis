@@ -14,8 +14,18 @@ use anyhow::anyhow;
 use bcrypt::{DEFAULT_COST, hash};
 use chrono::{DateTime, Utc};
 use diesel::{
-    AsChangeset, BoolExpressionMethods, ExpressionMethods, Insertable, JoinOnDsl,
-    PgTextExpressionMethods, QueryDsl, Queryable, RunQueryDsl, Selectable, dsl::not, insert_into,
+    AsChangeset,
+    BoolExpressionMethods,
+    ExpressionMethods,
+    Insertable,
+    JoinOnDsl,
+    PgTextExpressionMethods,
+    QueryDsl,
+    Queryable,
+    RunQueryDsl,
+    Selectable,
+    dsl::not,
+    insert_into,
 };
 use ibis_database_schema::{instance, instance_follow, local_user, oauth_account, person};
 use std::ops::DerefMut;
