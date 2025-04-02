@@ -21,7 +21,7 @@ use activitypub_federation::{
 use diffy::{Patch, apply};
 use ibis_database::{
     common::{
-        article::{Article, can_edit_article},
+        article::{Article, Edit, can_edit_article},
         instance::Instance,
     },
     error::{BackendError, BackendResult},
@@ -101,9 +101,15 @@ impl ActivityHandler for EditArticle {
         Ok(())
     }
 
-    /// Received on article origin instance
     async fn receive(self, context: &Data<Self::DataType>) -> Result<(), Self::Error> {
         let article = Article::read_from_ap_id(&self.object.object.clone().into(), context)?;
+
+        let edits = Edit::list_for_article(article.id, context)?;
+        let edit_known = edits.into_iter().any(|e| e.hash == self.object.version);
+        if edit_known {
+            return Ok(());
+        }
+
         let patch = Patch::from_str(&self.object.content)?;
         let actor = self.actor.dereference(context).await?;
 

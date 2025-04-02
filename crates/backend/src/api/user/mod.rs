@@ -123,7 +123,7 @@ pub(crate) fn add_login_cookie(
     let secret = read_jwt_secret(context)?;
     let key = EncodingKey::from_secret(secret.as_bytes());
     let jwt = encode(&Header::default(), &claims, &key)?;
-    let cookie = create_cookie(jwt, &context);
+    let cookie = create_cookie(jwt, context);
     Ok(jar.add(cookie))
 }
 
