@@ -149,7 +149,7 @@ pub async fn edit_list(
     } else {
         return Err(anyhow!("Must provide article_id or person_id").into());
     };
-    Ok(Json(Edit::view(
+    Ok(Json(Edit::list_views(
         params,
         &user.map(|u| u.inner()),
         &context,

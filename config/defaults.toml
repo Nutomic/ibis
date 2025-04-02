@@ -1,3 +1,6 @@
+# Domain for HTTP and frontend
+domain = "string"
+
 # Details about the PostgreSQL database connection
 [database]
 # Database connection url
@@ -8,11 +11,20 @@ pool_size = 30
 
 # Details of the initial admin account
 [setup]
+# Username for the admin account
 admin_username = "ibis"
+
+# Initial password for admin account (can be changed later)
 admin_password = "ibis"
 
+# Name of the Activitypub group which is used to federate articles
+group_name = "wiki"
+
+# Name of the bot account used to federate articles
+wiki_bot_name = "wikibot"
+
 [federation]
-# Domain name of the instance, mandatory for federation
+# Domain used for federation
 domain = "example.com"
 
 # Comma separated list of instances which are allowed for federation. If set, federation

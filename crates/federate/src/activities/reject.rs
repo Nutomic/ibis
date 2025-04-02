@@ -1,6 +1,6 @@
 use crate::{
     generate_activity_id,
-    objects::{edit::ApubEdit, instance::InstanceWrapper},
+    objects::{edit::ApubEdit, instance::InstanceWrapper, user::PersonWrapper},
     send_activity,
 };
 use activitypub_federation::{
@@ -36,14 +36,14 @@ pub struct RejectEdit {
 impl RejectEdit {
     pub async fn send(
         edit: ApubEdit,
-        user_instance: InstanceWrapper,
+        to: PersonWrapper,
         context: &Data<IbisContext>,
     ) -> BackendResult<()> {
         let local_instance: InstanceWrapper = Instance::read_local(context)?.into();
         let id = generate_activity_id(context)?;
         let reject = RejectEdit {
             actor: local_instance.ap_id.clone().into(),
-            to: vec![user_instance.ap_id.clone().into()],
+            to: vec![to.ap_id.clone().into()],
             object: edit,
             kind: Default::default(),
             id,
@@ -51,7 +51,7 @@ impl RejectEdit {
         send_activity(
             &local_instance,
             reject,
-            vec![Url::parse(&user_instance.inbox_url)?],
+            vec![Url::parse(&to.inbox_url)?],
             context,
         )
         .await?;

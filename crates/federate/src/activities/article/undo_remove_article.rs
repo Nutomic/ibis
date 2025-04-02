@@ -2,6 +2,7 @@ use super::remove_article::RemoveArticle;
 use crate::{
     generate_activity_id,
     objects::{article::ArticleWrapper, instance::InstanceWrapper, user::PersonWrapper},
+    routes::AnnouncableActivities,
 };
 use activitypub_federation::{
     config::Data,
@@ -31,7 +32,7 @@ pub struct UndoRemoveArticle {
 }
 
 impl UndoRemoveArticle {
-    pub async fn send_to_followers(
+    pub async fn send(
         actor: ObjectId<PersonWrapper>,
         article: ArticleWrapper,
         context: &Data<IbisContext>,
@@ -45,10 +46,11 @@ impl UndoRemoveArticle {
             kind: Default::default(),
             id,
         };
+        let announce = AnnouncableActivities::UndoRemoveArticle(undo);
 
         let local_instance: InstanceWrapper = Instance::read_local(context)?.into();
         local_instance
-            .send_to_followers(undo, vec![], context)
+            .send_to_followers(announce, vec![], context)
             .await?;
         Ok(())
     }

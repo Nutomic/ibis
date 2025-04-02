@@ -33,7 +33,7 @@ pub struct Instance {
     pub last_refreshed_at: DateTime<Utc>,
     pub local: bool,
     #[cfg(feature = "ssr")]
-    pub instances_url: Option<DbUrl>,
+    pub instances_url: DbUrl,
     pub name: Option<String>,
 }
 

@@ -9,7 +9,7 @@ pub mod utils;
 use serde::{Deserialize, Serialize};
 use url::Url;
 
-pub const MAIN_PAGE_NAME: &str = "Main_Page";
+pub const MAIN_PAGE_NAME: &str = "Main Page";
 
 pub static AUTH_COOKIE: &str = "auth";
 

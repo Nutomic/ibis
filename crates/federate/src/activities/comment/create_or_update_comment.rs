@@ -35,6 +35,8 @@ pub struct CreateOrUpdateComment {
     pub(crate) actor: ObjectId<PersonWrapper>,
     #[serde(deserialize_with = "deserialize_one_or_many")]
     pub(crate) to: Vec<Url>,
+    #[serde(deserialize_with = "deserialize_one_or_many")]
+    pub(crate) cc: Vec<Url>,
     pub(crate) object: ApubComment,
     #[serde(rename = "type")]
     pub(crate) kind: CreateOrUpdateType,
@@ -56,6 +58,7 @@ impl CreateOrUpdateComment {
             actor: object.attributed_to.clone(),
             object,
             to: generate_comment_activity_to(&instance)?,
+            cc: vec![],
             kind,
             id,
         };

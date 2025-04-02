@@ -12,7 +12,9 @@ pub mod user;
 
 fn article_resource() -> Resource<FrontendResult<ArticleView>> {
     Resource::new(article_title_param, move |title| async move {
-        let mut title = title.unwrap_or(MAIN_PAGE_NAME.to_string());
+        let mut title = title
+            .unwrap_or(MAIN_PAGE_NAME.to_string())
+            .replace("_", " ");
         let mut domain = None;
         if let Some((title_, domain_)) = title.clone().split_once('@') {
             title = title_.to_string();

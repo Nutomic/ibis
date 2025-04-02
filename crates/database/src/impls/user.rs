@@ -169,7 +169,17 @@ impl Person {
 
     /// Ghost user serves as placeholder for deleted accounts
     pub fn ghost(context: &IbisContext) -> BackendResult<Person> {
-        let username = "ghost";
+        Self::get_or_create_person_with_name("ghost", context)
+    }
+
+    pub fn wikibot(context: &IbisContext) -> BackendResult<Person> {
+        Self::get_or_create_person_with_name(&context.conf.setup.wiki_bot_name, context)
+    }
+
+    fn get_or_create_person_with_name(
+        username: &str,
+        context: &IbisContext,
+    ) -> BackendResult<Person> {
         let read = Person::read_from_name(username, &None, context);
         if read.is_ok() {
             read

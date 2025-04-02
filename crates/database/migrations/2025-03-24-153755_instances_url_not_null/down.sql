@@ -1,0 +1,1 @@
+alter table instance alter column instances_url drop not null;

@@ -14,6 +14,8 @@ pub struct IbisConfig {
     pub database: IbisConfigDatabase,
     /// Details of the initial admin account
     pub setup: IbisConfigSetup,
+    /// Domain for HTTP and frontend
+    pub domain: String,
     pub federation: IbisConfigFederation,
     pub options: Options,
     pub email: Option<IbisConfigEmail>,
@@ -71,19 +73,29 @@ pub struct IbisConfigEmail {
 #[serde(default)]
 #[serde(deny_unknown_fields)]
 pub struct IbisConfigSetup {
+    /// Username for the admin account
     #[default("ibis")]
     #[doku(example = "ibis")]
     pub admin_username: String,
+    /// Initial password for admin account (can be changed later)
     #[default("ibis")]
     #[doku(example = "ibis")]
     pub admin_password: String,
+    /// Name of the Activitypub group which is used to federate articles
+    #[default("wiki")]
+    #[doku(example = "wiki")]
+    pub group_name: String,
+    /// Name of the bot account used to federate articles
+    #[default("wikibot")]
+    #[doku(example = "wikibot")]
+    pub wiki_bot_name: String,
 }
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone, Document, SmartDefault)]
 #[serde(default)]
 #[serde(deny_unknown_fields)]
 pub struct IbisConfigFederation {
-    /// Domain name of the instance, mandatory for federation
+    /// Domain used for federation
     #[default("example.com")]
     #[doku(example = "example.com")]
     pub domain: String,

@@ -11,12 +11,13 @@ use std::sync::OnceLock;
 use timeago::Formatter;
 
 pub fn article_path(article: &Article) -> String {
+    let title = article.title.replace(" ", "_");
     if article.local {
-        format!("/article/{}", article.title)
+        format!("/article/{}", title)
     } else {
         format!(
             "/article/{}@{}",
-            article.title,
+            title,
             extract_domain(article.ap_id.inner())
         )
     }

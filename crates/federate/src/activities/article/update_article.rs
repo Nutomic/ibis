@@ -3,46 +3,51 @@ use crate::{
     objects::{
         article::{ApubArticle, ArticleWrapper},
         instance::InstanceWrapper,
+        user::PersonWrapper,
     },
 };
 use activitypub_federation::{
     config::Data,
     fetch::object_id::ObjectId,
-    kinds::{activity::CreateType, public},
+    kinds::{activity::UpdateType, public},
     protocol::helpers::deserialize_one_or_many,
     traits::{ActivityHandler, Object},
 };
 use ibis_database::{
-    common::instance::Instance,
+    common::{instance::Instance, user::Person},
     error::{BackendError, BackendResult},
     impls::IbisContext,
 };
 use serde::{Deserialize, Serialize};
 use url::Url;
 
-#[derive(Deserialize, Serialize, Debug)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct CreateArticle {
-    pub actor: ObjectId<InstanceWrapper>,
+pub struct UpdateArticle {
+    pub actor: ObjectId<PersonWrapper>,
     #[serde(deserialize_with = "deserialize_one_or_many")]
     pub to: Vec<Url>,
+    #[serde(deserialize_with = "deserialize_one_or_many")]
+    pub cc: Vec<Url>,
     pub object: ApubArticle,
     #[serde(rename = "type")]
-    pub kind: CreateType,
+    pub kind: UpdateType,
     pub id: Url,
 }
 
-impl CreateArticle {
-    pub async fn send_to_followers(
+impl UpdateArticle {
+    pub async fn send(
         article: ArticleWrapper,
+        local_instance: &InstanceWrapper,
         context: &Data<IbisContext>,
     ) -> BackendResult<()> {
-        let local_instance: InstanceWrapper = Instance::read_local(context)?.into();
         let object = article.clone().into_json(context).await?;
+        let actor = Person::wikibot(context)?;
         let id = generate_activity_id(context)?;
-        let create = CreateArticle {
-            actor: local_instance.ap_id.clone().into(),
+        let create = UpdateArticle {
+            actor: actor.ap_id.clone().into(),
             to: vec![public()],
+            cc: vec![],
             object,
             kind: Default::default(),
             id,
@@ -54,7 +59,7 @@ impl CreateArticle {
     }
 }
 #[async_trait::async_trait]
-impl ActivityHandler for CreateArticle {
+impl ActivityHandler for UpdateArticle {
     type DataType = IbisContext;
     type Error = BackendError;
 

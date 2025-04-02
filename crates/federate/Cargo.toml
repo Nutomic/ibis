@@ -8,9 +8,7 @@ workspace = true
 
 [dependencies]
 ibis_database = { workspace = true, features = ["ssr"] }
-enum_delegate = "0.2.0"
-async-trait = "0.1.87"
-rand = "0.8.5"
+ibis_markdown.workspace = true
 regex.workspace = true
 tokio.workspace = true
 futures.workspace = true
@@ -23,3 +21,9 @@ axum-macros.workspace = true
 chrono.workspace = true
 diffy.workspace = true
 anyhow.workspace = true
+enum_delegate = "0.2.0"
+async-trait = "0.1.87"
+rand = "0.8.5"
+html2md = "0.2.15"
+itertools = "0.14.0"
+either = { version = "1.15.0", features = ["serde"] }

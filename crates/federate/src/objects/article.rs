@@ -1,3 +1,4 @@
+use super::{Source, read_from_string_or_source, user::PersonWrapper};
 use crate::{
     collections::edits_collection::EditCollection,
     objects::instance::InstanceWrapper,
@@ -8,19 +9,24 @@ use activitypub_federation::{
     fetch::{collection_id::CollectionId, object_id::ObjectId},
     kinds::{object::ArticleType, public},
     protocol::{
-        helpers::deserialize_one_or_many,
+        helpers::{deserialize_one_or_many, deserialize_skip_error},
+        values::MediaTypeMarkdownOrHtml,
         verification::{verify_domains_match, verify_is_remote_object},
     },
     traits::Object,
 };
+use anyhow::anyhow;
 use ibis_database::{
     common::{
         article::{Article, EditVersion},
         instance::Instance,
+        user::Person,
     },
     error::BackendError,
     impls::{IbisContext, article::DbArticleForm, notifications::Notification},
 };
+use ibis_markdown::render_article_markdown;
+use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::{cmp::Reverse, ops::Deref};
 use url::Url;
@@ -31,14 +37,19 @@ pub struct ApubArticle {
     #[serde(rename = "type")]
     pub kind: ArticleType,
     pub id: ObjectId<ArticleWrapper>,
-    pub attributed_to: ObjectId<InstanceWrapper>,
+    pub attributed_to: ObjectId<PersonWrapper>,
     #[serde(deserialize_with = "deserialize_one_or_many")]
     pub to: Vec<Url>,
+    #[serde(deserialize_with = "deserialize_one_or_many")]
+    pub cc: Vec<Url>,
     pub edits: CollectionId<EditCollection>,
     latest_version: EditVersion,
     content: String,
     name: String,
     protected: bool,
+    pub(crate) media_type: Option<MediaTypeMarkdownOrHtml>,
+    #[serde(deserialize_with = "deserialize_skip_error", default)]
+    pub(crate) source: Option<Source>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -73,17 +84,22 @@ impl Object for ArticleWrapper {
     }
 
     async fn into_json(self, context: &Data<Self::DataType>) -> Result<Self::Kind, Self::Error> {
+        let latest_version = self.latest_edit_version(context)?;
+        let wikibot = Person::wikibot(context)?;
         let local_instance: InstanceWrapper = Instance::read_local(context)?.into();
         Ok(ApubArticle {
             kind: Default::default(),
             id: self.ap_id.clone().into(),
-            attributed_to: local_instance.ap_id.clone().into(),
-            to: vec![public(), local_instance.followers_url()?],
+            attributed_to: wikibot.ap_id.into(),
+            to: vec![public(), local_instance.ap_id.clone().into()],
+            cc: vec![],
             edits: self.edits_id()?.into(),
-            latest_version: self.latest_edit_version(context)?,
-            content: self.text.clone(),
+            latest_version,
+            content: render_article_markdown(&self.text),
             name: self.title.clone(),
             protected: self.protected,
+            media_type: Some(MediaTypeMarkdownOrHtml::Html),
+            source: Some(Source::new(self.text.clone())),
         })
     }
 
@@ -101,16 +117,27 @@ impl Object for ArticleWrapper {
         json: Self::Kind,
         context: &Data<Self::DataType>,
     ) -> Result<Self, Self::Error> {
-        let instance = json.attributed_to.dereference(context).await?;
-        let mut form = DbArticleForm {
+        let mut iter = json.to.iter().merge(json.cc.iter());
+        let instance = loop {
+            if let Some(cid) = iter.next() {
+                let cid = ObjectId::<InstanceWrapper>::from(cid.clone());
+                if let Ok(c) = cid.dereference(context).await {
+                    break c;
+                }
+            } else {
+                Err(anyhow!("not found"))?;
+            }
+        };
+        let text = read_from_string_or_source(&json.content, &json.media_type, &json.source);
+        let form = DbArticleForm {
             title: json.name,
-            text: json.content,
+            text,
             ap_id: json.id.into(),
             local: false,
             instance_id: instance.id,
             protected: json.protected,
         };
-        form.title = validate_article_title(&form.title)?;
+        validate_article_title(&form.title)?;
         let article = Article::create_or_update(form, context)?;
 
         let mut edits = json.edits.dereference(&article, context).await?.0;

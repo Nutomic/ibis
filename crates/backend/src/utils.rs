@@ -1,9 +1,15 @@
 use anyhow::anyhow;
 use diffy::{Patch, apply};
 use ibis_database::{
-    common::article::{Edit, EditVersion},
+    DbUrl,
+    common::{
+        article::{Edit, EditVersion},
+        instance::Instance,
+        utils::{extract_domain, http_protocol_str},
+    },
     error::BackendResult,
 };
+use url::Url;
 
 /// Starting from empty string, apply edits until the specified version is reached. If no version is
 /// given, apply all edits up to latest version.
@@ -26,6 +32,19 @@ pub(super) fn generate_article_version(
         }
     }
     Err(anyhow!("failed to generate article version").into())
+}
+
+pub(crate) fn generate_article_ap_id(
+    title: &str,
+    local_instance: &Instance,
+) -> BackendResult<DbUrl> {
+    Ok(Url::parse(&format!(
+        "{}://{}/article/{}",
+        http_protocol_str(),
+        extract_domain(&local_instance.ap_id.clone().into()),
+        title.replace(" ", "_")
+    ))?
+    .into())
 }
 
 #[cfg(test)]

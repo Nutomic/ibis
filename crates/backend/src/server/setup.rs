@@ -1,3 +1,4 @@
+use crate::utils::generate_article_ap_id;
 use activitypub_federation::config::Data;
 use chrono::Utc;
 use ibis_database::{
@@ -36,7 +37,7 @@ pub async fn setup(context: &Data<IbisContext>) -> Result<(), BackendError> {
         domain: domain.to_string(),
         ap_id,
         articles_url: Some(local_articles_url(domain)?.into()),
-        instances_url: Some(linked_instances_url(domain)?.into()),
+        instances_url: linked_instances_url(domain)?.into(),
         inbox_url,
         public_key: keypair.public_key,
         private_key: Some(keypair.private_key),
@@ -62,11 +63,7 @@ pub async fn setup(context: &Data<IbisContext>) -> Result<(), BackendError> {
     let form = DbArticleForm {
         title: MAIN_PAGE_NAME.to_string(),
         text: String::new(),
-        ap_id: Url::parse(&format!(
-            "{}://{domain}/article/{MAIN_PAGE_NAME}",
-            http_protocol_str()
-        ))?
-        .into(),
+        ap_id: generate_article_ap_id(MAIN_PAGE_NAME, &instance)?,
         instance_id: instance.id,
         local: true,
         protected: true,
@@ -78,7 +75,7 @@ pub async fn setup(context: &Data<IbisContext>) -> Result<(), BackendError> {
         "Default main page".to_string(),
         EditVersion::default(),
         &article,
-        admin.person.id,
+        admin.person.into(),
         context,
     )
     .await?;

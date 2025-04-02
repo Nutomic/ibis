@@ -1,5 +1,5 @@
 use super::{UserExt, check_is_admin};
-use crate::utils::generate_article_version;
+use crate::utils::{generate_article_ap_id, generate_article_version};
 use activitypub_federation::{config::Data, fetch::object_id::ObjectId};
 use anyhow::anyhow;
 use axum::{Form, Json, extract::Query};
@@ -35,7 +35,7 @@ use ibis_database::{
             can_edit_article,
         },
         instance::Instance,
-        utils::{extract_domain, http_protocol_str},
+        user::Person,
     },
     error::BackendResult,
     impls::{IbisContext, article::DbArticleForm, conflict::DbConflictForm, edit::DbEditForm},
@@ -43,35 +43,28 @@ use ibis_database::{
 use ibis_federate::{
     activities::{
         article::{
-            create_article::CreateArticle,
             remove_article::RemoveArticle,
             undo_remove_article::UndoRemoveArticle,
+            update_article::UpdateArticle,
         },
         submit_article_update,
     },
     objects::article::ArticleWrapper,
     validate::{validate_article_title, validate_not_empty},
 };
-use url::Url;
 
 /// Create a new article with empty text, and federate it to followers.
 #[debug_handler]
 pub(crate) async fn create_article(
     user: UserExt,
     context: Data<IbisContext>,
-    Form(mut params): Form<CreateArticleParams>,
+    Form(params): Form<CreateArticleParams>,
 ) -> BackendResult<Json<ArticleView>> {
-    params.title = validate_article_title(&params.title)?;
+    validate_article_title(&params.title)?;
     validate_not_empty(&params.text)?;
 
     let local_instance = Instance::read_local(&context)?;
-    let ap_id = Url::parse(&format!(
-        "{}://{}/article/{}",
-        http_protocol_str(),
-        extract_domain(&local_instance.ap_id.into()),
-        params.title
-    ))?
-    .into();
+    let ap_id = generate_article_ap_id(&params.title, &local_instance)?;
     let form = DbArticleForm {
         title: params.title,
         text: String::new(),
@@ -82,28 +75,16 @@ pub(crate) async fn create_article(
     };
     let article = Article::create(form, user.person.id, &context).await?;
 
-    let edit_data = EditArticleParams {
-        article_id: article.id,
-        new_text: params.text,
-        summary: params.summary,
-        previous_version_id: article.latest_edit_version(&context)?,
-        resolve_conflict_id: None,
-    };
-
-    let _ = edit_article(
-        UserExt {
-            local_user_view: user.clone(),
-        },
-        context.reset_request_count(),
-        Form(edit_data),
+    submit_article_update(
+        params.text,
+        params.summary,
+        article.latest_edit_version(&context)?,
+        &article,
+        user.person.clone().into(),
+        &context,
     )
     .await?;
-
-    Article::follow(article.id, &user, &context)?;
-
-    // allow reading unapproved article here
     let article_view = Article::read_view(article.id, Some(&user), &context)?;
-    CreateArticle::send_to_followers(article_view.article.clone().into(), &context).await?;
 
     Ok(Json(article_view))
 }
@@ -147,7 +128,6 @@ pub(crate) async fn edit_article(
 
     // Markdown formatting
     let new_text = fmtm::format(&params.new_text, Some(80))?;
-
     if params.previous_version_id == original_article.latest_version {
         // No intermediate changes, simply submit new version
         submit_article_update(
@@ -155,7 +135,7 @@ pub(crate) async fn edit_article(
             params.summary.clone(),
             params.previous_version_id,
             &original_article.article,
-            user.person.id,
+            user.person.clone().into(),
             &context,
         )
         .await?;
@@ -229,20 +209,14 @@ pub(crate) async fn list_articles(
 pub(crate) async fn fork_article(
     user: UserExt,
     context: Data<IbisContext>,
-    Form(mut params): Form<ForkArticleParams>,
+    Form(params): Form<ForkArticleParams>,
 ) -> BackendResult<Json<ArticleView>> {
     // TODO: lots of code duplicated from create_article(), can move it into helper
     let original_article = Article::read_view(params.article_id, Some(&user), &context)?;
-    params.new_title = validate_article_title(&params.new_title)?;
+    validate_article_title(&params.new_title)?;
 
     let local_instance = Instance::read_local(&context)?;
-    let ap_id = Url::parse(&format!(
-        "{}://{}/article/{}",
-        http_protocol_str(),
-        extract_domain(&local_instance.ap_id.into()),
-        &params.new_title
-    ))?
-    .into();
+    let ap_id = generate_article_ap_id(&params.new_title, &local_instance)?;
     let form = DbArticleForm {
         title: params.new_title,
         text: original_article.article.text.clone(),
@@ -275,7 +249,7 @@ pub(crate) async fn fork_article(
 
     Article::follow(article.id, &user, &context)?;
 
-    CreateArticle::send_to_followers(article.clone().into(), &context).await?;
+    UpdateArticle::send(article.clone().into(), &local_instance.into(), &context).await?;
 
     Ok(Json(Article::read_view(article.id, Some(&user), &context)?))
 }
@@ -326,9 +300,9 @@ pub async fn remove_article(
     let article = Article::update_removed(params.article_id, params.remove, &context)?;
     let actor = user.person.ap_id.clone().into();
     if params.remove {
-        RemoveArticle::send_to_followers(actor, article.into(), &context).await?;
+        RemoveArticle::send(actor, article.into(), &context).await?;
     } else {
-        UndoRemoveArticle::send_to_followers(actor, article.into(), &context).await?;
+        UndoRemoveArticle::send(actor, article.into(), &context).await?;
     }
     Ok(Json(()))
 }
@@ -393,13 +367,14 @@ pub async fn db_conflict_to_api_conflict(
     let ours = apply(&ancestor, &patch)?;
     match merge(&ancestor, &ours, &original_article.text) {
         Ok(new_text) => {
+            let person = Person::read(conflict.creator_id, context)?.into();
             // patch applies cleanly so we are done, federate the change
             submit_article_update(
                 new_text,
                 conflict.summary.clone(),
                 conflict.previous_version_id.clone(),
                 &original_article,
-                conflict.creator_id,
+                person,
                 context,
             )
             .await?;
