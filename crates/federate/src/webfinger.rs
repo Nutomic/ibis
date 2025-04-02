@@ -3,7 +3,12 @@ use activitypub_federation::{
     fetch::webfinger::{WEBFINGER_CONTENT_TYPE, Webfinger, WebfingerLink, extract_webfinger_name},
 };
 use axum::{
-    Json, Router, extract::Query, http::header::CONTENT_TYPE, response::IntoResponse, routing::get,
+    Json,
+    Router,
+    extract::Query,
+    http::header::CONTENT_TYPE,
+    response::IntoResponse,
+    routing::get,
 };
 use axum_macros::debug_handler;
 use ibis_database::{

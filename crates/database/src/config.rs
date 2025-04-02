@@ -73,15 +73,19 @@ pub struct IbisConfigEmail {
 #[serde(default)]
 #[serde(deny_unknown_fields)]
 pub struct IbisConfigSetup {
+    /// Username for the admin account
     #[default("ibis")]
     #[doku(example = "ibis")]
     pub admin_username: String,
+    /// Initial password for admin account (can be changed later)
     #[default("ibis")]
     #[doku(example = "ibis")]
     pub admin_password: String,
+    /// Name of the Activitypub group which is used to federate articles
     #[default("wiki")]
     #[doku(example = "wiki")]
     pub group_name: String,
+    /// Name of the bot account used to federate articles
     #[default("wikibot")]
     #[doku(example = "wikibot")]
     pub wiki_bot_name: String,

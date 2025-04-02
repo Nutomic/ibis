@@ -1,7 +1,8 @@
 use super::Endpoints;
 use crate::{
     collections::{
-        articles_collection::ArticleCollection, instance_collection::InstanceCollection,
+        articles_collection::ArticleCollection,
+        instance_collection::InstanceCollection,
     },
     send_activity,
 };

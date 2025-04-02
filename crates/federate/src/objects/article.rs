@@ -18,8 +18,9 @@ use activitypub_federation::{
 use anyhow::anyhow;
 use ibis_database::{
     common::{
-        article::{Article, Edit, EditVersion},
+        article::{Article, EditVersion},
         instance::Instance,
+        user::Person,
     },
     error::BackendError,
     impls::{IbisContext, article::DbArticleForm, notifications::Notification},
@@ -84,12 +85,12 @@ impl Object for ArticleWrapper {
 
     async fn into_json(self, context: &Data<Self::DataType>) -> Result<Self::Kind, Self::Error> {
         let latest_version = self.latest_edit_version(context)?;
-        let initial_edit = Edit::read_view(&latest_version, context)?;
+        let wikibot = Person::wikibot(context)?;
         let local_instance: InstanceWrapper = Instance::read_local(context)?.into();
         Ok(ApubArticle {
             kind: Default::default(),
             id: self.ap_id.clone().into(),
-            attributed_to: initial_edit.creator.ap_id.clone().into(),
+            attributed_to: wikibot.ap_id.into(),
             to: vec![public(), local_instance.ap_id.clone().into()],
             cc: vec![],
             edits: self.edits_id()?.into(),
