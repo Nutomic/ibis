@@ -79,6 +79,12 @@ pub struct IbisConfigSetup {
     #[default("ibis")]
     #[doku(example = "ibis")]
     pub admin_password: String,
+    #[default("wiki")]
+    #[doku(example = "wiki")]
+    pub group_name: String,
+    #[default("wikibot")]
+    #[doku(example = "wikibot")]
+    pub wiki_bot_name: String,
 }
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone, Document, SmartDefault)]

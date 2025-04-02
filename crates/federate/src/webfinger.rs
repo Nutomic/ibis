@@ -3,15 +3,14 @@ use activitypub_federation::{
     fetch::webfinger::{WEBFINGER_CONTENT_TYPE, Webfinger, WebfingerLink, extract_webfinger_name},
 };
 use axum::{
-    Json,
-    Router,
-    extract::Query,
-    http::header::CONTENT_TYPE,
-    response::IntoResponse,
-    routing::get,
+    Json, Router, extract::Query, http::header::CONTENT_TYPE, response::IntoResponse, routing::get,
 };
 use axum_macros::debug_handler;
-use ibis_database::{common::user::Person, error::BackendResult, impls::IbisContext};
+use ibis_database::{
+    common::{user::Person, utils::http_protocol_str},
+    error::BackendResult,
+    impls::IbisContext,
+};
 use serde::Deserialize;
 use url::Url;
 
@@ -31,9 +30,13 @@ async fn get_webfinger_response(
 ) -> BackendResult<impl IntoResponse> {
     let name = extract_webfinger_name(&info.resource, &context)?;
 
-    let links = if name == context.conf.federation.domain {
+    let links = if name == context.conf.setup.group_name {
         // webfinger response for instance actor (required for mastodon authorized fetch)
-        let url = Url::parse(&format!("https://{}", context.conf.federation.domain))?;
+        let url = Url::parse(&format!(
+            "{}://{}",
+            http_protocol_str(),
+            context.conf.federation.domain
+        ))?;
         webfinger_link_for_actor(url)?
     } else {
         let user_id: Url = Person::read_from_name(name, &None, &context)?.ap_id.into();

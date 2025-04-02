@@ -1,8 +1,7 @@
 use super::Endpoints;
 use crate::{
     collections::{
-        articles_collection::ArticleCollection,
-        instance_collection::InstanceCollection,
+        articles_collection::ArticleCollection, instance_collection::InstanceCollection,
     },
     send_activity,
 };
@@ -109,7 +108,7 @@ impl Object for InstanceWrapper {
             .map(Into::into))
     }
 
-    async fn into_json(self, _context: &Data<Self::DataType>) -> Result<Self::Kind, Self::Error> {
+    async fn into_json(self, context: &Data<Self::DataType>) -> Result<Self::Kind, Self::Error> {
         Ok(ApubInstance {
             kind: Default::default(),
             id: self.ap_id.clone().into(),
@@ -119,7 +118,7 @@ impl Object for InstanceWrapper {
             inbox: Url::parse(&self.inbox_url)?,
             public_key: self.public_key(),
             name: self.name.clone(),
-            preferred_username: "wiki".to_string(),
+            preferred_username: context.conf.setup.group_name.clone(),
             endpoints: None,
         })
     }

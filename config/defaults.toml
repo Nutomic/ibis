@@ -13,6 +13,8 @@ pool_size = 30
 [setup]
 admin_username = "ibis"
 admin_password = "ibis"
+group_name = "wiki"
+wiki_bot_name = "wikibot"
 
 [federation]
 # Domain used for federation
