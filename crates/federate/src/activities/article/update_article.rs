@@ -14,7 +14,7 @@ use activitypub_federation::{
     traits::{ActivityHandler, Object},
 };
 use ibis_database::{
-    common::instance::Instance,
+    common::{instance::Instance, user::Person},
     error::{BackendError, BackendResult},
     impls::IbisContext,
 };
@@ -37,12 +37,12 @@ pub struct UpdateArticle {
 
 impl UpdateArticle {
     pub async fn send(
-        actor: PersonWrapper,
         article: ArticleWrapper,
         local_instance: &InstanceWrapper,
         context: &Data<IbisContext>,
     ) -> BackendResult<()> {
         let object = article.clone().into_json(context).await?;
+        let actor = Person::wikibot(context)?;
         let id = generate_activity_id(context)?;
         let create = UpdateArticle {
             actor: actor.ap_id.clone().into(),

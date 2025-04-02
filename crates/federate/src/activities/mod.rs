@@ -49,7 +49,7 @@ pub async fn submit_article_update(
     if article_instance.local {
         let updated_article = Article::update_text(article.id, &new_text, context)?;
 
-        UpdateArticle::send(person, updated_article.into(), &local_instance, context).await?;
+        UpdateArticle::send(updated_article.into(), &local_instance, context).await?;
         AnnounceActivity::send(AnnouncableActivities::EditArticle(edit_activity), context).await?;
     } else {
         edit_activity

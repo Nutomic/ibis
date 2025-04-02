@@ -50,7 +50,7 @@ pub enum EditType {
 }
 
 impl EditArticle {
-    pub async fn new(
+    pub(crate) async fn new(
         edit: EditWrapper,
         from: &PersonWrapper,
         to_instance: &InstanceWrapper,
@@ -65,7 +65,7 @@ impl EditArticle {
             id,
         })
     }
-    pub async fn send(
+    pub(crate) async fn send(
         self,
         from: &PersonWrapper,
         to_instance: &InstanceWrapper,
@@ -115,7 +115,7 @@ impl ActivityHandler for EditArticle {
                     AnnounceActivity::send(AnnouncableActivities::EditArticle(self), context)
                         .await?;
                     let local_instance: InstanceWrapper = Instance::read_local(context)?.into();
-                    UpdateArticle::send(actor, article.into(), &local_instance, context).await?;
+                    UpdateArticle::send(article.into(), &local_instance, context).await?;
                 }
             }
             Err(_e) if article.local => {

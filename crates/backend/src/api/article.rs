@@ -8,31 +8,17 @@ use chrono::Utc;
 use diffy::{Patch, apply, create_patch, merge};
 use ibis_api_client::{
     article::{
-        CreateArticleParams,
-        DeleteConflictParams,
-        EditArticleParams,
-        FollowArticleParams,
-        ForkArticleParams,
-        GetArticleParams,
-        GetConflictParams,
-        ListArticlesParams,
-        ProtectArticleParams,
-        RemoveArticleParams,
+        CreateArticleParams, DeleteConflictParams, EditArticleParams, FollowArticleParams,
+        ForkArticleParams, GetArticleParams, GetConflictParams, ListArticlesParams,
+        ProtectArticleParams, RemoveArticleParams,
     },
     instance::SearchArticleParams,
 };
 use ibis_database::{
     common::{
-        ResolveObjectParams,
-        SuccessResponse,
+        ResolveObjectParams, SuccessResponse,
         article::{
-            ApiConflict,
-            Article,
-            ArticleView,
-            Conflict,
-            Edit,
-            EditVersion,
-            can_edit_article,
+            ApiConflict, Article, ArticleView, Conflict, Edit, EditVersion, can_edit_article,
         },
         instance::Instance,
         user::Person,
@@ -43,8 +29,7 @@ use ibis_database::{
 use ibis_federate::{
     activities::{
         article::{
-            remove_article::RemoveArticle,
-            undo_remove_article::UndoRemoveArticle,
+            remove_article::RemoveArticle, undo_remove_article::UndoRemoveArticle,
             update_article::UpdateArticle,
         },
         submit_article_update,
@@ -75,34 +60,16 @@ pub(crate) async fn create_article(
     };
     let article = Article::create(form, user.person.id, &context).await?;
 
-    let edit_data = EditArticleParams {
-        article_id: article.id,
-        new_text: params.text,
-        summary: params.summary,
-        previous_version_id: article.latest_edit_version(&context)?,
-        resolve_conflict_id: None,
-    };
-
-    let _ = edit_article(
-        UserExt {
-            local_user_view: user.clone(),
-        },
-        context.reset_request_count(),
-        Form(edit_data),
-    )
-    .await?;
-
-    Article::follow(article.id, &user, &context)?;
-
-    // allow reading unapproved article here
-    let article_view = Article::read_view(article.id, Some(&user), &context)?;
-    UpdateArticle::send(
+    submit_article_update(
+        params.text,
+        params.summary,
+        article.latest_edit_version(&context)?,
+        &article,
         user.person.clone().into(),
-        article_view.article.clone().into(),
-        &local_instance.into(),
         &context,
     )
     .await?;
+    let article_view = Article::read_view(article.id, Some(&user), &context)?;
 
     Ok(Json(article_view))
 }
@@ -267,13 +234,7 @@ pub(crate) async fn fork_article(
 
     Article::follow(article.id, &user, &context)?;
 
-    UpdateArticle::send(
-        user.person.clone().into(),
-        article.clone().into(),
-        &local_instance.into(),
-        &context,
-    )
-    .await?;
+    UpdateArticle::send(article.clone().into(), &local_instance.into(), &context).await?;
 
     Ok(Json(Article::read_view(article.id, Some(&user), &context)?))
 }

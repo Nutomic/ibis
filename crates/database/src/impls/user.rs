@@ -14,18 +14,8 @@ use anyhow::anyhow;
 use bcrypt::{DEFAULT_COST, hash};
 use chrono::{DateTime, Utc};
 use diesel::{
-    AsChangeset,
-    BoolExpressionMethods,
-    ExpressionMethods,
-    Insertable,
-    JoinOnDsl,
-    PgTextExpressionMethods,
-    QueryDsl,
-    Queryable,
-    RunQueryDsl,
-    Selectable,
-    dsl::not,
-    insert_into,
+    AsChangeset, BoolExpressionMethods, ExpressionMethods, Insertable, JoinOnDsl,
+    PgTextExpressionMethods, QueryDsl, Queryable, RunQueryDsl, Selectable, dsl::not, insert_into,
 };
 use ibis_database_schema::{instance, instance_follow, local_user, oauth_account, person};
 use std::ops::DerefMut;
@@ -169,7 +159,17 @@ impl Person {
 
     /// Ghost user serves as placeholder for deleted accounts
     pub fn ghost(context: &IbisContext) -> BackendResult<Person> {
-        let username = "ghost";
+        Self::get_or_create_person_with_name("ghost", context)
+    }
+
+    pub fn wikibot(context: &IbisContext) -> BackendResult<Person> {
+        Self::get_or_create_person_with_name("wikibot", context)
+    }
+
+    fn get_or_create_person_with_name(
+        username: &'static str,
+        context: &IbisContext,
+    ) -> BackendResult<Person> {
         let read = Person::read_from_name(username, &None, context);
         if read.is_ok() {
             read
