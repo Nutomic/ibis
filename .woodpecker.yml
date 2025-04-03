@@ -81,7 +81,7 @@ steps:
   build_release:
     image: node:current-alpine
     commands:
-      - apk add cargo
+      - apk add cargo rustup
       - cargo --version
       - npm install
       - *install_binstall
