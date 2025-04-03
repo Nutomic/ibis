@@ -1,7 +1,7 @@
 use super::ApiClient;
 use crate::errors::FrontendResult;
 use ibis_database::common::{
-    comment::CommentView,
+    comment::{CommentView, CommentViewWithArticle},
     newtypes::{ArticleId, CommentId},
 };
 use serde::{Deserialize, Serialize};
@@ -21,6 +21,11 @@ pub struct EditCommentParams {
 }
 
 #[derive(Deserialize, Serialize, Debug)]
+pub struct GetCommentParams {
+    pub id: CommentId,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
 pub struct DeleteCommentParams {
     pub id: CommentId,
 }
@@ -35,5 +40,10 @@ impl ApiClient {
 
     pub async fn edit_comment(&self, params: &EditCommentParams) -> FrontendResult<CommentView> {
         self.patch("/api/v1/comment", Some(&params)).await
+    }
+
+    pub async fn get_comment(&self, id: CommentId) -> FrontendResult<CommentViewWithArticle> {
+        let params = GetCommentParams { id };
+        self.get("/api/v1/comment", Some(&params)).await
     }
 }

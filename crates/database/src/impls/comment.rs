@@ -2,7 +2,8 @@ use super::notifications::Notification;
 use crate::{
     DbUrl,
     common::{
-        comment::{Comment, CommentView},
+        article::Article,
+        comment::{Comment, CommentView, CommentViewWithArticle},
         newtypes::{ArticleId, CommentId, PersonId},
         user::Person,
     },
@@ -19,7 +20,7 @@ use diesel::{
     dsl::insert_into,
     update,
 };
-use ibis_database_schema::{comment, person};
+use ibis_database_schema::{article, comment, person};
 use std::ops::DerefMut;
 
 #[derive(Insertable, AsChangeset, Debug)]
@@ -80,13 +81,24 @@ impl Comment {
             .get_result::<Self>(conn.deref_mut())?)
     }
 
-    pub fn read_view(id: CommentId, context: &IbisContext) -> BackendResult<CommentView> {
+    pub fn read_view(
+        id: CommentId,
+        context: &IbisContext,
+    ) -> BackendResult<CommentViewWithArticle> {
         let mut conn = context.db_pool.get()?;
-        let comment = comment::table
+        let (mut comment, article, creator) = comment::table
             .find(id)
-            .get_result::<Self>(conn.deref_mut())?;
-        let creator = Person::read(comment.creator_id, context)?;
-        Ok(CommentView { comment, creator })
+            .inner_join(article::table)
+            .inner_join(person::table)
+            .get_result::<(Comment, Article, Person)>(conn.deref_mut())?;
+        if comment.deleted {
+            comment.content = String::new();
+        }
+        Ok(CommentViewWithArticle {
+            comment,
+            creator,
+            article,
+        })
     }
 
     pub fn read_from_ap_id(ap_id: &DbUrl, context: &IbisContext) -> BackendResult<Self> {

@@ -1,4 +1,5 @@
 use super::{
+    article::Article,
     newtypes::{ArticleId, CommentId, PersonId},
     user::Person,
 };
@@ -34,4 +35,13 @@ pub struct Comment {
 pub struct CommentView {
     pub comment: Comment,
     pub creator: Person,
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug, PartialEq)]
+#[cfg_attr(feature = "ssr", derive(Queryable))]
+#[cfg_attr(feature = "ssr", diesel(check_for_backend(diesel::pg::Pg)))]
+pub struct CommentViewWithArticle {
+    pub comment: Comment,
+    pub creator: Person,
+    pub article: Article,
 }

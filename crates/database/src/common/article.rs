@@ -61,11 +61,10 @@ pub struct Article {
 
 impl Article {
     pub fn title(&self) -> String {
-        let title = self.title.replace('_', " ");
         if self.local {
-            title
+            self.title.clone()
         } else {
-            format!("{}@{}", title, extract_domain(self.ap_id.inner()))
+            format!("{}@{}", self.title, extract_domain(self.ap_id.inner()))
         }
     }
 }

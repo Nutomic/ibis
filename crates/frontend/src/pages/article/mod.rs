@@ -1,4 +1,5 @@
 pub mod actions;
+pub mod comment_redirect;
 pub mod create;
 pub mod diff;
 pub mod discussion;

@@ -1,6 +1,7 @@
 use crate::pages::{
     article::{
         actions::ArticleActions,
+        comment_redirect::CommentRedirect,
         create::CreateArticle,
         diff::EditDiff,
         discussion::ArticleDiscussion,
@@ -109,6 +110,7 @@ pub fn App() -> impl IntoView {
                             view=ArticleActions
                         />
                         <Route path=path!("/article/:title/diff/:hash") view=EditDiff />
+                        <Route path=path!("/comment/:id") view=CommentRedirect />
                         <IbisProtectedRoute path=path!("/create-article") view=CreateArticle />
 
                         <Route path=path!("/explore") view=Explore />

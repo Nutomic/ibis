@@ -26,6 +26,7 @@ use axum::{
     routing::{delete, get, patch, post},
 };
 use axum_macros::{FromRequestParts, debug_handler};
+use comment::get_comment;
 use http::StatusCode;
 use ibis_api_client::article::GetEditList;
 use ibis_database::{
@@ -74,6 +75,7 @@ pub fn api_routes() -> Router<()> {
         .route("/conflict", delete(delete_conflict))
         .route("/comment", post(create_comment))
         .route("/comment", patch(edit_comment))
+        .route("/comment", get(get_comment))
         .route("/instance", get(get_instance))
         .route("/instance", patch(update_instance))
         .route("/instance/follow", post(follow_instance))

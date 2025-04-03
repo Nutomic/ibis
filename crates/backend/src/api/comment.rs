@@ -4,10 +4,10 @@ use anyhow::anyhow;
 use axum::{Form, Json};
 use axum_macros::debug_handler;
 use chrono::Utc;
-use ibis_api_client::comment::{CreateCommentParams, EditCommentParams};
+use ibis_api_client::comment::{CreateCommentParams, EditCommentParams, GetCommentParams};
 use ibis_database::{
     common::{
-        comment::{Comment, CommentView},
+        comment::{Comment, CommentView, CommentViewWithArticle},
         utils::http_protocol_str,
     },
     error::BackendResult,
@@ -117,4 +117,12 @@ pub(crate) async fn edit_comment(
     }
 
     Ok(Json(comment))
+}
+
+#[debug_handler]
+pub(crate) async fn get_comment(
+    context: Data<IbisContext>,
+    Form(params): Form<GetCommentParams>,
+) -> BackendResult<Json<CommentViewWithArticle>> {
+    Ok(Json(Comment::read_view(params.id, &context)?))
 }
