@@ -141,7 +141,7 @@ pub struct ApiConflict {
 }
 
 pub fn can_edit_article(article: &Article, is_admin: bool) -> Result<(), anyhow::Error> {
-    if article.protected && !article.local && !is_admin {
+    if article.protected && !(article.local && is_admin) {
         return Err(anyhow!(
             "Article is protected, only admins on origin instance can edit".to_string()
         ));
