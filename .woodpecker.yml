@@ -79,7 +79,7 @@ steps:
       - sudo -u testuser env "PATH=$PATH" "CARGO_HOME=$CARGO_HOME" "DATABASE_URL=$DATABASE_URL" cargo test --no-fail-fast
 
   npm_install:
-    image: current-alpine
+    image: node:current-alpine
     commands:
       - npm install
     when:
