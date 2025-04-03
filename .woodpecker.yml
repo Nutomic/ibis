@@ -91,6 +91,8 @@ steps:
       - *install_cargo_leptos
       - export PATH="$PATH:$(pwd)/.cargo_home/bin/"
       - ./scripts/build_release.sh
+      - pwd
+      - ls -lah target/release/ibis
     when:
       - event: tag
 
