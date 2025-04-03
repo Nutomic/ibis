@@ -227,7 +227,7 @@ impl Notification {
         // notify author of parent comment
         {
             diesel::alias!(comment as parent_comment: DbComment);
-            let parent_comment_creator_id: Option<LocalUserId> = comment::table
+            let parent_comment_creator: Option<LocalUser> = comment::table
                 .find(comment.id)
                 .left_join(
                     parent_comment.on(parent_comment
@@ -240,21 +240,24 @@ impl Notification {
                         .field(comment::creator_id)
                         .eq(local_user::person_id)),
                 )
-                .select(local_user::id.nullable())
+                .select(local_user::all_columns.nullable())
                 .get_result(conn.deref_mut())?;
-            if let Some(local_user_id) = parent_comment_creator_id {
-                let form = NotificationInsertForm {
-                    local_user_id,
-                    article_id: comment.article_id,
-                    creator_id: comment.creator_id,
-                    comment_id: Some(comment.id),
-                    edit_id: None,
-                    conflict_id: None,
-                };
-                insert_into(notification::table)
-                    .values(&form)
-                    .on_conflict_do_nothing()
-                    .execute(&mut conn)?;
+            if let Some(parent_comment_creator) = parent_comment_creator {
+                // Dont notify when replying to own comment
+                if parent_comment_creator.person_id != comment.creator_id {
+                    let form = NotificationInsertForm {
+                        local_user_id: parent_comment_creator.id,
+                        article_id: comment.article_id,
+                        creator_id: comment.creator_id,
+                        comment_id: Some(comment.id),
+                        edit_id: None,
+                        conflict_id: None,
+                    };
+                    insert_into(notification::table)
+                        .values(&form)
+                        .on_conflict_do_nothing()
+                        .execute(&mut conn)?;
+                }
             }
         }
 
