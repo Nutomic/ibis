@@ -1,10 +1,11 @@
 use article_link::ArticleLinkScanner;
+use fmtm_ytmimi_markdown_fmt::{Config, OrderedListMarker, UnorderedListMarker};
 use markdown_it::{
     MarkdownIt,
     plugins::cmark::block::{heading::ATXHeading, lheading::SetextHeader},
 };
 use math_equation::MathEquationScanner;
-use std::sync::OnceLock;
+use std::{borrow::Cow, sync::OnceLock};
 use table_of_contents::{TocMarkerScanner, TocScanner};
 
 mod article_link;
@@ -96,4 +97,18 @@ fn common_markdown() -> MarkdownIt {
     external_link::add(p);
 
     parser
+}
+
+pub fn format_markdown(text: &str) -> Result<String, std::fmt::Error> {
+    const CONFIG: Config = Config {
+        max_width: Some(80),
+        fixed_zero_padding: Some(0),
+        fixed_number: None,
+        fixed_ordered_list_marker: Some(OrderedListMarker::Period),
+        fixed_unordered_list_marker: Some(UnorderedListMarker::Hyphen),
+        fixed_indentation: Some(Cow::Borrowed("    ")),
+        fixed_emphasis_marker: Some("*"),
+        fixed_strong_marker: Some("**"),
+    };
+    fmtm::format_with_config(text, CONFIG)
 }

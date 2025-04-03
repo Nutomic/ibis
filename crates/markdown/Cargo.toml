@@ -20,3 +20,5 @@ markdown-it-sub = "1.0.2"
 markdown-it-sup = "1.0.2"
 katex = { version = "0.4", default-features = false }
 github-slugger = "0.1.0"
+fmtm = "0.0.3"
+fmtm_ytmimi_markdown_fmt = "0.0.3"

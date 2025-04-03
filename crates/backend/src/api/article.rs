@@ -51,6 +51,7 @@ use ibis_federate::{
     objects::article::ArticleWrapper,
     validate::{validate_article_title, validate_not_empty},
 };
+use ibis_markdown::format_markdown;
 
 /// Create a new article with empty text, and federate it to followers.
 #[debug_handler]
@@ -75,7 +76,7 @@ pub(crate) async fn create_article(
     let article = Article::create(form, user.person.id, &context).await?;
 
     // Markdown formatting
-    let text = fmtm::format(&params.text, Some(80))?;
+    let text = format_markdown(&params.text)?;
 
     submit_article_update(
         text,
@@ -129,7 +130,7 @@ pub(crate) async fn edit_article(
     }
 
     // Markdown formatting
-    let new_text = fmtm::format(&params.new_text, Some(80))?;
+    let new_text = format_markdown(&params.new_text)?;
 
     if params.previous_version_id == original_article.latest_version {
         // No intermediate changes, simply submit new version
