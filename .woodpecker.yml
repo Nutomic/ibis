@@ -81,8 +81,7 @@ steps:
   build_release:
     image: node:current-alpine
     commands:
-      - apt-get update
-      - apt-get install cargo -y --no-install-recommends --no-install-suggests
+      - apk add cargo
       - cargo --version
       - npm install
       - *install_binstall
