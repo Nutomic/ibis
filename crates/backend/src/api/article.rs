@@ -74,8 +74,11 @@ pub(crate) async fn create_article(
     };
     let article = Article::create(form, user.person.id, &context).await?;
 
+    // Markdown formatting
+    let text = fmtm::format(&params.text, Some(80))?;
+
     submit_article_update(
-        params.text,
+        text,
         params.summary,
         article.latest_edit_version(&context)?,
         &article,
@@ -127,6 +130,7 @@ pub(crate) async fn edit_article(
 
     // Markdown formatting
     let new_text = fmtm::format(&params.new_text, Some(80))?;
+
     if params.previous_version_id == original_article.latest_version {
         // No intermediate changes, simply submit new version
         submit_article_update(
