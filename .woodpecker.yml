@@ -78,8 +78,9 @@ steps:
       - export DATABASE_URL="postgres://ibis:password@database:5432/ibis"
       - sudo -u testuser env "PATH=$PATH" "CARGO_HOME=$CARGO_HOME" "DATABASE_URL=$DATABASE_URL" cargo test --no-fail-fast
 
-  npm_install:
+  build_release:
     image: node:current-alpine
+    commands:
       - apt-get update
       - apt-get install cargo -y --no-install-recommends --no-install-suggests
       - cargo --version
