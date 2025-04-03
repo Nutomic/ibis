@@ -97,7 +97,7 @@ impl Person {
             .on_conflict(person::dsl::ap_id)
             .do_update()
             .set(person_form)
-            .get_result::<Person>(conn.deref_mut())?)
+            .get_result(conn.deref_mut())?)
     }
 
     pub fn read(id: PersonId, context: &IbisContext) -> BackendResult<Person> {
@@ -284,7 +284,7 @@ impl LocalUserView {
             Email(email) => query.filter(local_user::email.eq(email)),
             Id(id) => query.filter(local_user::id.eq(id)),
         };
-        Ok(query.get_result::<LocalUserView>(conn.deref_mut())?)
+        Ok(query.get_result(conn.deref_mut())?)
     }
 }
 
@@ -343,6 +343,6 @@ impl OAuthAccount {
         let mut conn = context.db_pool.get()?;
         Ok(insert_into(oauth_account::table)
             .values(form)
-            .get_result::<Self>(conn.deref_mut())?)
+            .get_result(conn.deref_mut())?)
     }
 }

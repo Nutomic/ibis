@@ -88,7 +88,7 @@ impl Article {
         let mut conn = context.db_pool.get()?;
         Ok(diesel::update(article::dsl::article.find(id))
             .set(article::dsl::text.eq(text))
-            .get_result::<Self>(conn.deref_mut())?)
+            .get_result(conn.deref_mut())?)
     }
 
     pub fn update_protected(
@@ -99,7 +99,7 @@ impl Article {
         let mut conn = context.db_pool.get()?;
         Ok(diesel::update(article::dsl::article.find(id))
             .set(article::dsl::protected.eq(locked))
-            .get_result::<Self>(conn.deref_mut())?)
+            .get_result(conn.deref_mut())?)
     }
 
     pub fn update_removed(
@@ -110,7 +110,7 @@ impl Article {
         let mut conn = context.db_pool.get()?;
         Ok(diesel::update(article::dsl::article.find(id))
             .set(article::dsl::removed.eq(removed))
-            .get_result::<Self>(conn.deref_mut())?)
+            .get_result(conn.deref_mut())?)
     }
 
     pub fn read(id: ArticleId, context: &IbisContext) -> BackendResult<Self> {
@@ -118,7 +118,7 @@ impl Article {
         Ok(article::table
             .find(id)
             .filter(not(article::removed))
-            .get_result::<Self>(conn.deref_mut())?)
+            .get_result(conn.deref_mut())?)
     }
 
     pub fn read_view<'a>(

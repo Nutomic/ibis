@@ -2,7 +2,6 @@ use super::notifications::Notification;
 use crate::{
     DbUrl,
     common::{
-        article::Article,
         comment::{Comment, CommentView, CommentViewWithArticle},
         newtypes::{ArticleId, CommentId, PersonId},
         user::Person,
@@ -86,19 +85,15 @@ impl Comment {
         context: &IbisContext,
     ) -> BackendResult<CommentViewWithArticle> {
         let mut conn = context.db_pool.get()?;
-        let (mut comment, article, creator) = comment::table
+        let mut comment_view = comment::table
             .find(id)
-            .inner_join(article::table)
             .inner_join(person::table)
-            .get_result::<(Comment, Article, Person)>(conn.deref_mut())?;
-        if comment.deleted {
-            comment.content = String::new();
+            .inner_join(article::table)
+            .get_result::<CommentViewWithArticle>(conn.deref_mut())?;
+        if comment_view.comment.deleted {
+            comment_view.comment.content = String::new();
         }
-        Ok(CommentViewWithArticle {
-            comment,
-            creator,
-            article,
-        })
+        Ok(comment_view)
     }
 
     pub fn read_from_ap_id(ap_id: &DbUrl, context: &IbisContext) -> BackendResult<Self> {
