@@ -85,31 +85,29 @@ pub fn ArticleActions() -> impl IntoView {
                                         </button>
                                     </div>
                                 </Show>
-                                <Show when=move || !article.article.local>
-                                    <input
-                                        class="input"
-                                        placeholder="New Title"
-                                        on:keyup=move |ev: KeyboardEvent| {
-                                            let val = event_target_value(&ev);
-                                            set_new_title.update(|v| *v = val);
-                                        }
-                                    />
+                                <input
+                                    class="input"
+                                    placeholder="New Title"
+                                    on:keyup=move |ev: KeyboardEvent| {
+                                        let val = event_target_value(&ev);
+                                        set_new_title.update(|v| *v = val);
+                                    }
+                                />
 
-                                    <button
-                                        class="btn"
-                                        disabled=move || new_title.get().is_empty()
-                                        on:click=move |_| {
-                                            fork_action.dispatch((article.article.id, new_title.get()));
-                                        }
-                                    >
+                                <button
+                                    class="btn"
+                                    disabled=move || new_title.get().is_empty()
+                                    on:click=move |_| {
+                                        fork_action.dispatch((article.article.id, new_title.get()));
+                                    }
+                                >
 
-                                        Fork Article
-                                    </button>
-                                    <p>
-                                        "You can fork a remote article to the local instance. This is useful if the original
-                                        instance is dead, or if there are disagreements how the article should be written."
-                                    </p>
-                                </Show>
+                                    Fork Article
+                                </button>
+                                <p>
+                                    "You can fork a remote article to the local instance. This is useful if the original
+                                    instance is dead, or if there are disagreements how the article should be written."
+                                </p>
                             </div>
                         }
                     })

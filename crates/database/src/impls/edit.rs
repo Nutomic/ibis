@@ -110,6 +110,7 @@ impl Edit {
         let mut conn = context.db_pool.get()?;
         Ok(edit::table
             .filter(edit::article_id.eq(id))
+            .filter(edit::pending.eq(false))
             .order(edit::published)
             .get_results(conn.deref_mut())?)
     }

@@ -4,7 +4,6 @@ use activitypub_federation::{config::Data, fetch::object_id::ObjectId};
 use anyhow::anyhow;
 use axum::{Form, Json, extract::Query};
 use axum_macros::debug_handler;
-use chrono::Utc;
 use diffy::{Patch, apply, create_patch, merge};
 use ibis_api_client::{
     article::{
@@ -211,7 +210,6 @@ pub(crate) async fn fork_article(
     context: Data<IbisContext>,
     Form(params): Form<ForkArticleParams>,
 ) -> BackendResult<Json<ArticleView>> {
-    // TODO: lots of code duplicated from create_article(), can move it into helper
     let original_article = Article::read_view(params.article_id, Some(&user), &context)?;
     validate_article_title(&params.new_title)?;
 
@@ -241,7 +239,7 @@ pub(crate) async fn fork_article(
             article_id: article.id,
             hash: e.hash,
             previous_version_id: e.previous_version_id,
-            published: Utc::now(),
+            published: e.published,
             pending: false,
         };
         Edit::create(&form, &context).await?;
