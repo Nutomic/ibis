@@ -78,14 +78,18 @@ steps:
       - export DATABASE_URL="postgres://ibis:password@database:5432/ibis"
       - sudo -u testuser env "PATH=$PATH" "CARGO_HOME=$CARGO_HOME" "DATABASE_URL=$DATABASE_URL" cargo test --no-fail-fast
 
+  npm_install:
+    image: current-alpine
+    commands:
+      - npm install
+    when:
+      - event: tag
+
   build_release:
     image: *rust_image
     environment:
       CARGO_HOME: .cargo_home
     commands:
-      - apt-get update
-      - apt-get install npm -y --no-install-recommends --no-install-suggests
-      - npm install
       - *install_binstall
       - rustup target add wasm32-unknown-unknown
       - *install_cargo_leptos
