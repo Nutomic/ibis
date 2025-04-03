@@ -216,7 +216,7 @@ async fn api_test_synchronize_articles() -> Result<()> {
         LinearRetryStrategy::new(),
     )
     .await?;
-    let beta_edits = beta.get_article_edits(create_res.article.id).await.unwrap();
+    let beta_edits = beta.get_article_edits(get_res.article.id).await.unwrap();
     assert_eq!(create_res.article.ap_id, get_res.article.ap_id);
     assert_eq!(create_params.title, get_res.article.title);
     assert_eq!(2, beta_edits.len());
