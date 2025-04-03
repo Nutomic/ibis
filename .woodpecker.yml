@@ -5,7 +5,7 @@ variables:
 
 steps:
   build_release:
-    image: node:current-alpine
+    image: node:current
     commands:
       - apk add cargo rustup
       - cargo --version
