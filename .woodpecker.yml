@@ -5,11 +5,10 @@ variables:
 
 steps:
   build_release:
-    image: node:current
+    image: *rust_image
     commands:
       - apt-get update
-      - apt-get install cargo rustup -y --no-install-recommends --no-install-suggests
-      - cargo --version
+      - apt-get install cargo npm -y --no-install-recommends --no-install-suggests
       - npm install
       - *install_binstall
       - rustup target add wasm32-unknown-unknown
