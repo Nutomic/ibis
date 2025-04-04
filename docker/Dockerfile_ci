@@ -12,7 +12,7 @@ RUN groupadd -g ${GID} -o ${UNAME} && \
     apt update && apt install --yes libpq-dev
 USER $UNAME
 
-COPY target/release/ibis /usr/local/bin/ibis
+COPY ibis /usr/local/bin/ibis
 
 ENTRYPOINT ["ibis"]
 EXPOSE 3000

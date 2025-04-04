@@ -91,6 +91,7 @@ steps:
       - *install_cargo_leptos
       - export PATH="$PATH:$(pwd)/.cargo_home/bin/"
       - ./scripts/build_release.sh
+      - cp target/release/ibis .
     when:
       - event: tag
 
@@ -99,7 +100,8 @@ steps:
     settings:
       files:
         - ibis.gz
-      title: ${CI_COMMIT_TAG##v}
+      title: ${CI_COMMIT_TAG}
+      prerelease: true
       api-key:
         from_secret: github_token
     when:
