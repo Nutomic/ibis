@@ -14,7 +14,7 @@ USER $UNAME
 
 RUN ls -lah /woodpecker/src/github.com/Nutomic/ibis/**
 RUN ls -lah /woodpecker/src/github.com/Nutomic/ibis/target/release/
-COPY /woodpecker/src/github.com/Nutomic/ibis/target/release/ibis /usr/local/bin/ibis
+COPY /woodpecker/src/github.com/Nutomic/ibis/ibis /usr/local/bin/ibis
 RUN ls -lah /usr/local/bin/ibis
 
 ENTRYPOINT ["ibis"]
