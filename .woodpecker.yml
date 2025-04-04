@@ -17,7 +17,7 @@ steps:
       - ./scripts/build_release.sh
       - cp target/release/ibis .
       - pwd
-      - ls -lah target/release
+      - ls -lah .
     when:
       - event: tag
 
