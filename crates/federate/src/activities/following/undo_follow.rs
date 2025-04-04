@@ -42,7 +42,7 @@ impl UndoFollow {
         let object = Follow::new(actor, to, context)?;
         let undo_follow = UndoFollow {
             actor: actor.ap_id.clone().into(),
-            to: object.to.clone(),
+            to: Some([to.ap_id.clone().into()]),
             object,
             kind: Default::default(),
             id,

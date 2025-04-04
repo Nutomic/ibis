@@ -163,7 +163,7 @@ impl Instance {
         Ok(instance_follow::table
             .inner_join(instance::table)
             .filter(instance::local)
-            .select(count(instance_follow::id))
+            .select(count(instance_follow::instance_id))
             .first(conn.deref_mut())?)
     }
 

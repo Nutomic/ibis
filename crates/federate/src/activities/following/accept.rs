@@ -1,7 +1,8 @@
+use super::InstanceOrPerson;
 use crate::{
     activities::following::follow::Follow,
     generate_activity_id,
-    objects::{instance::InstanceWrapper, user::PersonWrapper},
+    objects::user::PersonWrapper,
     send_activity,
 };
 use activitypub_federation::{
@@ -11,6 +12,8 @@ use activitypub_federation::{
     protocol::helpers::deserialize_skip_error,
     traits::{ActivityHandler, Actor},
 };
+use anyhow::anyhow;
+use either::Either;
 use ibis_database::{
     common::instance::Instance,
     error::{BackendError, BackendResult},
@@ -22,7 +25,7 @@ use url::Url;
 #[derive(Deserialize, Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Accept {
-    actor: ObjectId<InstanceWrapper>,
+    actor: ObjectId<InstanceOrPerson>,
     /// Optional, for compatibility with platforms that always expect recipient field
     #[serde(deserialize_with = "deserialize_skip_error", default)]
     pub(crate) to: Option<[ObjectId<PersonWrapper>; 1]>,
@@ -34,26 +37,28 @@ pub struct Accept {
 
 impl Accept {
     pub async fn send(
-        local_instance: InstanceWrapper,
+        actor: InstanceOrPerson,
         object: Follow,
         context: &Data<IbisContext>,
     ) -> BackendResult<()> {
         let id = generate_activity_id(context)?;
         let follower = object.actor.dereference(context).await?;
+        let actor_id = match &actor {
+            Either::Left(i) => i.ap_id.clone().into(),
+            Either::Right(p) => p.ap_id.clone().into(),
+        };
         let accept = Accept {
-            actor: local_instance.ap_id.clone().into(),
+            actor: actor_id,
             to: Some([follower.ap_id.clone().into()]),
             object,
             kind: Default::default(),
             id,
         };
-        send_activity(
-            &local_instance,
-            accept,
-            vec![follower.shared_inbox_or_inbox()],
-            context,
-        )
-        .await?;
+        let inboxes = vec![follower.shared_inbox_or_inbox()];
+        match actor {
+            Either::Left(i) => send_activity(&i, accept, inboxes, context).await?,
+            Either::Right(p) => send_activity(&p, accept, inboxes, context).await?,
+        };
         Ok(())
     }
 }
@@ -76,10 +81,14 @@ impl ActivityHandler for Accept {
     }
 
     async fn receive(self, context: &Data<Self::DataType>) -> Result<(), Self::Error> {
-        // add to follows
-        let person = self.object.actor.dereference_local(context).await?;
-        let instance = self.actor.dereference(context).await?;
-        Instance::follow(&person, &instance, false, context)?;
-        Ok(())
+        match self.actor.dereference(context).await? {
+            Either::Left(instance) => {
+                // add to follows
+                let person = self.object.actor.dereference_local(context).await?;
+                Instance::follow(&person, &instance, false, context)?;
+                Ok(())
+            }
+            Either::Right(_) => Err(anyhow!("person follow not supported").into()),
+        }
     }
 }

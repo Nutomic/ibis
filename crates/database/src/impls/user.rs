@@ -27,7 +27,14 @@ use diesel::{
     dsl::not,
     insert_into,
 };
-use ibis_database_schema::{instance, instance_follow, local_user, oauth_account, person};
+use ibis_database_schema::{
+    instance,
+    instance_follow,
+    local_user,
+    oauth_account,
+    person,
+    person_follow,
+};
 use std::ops::DerefMut;
 use url::Url;
 
@@ -205,6 +212,20 @@ impl Person {
             };
             Person::create(&person_form, context)
         }
+    }
+
+    pub fn follow(person: &Person, follower: &Person, context: &IbisContext) -> BackendResult<()> {
+        use person_follow::dsl::{follower_id, person_id};
+        let mut conn = context.db_pool.get()?;
+        let form = (person_id.eq(person.id), follower_id.eq(follower.id));
+        let rows = insert_into(person_follow::table)
+            .values(form)
+            .on_conflict((person_id, follower_id))
+            .do_update()
+            .set(form)
+            .execute(conn.deref_mut())?;
+        debug_assert_eq!(1, rows);
+        Ok(())
     }
 }
 
