@@ -1,5 +1,5 @@
 [workspace.package]
-version = "0.3.0-alpha-fix-docker-release.12"
+version = "0.3.0-alpha-fix-docker-release.13"
 edition = "2021"
 
 [workspace]
