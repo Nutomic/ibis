@@ -12,7 +12,10 @@ RUN groupadd -g ${GID} -o ${UNAME} && \
     apt update && apt install --yes libpq-dev
 USER $UNAME
 
+RUN ls -lah /woodpecker/src/github.com/Nutomic/ibis/**
+RUN ls -lah /woodpecker/src/github.com/Nutomic/ibis/target/release/
 COPY /woodpecker/src/github.com/Nutomic/ibis/target/release/ibis /usr/local/bin/ibis
+RUN ls -lah /usr/local/bin/ibis
 
 ENTRYPOINT ["ibis"]
 EXPOSE 3000
