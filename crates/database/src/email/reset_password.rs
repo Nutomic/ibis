@@ -1,6 +1,6 @@
 use super::send_email;
 use crate::{
-    common::{newtypes::LocalUserId, user::LocalUserView},
+    common::{newtypes::LocalUserId, user::LocalUserView, utils::http_protocol_str},
     error::BackendResult,
     impls::{IbisContext, user::LocalUserViewQuery},
 };
@@ -48,7 +48,12 @@ impl PasswordResetRequest {
             .get_result::<PasswordResetRequest>(&mut conn)?;
 
         let domain = &context.conf.federation.domain;
-        let reset_link = format!("{}/account/reset_password?token={}", domain, &token.token);
+        let reset_link = format!(
+            "{}://{}/account/reset_password?token={}",
+            http_protocol_str(),
+            domain,
+            &token.token
+        );
         let body = format!(
             r#"<h1>Password Reset Request for {}</h1><br><a href=\"{reset_link}\">Click here to reset your password</a>"#,
             local_user_view.person.username

@@ -1,6 +1,6 @@
 use super::send_email;
 use crate::{
-    common::{newtypes::LocalUserId, user::LocalUser},
+    common::{newtypes::LocalUserId, user::LocalUser, utils::http_protocol_str},
     error::BackendResult,
     impls::IbisContext,
 };
@@ -38,15 +38,17 @@ pub async fn send_verification_email(
     context: &IbisContext,
 ) -> BackendResult<()> {
     let mut conn = context.db_pool.get()?;
-    let domain = &context.conf.federation.domain;
+    let domain = &context.conf.domain;
     let form = EmailVerificationForm {
         local_user_id: to_user.id,
         email: new_email.to_string(),
         verification_token: uuid::Uuid::new_v4().to_string(),
     };
     let verify_link = format!(
-        "{}/account/verify_email?token={}",
-        domain, &form.verification_token
+        "{}://{}/account/verify_email?token={}",
+        http_protocol_str(),
+        domain,
+        &form.verification_token
     );
     insert_into(email_verification::table)
         .values(form)

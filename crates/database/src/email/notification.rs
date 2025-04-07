@@ -1,7 +1,6 @@
 use super::send_email;
 use crate::{
-    error::BackendResult,
-    impls::{IbisContext, notifications::Notification},
+    common::utils::http_protocol_str, error::BackendResult, impls::{notifications::Notification, IbisContext}
 };
 use ibis_markdown::{render_article_markdown, render_comment_markdown};
 
@@ -15,8 +14,11 @@ pub(crate) async fn send_notification_email(
         if let (Some(email), true) = (data.local_user.email, data.local_user.email_notifications) {
             let article_title = data.article.title();
             let creator_title = data.creator.title();
-            let notifications_link =
-                format!("https://{}/notifications", &context.conf.federation.domain);
+            let notifications_link = format!(
+                "{}://{}/notifications",
+                http_protocol_str(),
+                &context.conf.federation.domain
+            );
 
             let (subject, html) = if let Some(comment) = data.comment {
                 let comment_text = render_comment_markdown(&comment.content);
