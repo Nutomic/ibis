@@ -103,6 +103,9 @@ pub(crate) async fn login_user(
         &context,
     )
     .map_err(|_| invalid_login)?;
+    if context.conf.options.email_required && !user.local_user.email_verified {
+        return Err(anyhow!("Verify your email address to login").into());
+    }
     validate_password(&user, &params.password)?;
     let jar = add_login_cookie(&user.person, jar, &context)?;
     Ok((jar, Json(user)))

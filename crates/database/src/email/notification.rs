@@ -1,6 +1,8 @@
 use super::send_email;
 use crate::{
-    common::utils::http_protocol_str, error::BackendResult, impls::{notifications::Notification, IbisContext}
+    common::utils::http_protocol_str,
+    error::BackendResult,
+    impls::{IbisContext, notifications::Notification},
 };
 use ibis_markdown::{render_article_markdown, render_comment_markdown};
 
