@@ -59,9 +59,9 @@ pub fn ArticleNav(
                                 .error_popup(|_| article.refetch());
                         });
                         let follow_title = if article_.following {
-                            "Stop notifications"
+                            "Notifications active"
                         } else {
-                            "Get notified about new article edits and comments"
+                            "Notifications inactive"
                         };
                         view! {
                             <Title text=page_title(active_tab, &title) />
@@ -142,10 +142,10 @@ pub fn ArticleNav(
                                     <Show
                                         when=move || article_.following
                                         fallback=move || {
-                                            view! { <Icon icon=BELL size="24px" /> }
+                                            view! { <Icon icon=BELL_SLASH size="24px" /> }
                                         }
                                     >
-                                        <Icon icon=BELL_SLASH size="24px" />
+                                        <Icon icon=BELL size="24px" />
                                     </Show>
                                 </button>
                             </div>
