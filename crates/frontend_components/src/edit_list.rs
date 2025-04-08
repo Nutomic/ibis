@@ -1,4 +1,4 @@
-use crate::utils::formatting::{article_link, edit_path, render_date_time, user_link};
+use crate::utils::formatting::{article_link, edit_path, edit_time, user_link};
 use ibis_database::common::article::EditView;
 use leptos::{either::Either, prelude::*};
 
@@ -14,11 +14,11 @@ pub fn EditList(edits: Vec<EditView>, for_article: bool) -> impl IntoView {
                     .rev()
                     .map(|edit: EditView| {
                         let path = edit_path(&edit.edit, &edit.article);
-                        let date = render_date_time(edit.edit.published);
+                        let edit_time = edit_time(edit.edit.published);
                         let second_line = if for_article {
                             Either::Left(
                                 view! {
-                                    {date}
+                                    {edit_time}
                                     " by "
                                     {user_link(&edit.creator)}
                                 },
@@ -26,7 +26,7 @@ pub fn EditList(edits: Vec<EditView>, for_article: bool) -> impl IntoView {
                         } else {
                             Either::Right(
                                 view! {
-                                    {date}
+                                    {edit_time}
                                     " on "
                                     {article_link(&edit.article)}
                                 },

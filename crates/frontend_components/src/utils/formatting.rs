@@ -49,11 +49,13 @@ pub fn user_link(person: &Person) -> impl IntoView {
     }
 }
 
-pub fn render_date_time(date_time: DateTime<Utc>) -> String {
-    date_time
+pub fn edit_time(date_time: DateTime<Utc>) -> impl IntoView {
+    let absolute_time = date_time
         .with_timezone(&Local)
-        .format("%Y-%m-%d %H:%M:%S")
-        .to_string()
+        .format("%Y-%m-%d %H:%M:%S %Z")
+        .to_string();
+    let time_ago = time_ago(date_time);
+    view! { <span title=absolute_time>{time_ago}</span> }
 }
 
 pub fn time_ago(time: DateTime<Utc>) -> String {

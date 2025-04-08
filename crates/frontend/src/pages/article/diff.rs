@@ -2,7 +2,7 @@ use crate::pages::{article_edits_resource, article_resource};
 use ibis_frontend_components::{
     article_nav::{ActiveTab, ArticleNav},
     suspense_error::SuspenseError,
-    utils::formatting::{render_date_time, user_link},
+    utils::formatting::{edit_time, user_link},
 };
 use leptos::{either::Either, prelude::*};
 use leptos_meta::Title;
@@ -25,19 +25,19 @@ pub fn EditDiff() -> impl IntoView {
                         let hash = params.get_untracked().get("hash").clone();
                         let edit = edits.iter().find(|e| Some(e.edit.hash.0.to_string()) == hash);
                         if let Some(edit) = edit {
-                            let label = format!(
-                                "{} ({})",
-                                edit.edit.summary,
-                                render_date_time(edit.edit.published),
-                            );
                             let pending = edit.edit.pending;
-                            let title = format!("Diff {} — {}", edit.edit.summary, article_title);
+                            let title = format!(
+                                "Diff {} — {}",
+                                &edit.edit.summary,
+                                article_title,
+                            );
                             Either::Left(
                                 view! {
                                     <Title text=title />
                                     <div class="flex w-full">
                                         <h2 class="my-2 font-serif text-xl font-bold grow">
-                                            {label}
+                                            {edit.edit.summary.clone()} " ("
+                                            {edit_time(edit.edit.published)} ")"
                                         </h2>
                                         <Show when=move || pending>
                                             <span class="p-1 w-min rounded border-2 border-rose-300 h-min">
