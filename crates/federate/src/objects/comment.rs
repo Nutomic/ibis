@@ -19,9 +19,11 @@ use ibis_database::{
 };
 use ibis_markdown::render_comment_markdown;
 use serde::{Deserialize, Serialize};
+use serde_with::skip_serializing_none;
 use std::ops::Deref;
 use url::Url;
 
+#[skip_serializing_none]
 #[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ApubComment {

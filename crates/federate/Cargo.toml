@@ -27,3 +27,4 @@ rand = "0.8.5"
 html2md = "0.2.15"
 itertools = "0.14.0"
 either = { version = "1.15.0", features = ["serde"] }
+serde_with = "3.12.0"

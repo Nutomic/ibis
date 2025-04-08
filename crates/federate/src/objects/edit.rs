@@ -16,6 +16,7 @@ use ibis_database::{
 };
 use log::warn;
 use serde::{Deserialize, Serialize};
+use serde_with::skip_serializing_none;
 use std::ops::Deref;
 use url::Url;
 
@@ -26,6 +27,7 @@ pub enum PatchType {
     Patch,
 }
 
+#[skip_serializing_none]
 #[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ApubEdit {

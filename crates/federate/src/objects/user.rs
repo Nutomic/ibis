@@ -19,9 +19,11 @@ use ibis_database::{
 };
 use ibis_markdown::render_article_markdown;
 use serde::{Deserialize, Serialize};
+use serde_with::skip_serializing_none;
 use std::{fmt::Debug, ops::Deref};
 use url::Url;
 
+#[skip_serializing_none]
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ApubUser {
