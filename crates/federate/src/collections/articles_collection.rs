@@ -1,10 +1,10 @@
-use crate::objects::article::{ApubArticle, ArticleWrapper};
+use crate::{activities::article::update_article::UpdateArticle, objects::article::ArticleWrapper};
 use activitypub_federation::{
     config::Data,
     fetch::collection_id::CollectionId,
     kinds::collection::CollectionType,
     protocol::verification::verify_domains_match,
-    traits::{Collection, Object},
+    traits::{ActivityHandler, Collection},
 };
 use futures::future::{join_all, try_join_all};
 use ibis_database::{
@@ -22,7 +22,7 @@ pub struct ApubArticleCollection {
     pub r#type: CollectionType,
     pub id: Url,
     pub total_items: i32,
-    pub items: Vec<ApubArticle>,
+    pub items: Vec<UpdateArticle>,
 }
 
 #[derive(Clone, Debug)]
@@ -51,7 +51,7 @@ impl Collection for ArticleCollection {
             local_articles
                 .into_iter()
                 .map(ArticleWrapper)
-                .map(|a| a.into_json(context))
+                .map(|a| UpdateArticle::new(a, context))
                 .collect::<Vec<_>>(),
         )
         .await?;
@@ -81,10 +81,11 @@ impl Collection for ArticleCollection {
         let articles = apub
             .items
             .into_iter()
-            .filter(|i| !i.id.is_local(context))
-            .map(|article| async {
-                let id = article.id.clone();
-                let res = ArticleWrapper::from_json(article, context).await;
+            .filter(|i| !i.object.id.is_local(context))
+            .map(|update| async {
+                let id = update.object.id.clone();
+                UpdateArticle::verify(&update, context).await?;
+                let res = UpdateArticle::receive(update, context).await;
                 if let Err(e) = &res {
                     warn!("Failed to synchronize article {id}: {e}");
                 }

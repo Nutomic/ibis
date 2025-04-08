@@ -36,24 +36,31 @@ pub struct UpdateArticle {
 }
 
 impl UpdateArticle {
-    pub async fn send(
+    pub(crate) async fn new(
         article: ArticleWrapper,
-        local_instance: &InstanceWrapper,
         context: &Data<IbisContext>,
-    ) -> BackendResult<()> {
+    ) -> BackendResult<Self> {
         let object = article.clone().into_json(context).await?;
         let actor = Person::wikibot(context)?;
         let id = generate_activity_id(context)?;
-        let create = UpdateArticle {
+        Ok(UpdateArticle {
             actor: actor.ap_id.clone().into(),
             to: vec![public()],
             cc: vec![],
             object,
             kind: Default::default(),
             id,
-        };
+        })
+    }
+
+    pub async fn send(
+        article: ArticleWrapper,
+        local_instance: &InstanceWrapper,
+        context: &Data<IbisContext>,
+    ) -> BackendResult<()> {
+        let update = Self::new(article, context).await?;
         local_instance
-            .send_to_followers(create, vec![], context)
+            .send_to_followers(update, vec![], context)
             .await?;
         Ok(())
     }
