@@ -8,7 +8,7 @@ use leptos_use::{UseTextareaAutosizeReturn, use_textarea_autosize};
 #[component]
 pub fn CreateArticle() -> impl IntoView {
     let title = use_query_map()
-        .get()
+        .get_untracked()
         .get("title")
         .unwrap_or_default()
         .replace('_', " ");

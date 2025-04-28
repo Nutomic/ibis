@@ -38,7 +38,7 @@ pub fn CommentView(
     let comment_link = format!(
         "/article/{}/discussion#{comment_id}",
         article
-            .get()
+            .get_untracked()
             .and_then(|a| a.ok())
             .map(|a| comment_path(&comment.comment, &a.article))
             .unwrap_or_default(),
