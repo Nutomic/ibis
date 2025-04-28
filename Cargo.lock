@@ -2218,7 +2218,7 @@ dependencies = [
 
 [[package]]
 name = "ibis"
-version = "0.3.0-alpha.7"
+version = "0.3.0-alpha.8"
 dependencies = [
  "activitypub_federation",
  "anyhow",
@@ -2257,7 +2257,7 @@ dependencies = [
 
 [[package]]
 name = "ibis_api_client"
-version = "0.3.0-alpha.7"
+version = "0.3.0-alpha.8"
 dependencies = [
  "gloo-net",
  "http 1.2.0",
@@ -2274,7 +2274,7 @@ dependencies = [
 
 [[package]]
 name = "ibis_database"
-version = "0.3.0-alpha.7"
+version = "0.3.0-alpha.8"
 dependencies = [
  "activitypub_federation",
  "anyhow",
@@ -2304,14 +2304,14 @@ dependencies = [
 
 [[package]]
 name = "ibis_database_schema"
-version = "0.3.0-alpha.7"
+version = "0.3.0-alpha.8"
 dependencies = [
  "diesel",
 ]
 
 [[package]]
 name = "ibis_federate"
-version = "0.3.0-alpha.7"
+version = "0.3.0-alpha.8"
 dependencies = [
  "activitypub_federation",
  "anyhow",
@@ -2338,7 +2338,7 @@ dependencies = [
 
 [[package]]
 name = "ibis_frontend"
-version = "0.3.0-alpha.7"
+version = "0.3.0-alpha.8"
 dependencies = [
  "chrono",
  "codee",
@@ -2358,7 +2358,7 @@ dependencies = [
 
 [[package]]
 name = "ibis_frontend_components"
-version = "0.3.0-alpha.7"
+version = "0.3.0-alpha.8"
 dependencies = [
  "chrono",
  "codee",
@@ -2379,7 +2379,7 @@ dependencies = [
 
 [[package]]
 name = "ibis_hydrate"
-version = "0.3.0-alpha.7"
+version = "0.3.0-alpha.8"
 dependencies = [
  "console_error_panic_hook",
  "console_log",
@@ -2390,7 +2390,7 @@ dependencies = [
 
 [[package]]
 name = "ibis_markdown"
-version = "0.3.0-alpha.7"
+version = "0.3.0-alpha.8"
 dependencies = [
  "fmtm",
  "fmtm_ytmimi_markdown_fmt",
