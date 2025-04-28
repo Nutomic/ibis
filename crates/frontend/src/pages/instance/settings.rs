@@ -4,7 +4,7 @@ use leptos::prelude::*;
 use leptos_meta::Title;
 
 #[component]
-pub fn InstanceSettings() -> impl IntoView {
+pub fn AdminSettings() -> impl IntoView {
     let (saved, set_saved) = signal(false);
     let site = site();
 
@@ -24,7 +24,7 @@ pub fn InstanceSettings() -> impl IntoView {
     // TODO: It would make sense to use a table for the labels and inputs, but for some reason
     //       that completely breaks reactivity.
     view! {
-        <Title text="Instance Settings" />
+        <Title text="Admin Settings" />
         <SuspenseError result=site>
             {move || Suspend::new(async move {
                 site.await
@@ -33,7 +33,7 @@ pub fn InstanceSettings() -> impl IntoView {
                         let (topic, set_topic) = signal(site.instance.topic.unwrap_or_default());
                         view! {
                             <h1 class="flex-auto my-6 font-serif text-4xl font-bold grow">
-                                "Instance Settings"
+                                "Admin Settings"
                             </h1>
                             <div class="flex flex-row mb-2">
                                 <label class="block w-20" for="name">

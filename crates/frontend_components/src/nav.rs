@@ -93,9 +93,9 @@ pub fn Nav() -> impl IntoView {
                             </Show>
                             <Show when=is_admin>
                                 <li>
-                                    <a href="/instance/settings">
+                                    <a href="/admin">
                                         <Icon icon=GEAR />
-                                        "Settings"
+                                        "Admin Settings"
                                     </a>
                                 </li>
                             </Show>

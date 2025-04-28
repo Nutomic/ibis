@@ -14,7 +14,7 @@ use crate::pages::{
         details::InstanceDetails,
         explore::Explore,
         search::Search,
-        settings::InstanceSettings,
+        settings::AdminSettings,
     },
     user::{
         edit_profile::UserEditProfile,
@@ -115,10 +115,7 @@ pub fn App() -> impl IntoView {
 
                         <Route path=path!("/explore") view=Explore />
                         <Route path=path!("/instance/:hostname") view=InstanceDetails />
-                        <IbisProtectedRoute
-                            path=path!("/instance/settings")
-                            view=InstanceSettings
-                        />
+                        <IbisProtectedRoute path=path!("/admin") view=AdminSettings />
                         <Route path=path!("/about") view=About />
                         <Route path=path!("/search") view=Search />
 
