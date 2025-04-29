@@ -9,7 +9,7 @@ use crate::{
         user::PersonWrapper,
     },
     routes::AnnouncableActivities,
-    send_activity,
+    send_ibis_activity,
 };
 use activitypub_federation::{
     config::Data,
@@ -71,7 +71,7 @@ impl EditArticle {
         to_instance: &InstanceWrapper,
         context: &Data<IbisContext>,
     ) -> BackendResult<()> {
-        send_activity(
+        send_ibis_activity(
             from,
             self,
             vec![Url::parse(&to_instance.inbox_url)?],

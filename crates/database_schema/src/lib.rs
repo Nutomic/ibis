@@ -195,6 +195,15 @@ diesel::table! {
     }
 }
 
+diesel::table! {
+    sent_activity (id) {
+        #[max_length = 255]
+        id -> Varchar,
+        json -> Text,
+        published -> Timestamptz,
+    }
+}
+
 diesel::joinable!(article -> instance (instance_id));
 diesel::joinable!(article_follow -> article (article_id));
 diesel::joinable!(article_follow -> local_user (local_user_id));
@@ -234,4 +243,5 @@ diesel::allow_tables_to_appear_in_same_query!(
     password_reset_request,
     person,
     person_follow,
+    sent_activity,
 );

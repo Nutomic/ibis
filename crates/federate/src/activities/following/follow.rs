@@ -3,7 +3,7 @@ use crate::{
     activities::following::accept::Accept,
     generate_activity_id,
     objects::{instance::InstanceWrapper, user::PersonWrapper},
-    send_activity,
+    send_ibis_activity,
 };
 use activitypub_federation::{
     config::Data,
@@ -58,7 +58,7 @@ impl Follow {
         context: &Data<IbisContext>,
     ) -> BackendResult<()> {
         let follow = Self::new(actor, to, context)?;
-        send_activity(actor, follow, vec![to.shared_inbox_or_inbox()], context).await?;
+        send_ibis_activity(actor, follow, vec![to.shared_inbox_or_inbox()], context).await?;
         Ok(())
     }
 }

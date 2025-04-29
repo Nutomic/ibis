@@ -4,7 +4,7 @@ use crate::{
         articles_collection::ArticleCollection,
         instance_collection::InstanceCollection,
     },
-    send_activity,
+    send_ibis_activity,
 };
 use activitypub_federation::{
     config::Data,
@@ -87,7 +87,7 @@ impl InstanceWrapper {
             .map(|f| f.inbox_url())
             .collect();
         inboxes.extend(extra_recipients.into_iter().map(|i| i.inbox_url()));
-        send_activity(self, activity, inboxes, context).await?;
+        send_ibis_activity(self, activity, inboxes, context).await?;
         Ok(())
     }
 }

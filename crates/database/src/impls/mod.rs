@@ -19,6 +19,7 @@ pub mod edit;
 pub mod instance;
 pub mod instance_stats;
 pub mod notifications;
+pub mod sent_activity;
 pub mod user;
 
 pub type DbPool = Pool<ConnectionManager<PgConnection>>;

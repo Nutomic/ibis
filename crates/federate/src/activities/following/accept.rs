@@ -3,7 +3,7 @@ use crate::{
     activities::following::follow::Follow,
     generate_activity_id,
     objects::user::PersonWrapper,
-    send_activity,
+    send_ibis_activity,
 };
 use activitypub_federation::{
     config::Data,
@@ -56,8 +56,8 @@ impl Accept {
         };
         let inboxes = vec![follower.shared_inbox_or_inbox()];
         match actor {
-            Either::Left(i) => send_activity(&i, accept, inboxes, context).await?,
-            Either::Right(p) => send_activity(&p, accept, inboxes, context).await?,
+            Either::Left(i) => send_ibis_activity(&i, accept, inboxes, context).await?,
+            Either::Right(p) => send_ibis_activity(&p, accept, inboxes, context).await?,
         };
         Ok(())
     }

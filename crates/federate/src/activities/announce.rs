@@ -2,7 +2,7 @@ use crate::{
     generate_activity_id,
     objects::instance::InstanceWrapper,
     routes::AnnouncableActivities,
-    send_activity,
+    send_ibis_activity,
 };
 use activitypub_federation::{
     config::Data,
@@ -54,7 +54,7 @@ impl AnnounceActivity {
             .into_iter()
             .map(|f| f.inbox_url())
             .collect();
-        send_activity(&instance, announce, follower_inboxes, context).await?;
+        send_ibis_activity(&instance, announce, follower_inboxes, context).await?;
 
         Ok(())
     }

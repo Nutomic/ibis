@@ -53,16 +53,19 @@ use ibis_database::{
         instance::Instance,
         newtypes::CommentId,
         user::Person,
+        utils::http_protocol_str,
     },
     error::BackendResult,
-    impls::IbisContext,
+    impls::{IbisContext, sent_activity::SentActivity},
 };
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use url::Url;
 
 pub fn federation_routes() -> Router<()> {
     Router::new()
         .route("/", get(http_get_instance))
+        .route("/activity/:id", get(http_get_activity))
         .route("/outbox", get(http_get_instance_outbox))
         .route("/followers", get(http_get_instance_followers))
         .route("/user/:name", get(http_get_person))
@@ -80,6 +83,23 @@ async fn http_get_instance(context: Data<IbisContext>) -> BackendResult<impl Int
     let local_instance: InstanceWrapper = Instance::read_local(&context)?.into();
     let json_instance = local_instance.into_json(&context).await?;
     Ok(FederationJson(WithContext::new_default(json_instance)))
+}
+
+#[debug_handler]
+async fn http_get_activity(
+    Path(id): Path<String>,
+    context: Data<IbisContext>,
+) -> BackendResult<impl IntoResponse> {
+    let domain = &context.conf.federation.domain;
+    let url = Url::parse(&format!(
+        "{}://{}/activity/{}",
+        http_protocol_str(),
+        domain,
+        id
+    ))?;
+    let activity = SentActivity::read(url.into(), &context)?;
+    let json: Value = serde_json::from_str(&activity.json)?;
+    Ok(FederationJson(WithContext::new_default(json)))
 }
 
 #[debug_handler]

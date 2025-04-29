@@ -2,7 +2,7 @@ use super::follow::Follow;
 use crate::{
     generate_activity_id,
     objects::{instance::InstanceWrapper, user::PersonWrapper},
-    send_activity,
+    send_ibis_activity,
 };
 use activitypub_federation::{
     config::Data,
@@ -47,7 +47,7 @@ impl UndoFollow {
             kind: Default::default(),
             id,
         };
-        send_activity(
+        send_ibis_activity(
             actor,
             undo_follow,
             vec![to.shared_inbox_or_inbox()],

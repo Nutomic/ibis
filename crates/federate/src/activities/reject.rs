@@ -1,7 +1,7 @@
 use crate::{
     generate_activity_id,
     objects::{edit::ApubEdit, instance::InstanceWrapper, user::PersonWrapper},
-    send_activity,
+    send_ibis_activity,
 };
 use activitypub_federation::{
     config::Data,
@@ -48,7 +48,7 @@ impl RejectEdit {
             kind: Default::default(),
             id,
         };
-        send_activity(
+        send_ibis_activity(
             &local_instance,
             reject,
             vec![Url::parse(&to.inbox_url)?],
