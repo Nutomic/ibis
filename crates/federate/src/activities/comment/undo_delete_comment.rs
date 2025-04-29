@@ -1,4 +1,4 @@
-use super::{delete_comment::DeleteComment, generate_comment_activity_to};
+use super::delete_comment::DeleteComment;
 use crate::{
     generate_activity_id,
     objects::{comment::CommentWrapper, instance::InstanceWrapper, user::PersonWrapper},
@@ -8,7 +8,7 @@ use crate::{
 use activitypub_federation::{
     config::Data,
     fetch::object_id::ObjectId,
-    kinds::activity::UndoType,
+    kinds::{activity::UndoType, public},
     protocol::{
         helpers::deserialize_one_or_many,
         verification::{verify_domains_match, verify_urls_match},
@@ -45,7 +45,7 @@ impl UndoDeleteComment {
         let activity = UndoDeleteComment {
             actor: creator.ap_id.clone().into(),
             object,
-            to: generate_comment_activity_to(&instance)?,
+            to: vec![public(), instance.ap_id.clone().into()],
             kind: Default::default(),
             id,
         };

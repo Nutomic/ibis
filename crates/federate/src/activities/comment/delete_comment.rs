@@ -1,4 +1,3 @@
-use super::generate_comment_activity_to;
 use crate::{
     generate_activity_id,
     objects::{comment::CommentWrapper, instance::InstanceWrapper, user::PersonWrapper},
@@ -8,7 +7,7 @@ use crate::{
 use activitypub_federation::{
     config::Data,
     fetch::object_id::ObjectId,
-    kinds::activity::DeleteType,
+    kinds::{activity::DeleteType, public},
     protocol::{helpers::deserialize_one_or_many, verification::verify_domains_match},
     traits::ActivityHandler,
 };
@@ -44,7 +43,7 @@ impl DeleteComment {
         Ok(DeleteComment {
             actor: creator.ap_id.clone().into(),
             object: comment.ap_id.clone().into(),
-            to: generate_comment_activity_to(instance)?,
+            to: vec![public(), instance.ap_id.clone().into()],
             kind: Default::default(),
             id,
         })

@@ -1,4 +1,3 @@
-use super::generate_comment_activity_to;
 use crate::{
     generate_activity_id,
     objects::{
@@ -12,6 +11,7 @@ use crate::{
 use activitypub_federation::{
     config::Data,
     fetch::object_id::ObjectId,
+    kinds::public,
     protocol::{helpers::deserialize_one_or_many, verification::verify_domains_match},
     traits::{ActivityHandler, Object},
 };
@@ -57,7 +57,7 @@ impl CreateOrUpdateComment {
         let activity = Self {
             actor: object.attributed_to.clone(),
             object,
-            to: generate_comment_activity_to(&instance)?,
+            to: vec![public(), instance.ap_id.clone().into()],
             cc: vec![],
             kind,
             id,

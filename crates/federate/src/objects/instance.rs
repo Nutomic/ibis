@@ -71,6 +71,11 @@ impl InstanceWrapper {
             .collect())
     }
 
+    pub fn followers_url(&self) -> BackendResult<Url> {
+        let followers_url = format!("{}followers", &self.ap_id);
+        Ok(followers_url.parse()?)
+    }
+
     pub async fn send_to_followers<Activity>(
         &self,
         activity: Activity,

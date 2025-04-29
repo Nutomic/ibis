@@ -43,7 +43,7 @@ impl AnnounceActivity {
         let announce = AnnounceActivity {
             actor: instance.id().into(),
             to: vec![public()],
-            cc: vec![],
+            cc: vec![instance.followers_url()?],
             object,
             kind: AnnounceType::Announce,
             id,
