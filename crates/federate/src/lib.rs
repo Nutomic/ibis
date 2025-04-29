@@ -101,7 +101,7 @@ pub(crate) fn generate_activity_id(context: &Data<IbisContext>) -> BackendResult
     let domain = &context.conf.federation.domain;
     let id: String = thread_rng()
         .sample_iter(&Alphanumeric)
-        .take(7)
+        .take(20)
         .map(char::from)
         .collect();
     Ok(Url::parse(&format!(
