@@ -6,21 +6,15 @@ use crate::common::{TEST_ARTICLE_DEFAULT_TEXT, TestData};
 use anyhow::Result;
 use ibis_api_client::{
     article::{
-        CreateArticleParams,
-        EditArticleParams,
-        ForkArticleParams,
-        GetArticleParams,
-        ListArticlesParams,
-        ProtectArticleParams,
+        CreateArticleParams, EditArticleParams, ForkArticleParams, GetArticleParams,
+        ListArticlesParams, ProtectArticleParams,
     },
     comment::{CreateCommentParams, EditCommentParams},
     instance::SearchArticleParams,
     user::{GetUserParams, LoginUserParams, RegisterUserParams},
 };
 use ibis_database::common::{
-    article::ArticleView,
-    notifications::ApiNotificationData,
-    utils::extract_domain,
+    article::ArticleView, notifications::ApiNotificationData, utils::extract_domain,
 };
 use pretty_assertions::assert_eq;
 use retry_future::{LinearRetryStrategy, RetryFuture, RetryPolicy};
@@ -200,8 +194,7 @@ async fn api_test_synchronize_articles() -> Result<()> {
                 domain: Some(instance.domain.clone()),
                 id: None,
             };
-            let res = beta.get_article(get_article_data).await;
-            match res {
+            match beta.get_article(get_article_data).await {
                 Err(_) => Err(RetryPolicy::<String>::Retry(None)),
                 Ok(a) if a.latest_version != edit_res.latest_version => {
                     Err(RetryPolicy::Retry(None))
@@ -820,8 +813,7 @@ async fn api_test_synchronize_instances() -> Result<()> {
     // wait until instance collection is fetched
     let gamma_instances = RetryFuture::new(
         || async {
-            let res = gamma.list_instances().await;
-            match res {
+            match gamma.list_instances().await {
                 Err(_) => Err(RetryPolicy::<String>::Retry(None)),
                 Ok(i) if i.len() < 3 => Err(RetryPolicy::Retry(None)),
                 Ok(i) => Ok(i),
@@ -1052,6 +1044,49 @@ async fn api_test_comment_delete_restore() -> Result<()> {
     let beta_comments = beta.get_article(get_params).await.unwrap().comments;
     assert!(!beta_comments[0].comment.deleted);
     assert!(!beta_comments[0].comment.content.is_empty());
+
+    TestData::stop(alpha, beta, gamma)
+}
+
+#[tokio::test]
+async fn api_test_create_remote_article() -> Result<()> {
+    let TestData(alpha, beta, gamma) = TestData::start().await;
+
+    let beta_instance = alpha.follow_instance_with_resolve(&beta.hostname).await?;
+
+    // create article
+    let create_params = CreateArticleParams {
+        title: "Manu Chao".to_string(),
+        text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
+        summary: "create article".to_string(),
+        instance_id: Some(beta_instance.id),
+    };
+    let create_res = alpha.create_article(&create_params).await.unwrap();
+    assert_eq!(create_params.title, create_res.article.title);
+    assert!(!create_res.article.local);
+    // Federation is synchronous so by the time api call returns it is already federated back and
+    // not pending anymore.
+    //assert!(create_res.article.pending);
+
+    // Check article shown on beta
+    let get_article_data = GetArticleParams {
+        title: Some(create_res.article.title.clone()),
+        ..Default::default()
+    };
+    let beta_article = beta.get_article(get_article_data.clone())
+    .await?;
+    assert!(beta_article.article.local);
+    assert_eq!(create_res.article.title, beta_article.article.title);
+    assert_eq!(create_res.article.ap_id, beta_article.article.ap_id);
+
+    // Article not pending anymore on alpha
+    let get_article_data = GetArticleParams {
+        id: Some(create_res.article.id),
+        ..Default::default()
+    };
+    let alpha_article =  alpha.get_article(get_article_data.clone())
+    .await?;
+    assert!(!alpha_article.article.pending);
 
     TestData::stop(alpha, beta, gamma)
 }

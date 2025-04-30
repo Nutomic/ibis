@@ -12,15 +12,8 @@ use crate::{
 };
 use chrono::{DateTime, Utc};
 use diesel::{
-    AsChangeset,
-    BoolExpressionMethods,
-    ExpressionMethods,
-    Insertable,
-    JoinOnDsl,
-    NullableExpressionMethods,
-    PgTextExpressionMethods,
-    QueryDsl,
-    RunQueryDsl,
+    AsChangeset, BoolExpressionMethods, ExpressionMethods, Insertable, JoinOnDsl,
+    NullableExpressionMethods, PgTextExpressionMethods, QueryDsl, RunQueryDsl,
     dsl::{delete, max, not, now},
     insert_into,
 };
@@ -140,9 +133,7 @@ impl Article {
             )
             .into_boxed();
         if !user.map(|u| u.local_user.admin).unwrap_or_default() {
-            query = query
-                .filter(not(article::removed))
-                .filter(not(article::pending));
+            query = query.filter(not(article::removed));
         }
         query = match params.into() {
             ArticleViewQuery::Id(id) => query.filter(article::id.eq(id)),

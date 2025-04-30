@@ -2,7 +2,7 @@ use crate::{
     activities::{
         announce::AnnounceActivity,
         article::{
-            edit_article::CreateOrEditArticle,
+            create_or_edit_article::CreateOrEditArticle,
             remove_article::RemoveArticle,
             undo_remove_article::UndoRemoveArticle,
             update_article::UpdateArticle,

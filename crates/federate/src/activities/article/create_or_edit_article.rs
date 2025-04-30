@@ -18,6 +18,8 @@ use activitypub_federation::{
     protocol::helpers::deserialize_one_or_many,
     traits::{ActivityHandler, Object},
 };
+use anyhow::anyhow;
+use chrono::Utc;
 use diffy::{Patch, apply};
 use ibis_database::{
     common::{
@@ -25,7 +27,7 @@ use ibis_database::{
         instance::Instance,
     },
     error::{BackendError, BackendResult},
-    impls::IbisContext,
+    impls::{IbisContext, article::DbArticleForm},
 };
 use log::warn;
 use serde::{Deserialize, Serialize};
@@ -43,7 +45,7 @@ pub struct CreateOrEditArticle {
     pub id: Url,
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone, PartialEq)]
 pub enum CreateOrEditType {
     Create,
     Edit,
@@ -101,13 +103,45 @@ impl ActivityHandler for CreateOrEditArticle {
     }
 
     async fn verify(&self, context: &Data<Self::DataType>) -> Result<(), Self::Error> {
-        let article = Article::read_from_ap_id(&self.object.object.clone().into(), context)?;
-        can_edit_article(&article, false)?;
+        let article = Article::read_from_ap_id(&self.object.object.clone().into(), context);
+        if self.kind == CreateOrEditType::Create {
+            let local_instance = Instance::read_local(context)?;
+            if article.is_ok() && self.id.domain() != local_instance.ap_id.0.domain() {
+                return Err(anyhow!("Article already exists").into());
+            }
+        } else {
+            can_edit_article(&article?, false)?;
+        }
         Ok(())
     }
 
     async fn receive(self, context: &Data<Self::DataType>) -> Result<(), Self::Error> {
-        let article = Article::read_from_ap_id(&self.object.object.clone().into(), context)?;
+        let article = if self.kind == CreateOrEditType::Create {
+            let local_instance = Instance::read_local(context)?;
+            if self.object.object.inner().domain() != local_instance.ap_id.0.domain() {
+                return Err(anyhow!("Invalid article ap id").into());
+            }
+            // last path segment is the title
+            let title = self.object.object.to_string();
+            let title = title
+                .rsplit_once('/')
+                .ok_or(anyhow!("Missing article title"))?
+                .1
+                .replace("_", " ");
+            let form = DbArticleForm {
+                title,
+                text: String::new(),
+                ap_id: self.object.object.clone().into(),
+                instance_id: local_instance.id,
+                local: true,
+                protected: false,
+                updated: Utc::now(),
+                pending: false,
+            };
+            Article::create_or_update(form, context)?
+        } else {
+            Article::read_from_ap_id(&self.object.object.clone().into(), context)?
+        };
 
         let edits = Edit::list_for_article(article.id, context)?;
         let edit_known = edits.into_iter().any(|e| e.hash == self.object.version);

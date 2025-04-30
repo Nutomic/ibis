@@ -1,5 +1,5 @@
 use crate::{
-    activities::article::edit_article::CreateOrEditArticle,
+    activities::article::create_or_edit_article::CreateOrEditArticle,
     objects::{instance::InstanceWrapper, user::PersonWrapper},
     routes::AnnouncableActivities,
 };
