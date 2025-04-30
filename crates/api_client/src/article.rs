@@ -30,6 +30,7 @@ pub struct CreateArticleParams {
     pub title: String,
     pub text: String,
     pub summary: String,
+    pub instance_id: InstanceId,
 }
 
 #[derive(Deserialize, Serialize, Debug)]

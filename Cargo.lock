@@ -2347,6 +2347,7 @@ dependencies = [
  "ibis_database",
  "ibis_frontend_components",
  "ibis_markdown",
+ "itertools 0.14.0",
  "leptos",
  "leptos-use",
  "leptos_meta",

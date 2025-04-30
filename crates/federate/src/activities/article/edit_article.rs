@@ -33,35 +33,40 @@ use url::Url;
 
 #[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct EditArticle {
+pub struct CreateOrEditArticle {
     pub actor: ObjectId<PersonWrapper>,
     #[serde(deserialize_with = "deserialize_one_or_many")]
     pub to: Vec<Url>,
     pub object: ApubEdit,
     #[serde(rename = "type")]
-    pub kind: EditType,
+    pub kind: CreateOrEditType,
     pub id: Url,
 }
 
-#[derive(Deserialize, Serialize, Debug, Clone, Default)]
-pub enum EditType {
-    #[default]
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub enum CreateOrEditType {
+    Create,
     Edit,
 }
 
-impl EditArticle {
+impl CreateOrEditArticle {
     pub(crate) async fn new(
         edit: EditWrapper,
         from: &PersonWrapper,
         to_instance: &InstanceWrapper,
+        is_create: bool,
         context: &Data<IbisContext>,
     ) -> BackendResult<Self> {
         let id = generate_activity_id(context)?;
-        Ok(EditArticle {
+        let kind = match is_create {
+            true => CreateOrEditType::Create,
+            false => CreateOrEditType::Edit,
+        };
+        Ok(CreateOrEditArticle {
             actor: from.ap_id.clone().into(),
             to: vec![to_instance.ap_id.clone().into(), public()],
             object: edit.into_json(context).await?,
-            kind: Default::default(),
+            kind,
             id,
         })
     }
@@ -83,7 +88,7 @@ impl EditArticle {
 }
 
 #[async_trait::async_trait]
-impl ActivityHandler for EditArticle {
+impl ActivityHandler for CreateOrEditArticle {
     type DataType = IbisContext;
     type Error = BackendError;
 

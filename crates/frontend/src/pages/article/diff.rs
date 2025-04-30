@@ -1,5 +1,6 @@
 use crate::pages::{article_edits_resource, article_resource};
 use ibis_frontend_components::{
+    Pending,
     article_nav::{ActiveTab, ArticleNav},
     suspense_error::SuspenseError,
     utils::formatting::{edit_time, user_link},
@@ -39,11 +40,7 @@ pub fn EditDiff() -> impl IntoView {
                                             {edit.edit.summary.clone()} " ("
                                             {edit_time(edit.edit.published)} ")"
                                         </h2>
-                                        <Show when=move || pending>
-                                            <span class="p-1 w-min rounded border-2 border-rose-300 h-min">
-                                                Pending
-                                            </span>
-                                        </Show>
+                                        <Pending pending />
                                     </div>
                                     <p>"by " {user_link(&edit.creator)}</p>
                                     <div class="max-w-full prose prose-slate">

@@ -1,5 +1,5 @@
 use crate::{
-    activities::article::edit_article::EditArticle,
+    activities::article::edit_article::CreateOrEditArticle,
     objects::{instance::InstanceWrapper, user::PersonWrapper},
     routes::AnnouncableActivities,
 };
@@ -27,6 +27,7 @@ pub async fn submit_article_update(
     previous_version: EditVersion,
     article: &Article,
     person: PersonWrapper,
+    is_create: bool,
     context: &Data<IbisContext>,
 ) -> BackendResult<()> {
     let mut form = DbEditForm::new(
@@ -44,7 +45,9 @@ pub async fn submit_article_update(
 
     let local_instance: InstanceWrapper = Instance::read_local(context)?.into();
     let article_instance: InstanceWrapper = Instance::read(article.instance_id, context)?.into();
-    let edit_activity = EditArticle::new(edit.into(), &person, &article_instance, context).await?;
+    let edit_activity =
+        CreateOrEditArticle::new(edit.into(), &person, &article_instance, is_create, context)
+            .await?;
 
     if article_instance.local {
         let updated_article = Article::update_text(article.id, &new_text, context)?;

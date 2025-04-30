@@ -1,7 +1,4 @@
-use leptos::{
-    ev::beforeunload,
-    prelude::{Get, Signal},
-};
+use leptos::{ev::beforeunload, prelude::*};
 use leptos_use::{use_event_listener, use_window};
 
 pub mod article_editor;
@@ -26,4 +23,13 @@ fn prevent_navigation(signal: Signal<String>) {
             evt.prevent_default();
         }
     });
+}
+
+#[component]
+pub fn Pending(pending: bool) -> impl IntoView {
+    view! {
+        <Show when=move || pending>
+            <span class="p-1 w-min rounded border-2 border-rose-300 h-min">Pending</span>
+        </Show>
+    }
 }

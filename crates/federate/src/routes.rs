@@ -2,7 +2,7 @@ use crate::{
     activities::{
         announce::AnnounceActivity,
         article::{
-            edit_article::EditArticle,
+            edit_article::CreateOrEditArticle,
             remove_article::RemoveArticle,
             undo_remove_article::UndoRemoveArticle,
             update_article::UpdateArticle,
@@ -199,7 +199,7 @@ pub enum InboxActivities {
 #[serde(untagged)]
 #[enum_delegate::implement(ActivityHandler)]
 pub enum AnnouncableActivities {
-    EditArticle(EditArticle),
+    EditArticle(CreateOrEditArticle),
     UpdateArticle(UpdateArticle),
     RemoveArticle(RemoveArticle),
     UndoRemoveArticle(UndoRemoveArticle),

@@ -64,16 +64,17 @@ pub(crate) async fn create_article(
     validate_article_title(&params.title)?;
     validate_not_empty(&params.text)?;
 
-    let local_instance = Instance::read_local(&context)?;
-    let ap_id = generate_article_ap_id(&params.title, &local_instance)?;
+    let instance = Instance::read(params.instance_id, &context)?;
+    let ap_id = generate_article_ap_id(&params.title, &instance)?;
     let form = DbArticleForm {
         title: params.title,
         text: String::new(),
         ap_id,
-        instance_id: local_instance.id,
-        local: true,
+        instance_id: instance.id,
+        local: instance.local,
         protected: false,
         updated: Utc::now(),
+        pending: !instance.local,
     };
     let article = Article::create(form, user.person.id, &context).await?;
 
@@ -86,6 +87,7 @@ pub(crate) async fn create_article(
         article.latest_edit_version(&context)?,
         &article,
         user.person.clone().into(),
+        true,
         &context,
     )
     .await?;
@@ -142,6 +144,7 @@ pub(crate) async fn edit_article(
             params.previous_version_id,
             &original_article.article,
             user.person.clone().into(),
+            false,
             &context,
         )
         .await?;
@@ -230,6 +233,7 @@ pub(crate) async fn fork_article(
         local: true,
         protected: false,
         updated: Utc::now(),
+        pending: false,
     };
     let article = Article::create(form, user.person.id, &context).await?;
 
@@ -381,6 +385,7 @@ pub async fn db_conflict_to_api_conflict(
                 conflict.previous_version_id.clone(),
                 &original_article,
                 person,
+                false,
                 context,
             )
             .await?;

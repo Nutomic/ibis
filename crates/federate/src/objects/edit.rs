@@ -76,7 +76,7 @@ impl Object for EditWrapper {
     }
 
     async fn into_json(self, context: &Data<Self::DataType>) -> Result<Self::Kind, Self::Error> {
-        let article = Article::read_view(self.article_id, None, context)?;
+        let article = Article::read(self.article_id, context)?;
         let creator = Person::read(self.creator_id, context)?;
         Ok(ApubEdit {
             kind: PatchType::Patch,
@@ -85,7 +85,7 @@ impl Object for EditWrapper {
             summary: self.summary.clone(),
             version: self.hash.clone(),
             previous_version: self.previous_version_id.clone(),
-            object: article.article.ap_id.into(),
+            object: article.ap_id.into(),
             attributed_to: creator.ap_id.into(),
             published: self.published,
         })

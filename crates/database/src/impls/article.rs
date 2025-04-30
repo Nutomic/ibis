@@ -38,6 +38,7 @@ pub struct DbArticleForm {
     pub local: bool,
     pub protected: bool,
     pub updated: DateTime<Utc>,
+    pub pending: bool,
 }
 
 #[derive(Debug)]
@@ -139,7 +140,9 @@ impl Article {
             )
             .into_boxed();
         if !user.map(|u| u.local_user.admin).unwrap_or_default() {
-            query = query.filter(not(article::removed));
+            query = query
+                .filter(not(article::removed))
+                .filter(not(article::pending));
         }
         query = match params.into() {
             ArticleViewQuery::Id(id) => query.filter(article::id.eq(id)),
@@ -200,7 +203,9 @@ impl Article {
             query = query.filter(article::local);
         }
         if !include_removed {
-            query = query.filter(article::removed.eq(false));
+            query = query
+                .filter(article::removed.eq(false))
+                .filter(article::pending.eq(false));
         }
         if let Some(instance_id) = instance_id {
             query = query.filter(instance::dsl::id.eq(instance_id));
@@ -217,6 +222,7 @@ impl Article {
         let replaced = format!("%{replaced}%");
         Ok(article::table
             .filter(not(article::removed))
+            .filter(not(article::pending))
             .filter(
                 article::dsl::title
                     .ilike(&replaced)

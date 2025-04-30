@@ -144,6 +144,7 @@ impl Object for ArticleWrapper {
             instance_id: instance.id,
             protected: json.protected,
             updated: json.updated.or(json.published).unwrap_or_default(),
+            pending: false,
         };
         validate_article_title(&form.title)?;
         let article = Article::create_or_update(form, context)?;
