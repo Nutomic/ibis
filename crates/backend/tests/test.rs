@@ -28,19 +28,23 @@ use std::time::Duration;
 use tokio::time::sleep;
 use url::Url;
 
+fn create_test_article_params() -> CreateArticleParams {
+    CreateArticleParams {
+        title: "Manu Chao".to_string(),
+        text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
+        summary: "create article".to_string(),
+        instance_id: None,
+    }
+}
+
 #[tokio::test]
 async fn api_test_create_read_and_edit_local_article() -> Result<()> {
     let TestData(alpha, beta, gamma) = TestData::start().await;
 
     // create article
-    const TITLE: &str = "Manu Chao";
-    let create_params = CreateArticleParams {
-        title: "Manu Chao".to_string(),
-        text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
-        summary: "create article".to_string(),
-    };
+    let create_params = create_test_article_params();
     let create_res = alpha.create_article(&create_params).await.unwrap();
-    assert_eq!(TITLE, create_res.article.title);
+    assert_eq!(create_params.title, create_res.article.title);
     assert!(create_res.article.local);
 
     // now article can be read
@@ -50,7 +54,7 @@ async fn api_test_create_read_and_edit_local_article() -> Result<()> {
         id: None,
     };
     let get_res = alpha.get_article(get_article_data.clone()).await.unwrap();
-    assert_eq!(TITLE, get_res.article.title);
+    assert_eq!(create_params.title, get_res.article.title);
     assert_eq!(TEST_ARTICLE_DEFAULT_TEXT, get_res.article.text);
     assert!(get_res.article.local);
 
@@ -101,11 +105,7 @@ async fn api_test_create_duplicate_article() -> Result<()> {
     let TestData(alpha, beta, gamma) = TestData::start().await;
 
     // create article
-    let create_params = CreateArticleParams {
-        title: "Manu Chao".to_string(),
-        text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
-        summary: "create article".to_string(),
-    };
+    let create_params = create_test_article_params();
     let create_res = alpha.create_article(&create_params).await.unwrap();
     assert_eq!(create_params.title, create_res.article.title);
     assert!(create_res.article.local);
@@ -154,11 +154,7 @@ async fn api_test_synchronize_articles() -> Result<()> {
     let TestData(alpha, beta, gamma) = TestData::start().await;
 
     // create article on alpha
-    let create_params = CreateArticleParams {
-        title: "Manu Chao".to_string(),
-        text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
-        summary: "create article".to_string(),
-    };
+    let create_params = create_test_article_params();
     let create_res = alpha.create_article(&create_params).await.unwrap();
     assert_eq!(create_params.title, create_res.article.title);
     let edits = alpha
@@ -204,8 +200,7 @@ async fn api_test_synchronize_articles() -> Result<()> {
                 domain: Some(instance.domain.clone()),
                 id: None,
             };
-            let res = beta.get_article(get_article_data).await;
-            match res {
+            match beta.get_article(get_article_data).await {
                 Err(_) => Err(RetryPolicy::<String>::Retry(None)),
                 Ok(a) if a.latest_version != edit_res.latest_version => {
                     Err(RetryPolicy::Retry(None))
@@ -236,11 +231,7 @@ async fn api_test_edit_local_article() -> Result<()> {
         .unwrap();
 
     // create new article
-    let create_params = CreateArticleParams {
-        title: "Manu Chao".to_string(),
-        text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
-        summary: "create article".to_string(),
-    };
+    let create_params = create_test_article_params();
     let create_res = beta.create_article(&create_params).await.unwrap();
     assert_eq!(create_params.title, create_res.article.title);
     assert!(create_res.article.local);
@@ -305,11 +296,7 @@ async fn api_test_edit_remote_article() -> Result<()> {
         .unwrap();
 
     // create new article
-    let create_params = CreateArticleParams {
-        title: "Manu Chao".to_string(),
-        text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
-        summary: "create article".to_string(),
-    };
+    let create_params = create_test_article_params();
     let create_res = beta.create_article(&create_params).await.unwrap();
     assert_eq!(&create_params.title, &create_res.article.title);
     assert!(create_res.article.local);
@@ -385,11 +372,7 @@ async fn api_test_local_edit_conflict() -> Result<()> {
     let TestData(alpha, beta, gamma) = TestData::start().await;
 
     // create new article
-    let create_params = CreateArticleParams {
-        title: "Manu Chao".to_string(),
-        text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
-        summary: "create article".to_string(),
-    };
+    let create_params = create_test_article_params();
     let create_res = alpha.create_article(&create_params).await.unwrap();
     assert_eq!(create_params.title, create_res.article.title);
     assert!(create_res.article.local);
@@ -589,6 +572,7 @@ async fn api_test_overlapping_edits_no_conflict() -> Result<()> {
 "#
         .to_string(),
         summary: "create article".to_string(),
+        instance_id: None,
     };
     let create_res = alpha.create_article(&create_params).await.unwrap();
     assert_eq!(create_params.title, create_res.article.title);
@@ -652,11 +636,7 @@ async fn api_test_fork_article() -> Result<()> {
     let TestData(alpha, beta, gamma) = TestData::start().await;
 
     // create article
-    let create_params = CreateArticleParams {
-        title: "Manu Chao".to_string(),
-        text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
-        summary: "create article".to_string(),
-    };
+    let create_params = create_test_article_params();
     let create_res = alpha.create_article(&create_params).await.unwrap();
     let create_edits = alpha
         .get_article_edits(create_res.article.id)
@@ -747,11 +727,7 @@ async fn api_test_user_profile() -> Result<()> {
     let TestData(alpha, beta, gamma) = TestData::start().await;
 
     // Create an article and federate it, in order to federate the user who created it
-    let create_params = CreateArticleParams {
-        title: "Manu Chao".to_string(),
-        text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
-        summary: "create article".to_string(),
-    };
+    let create_params = create_test_article_params();
     let create_res = alpha.create_article(&create_params).await.unwrap();
     beta.resolve_article(create_res.article.ap_id.into())
         .await
@@ -785,11 +761,7 @@ async fn api_test_lock_article() -> Result<()> {
     let TestData(alpha, beta, gamma) = TestData::start().await;
 
     // create article
-    let create_params = CreateArticleParams {
-        title: "Manu Chao".to_string(),
-        text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
-        summary: "create article".to_string(),
-    };
+    let create_params = create_test_article_params();
     let create_res = alpha.create_article(&create_params).await.unwrap();
     assert!(!create_res.article.protected);
 
@@ -847,8 +819,7 @@ async fn api_test_synchronize_instances() -> Result<()> {
     // wait until instance collection is fetched
     let gamma_instances = RetryFuture::new(
         || async {
-            let res = gamma.list_instances().await;
-            match res {
+            match gamma.list_instances().await {
                 Err(_) => Err(RetryPolicy::<String>::Retry(None)),
                 Ok(i) if i.len() < 3 => Err(RetryPolicy::Retry(None)),
                 Ok(i) => Ok(i),
@@ -878,11 +849,7 @@ async fn api_test_remove_article() -> Result<()> {
         .unwrap();
 
     // create article
-    let create_params = CreateArticleParams {
-        title: "Manu Chao".to_string(),
-        text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
-        summary: "create article".to_string(),
-    };
+    let create_params = create_test_article_params();
     let create_res = alpha.create_article(&create_params).await.unwrap();
 
     let list_alpha = alpha.list_articles(Default::default()).await.unwrap();
@@ -956,11 +923,7 @@ async fn api_test_comment_create_edit() -> Result<()> {
         .unwrap();
 
     // create article
-    let params = CreateArticleParams {
-        title: "Manu Chao".to_string(),
-        text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
-        summary: "create article".to_string(),
-    };
+    let params = create_test_article_params();
     let alpha_article = alpha.create_article(&params).await.unwrap();
 
     // fetch article on beta and create comment
@@ -1034,11 +997,7 @@ async fn api_test_comment_delete_restore() -> Result<()> {
         .unwrap();
 
     // create article and comment
-    let params = CreateArticleParams {
-        title: "Manu Chao".to_string(),
-        text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
-        summary: "create article".to_string(),
-    };
+    let params = create_test_article_params();
     let alpha_article = alpha.create_article(&params).await.unwrap();
 
     let params = CreateCommentParams {
@@ -1091,6 +1050,47 @@ async fn api_test_comment_delete_restore() -> Result<()> {
     let beta_comments = beta.get_article(get_params).await.unwrap().comments;
     assert!(!beta_comments[0].comment.deleted);
     assert!(!beta_comments[0].comment.content.is_empty());
+
+    TestData::stop(alpha, beta, gamma)
+}
+
+#[tokio::test]
+async fn api_test_create_remote_article() -> Result<()> {
+    let TestData(alpha, beta, gamma) = TestData::start().await;
+
+    let beta_instance = alpha.follow_instance_with_resolve(&beta.hostname).await?;
+
+    // create article
+    let create_params = CreateArticleParams {
+        title: "Manu Chao".to_string(),
+        text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
+        summary: "create article".to_string(),
+        instance_id: Some(beta_instance.id),
+    };
+    let create_res = alpha.create_article(&create_params).await.unwrap();
+    assert_eq!(create_params.title, create_res.article.title);
+    assert!(!create_res.article.local);
+    // Federation is synchronous so by the time api call returns it is already federated back and
+    // not pending anymore.
+    //assert!(create_res.article.pending);
+
+    // Check article shown on beta
+    let get_article_data = GetArticleParams {
+        title: Some(create_res.article.title.clone()),
+        ..Default::default()
+    };
+    let beta_article = beta.get_article(get_article_data.clone()).await?;
+    assert!(beta_article.article.local);
+    assert_eq!(create_res.article.title, beta_article.article.title);
+    assert_eq!(create_res.article.ap_id, beta_article.article.ap_id);
+
+    // Article not pending anymore on alpha
+    let get_article_data = GetArticleParams {
+        id: Some(create_res.article.id),
+        ..Default::default()
+    };
+    let alpha_article = alpha.get_article(get_article_data.clone()).await?;
+    assert!(!alpha_article.article.pending);
 
     TestData::stop(alpha, beta, gamma)
 }

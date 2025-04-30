@@ -1,4 +1,7 @@
-use crate::utils::formatting::{article_link, edit_path, edit_time, user_link};
+use crate::{
+    Pending,
+    utils::formatting::{article_link, edit_path, edit_time, user_link},
+};
 use ibis_database::common::article::EditView;
 use leptos::{either::Either, prelude::*};
 
@@ -39,11 +42,7 @@ pub fn EditList(edits: Vec<EditView>, for_article: bool) -> impl IntoView {
                                         <a class="text-lg grow link link-primary" href=path>
                                             {edit.edit.summary}
                                         </a>
-                                        <Show when=move || edit.edit.pending>
-                                            <span class="p-1 w-min rounded border-2 border-rose-300">
-                                                Pending
-                                            </span>
-                                        </Show>
+                                        <Pending pending=edit.edit.pending />
                                     </div>
                                     <p>{second_line}</p>
                                 </div>

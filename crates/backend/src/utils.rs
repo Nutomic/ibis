@@ -34,14 +34,11 @@ pub(super) fn generate_article_version(
     Err(anyhow!("failed to generate article version").into())
 }
 
-pub(crate) fn generate_article_ap_id(
-    title: &str,
-    local_instance: &Instance,
-) -> BackendResult<DbUrl> {
+pub(crate) fn generate_article_ap_id(title: &str, instance: &Instance) -> BackendResult<DbUrl> {
     Ok(Url::parse(&format!(
         "{}://{}/article/{}",
         http_protocol_str(),
-        extract_domain(&local_instance.ap_id.clone().into()),
+        extract_domain(&instance.ap_id.clone().into()),
         title.replace(" ", "_")
     ))?
     .into())

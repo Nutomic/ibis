@@ -1,6 +1,9 @@
-use crate::utils::{
-    formatting::article_path,
-    resources::{is_admin, is_logged_in},
+use crate::{
+    Pending,
+    utils::{
+        formatting::article_path,
+        resources::{is_admin, is_logged_in},
+    },
 };
 use ibis_api_client::{
     CLIENT,
@@ -52,6 +55,7 @@ pub fn ArticleNav(
                         let ap_id = article_.article.ap_id.to_string();
                         let removed = article_.article.removed;
                         let protected = article_.article.protected;
+                        let pending = article_.article.pending;
                         let follow_article_action = Action::new(move |_: &()| async move {
                             CLIENT
                                 .follow_article(article_.article.id, !article_.following)
@@ -112,23 +116,21 @@ pub fn ArticleNav(
                                     </Show>
                                 </Suspense>
                             </div>
-                            <div class="flex flex-row place-items-center">
+                            <div class="flex flex-row place-items-center gap-2">
                                 <h1 class="flex-auto my-6 font-serif text-4xl font-bold grow">
                                     {title}
                                 </h1>
-                                <a href=ap_id class="mr-2">
+                                <Pending pending />
+                                <a href=ap_id>
                                     <Icon icon=FEDIVERSE_LOGO size="24px" />
                                 </a>
                                 <Show when=move || removed>
-                                    <span class="mr-2" title="Article was removed">
+                                    <span title="Article was removed">
                                         <Icon icon=TRASH size="24px" />
                                     </span>
                                 </Show>
                                 <Show when=move || protected>
-                                    <span
-                                        class="mr-2"
-                                        title="Article can only be edited by local admins"
-                                    >
+                                    <span title="Article can only be edited by local admins">
                                         <Icon icon=LOCK_SIMPLE size="24px" />
                                     </span>
                                 </Show>

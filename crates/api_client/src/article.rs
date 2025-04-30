@@ -30,6 +30,8 @@ pub struct CreateArticleParams {
     pub title: String,
     pub text: String,
     pub summary: String,
+    /// Instance where the new article is created (local by default)
+    pub instance_id: Option<InstanceId>,
 }
 
 #[derive(Deserialize, Serialize, Debug)]

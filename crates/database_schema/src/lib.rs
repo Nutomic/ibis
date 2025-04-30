@@ -13,6 +13,7 @@ diesel::table! {
         published -> Timestamptz,
         removed -> Bool,
         updated -> Timestamptz,
+        pending -> Bool,
     }
 }
 

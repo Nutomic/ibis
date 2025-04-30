@@ -37,3 +37,4 @@ leptos_meta.workspace = true
 leptos_router.workspace = true
 leptos-use.workspace = true
 codee.workspace = true
+itertools.workspace = true

@@ -91,6 +91,7 @@ diesel = { version = "2.2.7", default-features = false, features = [
   "uuid",
   "r2d2",
 ] }
+itertools = "0.14.0"
 
 [[workspace.metadata.leptos]]
 name = "ibis"
