@@ -117,7 +117,12 @@ impl ActivityHandler for CreateOrEditArticle {
 
     async fn receive(self, context: &Data<Self::DataType>) -> Result<(), Self::Error> {
         let article = if self.kind == CreateOrEditType::Create {
+            // remote user is creating new article on our instance
             let local_instance = Instance::read_local(context)?;
+            if !self.to.contains(&local_instance.ap_id.clone().into()) {
+                // not meant for us, ignore (not sure why this is being sent)
+                return Ok(());
+            }
             if self.object.object.inner().domain() != local_instance.ap_id.0.domain() {
                 return Err(anyhow!("Invalid article ap id").into());
             }

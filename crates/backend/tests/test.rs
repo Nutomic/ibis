@@ -6,15 +6,21 @@ use crate::common::{TEST_ARTICLE_DEFAULT_TEXT, TestData};
 use anyhow::Result;
 use ibis_api_client::{
     article::{
-        CreateArticleParams, EditArticleParams, ForkArticleParams, GetArticleParams,
-        ListArticlesParams, ProtectArticleParams,
+        CreateArticleParams,
+        EditArticleParams,
+        ForkArticleParams,
+        GetArticleParams,
+        ListArticlesParams,
+        ProtectArticleParams,
     },
     comment::{CreateCommentParams, EditCommentParams},
     instance::SearchArticleParams,
     user::{GetUserParams, LoginUserParams, RegisterUserParams},
 };
 use ibis_database::common::{
-    article::ArticleView, notifications::ApiNotificationData, utils::extract_domain,
+    article::ArticleView,
+    notifications::ApiNotificationData,
+    utils::extract_domain,
 };
 use pretty_assertions::assert_eq;
 use retry_future::{LinearRetryStrategy, RetryFuture, RetryPolicy};
@@ -1073,8 +1079,7 @@ async fn api_test_create_remote_article() -> Result<()> {
         title: Some(create_res.article.title.clone()),
         ..Default::default()
     };
-    let beta_article = beta.get_article(get_article_data.clone())
-    .await?;
+    let beta_article = beta.get_article(get_article_data.clone()).await?;
     assert!(beta_article.article.local);
     assert_eq!(create_res.article.title, beta_article.article.title);
     assert_eq!(create_res.article.ap_id, beta_article.article.ap_id);
@@ -1084,8 +1089,7 @@ async fn api_test_create_remote_article() -> Result<()> {
         id: Some(create_res.article.id),
         ..Default::default()
     };
-    let alpha_article =  alpha.get_article(get_article_data.clone())
-    .await?;
+    let alpha_article = alpha.get_article(get_article_data.clone()).await?;
     assert!(!alpha_article.article.pending);
 
     TestData::stop(alpha, beta, gamma)

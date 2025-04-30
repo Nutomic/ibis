@@ -12,8 +12,15 @@ use crate::{
 };
 use chrono::{DateTime, Utc};
 use diesel::{
-    AsChangeset, BoolExpressionMethods, ExpressionMethods, Insertable, JoinOnDsl,
-    NullableExpressionMethods, PgTextExpressionMethods, QueryDsl, RunQueryDsl,
+    AsChangeset,
+    BoolExpressionMethods,
+    ExpressionMethods,
+    Insertable,
+    JoinOnDsl,
+    NullableExpressionMethods,
+    PgTextExpressionMethods,
+    QueryDsl,
+    RunQueryDsl,
     dsl::{delete, max, not, now},
     insert_into,
 };

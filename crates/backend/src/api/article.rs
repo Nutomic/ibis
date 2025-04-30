@@ -8,17 +8,31 @@ use chrono::Utc;
 use diffy::{Patch, apply, create_patch, merge};
 use ibis_api_client::{
     article::{
-        CreateArticleParams, DeleteConflictParams, EditArticleParams, FollowArticleParams,
-        ForkArticleParams, GetArticleParams, GetConflictParams, ListArticlesParams,
-        ProtectArticleParams, RemoveArticleParams,
+        CreateArticleParams,
+        DeleteConflictParams,
+        EditArticleParams,
+        FollowArticleParams,
+        ForkArticleParams,
+        GetArticleParams,
+        GetConflictParams,
+        ListArticlesParams,
+        ProtectArticleParams,
+        RemoveArticleParams,
     },
     instance::SearchArticleParams,
 };
 use ibis_database::{
     common::{
-        ResolveObjectParams, SuccessResponse,
+        ResolveObjectParams,
+        SuccessResponse,
         article::{
-            ApiConflict, Article, ArticleView, Conflict, Edit, EditVersion, can_edit_article,
+            ApiConflict,
+            Article,
+            ArticleView,
+            Conflict,
+            Edit,
+            EditVersion,
+            can_edit_article,
         },
         instance::Instance,
         user::Person,
@@ -29,7 +43,8 @@ use ibis_database::{
 use ibis_federate::{
     activities::{
         article::{
-            remove_article::RemoveArticle, undo_remove_article::UndoRemoveArticle,
+            remove_article::RemoveArticle,
+            undo_remove_article::UndoRemoveArticle,
             update_article::UpdateArticle,
         },
         submit_article_update,
