@@ -47,6 +47,7 @@ impl Instance {
 #[cfg_attr(feature = "ssr", derive(Queryable))]
 pub struct InstanceView {
     pub instance: Instance,
+    pub articles: Vec<Article>,
     pub following: bool,
 }
 
@@ -55,12 +56,6 @@ pub struct InstanceView {
 pub struct InstanceFollow {
     pub instance: Instance,
     pub pending: bool,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
-pub struct InstanceWithArticles {
-    pub instance: Instance,
-    pub articles: Vec<Article>,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, SmartDefault)]

@@ -4,6 +4,7 @@ use activitypub_federation::{config::Data, fetch::object_id::ObjectId};
 use anyhow::anyhow;
 use axum::{Form, Json, extract::Query};
 use axum_macros::debug_handler;
+use chrono::Utc;
 use diffy::{Patch, apply, create_patch, merge};
 use ibis_api_client::{
     article::{
@@ -72,6 +73,7 @@ pub(crate) async fn create_article(
         instance_id: local_instance.id,
         local: true,
         protected: false,
+        updated: Utc::now(),
     };
     let article = Article::create(form, user.person.id, &context).await?;
 
@@ -227,6 +229,7 @@ pub(crate) async fn fork_article(
         instance_id: local_instance.id,
         local: true,
         protected: false,
+        updated: Utc::now(),
     };
     let article = Article::create(form, user.person.id, &context).await?;
 

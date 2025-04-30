@@ -2,7 +2,7 @@ use chrono::{DateTime, Local, Utc};
 use ibis_database::common::{
     article::{Article, Edit},
     comment::Comment,
-    instance::Instance,
+    instance::{Instance, InstanceView},
     user::Person,
     utils::extract_domain,
 };
@@ -79,11 +79,18 @@ pub fn instance_title(instance: &Instance) -> String {
     instance.name.clone().unwrap_or(instance.domain.clone())
 }
 
-pub fn instance_updated(instance: &Instance) -> String {
-    if instance.local {
+pub fn instance_updated(instance: &InstanceView) -> String {
+    if instance.instance.local {
         "Local".to_string()
     } else {
-        format!("Updated {}", time_ago(instance.last_refreshed_at))
+        // Get time of most recent edit, or fallback to last federation time
+        let edited = instance
+            .articles
+            .iter()
+            .map(|a| a.updated)
+            .max()
+            .unwrap_or(instance.instance.last_refreshed_at);
+        format!("Edited {}", time_ago(edited))
     }
 }
 

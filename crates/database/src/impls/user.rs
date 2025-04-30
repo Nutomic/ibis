@@ -165,11 +165,12 @@ impl Person {
         id_: PersonId,
         context: &IbisContext,
     ) -> BackendResult<Vec<InstanceFollow>> {
-        use instance_follow::dsl::{follower_id, instance_id};
+        use instance_follow::dsl::{follower_id, instance_id, pending};
         let mut conn = context.db_pool.get()?;
         Ok(instance_follow::table
             .inner_join(instance::table.on(instance_id.eq(instance::dsl::id)))
             .filter(follower_id.eq(id_))
+            .filter(pending.eq(false))
             .select((instance::all_columns, instance_follow::pending))
             .get_results(conn.deref_mut())?)
     }

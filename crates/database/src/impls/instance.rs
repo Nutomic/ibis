@@ -1,7 +1,7 @@
 use crate::{
     DbUrl,
     common::{
-        instance::{Instance, InstanceView, InstanceWithArticles},
+        instance::{Instance, InstanceView},
         newtypes::{CommentId, InstanceId, PersonId},
         user::Person,
     },
@@ -91,7 +91,10 @@ impl Instance {
         let mut conn = context.db_pool.get()?;
         let mut query = instance::table
             .left_join(
-                instance_follow::table.on(instance_follow::follower_id.nullable().eq(person_id)),
+                instance_follow::table.on(instance_follow::follower_id
+                    .nullable()
+                    .eq(person_id)
+                    .and(instance_follow::instance_id.eq(instance::id))),
             )
             .into_boxed();
         query = match params {
@@ -105,8 +108,19 @@ impl Instance {
             ))
             .get_result::<(Instance, Option<bool>)>(conn.deref_mut())?;
 
+        let articles = article::table
+            .filter(article::instance_id.eq(instance.id))
+            .inner_join(edit::table)
+            .filter(not(article::removed))
+            .group_by(article::id)
+            .order_by((article::local.desc(), max(edit::published).desc()))
+            .limit(5)
+            .select(article::all_columns)
+            .get_results(conn.deref_mut())?;
+
         Ok(InstanceView {
             instance,
+            articles,
             following: following.unwrap_or_default(),
         })
     }
@@ -174,7 +188,7 @@ impl Instance {
             .get_results(conn.deref_mut())?)
     }
 
-    pub fn list_with_articles(context: &IbisContext) -> BackendResult<Vec<InstanceWithArticles>> {
+    pub fn list_with_articles(context: &IbisContext) -> BackendResult<Vec<InstanceView>> {
         let mut conn = context.db_pool.get()?;
         // select all instances, with most recently edited first (pending edits are ignored)
         let instances = instance::table
@@ -199,7 +213,11 @@ impl Instance {
                 .limit(5)
                 .select(article::all_columns)
                 .get_results(conn.deref_mut())?;
-            res.push(InstanceWithArticles { instance, articles });
+            res.push(InstanceView {
+                instance,
+                articles,
+                following: false,
+            });
         }
 
         Ok(res)

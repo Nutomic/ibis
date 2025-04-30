@@ -12,6 +12,7 @@ diesel::table! {
         protected -> Bool,
         published -> Timestamptz,
         removed -> Bool,
+        updated -> Timestamptz,
     }
 }
 

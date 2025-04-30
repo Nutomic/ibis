@@ -8,7 +8,8 @@ use ibis_database::{
     common::{
         ResolveObjectParams,
         SuccessResponse,
-        instance::{Instance, InstanceView, InstanceWithArticles},
+        instance::{Instance, InstanceView},
+        user::Person,
         utils::http_protocol_str,
     },
     error::BackendResult,
@@ -103,13 +104,14 @@ pub(super) async fn resolve_instance(
 
 #[debug_handler]
 pub(crate) async fn list_instance_views(
+    user: Option<UserExt>,
     context: Data<IbisContext>,
-) -> BackendResult<Json<Vec<InstanceWithArticles>>> {
-    let instances = if cfg!(debug_assertions) {
+) -> BackendResult<Json<Vec<InstanceView>>> {
+    let mut instances = if cfg!(debug_assertions) {
         Instance::list_with_articles(&context)?
     } else {
         // Cache result of the db read in prod because it uses a lot of queries and rarely changes
-        static CACHE: LazyLock<Cache<(), Vec<InstanceWithArticles>>> = LazyLock::new(|| {
+        static CACHE: LazyLock<Cache<(), Vec<InstanceView>>> = LazyLock::new(|| {
             Cache::builder()
                 .max_capacity(1)
                 .time_to_live(Duration::from_secs(60 * 60))
@@ -119,5 +121,18 @@ pub(crate) async fn list_instance_views(
             .try_get_with((), || Instance::list_with_articles(&context))
             .map_err(|e| anyhow!(e))?
     };
+
+    // Manually update follow info so the main data can be cached
+    if let Some(user) = user {
+        let following = Person::read_following(user.person.id, &context)?
+            .iter()
+            .map(|i| i.instance.id)
+            .collect::<Vec<_>>();
+        for i in &mut instances {
+            if following.contains(&i.instance.id) {
+                i.following = true;
+            }
+        }
+    }
     Ok(Json(instances))
 }

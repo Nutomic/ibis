@@ -50,7 +50,7 @@ pub fn InstanceDetails() -> impl IntoView {
                             <div class="grid gap-3 mt-4">
                                 <div class="flex flex-row items-center">
                                     <h1 class="w-full font-serif text-4xl font-bold">{title}</h1>
-                                    {instance_updated(&instance_.instance)}
+                                    {instance_updated(&instance_)}
                                     <InstanceFollowButton instance=instance />
                                 </div>
 

@@ -14,7 +14,7 @@ use activitypub_federation::{
     traits::{ActivityHandler, Object},
 };
 use ibis_database::{
-    common::{instance::Instance, user::Person},
+    common::user::Person,
     error::{BackendError, BackendResult},
     impls::IbisContext,
 };
@@ -82,14 +82,7 @@ impl ActivityHandler for UpdateArticle {
         Ok(())
     }
 
-    async fn receive(self, context: &Data<Self::DataType>) -> Result<(), Self::Error> {
-        let article = ArticleWrapper::from_json(self.object.clone(), context).await?;
-        if article.local {
-            let local_instance: InstanceWrapper = Instance::read_local(context)?.into();
-            local_instance
-                .send_to_followers(self, vec![], context)
-                .await?;
-        }
+    async fn receive(self, _context: &Data<Self::DataType>) -> Result<(), Self::Error> {
         Ok(())
     }
 }

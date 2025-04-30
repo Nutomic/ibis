@@ -3,7 +3,7 @@ use ibis_api_client::{
     CLIENT,
     errors::{FrontendResult, FrontendResultExt},
 };
-use ibis_database::common::{article::Article, instance::InstanceWithArticles};
+use ibis_database::common::{article::Article, instance::InstanceView};
 use ibis_frontend_components::{
     suspense_error::SuspenseError,
     utils::formatting::{article_link, instance_title_with_domain, instance_updated},
@@ -42,7 +42,7 @@ pub fn Explore() -> impl IntoView {
     }
 }
 
-pub fn instance_card(i: InstanceWithArticles) -> impl IntoView {
+pub fn instance_card(i: InstanceView) -> impl IntoView {
     view! {
         <li>
             <div class="my-4 shadow card bg-base-100">
@@ -51,7 +51,7 @@ pub fn instance_card(i: InstanceWithArticles) -> impl IntoView {
                         <a class="card-title grow" href=format!("/instance/{}", i.instance.domain)>
                             {instance_title_with_domain(&i.instance)}
                         </a>
-                        {instance_updated(&i.instance)}
+                        {instance_updated(&i)}
                     </div>
                     <p>{i.instance.topic.clone()}</p>
                     <div class="flex flex-col text-base/5">
@@ -70,9 +70,7 @@ pub fn instance_card(i: InstanceWithArticles) -> impl IntoView {
 }
 
 #[component]
-fn ConnectView(
-    res: Resource<FrontendResult<Vec<InstanceWithArticles>>, JsonSerdeCodec>,
-) -> impl IntoView {
+fn ConnectView(res: Resource<FrontendResult<Vec<InstanceView>>, JsonSerdeCodec>) -> impl IntoView {
     let connect_ibis_wiki = Action::new(move |_: &()| async move {
         CLIENT
             .resolve_instance(Url::parse("https://ibis.wiki").expect("parse ibis.wiki url"))

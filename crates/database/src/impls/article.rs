@@ -10,6 +10,7 @@ use crate::{
     error::BackendResult,
     impls::IbisContext,
 };
+use chrono::{DateTime, Utc};
 use diesel::{
     AsChangeset,
     BoolExpressionMethods,
@@ -20,7 +21,7 @@ use diesel::{
     PgTextExpressionMethods,
     QueryDsl,
     RunQueryDsl,
-    dsl::{delete, max, not},
+    dsl::{delete, max, not, now},
     insert_into,
 };
 use ibis_database_schema::{article, article_follow, edit, instance};
@@ -36,6 +37,7 @@ pub struct DbArticleForm {
     pub instance_id: InstanceId,
     pub local: bool,
     pub protected: bool,
+    pub updated: DateTime<Utc>,
 }
 
 #[derive(Debug)]
@@ -87,7 +89,7 @@ impl Article {
     pub fn update_text(id: ArticleId, text: &str, context: &IbisContext) -> BackendResult<Self> {
         let mut conn = context.db_pool.get()?;
         Ok(diesel::update(article::dsl::article.find(id))
-            .set(article::dsl::text.eq(text))
+            .set((article::dsl::text.eq(text), article::dsl::updated.eq(now)))
             .get_result(conn.deref_mut())?)
     }
 

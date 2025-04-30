@@ -57,6 +57,7 @@ pub struct Article {
     pub protected: bool,
     pub published: DateTime<Utc>,
     pub removed: bool,
+    pub updated: DateTime<Utc>,
 }
 
 impl Article {

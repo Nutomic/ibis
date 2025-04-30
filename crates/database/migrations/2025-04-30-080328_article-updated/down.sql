@@ -1,0 +1,1 @@
+alter table article drop column updated;

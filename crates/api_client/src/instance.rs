@@ -5,7 +5,7 @@ use ibis_database::common::{
     ResolveObjectParams,
     SuccessResponse,
     article::Article,
-    instance::{Instance, InstanceView, InstanceWithArticles, SiteView},
+    instance::{Instance, InstanceView, SiteView},
     newtypes::InstanceId,
 };
 use serde::{Deserialize, Serialize};
@@ -39,7 +39,7 @@ impl ApiClient {
         self.get("/api/v1/instance", Some(&params)).await
     }
 
-    pub async fn list_instances(&self) -> FrontendResult<Vec<InstanceWithArticles>> {
+    pub async fn list_instances(&self) -> FrontendResult<Vec<InstanceView>> {
         self.get("/api/v1/instance/list", None::<i32>).await
     }
 

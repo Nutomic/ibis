@@ -16,6 +16,7 @@ use activitypub_federation::{
     traits::Object,
 };
 use anyhow::anyhow;
+use chrono::{DateTime, Utc};
 use ibis_database::{
     common::{
         article::{Article, EditVersion},
@@ -52,6 +53,8 @@ pub struct ApubArticle {
     pub(crate) media_type: Option<MediaTypeMarkdownOrHtml>,
     #[serde(deserialize_with = "deserialize_skip_error", default)]
     pub(crate) source: Option<Source>,
+    published: Option<DateTime<Utc>>,
+    updated: Option<DateTime<Utc>>,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
@@ -102,6 +105,8 @@ impl Object for ArticleWrapper {
             protected: self.protected,
             media_type: Some(MediaTypeMarkdownOrHtml::Html),
             source: Some(Source::new(self.text.clone())),
+            published: Some(self.published),
+            updated: Some(self.updated),
         })
     }
 
@@ -138,6 +143,7 @@ impl Object for ArticleWrapper {
             local: false,
             instance_id: instance.id,
             protected: json.protected,
+            updated: json.updated.or(json.published).unwrap_or_default(),
         };
         validate_article_title(&form.title)?;
         let article = Article::create_or_update(form, context)?;
