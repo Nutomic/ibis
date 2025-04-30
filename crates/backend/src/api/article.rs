@@ -64,7 +64,10 @@ pub(crate) async fn create_article(
     validate_article_title(&params.title)?;
     validate_not_empty(&params.text)?;
 
-    let instance = Instance::read(params.instance_id, &context)?;
+    let instance = match params.instance_id {
+        Some(id) => Instance::read(id, &context)?,
+        None => Instance::read_local(&context)?,
+    };
     let ap_id = generate_article_ap_id(&params.title, &instance)?;
     let form = DbArticleForm {
         title: params.title,

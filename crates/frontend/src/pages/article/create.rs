@@ -41,7 +41,7 @@ pub fn CreateArticle() -> impl IntoView {
                 title: title.clone(),
                 text: text.clone(),
                 summary: summary.clone(),
-                instance_id: InstanceId(instance_id.clone().parse().unwrap_or(1)),
+                instance_id: Some(InstanceId(instance_id.clone().parse().unwrap_or(1))),
             };
             async move {
                 set_wait_for_response.update(|w| *w = true);
