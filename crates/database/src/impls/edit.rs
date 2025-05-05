@@ -70,7 +70,11 @@ impl DbEditForm {
 }
 
 impl Edit {
-    pub async fn create(form: &DbEditForm, context: &IbisContext) -> BackendResult<Self> {
+    pub async fn create(
+        form: &DbEditForm,
+        notify: bool,
+        context: &IbisContext,
+    ) -> BackendResult<Self> {
         let mut conn = context.db_pool.get()?;
         let edit: Edit = insert_into(edit::table)
             .values(form)
@@ -79,7 +83,9 @@ impl Edit {
             .set(form)
             .get_result(conn.deref_mut())?;
 
-        Notification::notify_edit(&edit, context).await?;
+        if !notify {
+            Notification::notify_edit(&edit, context).await?;
+        }
         Ok(edit)
     }
 
