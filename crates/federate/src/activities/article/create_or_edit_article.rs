@@ -143,7 +143,8 @@ impl ActivityHandler for CreateOrEditArticle {
                 updated: Utc::now(),
                 pending: false,
             };
-            Article::create_or_update(form, context)?
+            let creator = self.actor.dereference(context).await?;
+            Article::create_or_update(form, creator.id, context).await?
         } else {
             Article::read_from_ap_id(&self.object.object.clone().into(), context)?
         };

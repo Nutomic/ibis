@@ -147,7 +147,8 @@ impl Object for ArticleWrapper {
             pending: false,
         };
         validate_article_title(&form.title)?;
-        let article = Article::create_or_update(form, context)?;
+        let creator = json.attributed_to.dereference(context).await?;
+        let article = Article::create_or_update(form, creator.id, context).await?;
 
         let mut edits = json.edits.dereference(&article, context).await?.0;
         edits.sort_by_key(|e| Reverse(e.published));

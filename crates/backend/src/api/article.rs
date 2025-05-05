@@ -256,7 +256,7 @@ pub(crate) async fn fork_article(
             published: e.published,
             pending: false,
         };
-        Edit::create(&form, true, &context).await?;
+        Edit::create(&form, false, &context).await?;
     }
 
     Article::follow(article.id, &user, &context)?;

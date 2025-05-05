@@ -77,14 +77,20 @@ impl Article {
         Ok(article)
     }
 
-    pub fn create_or_update(form: DbArticleForm, context: &IbisContext) -> BackendResult<Self> {
+    pub async fn create_or_update(
+        form: DbArticleForm,
+        creator_id: PersonId,
+        context: &IbisContext,
+    ) -> BackendResult<Self> {
         let mut conn = context.db_pool.get()?;
-        Ok(insert_into(article::table)
+        let article = insert_into(article::table)
             .values(&form)
             .on_conflict(article::dsl::ap_id)
             .do_update()
             .set(&form)
-            .get_result(conn.deref_mut())?)
+            .get_result(conn.deref_mut())?;
+        Notification::notify_article(&article, creator_id, context).await?;
+        Ok(article)
     }
 
     pub fn update_text(id: ArticleId, text: &str, context: &IbisContext) -> BackendResult<Self> {
