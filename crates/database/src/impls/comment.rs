@@ -1,4 +1,4 @@
-use super::notifications::Notification;
+use super::{is_conflict, notifications::Notification};
 use crate::{
     DbUrl,
     common::{
@@ -14,6 +14,7 @@ use diesel::{
     AsChangeset,
     ExpressionMethods,
     Insertable,
+    NullableExpressionMethods,
     QueryDsl,
     RunQueryDsl,
     dsl::insert_into,
@@ -47,17 +48,24 @@ pub struct DbCommentUpdateForm {
 }
 
 impl Comment {
-    pub async fn create(form: DbCommentInsertForm, context: &IbisContext) -> BackendResult<Self> {
+    pub async fn create_or_update(
+        form: DbCommentInsertForm,
+        context: &IbisContext,
+    ) -> BackendResult<Self> {
         let mut conn = context.db_pool.get()?;
-        let comment: Comment = insert_into(comment::table)
+        let comment = insert_into(comment::table)
             .values(&form)
-            .on_conflict(comment::dsl::ap_id)
-            .do_update()
-            .set(&form)
-            .get_result(conn.deref_mut())?;
-
-        Notification::notify_comment(&comment, context).await?;
-        Ok(comment)
+            .get_result::<Self>(conn.deref_mut());
+        Ok(if is_conflict(&comment) {
+            update(comment::table)
+                .filter(comment::ap_id.nullable().eq(form.ap_id.clone()))
+                .set(form)
+                .get_result::<Self>(conn.deref_mut())?
+        } else {
+            let c = comment?;
+            Notification::notify_comment(&c, context).await?;
+            c
+        })
     }
 
     pub fn update(

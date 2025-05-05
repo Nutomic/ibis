@@ -41,7 +41,7 @@ pub async fn submit_article_update(
 
     // insert edit to remote instance as pending, so only the creator can see it
     form.pending = !article.local;
-    let edit = Edit::create(&form, true, context).await?;
+    let edit = Edit::create_or_update(&form, true, context).await?;
 
     let local_instance: InstanceWrapper = Instance::read_local(context)?.into();
     let article_instance: InstanceWrapper = Instance::read(article.instance_id, context)?.into();

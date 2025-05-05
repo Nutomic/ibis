@@ -1,4 +1,4 @@
-use super::notifications::Notification;
+use super::{is_conflict, notifications::Notification};
 use crate::{
     DbUrl,
     common::{
@@ -21,7 +21,7 @@ use diesel::{
     PgTextExpressionMethods,
     QueryDsl,
     RunQueryDsl,
-    dsl::{delete, max, not, now},
+    dsl::{delete, max, not, now, update},
     insert_into,
 };
 use ibis_database_schema::{article, article_follow, edit, instance};
@@ -71,7 +71,7 @@ impl Article {
         let mut conn = context.db_pool.get()?;
         let article = insert_into(article::table)
             .values(form)
-            .get_result(conn.deref_mut())?;
+            .get_result::<Self>(conn.deref_mut())?;
 
         Notification::notify_article(&article, creator_id, context).await?;
         Ok(article)
@@ -85,12 +85,17 @@ impl Article {
         let mut conn = context.db_pool.get()?;
         let article = insert_into(article::table)
             .values(&form)
-            .on_conflict(article::dsl::ap_id)
-            .do_update()
-            .set(&form)
-            .get_result(conn.deref_mut())?;
-        Notification::notify_article(&article, creator_id, context).await?;
-        Ok(article)
+            .get_result::<Self>(conn.deref_mut());
+        Ok(if is_conflict(&article) {
+            update(article::table)
+                .filter(article::ap_id.eq(form.ap_id.clone()))
+                .set(form)
+                .get_result::<Self>(conn.deref_mut())?
+        } else {
+            let a = article?;
+            Notification::notify_article(&a, creator_id, context).await?;
+            a
+        })
     }
 
     pub fn update_text(id: ArticleId, text: &str, context: &IbisContext) -> BackendResult<Self> {

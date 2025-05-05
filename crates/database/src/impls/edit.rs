@@ -1,4 +1,4 @@
-use super::notifications::Notification;
+use super::{is_conflict, notifications::Notification};
 use crate::{
     DbUrl,
     common::{
@@ -17,7 +17,7 @@ use diesel::{
     Insertable,
     QueryDsl,
     RunQueryDsl,
-    dsl::not,
+    dsl::{not, update},
     insert_into,
 };
 use diffy::create_patch;
@@ -70,23 +70,27 @@ impl DbEditForm {
 }
 
 impl Edit {
-    pub async fn create(
+    pub async fn create_or_update(
         form: &DbEditForm,
         notify: bool,
         context: &IbisContext,
     ) -> BackendResult<Self> {
         let mut conn = context.db_pool.get()?;
-        let edit: Edit = insert_into(edit::table)
+        let edit = insert_into(edit::table)
             .values(form)
-            .on_conflict(edit::dsl::ap_id)
-            .do_update()
-            .set(form)
-            .get_result(conn.deref_mut())?;
-
-        if !notify {
-            Notification::notify_edit(&edit, context).await?;
-        }
-        Ok(edit)
+            .get_result::<Edit>(conn.deref_mut());
+        Ok(if is_conflict(&edit) {
+            update(edit::table)
+                .filter(edit::ap_id.eq(form.ap_id.clone()))
+                .set(form)
+                .get_result::<Self>(conn.deref_mut())?
+        } else {
+            let e = edit?;
+            if notify {
+                Notification::notify_edit(&e, context).await?;
+            }
+            e
+        })
     }
 
     pub fn read(version: &EditVersion, context: &IbisContext) -> BackendResult<Self> {

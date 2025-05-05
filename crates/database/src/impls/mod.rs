@@ -5,6 +5,7 @@ use diesel::{
     RunQueryDsl,
     define_sql_function,
     r2d2::{ConnectionManager, Pool},
+    result::{DatabaseErrorKind, Error},
     sql_types,
 };
 use diesel_migrations::{EmbeddedMigrations, MigrationHarness, embed_migrations};
@@ -70,3 +71,11 @@ pub fn read_jwt_secret(context: &IbisContext) -> BackendResult<String> {
 define_sql_function!(fn lower(x: sql_types::Text) -> sql_types::Text);
 
 define_sql_function!(fn coalesce<T: sql_types::SqlType + sql_types::SingleValue>(x: sql_types::Nullable<T>, y: T) -> T);
+
+/// Need to handle conflicts manually to avoid duplicate notifications
+fn is_conflict<T>(val: &Result<T, Error>) -> bool {
+    matches!(
+        val.as_ref().err(),
+        Some(Error::DatabaseError(DatabaseErrorKind::UniqueViolation, _))
+    )
+}
