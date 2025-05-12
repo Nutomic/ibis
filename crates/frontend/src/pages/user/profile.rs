@@ -36,7 +36,7 @@ pub fn UserProfile() -> impl IntoView {
                             </h1>
 
                             <div
-                                class="mb-2 max-w-full prose prose-slate"
+                                class="mb-2 max-w-full prose prose-slate text-ellipsis overflow-x-hidden"
                                 inner_html=render_article_markdown(&person.bio.unwrap_or_default())
                             ></div>
 

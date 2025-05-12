@@ -22,7 +22,10 @@ pub fn ReadArticle() -> impl IntoView {
                 if let Ok(markdown) = markdown {
                     Either::Right(
                         view! {
-                            <div class="max-w-full prose prose-slate" inner_html=markdown></div>
+                            <div
+                                class="max-w-full prose prose-slate text-ellipsis overflow-x-hidden"
+                                inner_html=markdown
+                            ></div>
                         },
                     )
                 } else {

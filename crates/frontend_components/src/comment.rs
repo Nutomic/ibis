@@ -87,7 +87,10 @@ pub fn CommentView(
                         }
                     }
                 >
-                    <div class="mt-2 max-w-full prose prose-slate" inner_html=render_comment></div>
+                    <div
+                        class="mt-2 max-w-full prose prose-slate text-ellipsis overflow-x-hidden"
+                        inner_html=render_comment
+                    ></div>
                     <div class="grid grid-cols-5 grid-rows-1 gap-2 w-fit text-s">
                         <Show when=move || !comment.comment.deleted>
                             <a

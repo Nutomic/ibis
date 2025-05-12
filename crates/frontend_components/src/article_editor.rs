@@ -31,7 +31,7 @@ pub fn EditorView(
                 <Show when=move || { show_preview.get() }>
                     <div class="md:hidden divider"></div>
                     <div
-                        class="py-2 text-base prose prose-slate basis-6/12 max-sm:px-2 md:ms-4"
+                        class="py-2 text-base prose prose-slate basis-6/12 text-ellipsis overflow-x-hidden max-sm:px-2 md:ms-4"
                         inner_html=move || preview.get()
                     ></div>
                 </Show>
