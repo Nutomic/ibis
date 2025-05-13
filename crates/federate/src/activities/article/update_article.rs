@@ -1,10 +1,12 @@
 use crate::{
+    activities::announce::AnnounceActivity,
     generate_activity_id,
     objects::{
         article::{ApubArticle, ArticleWrapper},
-        instance::InstanceWrapper,
         user::PersonWrapper,
     },
+    routes::AnnouncableActivities,
+    send_ibis_activity,
 };
 use activitypub_federation::{
     config::Data,
@@ -14,7 +16,7 @@ use activitypub_federation::{
     traits::{ActivityHandler, Object},
 };
 use ibis_database::{
-    common::{instance::Instance, user::Person},
+    common::user::Person,
     error::{BackendError, BackendResult},
     impls::IbisContext,
 };
@@ -53,15 +55,9 @@ impl UpdateArticle {
         })
     }
 
-    pub async fn send(
-        article: ArticleWrapper,
-        local_instance: &InstanceWrapper,
-        context: &Data<IbisContext>,
-    ) -> BackendResult<()> {
+    pub async fn send(article: ArticleWrapper, context: &Data<IbisContext>) -> BackendResult<()> {
         let update = Self::new(article, context).await?;
-        local_instance
-            .send_to_followers(update, vec![], context)
-            .await?;
+        Self::send_update(update, context).await?;
         Ok(())
     }
 }
@@ -86,12 +82,23 @@ impl ActivityHandler for UpdateArticle {
         let article = ArticleWrapper::from_json(self.object.clone(), context).await?;
 
         if article.local {
-            let local_instance: InstanceWrapper = Instance::read_local(context)?.into();
-
-            local_instance
-                .send_to_followers(self, vec![], context)
-                .await?;
+            Self::send_update(self, context).await?;
         }
+        Ok(())
+    }
+}
+
+impl UpdateArticle {
+    async fn send_update(self, context: &Data<IbisContext>) -> BackendResult<()> {
+        let actor: PersonWrapper = Person::wikibot(context)?.into();
+        let inboxes: Vec<_> = Person::read_followers(actor.id, context)?
+            .iter()
+            .map(|f| f.inbox_url())
+            .collect();
+        send_ibis_activity(&actor, self.clone(), inboxes, context).await?;
+
+        let announce = AnnouncableActivities::UpdateArticle(self);
+        AnnounceActivity::send(announce, context).await?;
         Ok(())
     }
 }

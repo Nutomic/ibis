@@ -165,8 +165,7 @@ impl ActivityHandler for CreateOrEditArticle {
                 if article.local {
                     AnnounceActivity::send(AnnouncableActivities::EditArticle(self), context)
                         .await?;
-                    let local_instance: InstanceWrapper = Instance::read_local(context)?.into();
-                    UpdateArticle::send(article.into(), &local_instance, context).await?;
+                    UpdateArticle::send(article.into(), context).await?;
                 }
             }
             Err(_e) if article.local => {

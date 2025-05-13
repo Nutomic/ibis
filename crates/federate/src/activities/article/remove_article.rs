@@ -1,6 +1,7 @@
 use crate::{
+    activities::announce::AnnounceActivity,
     generate_activity_id,
-    objects::{article::ArticleWrapper, instance::InstanceWrapper, user::PersonWrapper},
+    objects::{article::ArticleWrapper, user::PersonWrapper},
     routes::AnnouncableActivities,
 };
 use activitypub_federation::{
@@ -11,7 +12,7 @@ use activitypub_federation::{
     traits::ActivityHandler,
 };
 use ibis_database::{
-    common::{article::Article, instance::Instance},
+    common::article::Article,
     error::{BackendError, BackendResult},
     impls::IbisContext,
 };
@@ -54,12 +55,9 @@ impl RemoveArticle {
         article: ArticleWrapper,
         context: &Data<IbisContext>,
     ) -> BackendResult<()> {
-        let local_instance: InstanceWrapper = Instance::read_local(context)?.into();
         let remove = Self::new(actor, article, context)?;
         let announce = AnnouncableActivities::RemoveArticle(remove);
-        local_instance
-            .send_to_followers(announce, vec![], context)
-            .await?;
+        AnnounceActivity::send(announce, context).await?;
         Ok(())
     }
 }

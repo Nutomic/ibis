@@ -261,7 +261,7 @@ pub(crate) async fn fork_article(
 
     Article::follow(article.id, &user, &context)?;
 
-    UpdateArticle::send(article.clone().into(), &local_instance.into(), &context).await?;
+    UpdateArticle::send(article.clone().into(), &context).await?;
 
     Ok(Json(Article::read_view(article.id, Some(&user), &context)?))
 }

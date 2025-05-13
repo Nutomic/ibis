@@ -1,10 +1,7 @@
 use super::Endpoints;
-use crate::{
-    collections::{
-        articles_collection::ArticleCollection,
-        instance_collection::InstanceCollection,
-    },
-    send_ibis_activity,
+use crate::collections::{
+    articles_collection::ArticleCollection,
+    instance_collection::InstanceCollection,
 };
 use activitypub_federation::{
     config::Data,
@@ -14,7 +11,7 @@ use activitypub_federation::{
         public_key::PublicKey,
         verification::{verify_domains_match, verify_is_remote_object},
     },
-    traits::{ActivityHandler, Actor, Object},
+    traits::{Actor, Object},
 };
 use chrono::{DateTime, Utc};
 use ibis_database::{
@@ -74,26 +71,6 @@ impl InstanceWrapper {
     pub fn followers_url(&self) -> BackendResult<Url> {
         let followers_url = format!("{}followers", &self.ap_id);
         Ok(followers_url.parse()?)
-    }
-
-    pub async fn send_to_followers<Activity>(
-        &self,
-        activity: Activity,
-        extra_recipients: Vec<InstanceWrapper>,
-        context: &Data<IbisContext>,
-    ) -> Result<(), <Activity as ActivityHandler>::Error>
-    where
-        Activity: ActivityHandler + Serialize + Debug + Send + Sync,
-        <Activity as ActivityHandler>::Error: From<activitypub_federation::error::Error>,
-        <Activity as ActivityHandler>::Error: From<BackendError>,
-    {
-        let mut inboxes: Vec<_> = Instance::read_followers(self.id, context)?
-            .iter()
-            .map(|f| f.inbox_url())
-            .collect();
-        inboxes.extend(extra_recipients.into_iter().map(|i| i.inbox_url()));
-        send_ibis_activity(self, activity, inboxes, context).await?;
-        Ok(())
     }
 }
 

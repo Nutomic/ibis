@@ -43,7 +43,6 @@ pub async fn submit_article_update(
     form.pending = !article.local;
     let edit = Edit::create_or_update(&form, true, context).await?;
 
-    let local_instance: InstanceWrapper = Instance::read_local(context)?.into();
     let article_instance: InstanceWrapper = Instance::read(article.instance_id, context)?.into();
     let edit_activity =
         CreateOrEditArticle::new(edit.into(), &person, &article_instance, is_create, context)
@@ -52,7 +51,7 @@ pub async fn submit_article_update(
     if article_instance.local {
         let updated_article = Article::update_text(article.id, &new_text, context)?;
 
-        UpdateArticle::send(updated_article.into(), &local_instance, context).await?;
+        UpdateArticle::send(updated_article.into(), context).await?;
         AnnounceActivity::send(AnnouncableActivities::EditArticle(edit_activity), context).await?;
     } else {
         edit_activity

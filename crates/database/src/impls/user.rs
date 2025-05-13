@@ -175,6 +175,15 @@ impl Person {
             .get_results(conn.deref_mut())?)
     }
 
+    pub fn read_followers(id_: PersonId, context: &IbisContext) -> BackendResult<Vec<Person>> {
+        let mut conn = context.db_pool.get()?;
+        Ok(person_follow::table
+            .inner_join(person::table.on(person_follow::follower_id.eq(person::id)))
+            .filter(person_follow::person_id.eq(id_))
+            .select(person::all_columns)
+            .get_results(conn.deref_mut())?)
+    }
+
     /// Ghost user serves as placeholder for deleted accounts
     pub fn ghost(context: &IbisContext) -> BackendResult<Person> {
         Self::get_or_create_person_with_name("ghost", context)
