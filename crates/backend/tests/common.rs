@@ -38,7 +38,10 @@ impl TestData {
         });
 
         // Limit number of concurrent tests, otherwise it can throw errors about too many open files
-        while ACTIVE.load(Ordering::Relaxed) > 10 {
+        let max_parallelism = std::env::var("IBIS_TEST_PARALLELISM")
+            .map(|e| e.parse().unwrap())
+            .unwrap_or(10);
+        while ACTIVE.load(Ordering::Relaxed) > max_parallelism {
             sleep(Duration::from_secs(1)).await;
         }
         ACTIVE.fetch_add(1, Ordering::Relaxed);
