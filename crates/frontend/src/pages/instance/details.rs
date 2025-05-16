@@ -12,6 +12,7 @@ use ibis_frontend_components::{
 use leptos::prelude::*;
 use leptos_meta::Title;
 use leptos_router::hooks::use_params_map;
+use phosphor_leptos::{ARROW_SQUARE_OUT, Icon};
 
 #[component]
 pub fn InstanceDetails() -> impl IntoView {
@@ -45,11 +46,26 @@ pub fn InstanceDetails() -> impl IntoView {
                             },
                         );
                         let title = instance_title_with_domain(&instance_.instance);
+                        let local = !instance_.instance.local;
+                        let ap_id = instance_.instance.ap_id.to_string();
                         view! {
                             <Title text=title.clone() />
                             <div class="grid gap-3 mt-4">
                                 <div class="flex flex-row items-center">
-                                    <h1 class="w-full font-serif text-4xl font-bold">{title}</h1>
+                                    <h1 class="font-serif text-4xl font-bold shrink mr-2">
+                                        {title}
+                                    </h1>
+                                    <Show when=move || local>
+                                        <a href=ap_id.clone()>
+                                            <Icon
+                                                icon=ARROW_SQUARE_OUT
+                                                size="2.5rem"
+                                                {..}
+                                                class="p-1"
+                                            />
+                                        </a>
+                                    </Show>
+                                    <div class="grow"></div>
                                     {instance_updated(&instance_)}
                                     <InstanceFollowButton instance=instance />
                                 </div>
