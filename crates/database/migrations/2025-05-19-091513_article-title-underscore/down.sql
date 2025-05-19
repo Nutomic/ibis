@@ -1,0 +1,1 @@
+UPDATE article SET title = REPLACE(title, ' ', '_');
