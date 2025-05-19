@@ -16,7 +16,7 @@ use ibis_database::{
         sent_activity::{SentActivity, SentActivityInsertForm},
     },
 };
-use log::info;
+use log::{info, warn};
 use objects::{instance::InstanceWrapper, user::PersonWrapper};
 use rand::{Rng, distributions::Alphanumeric, thread_rng};
 use routes::AnnouncableActivities;
@@ -32,14 +32,15 @@ pub mod routes;
 pub mod validate;
 pub mod webfinger;
 
-pub async fn send_ibis_activity<Activity, ActorType: Actor>(
+pub async fn send_ibis_activity<Activity, ActorType>(
     actor: &ActorType,
     activity: Activity,
     recipients: Vec<Url>,
     context: &Data<IbisContext>,
 ) -> BackendResult<()>
 where
-    Activity: ActivityHandler + Serialize + Debug + Send + Sync,
+    Activity: ActivityHandler + Serialize + Debug + Send + Sync + 'static,
+    ActorType: Actor + Sync + Clone,
     <Activity as ActivityHandler>::Error: From<activitypub_federation::error::Error>,
 {
     let form = SentActivityInsertForm {
@@ -49,8 +50,21 @@ where
     SentActivity::create(form, context)?;
     info!("Sending activity {}", activity.id());
 
-    let activity = WithContext::new_default(activity);
-    queue_activity(&activity, actor, recipients, context).await?;
+    let actor = actor.clone();
+    let context = context.reset_request_count();
+    let join = tokio::spawn(async move {
+        let activity = WithContext::new_default(activity);
+        queue_activity(&activity, &actor, recipients, &context)
+            .await
+            .inspect_err(|e| warn!("Failed to send activity: {e}"))
+            .ok();
+    });
+
+    // In production do activity send in background to avoid slow api calls. For tests use
+    // synchronous federation.
+    if cfg!(debug_assertions) {
+        join.await?;
+    }
     Ok(())
 }
 
