@@ -1,8 +1,10 @@
 use crate::utils::resources::is_logged_in;
 use leptos::prelude::*;
 use leptos_router::{
-    NestedRoute,
+    MatchNestedRoutes,
+    PossibleRouteMatch,
     SsrMode,
+    any_nested_route::IntoAnyNestedRoute,
     components::{ProtectedRoute, ProtectedRouteProps},
 };
 
@@ -11,10 +13,11 @@ pub fn IbisProtectedRoute<Segments, ViewFn, View>(
     path: Segments,
     view: ViewFn,
     #[prop(optional)] ssr: SsrMode,
-) -> NestedRoute<Segments, (), (), impl Fn() -> AnyView + Send + Clone>
+) -> impl MatchNestedRoutes + Clone
 where
     ViewFn: Fn() -> View + Send + Clone + 'static,
     View: IntoView + 'static,
+    Segments: PossibleRouteMatch + Clone + Send + 'static,
 {
     let condition = move || Some(is_logged_in());
     let redirect_path = || "/";
@@ -26,5 +29,5 @@ where
         ssr,
         fallback: Default::default(),
     };
-    ProtectedRoute(props)
+    ProtectedRoute(props).into_any_nested_route()
 }

@@ -15,16 +15,16 @@ chrono.workspace = true
 anyhow.workspace = true
 url.workspace = true
 log.workspace = true
-time = "0.3.37"
+time = "0.3.41"
 ibis_federate.workspace = true
 ibis_api_client.workspace = true
 serde_json.workspace = true
 ibis_frontend = { workspace = true, features = ["ssr"] }
 axum.workspace = true
 axum-macros.workspace = true
-axum-extra = { version = "0.9.6", features = ["cookie"] }
+axum-extra = { version = "0.10.1", features = ["cookie"] }
 tokio.workspace = true
-tower-http = { version = "0.6.2", features = [
+tower-http = { version = "0.6.4", features = [
   "cors",
   "fs",
   "compression-full",
@@ -32,11 +32,11 @@ tower-http = { version = "0.6.2", features = [
 http.workspace = true
 activitypub_federation.workspace = true
 jsonwebtoken = "9.3.1"
-leptos_axum = "0.7.4"
+leptos_axum = "0.8.2"
 diffy.workspace = true
 tower = "0.5.2"
 tower-layer = "0.3.3"
-env_logger = { version = "0.11.6", default-features = false }
+env_logger = { version = "0.11.8", default-features = false }
 include_dir = "0.7.4"
 mime_guess = "2.0.5"
 bcrypt.workspace = true

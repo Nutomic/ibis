@@ -1,5 +1,8 @@
 use super::{UserExt, check_is_admin};
-use crate::utils::{generate_article_ap_id, generate_article_version};
+use crate::{
+    api::UserExtOpt,
+    utils::{generate_article_ap_id, generate_article_version},
+};
 use activitypub_federation::{config::Data, fetch::object_id::ObjectId};
 use anyhow::anyhow;
 use axum::{Form, Json, extract::Query};
@@ -177,11 +180,11 @@ pub(crate) async fn edit_article(
 /// Retrieve an article by ID. It must already be stored in the local database.
 #[debug_handler]
 pub(crate) async fn get_article(
-    user: Option<UserExt>,
+    user: UserExtOpt,
     Query(query): Query<GetArticleParams>,
     context: Data<IbisContext>,
 ) -> BackendResult<Json<ArticleView>> {
-    let user = user.map(|u| u.inner());
+    let user = user.inner();
     match (query.title, query.id) {
         (Some(title), None) => Ok(Json(Article::read_view(
             (&title, query.domain),

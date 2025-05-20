@@ -65,16 +65,16 @@ use url::Url;
 pub fn federation_routes() -> Router<()> {
     Router::new()
         .route("/", get(http_get_instance))
-        .route("/activity/:id", get(http_get_activity))
+        .route("/activity/{id}", get(http_get_activity))
         .route("/outbox", get(http_get_instance_outbox))
         .route("/followers", get(http_get_instance_followers))
-        .route("/user/:name", get(http_get_person))
-        .route("/user/:name/outbox", get(http_get_person_outbox))
+        .route("/user/{name}", get(http_get_person))
+        .route("/user/{name}/outbox", get(http_get_person_outbox))
         .route("/all_articles", get(http_get_all_articles))
         .route("/linked_instances", get(http_get_linked_instances))
-        .route("/article/:title", get(http_get_article))
-        .route("/article/:title/edits", get(http_get_article_edits))
-        .route("/comment/:id", get(http_get_comment))
+        .route("/article/{title}", get(http_get_article))
+        .route("/article/{title}/edits", get(http_get_article_edits))
+        .route("/comment/{id}", get(http_get_comment))
         .route("/inbox", post(http_post_inbox))
 }
 

@@ -18,7 +18,7 @@ use ibis_database::{
 };
 use log::{info, warn};
 use objects::{instance::InstanceWrapper, user::PersonWrapper};
-use rand::{Rng, distributions::Alphanumeric, thread_rng};
+use rand::{Rng, distr::Alphanumeric, rng};
 use routes::AnnouncableActivities;
 use serde::Serialize;
 use std::fmt::Debug;
@@ -113,7 +113,7 @@ impl UrlVerifier for VerifyUrlData {
 
 pub(crate) fn generate_activity_id(context: &Data<IbisContext>) -> BackendResult<Url> {
     let domain = &context.conf.federation.domain;
-    let id: String = thread_rng()
+    let id: String = rng()
         .sample_iter(&Alphanumeric)
         .take(20)
         .map(char::from)
