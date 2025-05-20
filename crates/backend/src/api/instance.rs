@@ -1,4 +1,5 @@
 use super::{UserExt, empty_to_none};
+use crate::api::UserExtOpt;
 use activitypub_federation::{config::Data, fetch::object_id::ObjectId};
 use anyhow::anyhow;
 use axum::{Form, Json, extract::Query};
@@ -23,17 +24,17 @@ use ibis_federate::{
     objects::instance::InstanceWrapper,
 };
 use moka::sync::Cache;
-use std::{sync::LazyLock, time::Duration};
+use std::{ops::Deref, sync::LazyLock, time::Duration};
 
 /// Retrieve details about an instance. If no id is provided, return local instance.
 #[debug_handler]
 pub(crate) async fn get_instance(
-    user: Option<UserExt>,
+    user: UserExtOpt,
     context: Data<IbisContext>,
     Form(params): Form<GetInstanceParams>,
 ) -> BackendResult<Json<InstanceView>> {
     use InstanceViewQuery::*;
-    let person_id = user.map(|u| u.person.id);
+    let person_id = user.as_ref().map(|u| u.person.id);
     let instance = match (params.id, params.hostname) {
         (Some(id), None) => Instance::read_view(Id(id), person_id, &context)?,
         (None, Some(hostname)) => {
@@ -104,7 +105,7 @@ pub(super) async fn resolve_instance(
 
 #[debug_handler]
 pub(crate) async fn list_instance_views(
-    user: Option<UserExt>,
+    user: UserExtOpt,
     context: Data<IbisContext>,
 ) -> BackendResult<Json<Vec<InstanceView>>> {
     let mut instances = if cfg!(debug_assertions) {
@@ -123,7 +124,7 @@ pub(crate) async fn list_instance_views(
     };
 
     // Manually update follow info so the main data can be cached
-    if let Some(user) = user {
+    if let Some(user) = user.deref() {
         let following = Person::read_following(user.person.id, &context)?
             .iter()
             .map(|i| i.instance.id)

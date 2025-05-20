@@ -1,4 +1,5 @@
 use super::{UserExt, empty_to_none};
+use crate::api::UserExtOpt;
 use activitypub_federation::config::Data;
 use anyhow::anyhow;
 use axum::{Form, Json, extract::Query};
@@ -51,6 +52,7 @@ use jsonwebtoken::{
 use log::warn;
 use register::validate_new_password;
 use serde::{Deserialize, Serialize};
+use std::ops::Deref;
 use time::{Duration, OffsetDateTime};
 
 pub mod register;
@@ -218,11 +220,11 @@ pub(crate) async fn list_notifications(
 
 #[debug_handler]
 pub(crate) async fn count_notifications(
-    user: Option<UserExt>,
+    user: UserExtOpt,
     context: Data<IbisContext>,
 ) -> BackendResult<Json<i64>> {
-    if let Some(user) = user {
-        Ok(Json(Notification::count(&user, &context)?))
+    if let Some(user) = user.deref() {
+        Ok(Json(Notification::count(user, &context)?))
     } else {
         Ok(Json(0))
     }

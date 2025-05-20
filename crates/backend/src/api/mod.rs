@@ -118,7 +118,7 @@ pub fn check_is_admin(user: &LocalUserView) -> BackendResult<()> {
 #[debug_handler]
 pub(crate) async fn site_view(
     context: Data<IbisContext>,
-    user: Option<UserExt>,
+    user: UserExtOpt,
 ) -> BackendResult<Json<SiteView>> {
     let oauth_providers = context
         .conf
@@ -129,7 +129,7 @@ pub(crate) async fn site_view(
         .collect();
 
     Ok(Json(SiteView {
-        my_profile: user.map(|u| u.inner()),
+        my_profile: user.inner(),
         config: context.conf.options.clone(),
         admin: Person::read_admin(&context)?,
         instance: Instance::read_local(&context)?,
@@ -141,7 +141,7 @@ pub(crate) async fn site_view(
 #[debug_handler]
 pub async fn edit_list(
     Query(query): Query<GetEditList>,
-    user: Option<UserExt>,
+    user: UserExtOpt,
     context: Data<IbisContext>,
 ) -> BackendResult<Json<Vec<EditView>>> {
     let params = if let Some(article_id) = query.article_id {
@@ -151,11 +151,7 @@ pub async fn edit_list(
     } else {
         return Err(anyhow!("Must provide article_id or person_id").into());
     };
-    Ok(Json(Edit::list_views(
-        params,
-        &user.map(|u| u.inner()),
-        &context,
-    )?))
+    Ok(Json(Edit::list_views(params, &user.inner(), &context)?))
 }
 
 /// Trims the string param, and converts to None if it is empty
@@ -177,13 +173,31 @@ pub struct UserExt {
     local_user_view: LocalUserView,
 }
 
+#[derive(FromRequestParts)]
+pub struct UserExtOpt {
+    #[from_request(via(Extension))]
+    local_user_view: Option<LocalUserView>,
+}
+
 impl UserExt {
     pub fn inner(self) -> LocalUserView {
         self.local_user_view
     }
 }
+impl UserExtOpt {
+    pub fn inner(self) -> Option<LocalUserView> {
+        self.local_user_view
+    }
+}
 impl Deref for UserExt {
     type Target = LocalUserView;
+
+    fn deref(&self) -> &Self::Target {
+        &self.local_user_view
+    }
+}
+impl Deref for UserExtOpt {
+    type Target = Option<LocalUserView>;
 
     fn deref(&self) -> &Self::Target {
         &self.local_user_view
