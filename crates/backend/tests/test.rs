@@ -931,6 +931,7 @@ async fn api_test_comment_create_edit() -> Result<()> {
         .resolve_article(alpha_article.article.ap_id.inner().clone())
         .await
         .unwrap();
+    assert!(!beta_article.article.local);
     let params = CreateCommentParams {
         content: "top comment".to_string(),
         article_id: beta_article.article.id,
@@ -952,6 +953,11 @@ async fn api_test_comment_create_edit() -> Result<()> {
         domain: Some(alpha.hostname.clone()),
         ..Default::default()
     };
+    let article = beta.get_article(get_params.clone()).await.unwrap();
+    assert_eq!(1, article.comments.len());
+
+    // now create child comment on alpha
+    sleep(Duration::from_secs(1)).await;
     let article = alpha.get_article(get_params.clone()).await.unwrap();
     assert_eq!(1, article.comments.len());
     let params = CreateCommentParams {
@@ -1062,7 +1068,7 @@ async fn api_test_create_remote_article() -> Result<()> {
 
     // create article
     let create_params = CreateArticleParams {
-        title: "Manu Chao".to_string(),
+        title: "Remote Test".to_string(),
         text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
         summary: "create article".to_string(),
         instance_id: Some(beta_instance.id),
@@ -1072,7 +1078,9 @@ async fn api_test_create_remote_article() -> Result<()> {
     assert!(!create_res.article.local);
     // Federation is synchronous so by the time api call returns it is already federated back and
     // not pending anymore.
-    //assert!(create_res.article.pending);
+    assert!(!create_res.article.pending);
+    assert!(!create_res.article.local);
+    assert_eq!(beta_instance.ap_id, create_res.instance.ap_id);
 
     // Check article shown on beta
     let get_article_data = GetArticleParams {
@@ -1080,7 +1088,10 @@ async fn api_test_create_remote_article() -> Result<()> {
         ..Default::default()
     };
     let beta_article = beta.get_article(get_article_data.clone()).await?;
+    let site_view = beta.site().await?;
+    assert!(!beta_article.article.pending);
     assert!(beta_article.article.local);
+    assert_eq!(site_view.instance, beta_article.instance);
     assert_eq!(create_res.article.title, beta_article.article.title);
     assert_eq!(create_res.article.ap_id, beta_article.article.ap_id);
 

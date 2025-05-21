@@ -105,8 +105,7 @@ impl ActivityHandler for CreateOrEditArticle {
     async fn verify(&self, context: &Data<Self::DataType>) -> Result<(), Self::Error> {
         let article = Article::read_from_ap_id(&self.object.object.clone().into(), context);
         if self.kind == CreateOrEditType::Create {
-            let local_instance = Instance::read_local(context)?;
-            if article.is_ok() && self.id.domain() != local_instance.ap_id.0.domain() {
+            if article.is_ok() {
                 return Err(anyhow!("Article already exists").into());
             }
         } else {
@@ -118,14 +117,7 @@ impl ActivityHandler for CreateOrEditArticle {
     async fn receive(self, context: &Data<Self::DataType>) -> Result<(), Self::Error> {
         let article = if self.kind == CreateOrEditType::Create {
             // remote user is creating new article on our instance
-            let local_instance = Instance::read_local(context)?;
-            if !self.to.contains(&local_instance.ap_id.clone().into()) {
-                // not meant for us, ignore (not sure why this is being sent)
-                return Ok(());
-            }
-            if self.object.object.inner().domain() != local_instance.ap_id.0.domain() {
-                return Err(anyhow!("Invalid article ap id").into());
-            }
+            let instance = Instance::read_from_ap_id(&self.to[0].clone().into(), context)?;
             // last path segment is the title
             let title = self.object.object.to_string();
             let title = title
@@ -137,8 +129,8 @@ impl ActivityHandler for CreateOrEditArticle {
                 title,
                 text: String::new(),
                 ap_id: self.object.object.clone().into(),
-                instance_id: local_instance.id,
-                local: true,
+                instance_id: instance.id,
+                local: instance.local,
                 protected: false,
                 updated: Utc::now(),
                 pending: false,
