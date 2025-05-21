@@ -41,10 +41,20 @@ impl TestData {
         let max_parallelism = std::env::var("IBIS_TEST_PARALLELISM")
             .map(|e| e.parse().unwrap())
             .unwrap_or(10);
-        while ACTIVE.load(Ordering::Relaxed) > max_parallelism {
-            sleep(Duration::from_secs(1)).await;
+        loop {
+            let res = ACTIVE.fetch_update(Ordering::AcqRel, Ordering::Acquire, |x| {
+                if x < max_parallelism {
+                    Some(x + 1)
+                } else {
+                    None
+                }
+            });
+            if res.is_err() {
+                sleep(Duration::from_secs(1)).await;
+            } else {
+                break;
+            }
         }
-        ACTIVE.fetch_add(1, Ordering::Relaxed);
 
         // Run things on different ports and db paths to allow parallel tests
         static COUNTER: AtomicI32 = AtomicI32::new(0);
@@ -81,7 +91,7 @@ impl TestData {
         for j in [alpha.stop(), beta.stop(), gamma.stop()] {
             j.join().unwrap();
         }
-        ACTIVE.fetch_sub(1, Ordering::Relaxed);
+        ACTIVE.fetch_sub(1, Ordering::AcqRel);
         Ok(())
     }
 }
