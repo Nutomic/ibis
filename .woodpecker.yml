@@ -66,7 +66,7 @@ steps:
     image: *rust_image
     environment:
       CARGO_HOME: .cargo_home
-      IBIS_TEST_PARALLELISM: 3
+      IBIS_TEST_PARALLELISM: 2
     commands:
       - apt-get update
       - apt-get install postgresql sudo -y --no-install-recommends --no-install-suggests
