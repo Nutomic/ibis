@@ -12,3 +12,8 @@ log.workspace = true
 
 [lib]
 crate-type = ["cdylib", "rlib"]
+
+# Needed to avoid release build failure in CI.
+# https://github.com/rust-lang/rust/issues/141048
+[package.metadata.wasm-pack.profile.release] 
+wasm-opt = ["-O", "--enable-bulk-memory"]
