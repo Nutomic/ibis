@@ -95,6 +95,8 @@ steps:
       - export PATH="$PATH:$(pwd)/.cargo_home/bin/"
       - ./scripts/build_release.sh
       - cp target/release/ibis .
+    when:
+      - event: tag
 
   publish_release:
     image: woodpeckerci/plugin-release
