@@ -21,7 +21,7 @@ steps:
           "DATABASE_URL=postgres://ibis:password@database:5432/ibis" 
           "IBIS_TEST_PARALLELISM=5" 
           "CARGO_HOME=$CARGO_HOME" 
-          cargo test --no-fail-fast -p ibis -- --nocapture
+          cargo test --no-fail-fast
 
   build_release:
     image: *rust_image
