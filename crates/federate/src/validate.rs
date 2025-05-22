@@ -6,7 +6,7 @@ use std::sync::LazyLock;
 pub fn validate_article_title(title: &str) -> BackendResult<()> {
     #[expect(clippy::expect_used)]
     static TITLE_REGEX: LazyLock<Regex> =
-        LazyLock::new(|| Regex::new(r"^[a-zA-Z0-9 ]{3,100}$").expect("compile regex"));
+        LazyLock::new(|| Regex::new(r"^[a-zA-Z0-9- ]{3,100}$").expect("compile regex"));
     if !TITLE_REGEX.is_match(title) {
         return Err(anyhow!("Invalid title").into());
     }

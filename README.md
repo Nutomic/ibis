@@ -18,6 +18,7 @@ Contributions are more than welcome, especially for the frontend.
 
 ## Features
 
+- Federated via ActivityPub protocol
 - Fully functional wiki with article creation, reading, editing and edit history
 - Conflict handling in case of concurrent edits
 - Articles have discussion page with nested comments
@@ -28,8 +29,8 @@ Contributions are more than welcome, especially for the frontend.
 - Dark mode, so that you can write articles from the beach or from your basement
 - Explore page to discover interesting articles
 - Fast user interface with server-side rendering based on Webassembly
-- Notification system to get notified about new articles, edits and comments
-- In the future Ibis will be fully federated with Mastodon, Lemmy and other Fediverse platforms
+- Notification system to get notified about new articles, edits and comment
+- OAuth and email support
 
 
 ## Useful links
