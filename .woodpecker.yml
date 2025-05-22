@@ -17,6 +17,7 @@ steps:
       - *install_cargo_leptos
       - export PATH="$PATH:$(pwd)/.cargo_home/bin/"
       - export RUSTFLAGS='--cfg getrandom_backend="wasm_js" -Ctarget-cpu=mvp'
+      - export RUST_BACKTRACE=full
       - ./scripts/build_release.sh
       - cp target/release/ibis .
 
