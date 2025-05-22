@@ -42,6 +42,7 @@ mime_guess = "2.0.5"
 bcrypt.workspace = true
 moka = { version = "0.12.10", features = ["sync"] }
 doku.workspace = true
+wasm-opt = "0.116.1"
 
 [dev-dependencies]
 pretty_assertions = "1.4.1"
