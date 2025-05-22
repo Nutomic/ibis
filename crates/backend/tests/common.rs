@@ -38,8 +38,8 @@ impl TestData {
         });
 
         // Limit number of concurrent tests, otherwise it can throw errors about too many open files
-        let max_parallelism = dbg!(dbg!(std::env::var("IBIS_TEST_PARALLELISM"))
-            .map(|e| e.parse().unwrap()))
+        let max_parallelism = std::env::var("IBIS_TEST_PARALLELISM")
+            .map(|e| e.parse().unwrap())
             .unwrap_or(10);
         loop {
             let res = ACTIVE.fetch_update(Ordering::AcqRel, Ordering::Acquire, |x| {
@@ -55,7 +55,6 @@ impl TestData {
                 break;
             }
         }
-        dbg!(ACTIVE.load(Ordering::Acquire));
 
         // Run things on different ports and db paths to allow parallel tests
         static COUNTER: AtomicI32 = AtomicI32::new(0);
