@@ -38,14 +38,13 @@ impl TestData {
         });
 
         // Limit number of concurrent tests, otherwise it can throw errors about too many open files
-        let max_parallelism = std::env::var("IBIS_TEST_PARALLELISM")
-            .map(|e| e.parse().unwrap())
+        let max_parallelism = dbg!(dbg!(std::env::var("IBIS_TEST_PARALLELISM"))
+            .map(|e| e.parse().unwrap()))
             .unwrap_or(10);
-        dbg!(max_parallelism);
         loop {
             let res = ACTIVE.fetch_update(Ordering::AcqRel, Ordering::Acquire, |x| {
                 if x < max_parallelism {
-                    dbg!(Some(x + 1))
+                    Some(x + 1)
                 } else {
                     None
                 }
