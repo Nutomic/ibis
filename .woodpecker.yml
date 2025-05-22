@@ -19,7 +19,7 @@ steps:
       - chown testuser:testuser /home/testuser -R
       - export PATH="/usr/lib/postgresql/15/bin:/usr/local/cargo/bin:$PATH"
       - export DATABASE_URL="postgres://ibis:password@database:5432/ibis"
-      - sudo -u testuser env "PATH=$PATH" "CARGO_HOME=$CARGO_HOME" "DATABASE_URL=$DATABASE_URL" cargo test --no-fail-fast -p ibis
+      - sudo -u testuser env "PATH=$PATH" "CARGO_HOME=$CARGO_HOME" "DATABASE_URL=$DATABASE_URL" cargo test --no-fail-fast -p ibis -- --nocapture
 
   build_release:
     image: *rust_image
