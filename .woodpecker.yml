@@ -4,20 +4,6 @@ variables:
   - &install_cargo_leptos "cargo-binstall -y cargo-leptos@0.2.35"
 
 steps:
-  build_release:
-    image: *rust_image
-    environment:
-      CARGO_HOME: .cargo_home
-    commands:
-      - apt-get update
-      - apt-get install npm -y --no-install-recommends --no-install-suggests
-      - npm install
-      - *install_binstall
-      - rustup target add wasm32-unknown-unknown
-      - *install_cargo_leptos
-      - export PATH="$PATH:$(pwd)/.cargo_home/bin/"
-      - ./scripts/build_release.sh
-      - cp target/release/ibis .
 
   cargo_test:
     image: *rust_image
@@ -37,6 +23,21 @@ steps:
           "IBIS_TEST_PARALLELISM=5" 
           "CARGO_HOME=$CARGO_HOME" 
           cargo test --no-fail-fast
+          
+  build_release:
+    image: *rust_image
+    environment:
+      CARGO_HOME: .cargo_home
+    commands:
+      - apt-get update
+      - apt-get install npm -y --no-install-recommends --no-install-suggests
+      - npm install
+      - *install_binstall
+      - rustup target add wasm32-unknown-unknown
+      - *install_cargo_leptos
+      - export PATH="$PATH:$(pwd)/.cargo_home/bin/"
+      - ./scripts/build_release.sh
+      - cp target/release/ibis .
 
   publish_release:
     image: woodpeckerci/plugin-release

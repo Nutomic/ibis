@@ -23,6 +23,9 @@ debug = 0
 
 [profile.release]
 lto = "thin"
+# Breaks release builds in CI.
+# https://github.com/leptos-rs/cargo-leptos/issues/441
+# strip = true
 
 # Defines a size-optimized profile for the WASM bundle in release mode
 [profile.wasm-release]
