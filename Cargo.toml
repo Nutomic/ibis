@@ -23,7 +23,6 @@ debug = 0
 
 [profile.release]
 lto = "thin"
-strip = true
 
 # Defines a size-optimized profile for the WASM bundle in release mode
 [profile.wasm-release]
