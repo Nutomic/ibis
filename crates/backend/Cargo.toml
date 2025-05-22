@@ -42,14 +42,8 @@ mime_guess = "2.0.5"
 bcrypt.workspace = true
 moka = { version = "0.12.10", features = ["sync"] }
 doku.workspace = true
-wasm-opt = "0.116.1"
-getrandom = { version = "0.3", features = ["wasm_js"] }
 
 [dev-dependencies]
 pretty_assertions = "1.4.1"
 retry_future = "0.4.0"
 
-# Needed to avoid release build failure in CI.
-# https://github.com/rust-lang/rust/issues/141048
-[package.metadata.wasm-pack.profile.release]
-wasm-opt = ['-Oz','--enable-bulk-memory','--all-features']
