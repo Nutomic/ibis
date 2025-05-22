@@ -35,10 +35,9 @@ steps:
       - rustup target add wasm32-unknown-unknown
       - *install_cargo_leptos
       - export PATH="$PATH:$(pwd)/.cargo_home/bin/"
+      - export RUSTFLAGS='--cfg getrandom_backend="wasm_js" -Ctarget-cpu=mvp'
       - ./scripts/build_release.sh
       - cp target/release/ibis .
-    when:
-      - event: tag
 
   publish_release:
     image: woodpeckerci/plugin-release
