@@ -1,5 +1,5 @@
 [workspace.package]
-version = "0.3.0-alpha.19"
+version = "0.3.0-alpha.23"
 edition = "2021"
 
 [workspace]
@@ -23,7 +23,9 @@ debug = 0
 
 [profile.release]
 lto = "thin"
-strip = true
+# Breaks release builds in CI.
+# https://github.com/leptos-rs/cargo-leptos/issues/441
+# strip = true
 
 # Defines a size-optimized profile for the WASM bundle in release mode
 [profile.wasm-release]
