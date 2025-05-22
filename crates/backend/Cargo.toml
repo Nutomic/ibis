@@ -52,4 +52,4 @@ retry_future = "0.4.0"
 # Needed to avoid release build failure in CI.
 # https://github.com/rust-lang/rust/issues/141048
 [package.metadata.wasm-pack.profile.release]
-wasm-opt = ["-O", "--enable-bulk-memory"]
+wasm-bindgen = ["-O", "--enable-bulk-memory"]
