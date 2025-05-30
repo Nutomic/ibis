@@ -24,7 +24,7 @@ use ibis_database::{
         user::Person,
     },
     error::BackendError,
-    impls::{IbisContext, article::DbArticleForm, notifications::Notification},
+    impls::{IbisContext, article::DbArticleForm},
 };
 use ibis_markdown::render_article_markdown;
 use itertools::Itertools;
