@@ -204,11 +204,15 @@ pub(crate) async fn get_article(
 
 #[debug_handler]
 pub(crate) async fn list_articles(
-    user: UserExt,
+    user: UserExtOpt,
     Query(query): Query<ListArticlesParams>,
     context: Data<IbisContext>,
 ) -> BackendResult<Json<Vec<Article>>> {
-    let include_removed = user.local_user.admin && query.include_removed.unwrap_or_default();
+    let include_removed = user
+        .as_ref()
+        .map(|u| u.local_user.admin)
+        .unwrap_or_default()
+        && query.include_removed.unwrap_or_default();
     Ok(Json(Article::read_all(
         query.only_local,
         query.instance_id,
