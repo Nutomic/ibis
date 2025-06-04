@@ -115,7 +115,7 @@ pub(crate) async fn list_instance_views(
         static CACHE: LazyLock<Cache<(), Vec<InstanceView>>> = LazyLock::new(|| {
             Cache::builder()
                 .max_capacity(1)
-                .time_to_live(Duration::from_secs(60 * 60))
+                .time_to_live(Duration::from_secs(5 * 60))
                 .build()
         });
         CACHE
