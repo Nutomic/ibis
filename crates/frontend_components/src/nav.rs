@@ -1,10 +1,12 @@
 use crate::utils::{
     dark_mode::DarkMode,
     formatting::instance_title,
+    i18n::LanguageSelector,
     resources::{config, is_admin, is_logged_in, my_profile, site},
 };
 use ibis_api_client::{CLIENT, errors::FrontendResultExt};
 use leptos::{IntoView, component, prelude::*, view, *};
+use leptos_fluent::tr;
 use leptos_router::hooks::use_navigate;
 use phosphor_leptos::{
     BELL_RINGING,
@@ -59,32 +61,32 @@ pub fn Nav() -> impl IntoView {
                             <li>
                                 <a href="/">
                                     <Icon icon=HOUSE />
-                                    "Main Page"
+                                    {move || tr!("main-page")}
                                 </a>
                             </li>
                             <li>
                                 <a href="/explore">
                                     <Icon icon=CARDS />
-                                    "Explore"
+                                    {move || tr!("explore")}
                                 </a>
                             </li>
                             <li>
                                 <a href="/about">
                                     <Icon icon=EXCLAMATION_MARK />
-                                    "About"
+                                    {move || tr!("about")}
                                 </a>
                             </li>
                             <Show when=is_logged_in>
                                 <li>
                                     <a href="/create-article">
                                         <Icon icon=PLUS />
-                                        "Create Article"
+                                        {move || tr!("create-article")}
                                     </a>
                                 </li>
                                 <li>
                                     <a href="/notifications">
                                         <Icon icon=BELL_RINGING />
-                                        "Notifications "
+                                        {move || tr!("notifications")}
                                         <span class="indicator-item indicator-end badge badge-neutral">
                                             {notification_count}
                                         </span>
@@ -95,7 +97,7 @@ pub fn Nav() -> impl IntoView {
                                 <li>
                                     <a href="/admin">
                                         <Icon icon=GEAR />
-                                        "Admin Settings"
+                                        {move || tr!("admin-settings")}
                                     </a>
                                 </li>
                             </Show>
@@ -190,6 +192,7 @@ pub fn Nav() -> impl IntoView {
                                 />
                                 <span class="label-text">Dark</span>
                             </label>
+                            <LanguageSelector />
                             <p>"Version "{env!("CARGO_PKG_VERSION")}</p>
                             <p>
                                 <a href="https://github.com/Nutomic/ibis" class="link">

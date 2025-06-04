@@ -10,12 +10,16 @@ ssr = [
   "leptos-use/axum",
   "leptos/ssr",
   "ibis_api_client/ssr",
+  "leptos-fluent/ssr",
+  "leptos-fluent/axum",
+  "axum",
 ]
 hydrate = [
   "ibis_markdown/hydrate",
   "leptos/hydrate",
   "ibis_api_client/hydrate",
   "uuid/js",
+  "leptos-fluent/hydrate",
 ]
 
 [lints]
@@ -36,4 +40,9 @@ leptos_meta.workspace = true
 leptos_router.workspace = true
 leptos-use.workspace = true
 codee.workspace = true
+leptos-fluent.workspace = true
+axum = { workspace = true, optional = true }
 timeago = "0.4.2"
+
+[package.metadata.cargo-shear]
+ignored = ["axum"]

@@ -96,6 +96,7 @@ diesel = { version = "2.2.10", default-features = false, features = [
   "r2d2",
 ] }
 itertools = "0.14.0"
+leptos-fluent = "0.2.12"
 
 [[workspace.metadata.leptos]]
 name = "ibis"
@@ -107,6 +108,7 @@ lib-profile-release = "wasm-release"
 style-file = "assets/ibis.css"
 tailwind-input-file = "assets/ibis.css"
 tailwind-config-file = "tailwind.config.js"
+watch-additional-files = ["locales"]
 
 # Speedup RSA key generation
 # https://github.com/RustCrypto/RSA/blob/master/README.md#example

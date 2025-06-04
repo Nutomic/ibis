@@ -6,6 +6,7 @@ use std::str::FromStr;
 
 pub mod dark_mode;
 pub mod formatting;
+pub mod i18n;
 pub mod resources;
 
 pub fn use_cookie<T>(name: &str) -> (Signal<Option<T>>, WriteSignal<Option<T>>)

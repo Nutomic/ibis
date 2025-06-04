@@ -7,6 +7,7 @@ use ibis_frontend_components::{
 };
 use itertools::Itertools;
 use leptos::{html::Textarea, prelude::*};
+use leptos_fluent::tr;
 use leptos_meta::Title;
 use leptos_router::{components::Redirect, hooks::use_query_map};
 use leptos_use::{UseTextareaAutosizeReturn, use_textarea_autosize};
@@ -64,8 +65,8 @@ pub fn CreateArticle() -> impl IntoView {
     let instances = Resource::new(move || (), |_| async move { CLIENT.list_instances().await });
 
     view! {
-        <Title text="Create new Article" />
-        <h1 class="my-4 font-serif text-4xl font-bold">Create new Article</h1>
+        <Title text=move || tr!("create-article") />
+        <h1 class="my-4 font-serif text-4xl font-bold">{move || tr!("create-article")}</h1>
         <Show
             when=move || create_response.get().is_some()
             fallback=move || {

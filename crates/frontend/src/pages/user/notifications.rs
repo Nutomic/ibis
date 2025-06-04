@@ -13,6 +13,7 @@ use ibis_frontend_components::{
     utils::formatting::{article_link, article_path, comment_path, edit_path, time_ago, user_link},
 };
 use leptos::{either::EitherOf4, prelude::*};
+use leptos_fluent::tr;
 use leptos_meta::Title;
 use phosphor_leptos::{CHECK, Icon, IconData, LINK, TRASH};
 
@@ -26,8 +27,10 @@ pub fn Notifications() -> impl IntoView {
     );
 
     view! {
-        <Title text="Notifications" />
-        <h1 class="flex-auto my-6 font-serif text-4xl font-bold grow">Notifications</h1>
+        <Title text=move || tr!("notifications") />
+        <h1 class="flex-auto my-6 font-serif text-4xl font-bold grow">
+            {move || tr!("notifications")}
+        </h1>
         <SuspenseError result=notifications>
             <ul class="divide-y divide-solid">
                 {move || Suspend::new(async move {
