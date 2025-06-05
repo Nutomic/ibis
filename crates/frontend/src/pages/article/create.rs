@@ -3,12 +3,11 @@ use ibis_database::common::{article::ArticleView, newtypes::InstanceId};
 use ibis_frontend_components::{
     article_editor::EditorView,
     suspense_error::SuspenseError,
-    utils::formatting::article_path,
+    utils::{formatting::article_path, i18n::IbisTitle},
 };
 use itertools::Itertools;
 use leptos::{html::Textarea, prelude::*};
 use leptos_fluent::tr;
-use leptos_meta::Title;
 use leptos_router::{components::Redirect, hooks::use_query_map};
 use leptos_use::{UseTextareaAutosizeReturn, use_textarea_autosize};
 
@@ -65,7 +64,7 @@ pub fn CreateArticle() -> impl IntoView {
     let instances = Resource::new(move || (), |_| async move { CLIENT.list_instances().await });
 
     view! {
-        <Title text=move || tr!("create-article") />
+        <IbisTitle key="create-article" />
         <h1 class="my-4 font-serif text-4xl font-bold">{move || tr!("create-article")}</h1>
         <Show
             when=move || create_response.get().is_some()

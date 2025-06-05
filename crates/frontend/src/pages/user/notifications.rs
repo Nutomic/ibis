@@ -10,11 +10,13 @@ use ibis_database::common::{
 };
 use ibis_frontend_components::{
     suspense_error::SuspenseError,
-    utils::formatting::{article_link, article_path, comment_path, edit_path, time_ago, user_link},
+    utils::{
+        formatting::{article_link, article_path, comment_path, edit_path, time_ago, user_link},
+        i18n::IbisTitle,
+    },
 };
 use leptos::{either::EitherOf4, prelude::*};
 use leptos_fluent::tr;
-use leptos_meta::Title;
 use phosphor_leptos::{CHECK, Icon, IconData, LINK, TRASH};
 
 type NotificationsResource = Resource<Result<Vec<ApiNotification>, FrontendError>>;
@@ -27,7 +29,7 @@ pub fn Notifications() -> impl IntoView {
     );
 
     view! {
-        <Title text=move || tr!("notifications") />
+        <IbisTitle key="notifications" />
         <h1 class="flex-auto my-6 font-serif text-4xl font-bold grow">
             {move || tr!("notifications")}
         </h1>

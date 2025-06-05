@@ -6,10 +6,12 @@ use ibis_api_client::{
 use ibis_database::common::{article::Article, instance::InstanceView};
 use ibis_frontend_components::{
     suspense_error::SuspenseError,
-    utils::formatting::{article_link, instance_title_with_domain, instance_updated},
+    utils::{
+        formatting::{article_link, instance_title_with_domain, instance_updated},
+        i18n::IbisTitle,
+    },
 };
 use leptos::prelude::*;
-use leptos_meta::Title;
 use url::Url;
 
 #[component]
@@ -17,7 +19,7 @@ pub fn Explore() -> impl IntoView {
     let instances = Resource::new(move || (), |_| async move { CLIENT.list_instances().await });
 
     view! {
-        <Title text="Explore" />
+        <IbisTitle key="explore" />
         <h1 class="my-4 font-serif text-4xl font-bold">Instances</h1>
         <SuspenseError result=instances>
             {move || Suspend::new(async move {
