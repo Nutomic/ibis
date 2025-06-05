@@ -65,9 +65,9 @@ impl TestData {
         let port_beta = first_port + 1;
         let port_gamma = first_port + 2;
 
-        let alpha_db_path = generate_db_path("alpha", port_alpha);
-        let beta_db_path = generate_db_path("beta", port_beta);
-        let gamma_db_path = generate_db_path("gamma", port_gamma);
+        let alpha_db_path = generate_db_path(current_run);
+        let beta_db_path = generate_db_path(current_run);
+        let gamma_db_path = generate_db_path(current_run);
 
         // initialize postgres databases in parallel because its slow
         for j in [
@@ -97,9 +97,9 @@ impl TestData {
 }
 
 /// Generate a unique db path for each postgres so that tests can run in parallel.
-fn generate_db_path(name: &'static str, port: i32) -> String {
+fn generate_db_path(current_run: i32) -> String {
     let path = format!(
-        "{}/../../target/test_db/{name}-{port}",
+        "{}/../../target/test_db/{current_run}",
         current_dir().unwrap().display()
     );
     create_dir_all(&path).unwrap();
