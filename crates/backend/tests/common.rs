@@ -1,6 +1,5 @@
 #![expect(clippy::unwrap_used)]
 
-use anyhow::Result;
 use ibis::start;
 use ibis_api_client::{ApiClient, user::RegisterUserParams};
 use ibis_database::{
@@ -20,14 +19,15 @@ use std::{
     thread::spawn,
     time::Duration,
 };
+use test_context::AsyncTestContext;
 use tokio::{join, sync::oneshot, task::JoinHandle, time::sleep};
 
 pub struct TestData(pub IbisInstance, pub IbisInstance, pub IbisInstance);
 
 static ACTIVE: AtomicI32 = AtomicI32::new(0);
 
-impl TestData {
-    pub async fn start() -> Self {
+impl AsyncTestContext for TestData {
+    async fn setup() -> Self {
         static INIT: Once = Once::new();
         INIT.call_once(|| {
             env_logger::builder()
@@ -87,12 +87,11 @@ impl TestData {
         Self(alpha, beta, gamma)
     }
 
-    pub fn stop(alpha: IbisInstance, beta: IbisInstance, gamma: IbisInstance) -> Result<()> {
-        for j in [alpha.stop(), beta.stop(), gamma.stop()] {
+    async fn teardown(self) {
+        for j in [self.0.stop(), self.1.stop(), self.2.stop()] {
             j.join().unwrap();
         }
         ACTIVE.fetch_sub(1, Ordering::AcqRel);
-        Ok(())
     }
 }
 

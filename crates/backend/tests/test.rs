@@ -25,6 +25,7 @@ use ibis_database::common::{
 use pretty_assertions::assert_eq;
 use retry_future::{LinearRetryStrategy, RetryFuture, RetryPolicy};
 use std::time::Duration;
+use test_context::test_context;
 use tokio::time::sleep;
 use url::Url;
 
@@ -37,10 +38,11 @@ fn create_test_article_params() -> CreateArticleParams {
     }
 }
 
+#[test_context(TestData)]
 #[tokio::test]
-async fn api_test_create_read_and_edit_local_article() -> Result<()> {
-    let TestData(alpha, beta, gamma) = TestData::start().await;
-
+async fn api_test_create_read_and_edit_local_article(
+    TestData(alpha, beta, _): &mut TestData,
+) -> Result<()> {
     // create article
     let create_params = create_test_article_params();
     let create_res = alpha.create_article(&create_params).await.unwrap();
@@ -97,13 +99,12 @@ async fn api_test_create_read_and_edit_local_article() -> Result<()> {
     assert_eq!(2, list_articles.len());
     assert_eq!(edit_res.article, list_articles[0]);
 
-    TestData::stop(alpha, beta, gamma)
+    Ok(())
 }
 
+#[test_context(TestData)]
 #[tokio::test]
-async fn api_test_create_duplicate_article() -> Result<()> {
-    let TestData(alpha, beta, gamma) = TestData::start().await;
-
+async fn api_test_create_duplicate_article(TestData(alpha, _, _): &mut TestData) -> Result<()> {
     // create article
     let create_params = create_test_article_params();
     let create_res = alpha.create_article(&create_params).await.unwrap();
@@ -113,13 +114,12 @@ async fn api_test_create_duplicate_article() -> Result<()> {
     let create_res = alpha.create_article(&create_params).await;
     assert!(create_res.is_err());
 
-    TestData::stop(alpha, beta, gamma)
+    Ok(())
 }
 
+#[test_context(TestData)]
 #[tokio::test]
-async fn api_test_follow_instance() -> Result<()> {
-    let TestData(alpha, beta, gamma) = TestData::start().await;
-
+async fn api_test_follow_instance(TestData(alpha, beta, _): &mut TestData) -> Result<()> {
     // check initial state
     let alpha_follows = alpha.get_follows().await.unwrap();
     assert_eq!(0, alpha_follows.len());
@@ -146,13 +146,12 @@ async fn api_test_follow_instance() -> Result<()> {
     let alpha_follows = alpha.get_follows().await.unwrap();
     assert_eq!(0, alpha_follows.len());
 
-    TestData::stop(alpha, beta, gamma)
+    Ok(())
 }
 
+#[test_context(TestData)]
 #[tokio::test]
-async fn api_test_synchronize_articles() -> Result<()> {
-    let TestData(alpha, beta, gamma) = TestData::start().await;
-
+async fn api_test_synchronize_articles(TestData(alpha, beta, _): &mut TestData) -> Result<()> {
     // create article on alpha
     let create_params = create_test_article_params();
     let create_res = alpha.create_article(&create_params).await.unwrap();
@@ -218,13 +217,12 @@ async fn api_test_synchronize_articles() -> Result<()> {
     assert_eq!(edit_params.new_text, get_res.article.text);
     assert!(!get_res.article.local);
 
-    TestData::stop(alpha, beta, gamma)
+    Ok(())
 }
 
+#[test_context(TestData)]
 #[tokio::test]
-async fn api_test_edit_local_article() -> Result<()> {
-    let TestData(alpha, beta, gamma) = TestData::start().await;
-
+async fn api_test_edit_local_article(TestData(alpha, beta, _): &mut TestData) -> Result<()> {
     let beta_instance = alpha
         .follow_instance_with_resolve(&beta.hostname)
         .await
@@ -279,13 +277,12 @@ async fn api_test_edit_local_article() -> Result<()> {
     assert_eq!(edits.len(), 2);
     assert_eq!(edit_res.article.text, get_res.article.text);
 
-    TestData::stop(alpha, beta, gamma)
+    Ok(())
 }
 
+#[test_context(TestData)]
 #[tokio::test]
-async fn api_test_edit_remote_article() -> Result<()> {
-    let TestData(alpha, beta, gamma) = TestData::start().await;
-
+async fn api_test_edit_remote_article(TestData(alpha, beta, gamma): &mut TestData) -> Result<()> {
     let beta_id_on_alpha = alpha
         .follow_instance_with_resolve(&beta.hostname)
         .await
@@ -364,13 +361,12 @@ async fn api_test_edit_remote_article() -> Result<()> {
     assert_eq!(edits.len(), 2);
     assert_eq!(edit_res.article.text, get_res.article.text);
 
-    TestData::stop(alpha, beta, gamma)
+    Ok(())
 }
 
+#[test_context(TestData)]
 #[tokio::test]
-async fn api_test_local_edit_conflict() -> Result<()> {
-    let TestData(alpha, beta, gamma) = TestData::start().await;
-
+async fn api_test_local_edit_conflict(TestData(alpha, _, _): &mut TestData) -> Result<()> {
     // create new article
     let create_params = create_test_article_params();
     let create_res = alpha.create_article(&create_params).await.unwrap();
@@ -434,25 +430,22 @@ async fn api_test_local_edit_conflict() -> Result<()> {
 
     assert_eq!(0, alpha.notifications_count().await.unwrap());
 
-    TestData::stop(alpha, beta, gamma)
+    Ok(())
 }
 
+#[test_context(TestData)]
 #[tokio::test]
-async fn api_test_federated_edit_conflict() -> Result<()> {
-    /*
-    let TestData(alpha, beta, gamma) = TestData::start().await;
-
+#[ignore]
+async fn api_test_federated_edit_conflict(
+    TestData(alpha, beta, gamma): &mut TestData,
+) -> Result<()> {
     let beta_id_on_alpha = alpha
         .follow_instance_with_resolve(&beta.hostname)
         .await
         .unwrap();
 
     // create new article
-    let create_params = CreateArticleParams {
-        title: "Manu Chao".to_string(),
-        text: TEST_ARTICLE_DEFAULT_TEXT.to_string(),
-        summary: "create article".to_string(),
-    };
+    let create_params = create_test_article_params();
     let create_res = beta.create_article(&create_params).await.unwrap();
     let beta_edits = beta.get_article_edits(create_res.article.id).await.unwrap();
     assert_eq!(create_params.title, create_res.article.title);
@@ -551,15 +544,14 @@ async fn api_test_federated_edit_conflict() -> Result<()> {
     let notifications = gamma.notifications_list().await.unwrap();
     assert_eq!(0, notifications.len());
 
-    TestData::stop(alpha, beta, gamma)
-    */
     Ok(())
 }
 
+#[test_context(TestData)]
 #[tokio::test]
-async fn api_test_overlapping_edits_no_conflict() -> Result<()> {
-    let TestData(alpha, beta, gamma) = TestData::start().await;
-
+async fn api_test_overlapping_edits_no_conflict(
+    TestData(alpha, _, _): &mut TestData,
+) -> Result<()> {
     // Create new article
     // Need to use multiple lines to provide enough context for diff/merge.
     // Also need to use long lines so that markdown paramsatting doesnt change line breaks.
@@ -628,13 +620,12 @@ async fn api_test_overlapping_edits_no_conflict() -> Result<()> {
         edit_res.article.text
     );
 
-    TestData::stop(alpha, beta, gamma)
+    Ok(())
 }
 
+#[test_context(TestData)]
 #[tokio::test]
-async fn api_test_fork_article() -> Result<()> {
-    let TestData(alpha, beta, gamma) = TestData::start().await;
-
+async fn api_test_fork_article(TestData(alpha, beta, _): &mut TestData) -> Result<()> {
     // create article
     let create_params = create_test_article_params();
     let create_res = alpha.create_article(&create_params).await.unwrap();
@@ -682,12 +673,12 @@ async fn api_test_fork_article() -> Result<()> {
     let search_res = beta.search(&search_params).await.unwrap();
     assert_eq!(2, search_res.len());
 
-    TestData::stop(alpha, beta, gamma)
+    Ok(())
 }
 
+#[test_context(TestData)]
 #[tokio::test]
-async fn api_test_user_registration_login() -> Result<()> {
-    let TestData(alpha, beta, gamma) = TestData::start().await;
+async fn api_test_user_registration_login(TestData(alpha, _, _): &mut TestData) -> Result<()> {
     let username = "my_user";
     let password = "hunter22";
     let register_data = RegisterUserParams {
@@ -719,13 +710,12 @@ async fn api_test_user_registration_login() -> Result<()> {
     let my_profile_after_logout = alpha.site().await.unwrap().my_profile;
     assert!(my_profile_after_logout.is_none());
 
-    TestData::stop(alpha, beta, gamma)
+    Ok(())
 }
 
+#[test_context(TestData)]
 #[tokio::test]
-async fn api_test_user_profile() -> Result<()> {
-    let TestData(alpha, beta, gamma) = TestData::start().await;
-
+async fn api_test_user_profile(TestData(alpha, beta, _): &mut TestData) -> Result<()> {
     // Create an article and federate it, in order to federate the user who created it
     let create_params = create_test_article_params();
     let create_res = alpha.create_article(&create_params).await.unwrap();
@@ -753,13 +743,12 @@ async fn api_test_user_profile() -> Result<()> {
     assert_eq!("alpha", user.username);
     assert!(!user.local);
 
-    TestData::stop(alpha, beta, gamma)
+    Ok(())
 }
 
+#[test_context(TestData)]
 #[tokio::test]
-async fn api_test_lock_article() -> Result<()> {
-    let TestData(alpha, beta, gamma) = TestData::start().await;
-
+async fn api_test_lock_article(TestData(alpha, _, gamma): &mut TestData) -> Result<()> {
     // create article
     let create_params = create_test_article_params();
     let create_res = alpha.create_article(&create_params).await.unwrap();
@@ -796,13 +785,12 @@ async fn api_test_lock_article() -> Result<()> {
     let edit_res = gamma.edit_article_without_conflict(&edit_params).await;
     assert!(edit_res.is_none());
 
-    TestData::stop(alpha, beta, gamma)
+    Ok(())
 }
 
+#[test_context(TestData)]
 #[tokio::test]
-async fn api_test_synchronize_instances() -> Result<()> {
-    let TestData(alpha, beta, gamma) = TestData::start().await;
-
+async fn api_test_synchronize_instances(TestData(alpha, beta, gamma): &mut TestData) -> Result<()> {
     // fetch alpha instance on beta
     beta.resolve_instance(Url::parse(&format!("http://{}", &alpha.hostname))?)
         .await
@@ -837,13 +825,12 @@ async fn api_test_synchronize_instances() -> Result<()> {
             .any(|i| i.instance.domain == alpha.hostname)
     );
 
-    TestData::stop(alpha, beta, gamma)
+    Ok(())
 }
 
+#[test_context(TestData)]
 #[tokio::test]
-async fn api_test_remove_article() -> Result<()> {
-    let TestData(alpha, beta, gamma) = TestData::start().await;
-
+async fn api_test_remove_article(TestData(alpha, beta, _): &mut TestData) -> Result<()> {
     beta.follow_instance_with_resolve(&alpha.hostname)
         .await
         .unwrap();
@@ -907,13 +894,12 @@ async fn api_test_remove_article() -> Result<()> {
     let list_beta = beta.list_articles(Default::default()).await?;
     assert_eq!(3, list_beta.len());
 
-    TestData::stop(alpha, beta, gamma)
+    Ok(())
 }
 
+#[test_context(TestData)]
 #[tokio::test]
-async fn api_test_comment_create_edit() -> Result<()> {
-    let TestData(alpha, beta, gamma) = TestData::start().await;
-
+async fn api_test_comment_create_edit(TestData(alpha, beta, gamma): &mut TestData) -> Result<()> {
     beta.follow_instance_with_resolve(&alpha.hostname)
         .await
         .unwrap();
@@ -991,13 +977,12 @@ async fn api_test_comment_create_edit() -> Result<()> {
     assert_eq!(2, gamma_comments.len());
     assert_eq!(edited_comment.content, gamma_comments[0].comment.content);
 
-    TestData::stop(alpha, beta, gamma)
+    Ok(())
 }
 
+#[test_context(TestData)]
 #[tokio::test]
-async fn api_test_comment_delete_restore() -> Result<()> {
-    let TestData(alpha, beta, gamma) = TestData::start().await;
-
+async fn api_test_comment_delete_restore(TestData(alpha, beta, _): &mut TestData) -> Result<()> {
     beta.follow_instance_with_resolve(&alpha.hostname)
         .await
         .unwrap();
@@ -1057,13 +1042,12 @@ async fn api_test_comment_delete_restore() -> Result<()> {
     assert!(!beta_comments[0].comment.deleted);
     assert!(!beta_comments[0].comment.content.is_empty());
 
-    TestData::stop(alpha, beta, gamma)
+    Ok(())
 }
 
+#[test_context(TestData)]
 #[tokio::test]
-async fn api_test_create_remote_article() -> Result<()> {
-    let TestData(alpha, beta, gamma) = TestData::start().await;
-
+async fn api_test_create_remote_article(TestData(alpha, beta, _): &mut TestData) -> Result<()> {
     let beta_instance = alpha.follow_instance_with_resolve(&beta.hostname).await?;
 
     // create article
@@ -1103,5 +1087,5 @@ async fn api_test_create_remote_article() -> Result<()> {
     let alpha_article = alpha.get_article(get_article_data.clone()).await?;
     assert!(!alpha_article.article.pending);
 
-    TestData::stop(alpha, beta, gamma)
+    Ok(())
 }
