@@ -16,11 +16,15 @@ use std::{
         Once,
         atomic::{AtomicI32, Ordering},
     },
-    thread::spawn,
     time::Duration,
 };
 use test_context::AsyncTestContext;
-use tokio::{join, sync::oneshot, task::JoinHandle, time::sleep};
+use tokio::{
+    join,
+    sync::oneshot,
+    task::{JoinHandle, spawn_blocking},
+    time::sleep,
+};
 
 pub struct TestData(pub IbisInstance, pub IbisInstance, pub IbisInstance);
 
@@ -61,48 +65,20 @@ impl AsyncTestContext for TestData {
         let current_run = COUNTER.fetch_add(1, Ordering::Relaxed);
 
         let first_port = 8100 + (current_run * 3);
-        let port_alpha = first_port;
-        let port_beta = first_port + 1;
-        let port_gamma = first_port + 2;
-
-        let alpha_db_path = generate_db_path("alpha", port_alpha);
-        let beta_db_path = generate_db_path("beta", port_beta);
-        let gamma_db_path = generate_db_path("gamma", port_gamma);
-
-        // initialize postgres databases in parallel because its slow
-        for j in [
-            IbisInstance::prepare_db(alpha_db_path.clone()),
-            IbisInstance::prepare_db(beta_db_path.clone()),
-            IbisInstance::prepare_db(gamma_db_path.clone()),
-        ] {
-            j.join().unwrap();
-        }
 
         let (alpha, beta, gamma) = join!(
-            IbisInstance::start(alpha_db_path, port_alpha, "alpha"),
-            IbisInstance::start(beta_db_path, port_beta, "beta"),
-            IbisInstance::start(gamma_db_path, port_gamma, "gamma")
+            IbisInstance::new("alpha", first_port,),
+            IbisInstance::new("beta", first_port + 1,),
+            IbisInstance::new("gamma", first_port + 2,)
         );
 
         Self(alpha, beta, gamma)
     }
 
     async fn teardown(self) {
-        for j in [self.0.stop(), self.1.stop(), self.2.stop()] {
-            j.join().unwrap();
-        }
+        join!(self.0.stop(), self.1.stop(), self.2.stop());
         ACTIVE.fetch_sub(1, Ordering::AcqRel);
     }
-}
-
-/// Generate a unique db path for each postgres so that tests can run in parallel.
-fn generate_db_path(name: &'static str, port: i32) -> String {
-    let path = format!(
-        "{}/../../target/test_db/{name}-{port}",
-        current_dir().unwrap().display()
-    );
-    create_dir_all(&path).unwrap();
-    path
 }
 
 pub struct IbisInstance {
@@ -113,12 +89,26 @@ pub struct IbisInstance {
 }
 
 impl IbisInstance {
-    fn prepare_db(db_path: String) -> std::thread::JoinHandle<()> {
+    async fn new(name: &'static str, port: i32) -> Self {
+        let db_path = Self::generate_db_path(name, port);
+        Self::prepare_db(db_path.clone()).await;
+        Self::start(db_path, port, name).await
+    }
+
+    /// Generate a unique db path for each postgres so that tests can run in parallel.
+    fn generate_db_path(name: &'static str, port: i32) -> String {
+        let path = format!(
+            "{}/../../target/test_db/{name}-{port}",
+            current_dir().unwrap().display()
+        );
+        create_dir_all(&path).unwrap();
+        path
+    }
+
+    async fn prepare_db(db_path: String) {
         // stop any db leftover from previous run
-        Self::stop_internal(db_path.clone()).join().ok();
-        // remove old db
-        remove_dir_all(&db_path).ok();
-        spawn(move || {
+        Self::stop_internal(db_path.clone()).await;
+        spawn_blocking(move || {
             Command::new("./scripts/start_test_db.sh")
                 .arg(&db_path)
                 .stdout(Stdio::null())
@@ -126,6 +116,8 @@ impl IbisInstance {
                 .output()
                 .unwrap();
         })
+        .await
+        .unwrap();
     }
 
     async fn start(db_path: String, port: i32, username: &str) -> Self {
@@ -172,20 +164,24 @@ impl IbisInstance {
         }
     }
 
-    fn stop(self) -> std::thread::JoinHandle<()> {
+    async fn stop(self) {
         self.db_handle.abort();
-        Self::stop_internal(self.db_path)
+        Self::stop_internal(self.db_path).await;
     }
 
-    fn stop_internal(db_path: String) -> std::thread::JoinHandle<()> {
-        spawn(move || {
+    async fn stop_internal(db_path: String) {
+        spawn_blocking(move || {
             Command::new("./scripts/stop_test_db.sh")
-                .arg(db_path)
+                .arg(&db_path)
                 .stdout(Stdio::null())
                 .stderr(Stdio::null())
                 .output()
                 .unwrap();
+            // remove db files
+            remove_dir_all(&db_path).ok();
         })
+        .await
+        .unwrap();
     }
 }
 
