@@ -9,7 +9,7 @@ use activitypub_federation::{
     fetch::object_id::ObjectId,
     kinds::activity::UndoType,
     protocol::{helpers::deserialize_skip_error, verification::verify_urls_match},
-    traits::{ActivityHandler, Actor},
+    traits::{Activity, Actor},
 };
 use ibis_database::{
     common::instance::Instance,
@@ -59,7 +59,7 @@ impl UndoFollow {
 }
 
 #[async_trait::async_trait]
-impl ActivityHandler for UndoFollow {
+impl Activity for UndoFollow {
     type DataType = IbisContext;
     type Error = BackendError;
 

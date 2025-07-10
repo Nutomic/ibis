@@ -80,6 +80,10 @@ impl Object for ArticleWrapper {
     type Kind = ApubArticle;
     type Error = BackendError;
 
+    fn id(&self) -> &Url {
+        self.ap_id.inner()
+    }
+
     async fn read_from_id(
         object_id: Url,
         context: &Data<Self::DataType>,

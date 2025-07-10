@@ -10,7 +10,7 @@ use activitypub_federation::{
     fetch::object_id::ObjectId,
     kinds::activity::FollowType,
     protocol::{helpers::deserialize_skip_error, verification::verify_urls_match},
-    traits::{ActivityHandler, Actor},
+    traits::{Activity, Actor},
 };
 use anyhow::anyhow;
 use either::Either;
@@ -64,7 +64,7 @@ impl Follow {
 }
 
 #[async_trait::async_trait]
-impl ActivityHandler for Follow {
+impl Activity for Follow {
     type DataType = IbisContext;
     type Error = BackendError;
 

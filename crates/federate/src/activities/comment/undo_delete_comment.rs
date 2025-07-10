@@ -13,7 +13,7 @@ use activitypub_federation::{
         helpers::deserialize_one_or_many,
         verification::{verify_domains_match, verify_urls_match},
     },
-    traits::ActivityHandler,
+    traits::Activity,
 };
 use chrono::Utc;
 use ibis_database::{
@@ -56,7 +56,7 @@ impl UndoDeleteComment {
 }
 
 #[async_trait::async_trait]
-impl ActivityHandler for UndoDeleteComment {
+impl Activity for UndoDeleteComment {
     type DataType = IbisContext;
     type Error = BackendError;
 

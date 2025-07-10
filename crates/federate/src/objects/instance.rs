@@ -80,6 +80,10 @@ impl Object for InstanceWrapper {
     type Kind = ApubInstance;
     type Error = BackendError;
 
+    fn id(&self) -> &Url {
+        self.ap_id.inner()
+    }
+
     fn last_refreshed_at(&self) -> Option<DateTime<Utc>> {
         Some(self.last_refreshed_at)
     }
@@ -162,10 +166,6 @@ impl Object for InstanceWrapper {
 }
 
 impl Actor for InstanceWrapper {
-    fn id(&self) -> Url {
-        self.ap_id.clone().into()
-    }
-
     fn public_key_pem(&self) -> &str {
         &self.public_key
     }

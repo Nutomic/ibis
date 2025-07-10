@@ -55,9 +55,8 @@ pub async fn send_verification_email(
         .execute(conn.deref_mut())?;
 
     let body = format!(
-        r#"Please click the link below to verify your email address for the account on {}. Ignore this email if the account isn't yours.<br><br>
+        r#"Please click the link below to verify your email address for the account on {domain}. Ignore this email if the account isn't yours.<br><br>
         <a href="{verify_link}">Verify your email</a>"#,
-        domain
     );
 
     send_email("Registration for Ibis", new_email, body, context).await?;

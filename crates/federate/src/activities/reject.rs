@@ -8,7 +8,7 @@ use activitypub_federation::{
     fetch::object_id::ObjectId,
     kinds::activity::RejectType,
     protocol::helpers::deserialize_one_or_many,
-    traits::ActivityHandler,
+    traits::Activity,
 };
 use ibis_database::{
     common::{
@@ -60,7 +60,7 @@ impl RejectEdit {
 }
 
 #[async_trait::async_trait]
-impl ActivityHandler for RejectEdit {
+impl Activity for RejectEdit {
     type DataType = IbisContext;
     type Error = BackendError;
 

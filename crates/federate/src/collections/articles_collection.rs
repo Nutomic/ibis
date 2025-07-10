@@ -4,7 +4,7 @@ use activitypub_federation::{
     fetch::collection_id::CollectionId,
     kinds::collection::CollectionType,
     protocol::verification::verify_domains_match,
-    traits::{ActivityHandler, Collection},
+    traits::{Activity, Collection},
 };
 use futures::future::{join_all, try_join_all};
 use ibis_database::{

@@ -36,7 +36,7 @@ use activitypub_federation::{
     },
     config::Data,
     protocol::context::WithContext,
-    traits::{ActivityHandler, Collection, Object},
+    traits::{Activity, Collection, Object},
 };
 use axum::{
     Router,
@@ -185,7 +185,7 @@ async fn http_get_comment(
 /// List of all activities which this actor can receive.
 #[derive(Deserialize, Serialize, Debug)]
 #[serde(untagged)]
-#[enum_delegate::implement(ActivityHandler)]
+#[enum_delegate::implement(Activity)]
 pub enum InboxActivities {
     Follow(Follow),
     UndoFollow(UndoFollow),
@@ -197,7 +197,7 @@ pub enum InboxActivities {
 
 #[derive(Clone, Debug, Deserialize, Serialize)]
 #[serde(untagged)]
-#[enum_delegate::implement(ActivityHandler)]
+#[enum_delegate::implement(Activity)]
 pub enum AnnouncableActivities {
     EditArticle(CreateOrEditArticle),
     UpdateArticle(UpdateArticle),

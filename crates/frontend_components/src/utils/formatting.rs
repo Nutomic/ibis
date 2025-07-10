@@ -13,7 +13,7 @@ use timeago::Formatter;
 pub fn article_path(article: &Article) -> String {
     let title = article.title.replace(" ", "_");
     if article.local {
-        format!("/article/{}", title)
+        format!("/article/{title}")
     } else {
         format!(
             "/article/{}@{}",

@@ -9,7 +9,7 @@ use activitypub_federation::{
     fetch::object_id::ObjectId,
     kinds::{activity::AnnounceType, public},
     protocol::helpers::deserialize_one_or_many,
-    traits::{ActivityHandler, Actor},
+    traits::{Activity, Object},
 };
 use ibis_database::{
     common::instance::Instance,
@@ -41,7 +41,7 @@ impl AnnounceActivity {
         let id = generate_activity_id(context)?;
         let instance: InstanceWrapper = Instance::read_local(context)?.into();
         let announce = AnnounceActivity {
-            actor: instance.id().into(),
+            actor: instance.id().clone().into(),
             to: vec![public()],
             cc: vec![instance.followers_url()?],
             object,
@@ -61,7 +61,7 @@ impl AnnounceActivity {
 }
 
 #[async_trait::async_trait]
-impl ActivityHandler for AnnounceActivity {
+impl Activity for AnnounceActivity {
     type DataType = IbisContext;
     type Error = BackendError;
 

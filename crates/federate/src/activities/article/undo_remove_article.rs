@@ -10,7 +10,7 @@ use activitypub_federation::{
     fetch::object_id::ObjectId,
     kinds::{activity::UndoType, public},
     protocol::{helpers::deserialize_one_or_many, verification::verify_domains_match},
-    traits::ActivityHandler,
+    traits::Activity,
 };
 use ibis_database::{
     common::article::Article,
@@ -53,7 +53,7 @@ impl UndoRemoveArticle {
     }
 }
 #[async_trait::async_trait]
-impl ActivityHandler for UndoRemoveArticle {
+impl Activity for UndoRemoveArticle {
     type DataType = IbisContext;
     type Error = BackendError;
 

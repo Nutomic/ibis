@@ -9,7 +9,7 @@ use activitypub_federation::{
     fetch::object_id::ObjectId,
     kinds::{activity::DeleteType, public},
     protocol::{helpers::deserialize_one_or_many, verification::verify_domains_match},
-    traits::ActivityHandler,
+    traits::Activity,
 };
 use chrono::Utc;
 use ibis_database::{
@@ -59,7 +59,7 @@ impl DeleteComment {
 }
 
 #[async_trait::async_trait]
-impl ActivityHandler for DeleteComment {
+impl Activity for DeleteComment {
     type DataType = IbisContext;
     type Error = BackendError;
 

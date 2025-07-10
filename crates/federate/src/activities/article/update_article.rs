@@ -13,7 +13,7 @@ use activitypub_federation::{
     fetch::object_id::ObjectId,
     kinds::{activity::UpdateType, public},
     protocol::helpers::deserialize_one_or_many,
-    traits::{ActivityHandler, Object},
+    traits::{Activity, Object},
 };
 use ibis_database::{
     common::user::Person,
@@ -62,7 +62,7 @@ impl UpdateArticle {
     }
 }
 #[async_trait::async_trait]
-impl ActivityHandler for UpdateArticle {
+impl Activity for UpdateArticle {
     type DataType = IbisContext;
     type Error = BackendError;
 

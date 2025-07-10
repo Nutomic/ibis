@@ -67,6 +67,10 @@ impl Object for PersonWrapper {
     type Kind = ApubUser;
     type Error = BackendError;
 
+    fn id(&self) -> &Url {
+        self.ap_id.inner()
+    }
+
     fn last_refreshed_at(&self) -> Option<DateTime<Utc>> {
         Some(self.last_refreshed_at)
     }
@@ -127,10 +131,6 @@ impl Object for PersonWrapper {
 }
 
 impl Actor for PersonWrapper {
-    fn id(&self) -> Url {
-        self.ap_id.clone().into()
-    }
-
     fn public_key_pem(&self) -> &str {
         &self.public_key
     }

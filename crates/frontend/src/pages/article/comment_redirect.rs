@@ -27,7 +27,7 @@ pub fn CommentRedirect() -> impl IntoView {
                     .await
                     .map(|comment_view| {
                         let title = comment_view.article.title().replace(' ', "_");
-                        let path = format!("/article/{}/discussion", title);
+                        let path = format!("/article/{title}/discussion");
                         view! { <Redirect path=path /> }
                     })
             })}

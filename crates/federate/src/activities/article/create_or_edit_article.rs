@@ -16,7 +16,7 @@ use activitypub_federation::{
     fetch::object_id::ObjectId,
     kinds::public,
     protocol::helpers::deserialize_one_or_many,
-    traits::{ActivityHandler, Object},
+    traits::{Activity, Object},
 };
 use anyhow::anyhow;
 use chrono::Utc;
@@ -90,7 +90,7 @@ impl CreateOrEditArticle {
 }
 
 #[async_trait::async_trait]
-impl ActivityHandler for CreateOrEditArticle {
+impl Activity for CreateOrEditArticle {
     type DataType = IbisContext;
     type Error = BackendError;
 

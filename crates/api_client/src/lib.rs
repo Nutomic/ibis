@@ -196,6 +196,6 @@ impl ApiClient {
                 .map_err(|e| FrontendError::new(format!("Failed to get hostname: {:?}", e)))?;
         }
 
-        Ok(format!("{protocol}://{}{path}", hostname))
+        Ok(format!("{protocol}://{hostname}{path}"))
     }
 }

@@ -9,7 +9,7 @@ use activitypub_federation::{
     fetch::object_id::ObjectId,
     kinds::{activity::DeleteType, public},
     protocol::{helpers::deserialize_one_or_many, verification::verify_domains_match},
-    traits::ActivityHandler,
+    traits::Activity,
 };
 use ibis_database::{
     common::article::Article,
@@ -62,7 +62,7 @@ impl RemoveArticle {
     }
 }
 #[async_trait::async_trait]
-impl ActivityHandler for RemoveArticle {
+impl Activity for RemoveArticle {
     type DataType = IbisContext;
     type Error = BackendError;
 

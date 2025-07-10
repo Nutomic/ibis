@@ -10,7 +10,7 @@ use activitypub_federation::{
     fetch::object_id::ObjectId,
     kinds::activity::AcceptType,
     protocol::helpers::deserialize_skip_error,
-    traits::{ActivityHandler, Actor},
+    traits::{Activity, Actor},
 };
 use anyhow::anyhow;
 use either::Either;
@@ -64,7 +64,7 @@ impl Accept {
 }
 
 #[async_trait::async_trait]
-impl ActivityHandler for Accept {
+impl Activity for Accept {
     type DataType = IbisContext;
     type Error = BackendError;
 

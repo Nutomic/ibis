@@ -66,6 +66,10 @@ impl Object for EditWrapper {
     type Kind = ApubEdit;
     type Error = BackendError;
 
+    fn id(&self) -> &Url {
+        self.ap_id.inner()
+    }
+
     async fn read_from_id(
         object_id: Url,
         context: &Data<Self::DataType>,

@@ -113,6 +113,6 @@ impl From<ParseIntError> for FrontendError {
 
 impl From<JsValue> for FrontendError {
     fn from(value: JsValue) -> Self {
-        Self(format!("{:?}", value))
+        Self(format!("{value:?}"))
     }
 }

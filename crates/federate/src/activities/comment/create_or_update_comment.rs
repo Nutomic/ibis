@@ -13,7 +13,7 @@ use activitypub_federation::{
     fetch::object_id::ObjectId,
     kinds::public,
     protocol::{helpers::deserialize_one_or_many, verification::verify_domains_match},
-    traits::{ActivityHandler, Object},
+    traits::{Activity, Object},
 };
 use ibis_database::{
     common::{instance::Instance, user::Person},
@@ -70,7 +70,7 @@ impl CreateOrUpdateComment {
 }
 
 #[async_trait::async_trait]
-impl ActivityHandler for CreateOrUpdateComment {
+impl Activity for CreateOrUpdateComment {
     type DataType = IbisContext;
     type Error = BackendError;
 

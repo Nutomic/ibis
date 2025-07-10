@@ -4,7 +4,7 @@ use activitypub_federation::{
     config::{Data, UrlVerifier},
     error::Error as ActivityPubError,
     protocol::context::WithContext,
-    traits::{ActivityHandler, Actor},
+    traits::{Activity, Actor},
 };
 use async_trait::async_trait;
 use ibis_database::{
@@ -32,16 +32,16 @@ pub mod routes;
 pub mod validate;
 pub mod webfinger;
 
-pub async fn send_ibis_activity<Activity, ActorType>(
+pub async fn send_ibis_activity<A, ActorType>(
     actor: &ActorType,
-    activity: Activity,
+    activity: A,
     recipients: Vec<Url>,
     context: &Data<IbisContext>,
 ) -> BackendResult<()>
 where
-    Activity: ActivityHandler + Serialize + Debug + Send + Sync + 'static,
+    A: Activity + Serialize + Debug + Send + Sync + 'static,
     ActorType: Actor + Sync + Clone,
-    <Activity as ActivityHandler>::Error: From<activitypub_federation::error::Error>,
+    <A as Activity>::Error: From<activitypub_federation::error::Error>,
 {
     let form = SentActivityInsertForm {
         id: activity.id().clone().into(),
