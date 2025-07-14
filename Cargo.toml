@@ -49,9 +49,9 @@ ibis_federate = { path = "crates/federate" }
 ibis_frontend = { path = "crates/frontend" }
 ibis_api_client = { path = "crates/api_client" }
 ibis_markdown = { path = "crates/markdown" }
-leptos = "0.8.2"
-leptos_meta = "0.8.2"
-leptos_router = "0.8.2"
+leptos = "0.8.3"
+leptos_meta = "0.8.3"
+leptos_router = "0.8.3"
 leptos-use = { version = "0.16.0-beta2", features = [
   "use_textarea_autosize",
   "use_cookie",
