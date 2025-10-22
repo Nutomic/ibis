@@ -2,8 +2,7 @@ use chrono::{Duration, Local};
 use codee::string::FromToStringCodec;
 use leptos::prelude::*;
 use leptos_use::{SameSite, UseCookieOptions, use_cookie_with_options};
-use std::str::FromStr;
-use std::fmt::Debug;
+use std::{fmt::Debug, str::FromStr};
 
 pub mod dark_mode;
 pub mod formatting;
