@@ -11,7 +11,7 @@ pub mod resources;
 
 pub fn use_cookie<T>(name: &str) -> (Signal<Option<T>>, WriteSignal<Option<T>>)
 where
-    T: Debug + Send + Sync + FromStr + ToString + Clone + 'static,
+    T: Clone + PartialEq + Send + Sync + Debug + FromStr + ToString + 'static,
 {
     let expires = (Local::now() + Duration::days(356)).timestamp();
     let cookie_options = UseCookieOptions::default()

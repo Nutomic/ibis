@@ -13,12 +13,12 @@ hydrate = ["katex/wasm-js"]
 [dependencies]
 phosphor-leptos.workspace = true
 markdown-it = "0.6.1"
-markdown-it-block-spoiler = "1.0.2"
+markdown-it-block-spoiler = "1.0.3"
 markdown-it-heading-anchors = "0.3.0"
 markdown-it-footnote = "0.2.0"
 markdown-it-sub = "1.0.2"
 markdown-it-sup = "1.0.2"
 katex = { version = "0.4", default-features = false }
 github-slugger = "0.1.0"
-fmtm = "0.0.3"
-fmtm_ytmimi_markdown_fmt = "0.0.3"
+fmtm = "0.0.4"
+fmtm_ytmimi_markdown_fmt = "0.0.4"
