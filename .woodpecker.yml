@@ -46,7 +46,7 @@ steps:
     commands:
       - diesel migration run
       - diesel print-schema --config-file=diesel.toml > tmp.schema
-      - diff tmp.schema crates/db_schema/src/schema.rs
+      - diff tmp.schema crates/database_schema/src/lib.rs
 
   cargo_clippy:
     image: *rust_image
