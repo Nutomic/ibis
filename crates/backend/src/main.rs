@@ -4,6 +4,9 @@ use ibis_database::config::IbisConfig;
 
 #[tokio::main]
 pub async fn main() -> ibis_database::error::BackendResult<()> {
+    // https://github.com/seanmonstar/reqwest/issues/2924
+    let _ = rustls::crypto::ring::default_provider().install_default();
+
     if std::env::args().collect::<Vec<_>>().get(1) == Some(&"--print-config".to_string()) {
         println!("{}", doku::to_toml::<IbisConfig>());
         std::process::exit(0);
