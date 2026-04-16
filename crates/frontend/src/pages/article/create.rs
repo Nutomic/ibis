@@ -119,15 +119,20 @@ pub fn CreateArticle() -> impl IntoView {
                                         required
                                     >
                                         // Put local instance first to be the default
-                                        {instances_
-                                            .into_iter()
-                                            .flatten()
-                                            .map(|i| i.instance)
-                                            .sorted_by(|a, b| Ord::cmp(&b.local, &a.local))
-                                            .map(|i| {
-                                                view! { <option value=i.id.0>{i.domain}</option> }
-                                            })
-                                            .collect_view()}
+                                        {if let Ok(instances) = instances_ {
+                                            instance_id.1.set(instances[0].instance.id.0.to_string());
+                                            instances
+                                                .into_iter()
+                                                .map(|i| i.instance)
+                                                .sorted_by(|a, b| Ord::cmp(&b.local, &a.local))
+                                                .map(|i| {
+
+                                                    view! { <option value=i.id.0>{i.domain}</option> }
+                                                })
+                                                .collect_view()
+                                        } else {
+                                            vec![]
+                                        }}
                                     </select>
 
                                     <EditorView textarea_ref content set_content />
