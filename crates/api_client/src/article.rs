@@ -99,6 +99,9 @@ impl ApiClient {
     pub async fn create_article(&self, data: &CreateArticleParams) -> FrontendResult<ArticleView> {
         self.post("/api/v1/article", Some(&data)).await
     }
+    pub async fn import_article(&self, data: &ImportArticleParams) -> FrontendResult<ArticleView> {
+        self.post("/api/v1/article/import", Some(&data)).await
+    }
 
     pub async fn get_article(&self, data: GetArticleParams) -> FrontendResult<ArticleView> {
         self.send(Method::GET, "/api/v1/article", Some(data)).await

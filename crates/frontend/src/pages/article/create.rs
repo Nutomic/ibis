@@ -1,4 +1,7 @@
-use ibis_api_client::{CLIENT, article::CreateArticleParams};
+use ibis_api_client::{
+    CLIENT,
+    article::{CreateArticleParams, ImportArticleParams},
+};
 use ibis_database::common::{article::ArticleView, newtypes::InstanceId};
 use ibis_frontend_components::{
     article_editor::EditorView,
@@ -28,14 +31,17 @@ pub fn CreateArticle() -> impl IntoView {
         trigger_resize: _,
     } = use_textarea_autosize(textarea_ref);
     let summary = signal(String::new());
+    let import_url = signal(String::new());
     let instance_id = signal(String::new());
     let (create_response, set_create_response) = signal(None::<ArticleView>);
     let (create_error, set_create_error) = signal(None::<String>);
     let (wait_for_response, set_wait_for_response) = signal(false);
-    let button_is_disabled = Signal::derive(move || {
+    let create_button_is_disabled = Signal::derive(move || {
         wait_for_response.get() || summary.0.get().is_empty() || title.0.get().is_empty()
     });
-    let submit_action = Action::new(
+    let import_button_is_disabled =
+        Signal::derive(move || wait_for_response.get() || import_url.0.get().is_empty());
+    let create_action = Action::new(
         move |(title, text, summary, instance_id): &(String, String, String, String)| {
             let params = CreateArticleParams {
                 title: title.clone(),
@@ -61,6 +67,27 @@ pub fn CreateArticle() -> impl IntoView {
             }
         },
     );
+    let import_action = Action::new(move |url: &String| {
+        let params = ImportArticleParams {
+            url: url.to_string(),
+        };
+        async move {
+            set_wait_for_response.update(|w| *w = true);
+            let res = CLIENT.import_article(&params).await;
+            set_wait_for_response.update(|w| *w = false);
+            match res {
+                Ok(res) => {
+                    set_create_response.update(|v| *v = Some(res));
+                    set_create_error.update(|e| *e = None);
+                }
+                Err(err) => {
+                    let msg = err.to_string();
+                    log::warn!("Unable to create: {msg}");
+                    set_create_error.update(|e| *e = Some(msg));
+                }
+            }
+        }
+    });
     let instances = Resource::new(move || (), |_| async move { CLIENT.list_instances().await });
 
     view! {
@@ -124,9 +151,9 @@ pub fn CreateArticle() -> impl IntoView {
 
                                         <button
                                             class="btn btn-primary"
-                                            prop:disabled=move || button_is_disabled.get()
+                                            prop:disabled=move || create_button_is_disabled.get()
                                             on:click=move |_| {
-                                                submit_action
+                                                create_action
                                                     .dispatch((
                                                         title.0.get(),
                                                         content.get(),
@@ -136,6 +163,30 @@ pub fn CreateArticle() -> impl IntoView {
                                             }
                                         >
                                             Submit
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="divider"></div>
+                                <div class="item-view">
+                                    <h2 class="my-4 font-serif text-xl font-bold">
+                                        Import from Wikipedia
+                                    </h2>
+                                    <div class=" flex flex-row">
+                                        <input
+                                            class="mr-4 input input-primary grow"
+                                            type="text"
+                                            placeholder="https://en.wikipedia.org/wiki/Animal"
+                                            bind:value=import_url
+                                            required
+                                        />
+                                        <button
+                                            class="btn btn-primary"
+                                            prop:disabled=move || import_button_is_disabled.get()
+                                            on:click=move |_| {
+                                                import_action.dispatch(import_url.0.get());
+                                            }
+                                        >
+                                            Import
                                         </button>
                                     </div>
                                 </div>
