@@ -34,6 +34,8 @@ impl AsyncTestContext for TestData {
     async fn setup() -> Self {
         static INIT: Once = Once::new();
         INIT.call_once(|| {
+            // https://github.com/seanmonstar/reqwest/issues/2924
+            let _ = rustls::crypto::ring::default_provider().install_default();
             env_logger::builder()
                 .filter_level(LevelFilter::Warn)
                 //.filter_module("activitypub_federation", LevelFilter::Info)
