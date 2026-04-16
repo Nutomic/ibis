@@ -35,6 +35,11 @@ pub struct CreateArticleParams {
 }
 
 #[derive(Deserialize, Serialize, Debug)]
+pub struct ImportArticleParams {
+    pub url: String,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
 pub struct EditArticleParams {
     /// Id of the article to edit
     pub article_id: ArticleId,
