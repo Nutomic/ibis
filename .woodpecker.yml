@@ -95,9 +95,9 @@ steps:
       - sudo -u testuser env 
           "PATH=/usr/lib/postgresql/15/bin:/usr/local/cargo/bin:$PATH" 
           "DATABASE_URL=postgres://ibis:password@database:5432/ibis" 
-          "IBIS_TEST_PARALLELISM=1" 
+          "IBIS_TEST_PARALLELISM=5"
           "CARGO_HOME=$CARGO_HOME" 
-          cargo test --no-fail-fast -- --nocapture
+          cargo test -- --nocapture
     when:
       - event: pull_request
 
