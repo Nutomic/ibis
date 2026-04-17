@@ -12,6 +12,8 @@ steps:
     commands:
       - rustup component add rustfmt --toolchain nightly
       - cargo +nightly fmt -- --check
+    when:
+      - event: pull_request
 
   leptos_fmt:
     image: *rust_image
@@ -19,11 +21,15 @@ steps:
       - *install_binstall
       - cargo binstall -y leptosfmt
       - leptosfmt -c .leptosfmt.toml --check src
+    when:
+      - event: pull_request
 
   toml_fmt:
     image: tamasfe/taplo:0.9.3
     commands:
       - taplo format --check
+    when:
+      - event: pull_request
 
   ignored_files:
     image: alpine:3
@@ -31,6 +37,8 @@ steps:
       - apk add git
       - IGNORED=$(git ls-files --cached -i --exclude-standard)
       - if [[ "$IGNORED" ]]; then echo "Ignored files present:\n$IGNORED\n"; exit 1; fi
+    when:
+      - event: pull_request
 
   cargo_shear:
     image: *rust_image
@@ -38,6 +46,8 @@ steps:
       - *install_binstall
       - cargo binstall -y cargo-shear
       - cargo shear
+    when:
+      - event: pull_request
 
   check_diesel_schema:
     image: willsquire/diesel-cli
@@ -47,6 +57,8 @@ steps:
       - diesel migration run
       - diesel print-schema --config-file=diesel.toml > tmp.schema
       - diff tmp.schema crates/database_schema/src/lib.rs
+    when:
+      - event: pull_request
 
   cargo_clippy:
     image: *rust_image
@@ -55,6 +67,8 @@ steps:
     commands:
       - rustup component add clippy
       - cargo clippy --tests --all-targets --all-features
+    when:
+      - event: pull_request
 
   check_config_defaults_updated:
     image: *rust_image
@@ -63,6 +77,8 @@ steps:
     commands:
       - cargo run -- --print-config > config/defaults_current.toml
       - diff config/defaults.toml config/defaults_current.toml
+    when:
+      - event: pull_request
 
   cargo_test:
     image: *rust_image
@@ -82,6 +98,8 @@ steps:
           "IBIS_TEST_PARALLELISM=1" 
           "CARGO_HOME=$CARGO_HOME" 
           cargo test --no-fail-fast -- --nocapture
+    when:
+      - event: pull_request
 
   build_release:
     image: *rust_image
