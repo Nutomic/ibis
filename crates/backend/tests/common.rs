@@ -168,6 +168,7 @@ impl IbisInstance {
 
     async fn stop(self) {
         self.db_handle.abort();
+        self.db_handle.await.ok();
         Self::stop_internal(self.db_path).await;
     }
 
