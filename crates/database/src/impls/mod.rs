@@ -36,9 +36,9 @@ pub struct IbisContext {
 
 impl IbisContext {
     pub fn init(config: IbisConfig, ignore_env: bool) -> BackendResult<Self> {
-            // https://github.com/seanmonstar/reqwest/issues/2924
-            let _ = rustls::crypto::ring::default_provider().install_default();
-            
+        // https://github.com/seanmonstar/reqwest/issues/2924
+        let _ = rustls::crypto::ring::default_provider().install_default();
+
         let database_url = config.database.connection_url.clone();
         let database_url = if ignore_env {
             database_url

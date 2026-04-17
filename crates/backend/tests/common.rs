@@ -32,8 +32,8 @@ static ACTIVE: AtomicI32 = AtomicI32::new(0);
 
 impl AsyncTestContext for TestData {
     async fn setup() -> Self {
-            // https://github.com/seanmonstar/reqwest/issues/2924
-            let _ = rustls::crypto::ring::default_provider().install_default();
+        // https://github.com/seanmonstar/reqwest/issues/2924
+        let _ = rustls::crypto::ring::default_provider().install_default();
         static INIT: Once = Once::new();
         INIT.call_once(|| {
             env_logger::builder()
