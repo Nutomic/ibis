@@ -6,21 +6,15 @@ use crate::common::{TEST_ARTICLE_DEFAULT_TEXT, TestData};
 use anyhow::Result;
 use ibis_api_client::{
     article::{
-        CreateArticleParams,
-        EditArticleParams,
-        ForkArticleParams,
-        GetArticleParams,
-        ListArticlesParams,
-        ProtectArticleParams,
+        CreateArticleParams, EditArticleParams, ForkArticleParams, GetArticleParams,
+        ListArticlesParams, ProtectArticleParams,
     },
     comment::{CreateCommentParams, EditCommentParams},
     instance::SearchArticleParams,
     user::{GetUserParams, LoginUserParams, RegisterUserParams},
 };
 use ibis_database::common::{
-    article::ArticleView,
-    notifications::ApiNotificationData,
-    utils::extract_domain,
+    article::ArticleView, notifications::ApiNotificationData, utils::extract_domain,
 };
 use pretty_assertions::assert_eq;
 use retry_future::{LinearRetryStrategy, RetryFuture, RetryPolicy};
@@ -433,9 +427,10 @@ async fn api_test_local_edit_conflict(TestData(alpha, _, _): &mut TestData) -> R
     Ok(())
 }
 
-#[test_context(TestData)]
-#[tokio::test]
-#[ignore]
+//#[test_context(TestData)]
+//#[tokio::test]
+//#[ignore]
+#[allow(unused)]
 async fn api_test_federated_edit_conflict(
     TestData(alpha, beta, gamma): &mut TestData,
 ) -> Result<()> {
