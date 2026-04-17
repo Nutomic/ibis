@@ -6,15 +6,21 @@ use crate::common::{TEST_ARTICLE_DEFAULT_TEXT, TestData};
 use anyhow::Result;
 use ibis_api_client::{
     article::{
-        CreateArticleParams, EditArticleParams, ForkArticleParams, GetArticleParams,
-        ListArticlesParams, ProtectArticleParams,
+        CreateArticleParams,
+        EditArticleParams,
+        ForkArticleParams,
+        GetArticleParams,
+        ListArticlesParams,
+        ProtectArticleParams,
     },
     comment::{CreateCommentParams, EditCommentParams},
     instance::SearchArticleParams,
     user::{GetUserParams, LoginUserParams, RegisterUserParams},
 };
 use ibis_database::common::{
-    article::ArticleView, notifications::ApiNotificationData, utils::extract_domain,
+    article::ArticleView,
+    notifications::ApiNotificationData,
+    utils::extract_domain,
 };
 use pretty_assertions::assert_eq;
 use retry_future::{LinearRetryStrategy, RetryFuture, RetryPolicy};

@@ -120,6 +120,7 @@ impl IbisInstance {
         })
         .await
         .unwrap();
+        sleep(Duration::from_secs(5)).await;
     }
 
     async fn start(db_path: String, port: i32, username: &str) -> Self {
