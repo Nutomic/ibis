@@ -11,6 +11,7 @@ steps:
     commands:
       - apt-get update
       - apt-get install postgresql sudo -y --no-install-recommends --no-install-suggests
+      - cat /etc/os-release
       - pg_ctl --help
       - initdb --help
       # dbinit (used by tests to create temp db) refuses to run as root so we need to setup another user
