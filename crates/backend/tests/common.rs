@@ -113,8 +113,8 @@ impl IbisInstance {
         spawn_blocking(move || {
             Command::new("./scripts/start_test_db.sh")
                 .arg(&db_path)
-                .stdout(Stdio::null())
-                .stderr(Stdio::null())
+                .stdout(Stdio::inherit())
+                .stderr(Stdio::inherit())
                 .output()
                 .unwrap();
         })
@@ -177,8 +177,8 @@ impl IbisInstance {
         spawn_blocking(move || {
             Command::new("./scripts/stop_test_db.sh")
                 .arg(&db_path)
-                .stdout(Stdio::null())
-                .stderr(Stdio::null())
+                .stdout(Stdio::inherit())
+                .stderr(Stdio::inherit())
                 .output()
                 .unwrap();
             // remove db files
