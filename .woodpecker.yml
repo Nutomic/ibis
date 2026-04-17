@@ -11,6 +11,8 @@ steps:
     commands:
       - apt-get update
       - apt-get install postgresql sudo -y --no-install-recommends --no-install-suggests
+      - pg_ctl --help
+      - initdb --help
       # dbinit (used by tests to create temp db) refuses to run as root so we need to setup another user
       - adduser testuser
       - cp /usr/local/rustup /home/testuser/.rustup -r
