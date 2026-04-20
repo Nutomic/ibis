@@ -5,7 +5,10 @@ use axum::{Form, Json};
 use axum_extra::extract::CookieJar;
 use axum_macros::debug_handler;
 use ibis_api_client::user::{
-    AuthenticateWithOauth, OAuthTokenResponse, RegisterUserParams, RegistrationResponse,
+    AuthenticateWithOauth,
+    OAuthTokenResponse,
+    RegisterUserParams,
+    RegistrationResponse,
 };
 use ibis_database::{
     common::user::{LocalUser, LocalUserView},
