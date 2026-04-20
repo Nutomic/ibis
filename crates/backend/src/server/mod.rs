@@ -2,9 +2,7 @@ use crate::api::api_routes;
 use activitypub_federation::config::{FederationConfig, FederationMiddleware};
 use assets::file_and_error_handler;
 use axum::{
-    Extension,
-    Router,
-    ServiceExt,
+    Extension, Router, ServiceExt,
     body::Body,
     extract::State,
     http::Request,
@@ -33,6 +31,8 @@ pub(super) async fn start_server(
     override_hostname: Option<SocketAddr>,
     notify_start: Option<oneshot::Sender<()>>,
 ) -> BackendResult<()> {
+    info!("Starting Ibis v{}", env!("CARGO_PKG_VERSION"));
+
     let leptos_options = get_config_from_str(include_str!("../../../../Cargo.toml"))?;
     let mut addr = leptos_options.site_addr;
     if let Some(override_hostname) = override_hostname {
