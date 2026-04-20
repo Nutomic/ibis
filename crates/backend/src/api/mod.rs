@@ -5,6 +5,7 @@ use crate::api::{
         fork_article,
         get_article,
         get_conflict,
+        import_article,
         list_articles,
         protect_article,
         resolve_article,
@@ -64,6 +65,7 @@ pub fn api_routes() -> Router<()> {
             "/article",
             get(get_article).post(create_article).patch(edit_article),
         )
+        .route("/article/import", post(import_article))
         .route("/article/list", get(list_articles))
         .route("/article/fork", post(fork_article))
         .route("/article/resolve", get(resolve_article))

@@ -9,6 +9,7 @@ use axum::{Form, Json, extract::Query};
 use axum_macros::debug_handler;
 use chrono::Utc;
 use diffy::{Patch, apply, create_patch, merge};
+use dom_query::Document;
 use ibis_api_client::{
     article::{
         CreateArticleParams,
@@ -18,6 +19,7 @@ use ibis_api_client::{
         ForkArticleParams,
         GetArticleParams,
         GetConflictParams,
+        ImportArticleParams,
         ListArticlesParams,
         ProtectArticleParams,
         RemoveArticleParams,
@@ -38,6 +40,7 @@ use ibis_database::{
             can_edit_article,
         },
         instance::Instance,
+        newtypes::InstanceId,
         user::Person,
     },
     error::BackendResult,
@@ -56,6 +59,8 @@ use ibis_federate::{
     validate::{validate_article_title, validate_not_empty},
 };
 use ibis_markdown::format_markdown;
+use std::sync::{LazyLock, Mutex};
+use wikipedia_article_transform::{ArticleFormat, WikiPage};
 
 /// Create a new article with empty text, and federate it to followers.
 #[debug_handler]
@@ -64,16 +69,73 @@ pub(crate) async fn create_article(
     context: Data<IbisContext>,
     Form(params): Form<CreateArticleParams>,
 ) -> BackendResult<Json<ArticleView>> {
-    validate_article_title(&params.title)?;
     validate_not_empty(&params.text)?;
 
-    let instance = match params.instance_id {
+    do_create(
+        params.title,
+        params.summary,
+        params.text,
+        user,
+        params.instance_id,
+        context,
+    )
+    .await
+}
+
+/// Create a new article by importing the text from Wikipedia
+#[debug_handler]
+pub(crate) async fn import_article(
+    user: UserExt,
+    context: Data<IbisContext>,
+    Form(params): Form<ImportArticleParams>,
+) -> BackendResult<Json<ArticleView>> {
+    let html = context.client.get(&params.url).send().await?.text().await?;
+    static W: LazyLock<Mutex<WikiPage>> =
+        LazyLock::new(|| Mutex::new(WikiPage::new().expect("init wikipage")));
+
+    let (title, content) = {
+        let document = Document::from(html);
+        (
+            document
+                .select(".mw-page-title-main")
+                .first()
+                .text()
+                .to_string(),
+            document.select("#bodyContent").html().to_string(),
+        )
+    };
+
+    let sections = W.lock().expect("mutex").extract_text(content.trim())?;
+
+    let markdown = format!("[!toc]\n\n{}", sections.format_markdown());
+
+    do_create(
+        title,
+        format!("Imported from {}", params.url),
+        markdown,
+        user,
+        None,
+        context,
+    )
+    .await
+}
+
+async fn do_create(
+    title: String,
+    summary: String,
+    text: String,
+    user: UserExt,
+    instance_id: Option<InstanceId>,
+    context: Data<IbisContext>,
+) -> BackendResult<Json<ArticleView>> {
+    validate_article_title(&title)?;
+    let instance = match instance_id {
         Some(id) => Instance::read(id, &context)?,
         None => Instance::read_local(&context)?,
     };
-    let ap_id = generate_article_ap_id(&params.title, &instance)?;
+    let ap_id = generate_article_ap_id(&title, &instance)?;
     let form = DbArticleForm {
-        title: params.title,
+        title,
         text: String::new(),
         ap_id,
         instance_id: instance.id,
@@ -85,10 +147,10 @@ pub(crate) async fn create_article(
     let article = Article::create(form, user.person.id, &context).await?;
 
     // Markdown formatting
-    let text = format_markdown(&params.text)?;
+    let text = format_markdown(&text)?;
     submit_article_update(
         text,
-        params.summary,
+        summary,
         article.latest_edit_version(&context)?,
         &article,
         user.person.clone().into(),

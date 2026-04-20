@@ -35,6 +35,11 @@ pub struct CreateArticleParams {
 }
 
 #[derive(Deserialize, Serialize, Debug)]
+pub struct ImportArticleParams {
+    pub url: String,
+}
+
+#[derive(Deserialize, Serialize, Debug)]
 pub struct EditArticleParams {
     /// Id of the article to edit
     pub article_id: ArticleId,
@@ -93,6 +98,9 @@ pub struct FollowArticleParams {
 impl ApiClient {
     pub async fn create_article(&self, data: &CreateArticleParams) -> FrontendResult<ArticleView> {
         self.post("/api/v1/article", Some(&data)).await
+    }
+    pub async fn import_article(&self, data: &ImportArticleParams) -> FrontendResult<ArticleView> {
+        self.post("/api/v1/article/import", Some(&data)).await
     }
 
     pub async fn get_article(&self, data: GetArticleParams) -> FrontendResult<ArticleView> {
