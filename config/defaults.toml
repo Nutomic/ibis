@@ -24,7 +24,7 @@ group_name = "wiki"
 wiki_bot_name = "wikibot"
 
 [federation]
-# Domain used for federation
+# Domain used for federation. Only set this if it is different from config.domain (eg for debugging).; optional
 domain = "example.com"
 
 # Comma separated list of instances which are allowed for federation. If set, federation
