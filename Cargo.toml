@@ -35,13 +35,32 @@ lto = "thin"
 panic = "abort"
 
 [workspace.lints.clippy]
-dbg_macro = "deny"
-unwrap_used = "deny"
-todo = "deny"
+cast_lossless = "deny"
 correctness = { level = "deny", priority = -1 }
+dbg_macro = "deny"
+explicit_into_iter_loop = "deny"
+explicit_iter_loop = "deny"
+get_first = "deny"
+implicit_clone = "deny"
+inefficient_to_string = "deny"
+items-after-statements = "deny"
+manual_string_new = "deny"
 perf = { level = "deny", priority = -1 }
+redundant_closure_for_method_calls = "deny"
 style = { level = "deny", priority = -1 }
 suspicious = { level = "deny", priority = -1 }
+unwrap_used = "deny"
+unimplemented = "deny"
+as_conversions = "deny"
+large_futures = "deny"
+tests_outside_test_module = "deny"
+try_err = "deny"
+unreachable = "deny"
+return_and_then = "deny"
+ref_patterns = "deny"
+redundant_type_annotations = "deny"
+if_then_some_else_none = "deny"
+allow_attributes = "deny"
 
 [workspace.dependencies]
 ibis_database = { path = "crates/database" }

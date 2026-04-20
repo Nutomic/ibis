@@ -37,7 +37,7 @@ impl Collection for InstanceFollower {
         Ok(GroupFollowers {
             id: Url::parse(&format!("{}followers", instance.ap_id))?,
             r#type: CollectionType::Collection,
-            total_items: followers as i32,
+            total_items: followers.try_into()?,
             items: vec![],
         })
     }

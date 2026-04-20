@@ -6,7 +6,7 @@ use leptos_router::hooks::use_query_map;
 pub fn VerifyEmail() -> impl IntoView {
     let success = signal(false);
     let verify_email_action = Action::new(move |token: &String| {
-        let token = token.to_string();
+        let token = token.clone();
         async move {
             CLIENT
                 .verify_email(token)

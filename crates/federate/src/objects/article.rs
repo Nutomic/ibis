@@ -139,7 +139,7 @@ impl Object for ArticleWrapper {
                     break c;
                 }
             } else {
-                Err(anyhow!("not found"))?;
+                return Err(anyhow!("not found").into());
             }
         };
         let text = read_from_string_or_source(&json.content, &json.media_type, &json.source);

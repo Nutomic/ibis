@@ -33,26 +33,25 @@ impl InlineRule for ArticleLinkScanner {
 
     /// Find `[[Title@example.com]], return the position and split title/domain.
     fn run(state: &mut InlineState) -> Option<(Node, usize)> {
+        const SEPARATOR_LENGTH: usize = 2;
         let input = &state.src[state.pos..state.pos_max];
         if !input.starts_with("[[") {
             return None;
         }
-        const SEPARATOR_LENGTH: usize = 2;
 
-        input.find("]]").and_then(|length| {
-            let start = state.pos + SEPARATOR_LENGTH;
-            let i = start + length - SEPARATOR_LENGTH;
-            let content = &state.src[start..i];
-            content.split_once('@').map(|(title, domain)| {
-                // Handle custom link label if provided, otherwise use title as label
-                let (domain, label) = domain.split_once('|').unwrap_or((domain, title));
-                let node = Node::new(ArticleLink {
-                    label: label.to_string(),
-                    title: title.to_string(),
-                    domain: domain.to_string(),
-                });
-                (node, length + SEPARATOR_LENGTH)
-            })
+        let length = input.find("]]")?;
+        let start = state.pos + SEPARATOR_LENGTH;
+        let i = start + length - SEPARATOR_LENGTH;
+        let content = &state.src[start..i];
+        content.split_once('@').map(|(title, domain)| {
+            // Handle custom link label if provided, otherwise use title as label
+            let (domain, label) = domain.split_once('|').unwrap_or((domain, title));
+            let node = Node::new(ArticleLink {
+                label: label.to_string(),
+                title: title.to_string(),
+                domain: domain.to_string(),
+            });
+            (node, length + SEPARATOR_LENGTH)
         })
     }
 }

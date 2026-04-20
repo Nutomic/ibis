@@ -68,9 +68,7 @@ pub fn CreateArticle() -> impl IntoView {
         },
     );
     let import_action = Action::new(move |url: &String| {
-        let params = ImportArticleParams {
-            url: url.to_string(),
-        };
+        let params = ImportArticleParams { url: url.clone() };
         async move {
             set_wait_for_response.update(|w| *w = true);
             let res = CLIENT.import_article(&params).await;

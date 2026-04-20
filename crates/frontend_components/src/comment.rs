@@ -39,7 +39,7 @@ pub fn CommentView(
         "/article/{}/discussion#{comment_id}",
         article
             .get_untracked()
-            .and_then(|a| a.ok())
+            .and_then(std::result::Result::ok)
             .map(|a| comment_path(&comment.comment, &a.article))
             .unwrap_or_default(),
     );

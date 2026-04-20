@@ -14,7 +14,7 @@ pub fn validate_article_title(title: &str) -> BackendResult<()> {
 }
 
 pub fn validate_user_name(name: &str) -> BackendResult<()> {
-    #[allow(clippy::expect_used)]
+    #[expect(clippy::expect_used)]
     static VALID_ACTOR_NAME_REGEX: LazyLock<Regex> =
         LazyLock::new(|| Regex::new(r"^[a-zA-Z0-9_]{3,20}$").expect("compile regex"));
 

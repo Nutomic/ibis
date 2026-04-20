@@ -13,8 +13,8 @@ pub fn ResetPassword() -> impl IntoView {
     let token = Signal::derive(move || query_map.get("token"));
 
     let login_action = Action::new(move |(): &()| {
-        let password = password.0.get().to_string();
-        let confirm_password = confirm_password.0.get().to_string();
+        let password = password.0.get().clone();
+        let confirm_password = confirm_password.0.get().clone();
         let params = ChangePasswordAfterReset {
             password,
             confirm_password,

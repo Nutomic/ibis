@@ -45,7 +45,7 @@ use std::ops::DerefMut;
 
 #[derive(Queryable, Selectable, Debug)]
 #[diesel(table_name = notification, check_for_backend(diesel::pg::Pg))]
-#[allow(dead_code)]
+#[expect(dead_code)]
 pub struct Notification {
     pub(crate) id: NotificationId,
     local_user_id: LocalUserId,
@@ -101,7 +101,7 @@ impl Notification {
             .filter(notification::id.eq(id))
             .get_result(&mut conn)?)
     }
-    pub async fn list(
+    pub fn list(
         user: &LocalUserView,
         context: &IbisContext,
     ) -> BackendResult<Vec<ApiNotification>> {
@@ -197,11 +197,7 @@ impl Notification {
             .into_iter()
             // exclude creator so he doesnt get notified about his own edit/comment
             .flat_map(|(person_id, local_user_id)| {
-                if person_id != creator_id {
-                    Some(local_user_id)
-                } else {
-                    None
-                }
+                (person_id != creator_id).then_some(local_user_id)
             })
             .map(|local_user_id| NotificationInsertForm {
                 local_user_id,
@@ -319,11 +315,7 @@ impl Notification {
             .into_iter()
             // exclude creator so he doesnt get notified about his own edit/comment
             .flat_map(|(person_id, local_user_id)| {
-                if person_id != creator_id {
-                    Some(local_user_id)
-                } else {
-                    None
-                }
+                (person_id != creator_id).then_some(local_user_id)
             })
             .map(map_fn)
             .collect();

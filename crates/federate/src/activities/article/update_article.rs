@@ -93,7 +93,7 @@ impl UpdateArticle {
         let actor: PersonWrapper = Person::wikibot(context)?.into();
         let inboxes: Vec<_> = Person::read_followers(actor.id, context)?
             .iter()
-            .map(|f| f.inbox_url())
+            .map(ibis_database::common::user::Person::inbox_url)
             .collect();
         send_ibis_activity(&actor, self.clone(), inboxes, context).await?;
 

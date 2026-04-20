@@ -22,7 +22,7 @@ pub struct ApiClient {
 }
 
 impl ApiClient {
-    pub fn new(#[allow(unused)] test_hostname: Option<String>) -> Self {
+    pub fn new(test_hostname: Option<String>) -> Self {
         #[cfg(feature = "ssr")]
         {
             // need cookie store for auth in tests
@@ -90,7 +90,7 @@ impl ApiClient {
         let res = req.send().await?;
         let status = res.status();
         let url = res.url().to_string();
-        let text = res.text().await?.to_string();
+        let text = res.text().await?.clone();
         Self::response(status.into(), text, &url)
     }
 

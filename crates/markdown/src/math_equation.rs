@@ -29,6 +29,7 @@ impl InlineRule for MathEquationScanner {
     const MARKER: char = '$';
 
     fn run(state: &mut InlineState) -> Option<(Node, usize)> {
+        const SEPARATOR_LENGTH: usize = 2;
         let input = &state.src[state.pos..state.pos_max];
         if !input.starts_with("$$") {
             return None;
@@ -37,7 +38,6 @@ impl InlineRule for MathEquationScanner {
         if input.starts_with("$$\n") || input.starts_with("$$ ") {
             display_mode = true;
         }
-        const SEPARATOR_LENGTH: usize = 2;
 
         input[SEPARATOR_LENGTH - 1..].find("$$").map(|length| {
             let start = state.pos + SEPARATOR_LENGTH;

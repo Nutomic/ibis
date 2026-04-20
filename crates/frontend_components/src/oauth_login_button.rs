@@ -24,7 +24,7 @@ impl FromStr for OauthCookie {
     }
 }
 
-#[allow(clippy::to_string_trait_impl)]
+#[expect(clippy::to_string_trait_impl)]
 impl ToString for OauthCookie {
     fn to_string(&self) -> String {
         serde_json::to_string(self).expect("convert oauth cookie to string")

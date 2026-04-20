@@ -89,10 +89,10 @@ pub(crate) async fn import_article(
     context: Data<IbisContext>,
     Form(params): Form<ImportArticleParams>,
 ) -> BackendResult<Json<ArticleView>> {
-    let html = context.client.get(&params.url).send().await?.text().await?;
     static W: LazyLock<Mutex<WikiPage>> =
         LazyLock::new(|| Mutex::new(WikiPage::new().expect("init wikipage")));
 
+    let html = context.client.get(&params.url).send().await?.text().await?;
     let (title, content) = {
         let document = Document::from(html);
         (

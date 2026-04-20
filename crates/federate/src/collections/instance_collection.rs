@@ -58,8 +58,8 @@ impl Collection for InstanceCollection {
         .await?;
         let collection = ApubInstanceCollection {
             r#type: Default::default(),
-            id: linked_instances_url(&context.conf.federation_domain())?.into(),
-            total_items: instances.len() as i32,
+            id: linked_instances_url(context.conf.federation_domain())?.into(),
+            total_items: instances.len().try_into()?,
             items: instances,
         };
         Ok(collection)

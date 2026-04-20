@@ -51,7 +51,7 @@ impl Collection for EditCollection {
         let collection = ApubEditCollection {
             r#type: Default::default(),
             id: article.edits_id()?.into(),
-            total_items: edits.len() as i32,
+            total_items: edits.len().try_into()?,
             items: edits,
         };
         Ok(collection)

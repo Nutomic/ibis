@@ -215,7 +215,7 @@ pub(crate) async fn list_notifications(
     user: UserExt,
     context: Data<IbisContext>,
 ) -> BackendResult<Json<Vec<ApiNotification>>> {
-    Ok(Json(Notification::list(&user, &context).await?))
+    Ok(Json(Notification::list(&user, &context)?))
 }
 
 #[debug_handler]

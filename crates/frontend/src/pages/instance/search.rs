@@ -92,7 +92,7 @@ pub fn Search() -> impl IntoView {
                                             view! {
                                                 <li>
                                                     <a class="text-lg link" href=format!("/instance/{domain}")>
-                                                        {domain.to_string()}
+                                                        {domain.clone()}
                                                     </a>
                                                 </li>
                                             },

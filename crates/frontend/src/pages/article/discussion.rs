@@ -91,5 +91,5 @@ fn build_comments_tree(comments: Vec<CommentView>) -> Vec<CommentView> {
     debug_assert!(comments.len() == map.len());
 
     // Now convert it back to flat array with correct order for rendering
-    tree.into_iter().flat_map(|t| t.flatten()).collect()
+    tree.into_iter().flat_map(CommentNode::flatten).collect()
 }

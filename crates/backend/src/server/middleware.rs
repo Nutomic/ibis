@@ -32,7 +32,10 @@ pub(super) async fn auth_middleware(
         .get_all(AUTH_COOKIE)
         .into_iter()
         .filter_map(|h| h.to_str().ok());
-    let auth: HashSet<_> = headers.chain(cookies).map(|s| s.to_string()).collect();
+    let auth: HashSet<_> = headers
+        .chain(cookies)
+        .map(std::string::ToString::to_string)
+        .collect();
 
     for auth in auth {
         if let Ok(local_user) = validate(&auth, &context).await {

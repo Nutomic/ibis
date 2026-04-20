@@ -45,10 +45,7 @@ async fn send_email(
         .to(Mailbox::new(None, Address::from_str(to_email)?))
         .message_id(Some(message_id))
         .subject(subject)
-        .multipart(MultiPart::alternative_plain_html(
-            plain_text,
-            html.to_string(),
-        ))?;
+        .multipart(MultiPart::alternative_plain_html(plain_text, html.clone()))?;
 
     mailer.send(email).await?;
     Ok(())

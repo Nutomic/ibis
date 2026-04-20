@@ -9,7 +9,7 @@ pub fn RequestPasswordReset() -> impl IntoView {
     let (response_received, set_response_received) = signal(false);
 
     let reset_action = Action::new(move |(): &()| {
-        let email = email.0.get().to_string();
+        let email = email.0.get().clone();
         let params = PasswordReset { email };
         async move {
             set_loading.set(true);

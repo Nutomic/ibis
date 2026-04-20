@@ -7,7 +7,7 @@ pub fn I18n(children: Children) -> impl IntoView {
     // See all options in the reference at
     // https://mondeja.github.io/leptos-fluent/leptos_fluent.html
 
-    #[allow(unused_variables)]
+    #[expect(unused_variables)]
     let max_age = 60 * 60 * 24 * 365;
     leptos_fluent! {
         children: children(),

@@ -12,8 +12,8 @@ pub fn Login() -> impl IntoView {
     let (loading, set_loading) = signal(false);
 
     let login_action = Action::new(move |(): &()| {
-        let username_or_email = username_or_email.0.get().to_string();
-        let password = password.0.get().to_string();
+        let username_or_email = username_or_email.0.get().clone();
+        let password = password.0.get().clone();
         let params = LoginUserParams {
             username_or_email,
             password,

@@ -21,7 +21,7 @@ pub fn ArticleActions() -> impl IntoView {
     let fork_action = Action::new(move |(article_id, new_title): &(ArticleId, String)| {
         let params = ForkArticleParams {
             article_id: *article_id,
-            new_title: new_title.to_string(),
+            new_title: new_title.clone(),
         };
         async move {
             CLIENT

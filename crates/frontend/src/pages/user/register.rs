@@ -19,10 +19,10 @@ pub fn Register() -> impl IntoView {
 
     let register_action = Action::new(move |(): &()| {
         let params = RegisterUserParams {
-            username: username.0.get().to_string(),
-            email: Some(email.0.get().to_string()),
-            password: password.0.get().to_string(),
-            confirm_password: confirm_password.0.get().to_string(),
+            username: username.0.get().clone(),
+            email: Some(email.0.get().clone()),
+            password: password.0.get().clone(),
+            confirm_password: confirm_password.0.get().clone(),
         };
         info!("Try to register new account for {}", params.username);
         async move {
