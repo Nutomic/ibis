@@ -13,7 +13,9 @@ steps:
       - apt-get install postgresql sudo -y --no-install-recommends --no-install-suggests
       # dbinit (used by tests to create temp db) refuses to run as root so we need to setup another user
       - ls /usr/lib/postgresql/
-      - ls /usr/lib/postgresql/15/bin/
+      - ls /usr/lib/postgresql/17/bin/
+      - PATH=$PATH:/usr/lib/postgresql/17/bin
+      - export PATH
       - adduser testuser
       - cp /usr/local/rustup /home/testuser/.rustup -r
       - chown testuser:testuser . -R
