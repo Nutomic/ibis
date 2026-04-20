@@ -1,0 +1,1 @@
+alter table email_verification add column email text not null default '';

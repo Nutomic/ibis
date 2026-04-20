@@ -1,10 +1,6 @@
 use crate::{error::BackendResult, impls::IbisContext};
 use lettre::{
-    Address,
-    AsyncSmtpTransport,
-    AsyncTransport,
-    Tokio1Executor,
-    message::*,
+    Address, AsyncSmtpTransport, AsyncTransport, Tokio1Executor, message::*,
     transport::smtp::extension::ClientId,
 };
 use log::{debug, warn};
