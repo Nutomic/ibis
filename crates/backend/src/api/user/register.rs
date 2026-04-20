@@ -45,15 +45,13 @@ pub async fn register_user(
 
     check_new_user(&params.username, params.email.as_deref(), &context)?;
 
-    // dont pass the email here, it needs to be validated first
     let user = LocalUserView::create(
         params.username,
         Some(params.password),
         false,
-        None,
+        params.email.clone(),
         &context,
     )?;
-
     if let Some(email) = &params.email {
         send_verification_email(&user.local_user, email, &context).await?;
     }

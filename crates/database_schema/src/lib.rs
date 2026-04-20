@@ -74,7 +74,6 @@ diesel::table! {
     email_verification (id) {
         id -> Int4,
         local_user_id -> Int4,
-        email -> Text,
         verification_token -> Text,
         published -> Timestamptz,
     }

@@ -19,7 +19,6 @@ use std::ops::DerefMut;
 pub struct EmailVerification {
     pub id: i32,
     pub local_user_id: LocalUserId,
-    pub email: String,
     pub verification_token: String,
     pub published: DateTime<Utc>,
 }
@@ -28,7 +27,6 @@ pub struct EmailVerification {
 #[ diesel(table_name = email_verification)]
 pub struct EmailVerificationForm {
     pub local_user_id: LocalUserId,
-    pub email: String,
     pub verification_token: String,
 }
 
@@ -41,7 +39,6 @@ pub async fn send_verification_email(
     let domain = &context.conf.domain;
     let form = EmailVerificationForm {
         local_user_id: to_user.id,
-        email: new_email.to_string(),
         verification_token: uuid::Uuid::new_v4().to_string(),
     };
     let verify_link = format!(
@@ -73,7 +70,7 @@ pub fn set_email_verified(token: &str, context: &IbisContext) -> BackendResult<(
     // mark email as validated
     update(local_user::table.filter(local_user::id.eq(verification.local_user_id)))
         .set((
-            local_user::email.eq(verification.email),
+            local_user::id.eq(verification.local_user_id),
             local_user::email_verified.eq(true),
         ))
         .execute(conn.deref_mut())?;
