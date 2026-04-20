@@ -32,9 +32,12 @@ static ACTIVE: AtomicI32 = AtomicI32::new(0);
 
 impl AsyncTestContext for TestData {
     async fn setup() -> Self {
+        static INIT: Once = Once::new();
+        static COUNTER: AtomicI32 = AtomicI32::new(0);
+
         // https://github.com/seanmonstar/reqwest/issues/2924
         let _ = rustls::crypto::ring::default_provider().install_default();
-        static INIT: Once = Once::new();
+
         INIT.call_once(|| {
             env_logger::builder()
                 .filter_level(LevelFilter::Warn)
@@ -49,11 +52,7 @@ impl AsyncTestContext for TestData {
             .unwrap_or(10);
         loop {
             let res = ACTIVE.fetch_update(Ordering::AcqRel, Ordering::Acquire, |x| {
-                if x < max_parallelism {
-                    Some(x + 1)
-                } else {
-                    None
-                }
+                (x < max_parallelism).then(|| x + 1)
             });
             if res.is_err() {
                 sleep(Duration::from_secs(1)).await;
@@ -63,7 +62,6 @@ impl AsyncTestContext for TestData {
         }
 
         // Run things on different ports and db paths to allow parallel tests
-        static COUNTER: AtomicI32 = AtomicI32::new(0);
         let current_run = COUNTER.fetch_add(1, Ordering::Relaxed);
 
         let first_port = 8100 + (current_run * 3);
