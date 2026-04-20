@@ -53,6 +53,8 @@ pub struct ApubArticle {
     pub(crate) media_type: Option<MediaTypeMarkdownOrHtml>,
     #[serde(deserialize_with = "deserialize_skip_error", default)]
     pub(crate) source: Option<Source>,
+    // Hack, prevent Lemmy users from posting wiki articles (this value is ignored by ibis)
+    pub posting_restricted_to_mods: Option<bool>,
     published: Option<DateTime<Utc>>,
     updated: Option<DateTime<Utc>>,
 }
@@ -109,6 +111,7 @@ impl Object for ArticleWrapper {
             protected: self.protected,
             media_type: Some(MediaTypeMarkdownOrHtml::Html),
             source: Some(Source::new(self.text.clone())),
+            posting_restricted_to_mods: Some(true),
             published: Some(self.published),
             updated: Some(self.updated),
         })
