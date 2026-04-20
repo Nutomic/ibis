@@ -12,16 +12,12 @@ steps:
       - apt-get update
       - apt-get install postgresql sudo -y --no-install-recommends --no-install-suggests
       # dbinit (used by tests to create temp db) refuses to run as root so we need to setup another user
-      - ls /usr/lib/postgresql/
-      - ls /usr/lib/postgresql/17/bin/
-      - PATH=$PATH:/usr/lib/postgresql/17/bin
-      - export PATH
       - adduser testuser
       - cp /usr/local/rustup /home/testuser/.rustup -r
       - chown testuser:testuser . -R
       - chown testuser:testuser /home/testuser -R
       - sudo -u testuser env 
-          "PATH=/usr/lib/postgresql/15/bin:/usr/local/cargo/bin:$PATH" 
+          "PATH=/usr/lib/postgresql/17/bin:/usr/local/cargo/bin:$PATH"
           "DATABASE_URL=postgres://ibis:password@database:5432/ibis" 
           "IBIS_TEST_PARALLELISM=5"
           "CARGO_HOME=$CARGO_HOME" 
