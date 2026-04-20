@@ -113,14 +113,13 @@ impl IbisInstance {
         spawn_blocking(move || {
             Command::new("./scripts/start_test_db.sh")
                 .arg(&db_path)
-                .stdout(Stdio::inherit())
+                .stdout(Stdio::null())
                 .stderr(Stdio::inherit())
                 .output()
                 .unwrap();
         })
         .await
         .unwrap();
-        sleep(Duration::from_secs(15)).await;
     }
 
     async fn start(db_path: String, port: i32, username: &str) -> Self {
@@ -177,7 +176,7 @@ impl IbisInstance {
         spawn_blocking(move || {
             Command::new("./scripts/stop_test_db.sh")
                 .arg(&db_path)
-                .stdout(Stdio::inherit())
+                .stdout(Stdio::null())
                 .stderr(Stdio::inherit())
                 .output()
                 .unwrap();

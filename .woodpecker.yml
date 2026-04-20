@@ -4,27 +4,6 @@ variables:
   - &install_cargo_leptos "cargo-binstall -y cargo-leptos@0.2.35"
 
 steps:
-  cargo_test:
-    image: *rust_image
-    environment:
-      CARGO_HOME: .cargo_home
-    commands:
-      - apt-get update
-      - apt-get install postgresql sudo -y --no-install-recommends --no-install-suggests
-      # dbinit (used by tests to create temp db) refuses to run as root so we need to setup another user
-      - adduser testuser
-      - cp /usr/local/rustup /home/testuser/.rustup -r
-      - chown testuser:testuser . -R
-      - chown testuser:testuser /home/testuser -R
-      - sudo -u testuser env 
-          "PATH=/usr/lib/postgresql/15/bin:/usr/local/cargo/bin:$PATH" 
-          "DATABASE_URL=postgres://ibis:password@database:5432/ibis" 
-          "IBIS_TEST_PARALLELISM=5"
-          "CARGO_HOME=$CARGO_HOME" 
-          cargo test -- --nocapture
-    when:
-      - event: pull_request
-
   cargo_fmt:
     image: rustlang/rust:nightly
     environment:
@@ -98,6 +77,26 @@ steps:
     commands:
       - cargo run -- --print-config > config/defaults_current.toml
       - diff config/defaults.toml config/defaults_current.toml
+    when:
+      - event: pull_request
+  cargo_test:
+    image: *rust_image
+    environment:
+      CARGO_HOME: .cargo_home
+    commands:
+      - apt-get update
+      - apt-get install postgresql sudo -y --no-install-recommends --no-install-suggests
+      # dbinit (used by tests to create temp db) refuses to run as root so we need to setup another user
+      - adduser testuser
+      - cp /usr/local/rustup /home/testuser/.rustup -r
+      - chown testuser:testuser . -R
+      - chown testuser:testuser /home/testuser -R
+      - sudo -u testuser env 
+          "PATH=/usr/lib/postgresql/15/bin:/usr/local/cargo/bin:$PATH" 
+          "DATABASE_URL=postgres://ibis:password@database:5432/ibis" 
+          "IBIS_TEST_PARALLELISM=5"
+          "CARGO_HOME=$CARGO_HOME" 
+          cargo test -- --nocapture
     when:
       - event: pull_request
 
