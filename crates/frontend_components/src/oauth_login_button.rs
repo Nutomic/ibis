@@ -9,7 +9,7 @@ use std::str::FromStr;
 use url::Url;
 use uuid::Uuid;
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct OauthCookie {
     pub state: String,
     pub issuer_url: Url,

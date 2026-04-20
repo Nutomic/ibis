@@ -32,6 +32,8 @@ static ACTIVE: AtomicI32 = AtomicI32::new(0);
 
 impl AsyncTestContext for TestData {
     async fn setup() -> Self {
+        // https://github.com/seanmonstar/reqwest/issues/2924
+        let _ = rustls::crypto::ring::default_provider().install_default();
         static INIT: Once = Once::new();
         INIT.call_once(|| {
             env_logger::builder()
@@ -112,7 +114,7 @@ impl IbisInstance {
             Command::new("./scripts/start_test_db.sh")
                 .arg(&db_path)
                 .stdout(Stdio::null())
-                .stderr(Stdio::null())
+                .stderr(Stdio::inherit())
                 .output()
                 .unwrap();
         })
@@ -166,6 +168,7 @@ impl IbisInstance {
 
     async fn stop(self) {
         self.db_handle.abort();
+        self.db_handle.await.ok();
         Self::stop_internal(self.db_path).await;
     }
 
@@ -174,7 +177,7 @@ impl IbisInstance {
             Command::new("./scripts/stop_test_db.sh")
                 .arg(&db_path)
                 .stdout(Stdio::null())
-                .stderr(Stdio::null())
+                .stderr(Stdio::inherit())
                 .output()
                 .unwrap();
             // remove db files

@@ -1,5 +1,5 @@
 use leptos::prelude::*;
-use leptos_fluent::{expect_i18n, leptos_fluent};
+use leptos_fluent::{I18n, leptos_fluent};
 use leptos_meta::Title;
 
 #[component]
@@ -27,7 +27,7 @@ pub fn I18n(children: Children) -> impl IntoView {
 
 #[component]
 pub(crate) fn LanguageSelector() -> impl IntoView {
-    let i18n = expect_i18n();
+    let i18n = expect_context::<I18n>();
 
     view! {
         <select
@@ -55,6 +55,6 @@ pub(crate) fn LanguageSelector() -> impl IntoView {
 
 #[component]
 pub fn ibis_title(key: &'static str) -> impl IntoView {
-    let i18n = expect_i18n();
+    let i18n = expect_context::<I18n>();
     view! { <Title text=move || i18n.tr(key) /> }
 }

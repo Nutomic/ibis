@@ -24,10 +24,10 @@ ibis_markdown.workspace = true
 ibis_database_schema = { path = "../database_schema" }
 diesel.workspace = true
 diesel-derive-newtype = "2.1.2"
-diesel_migrations = "2.2.0"
+diesel_migrations = "2.3.1"
 hex = "0.4.3"
 bcrypt.workspace = true
-config = { version = "0.15.11", features = ["toml"] }
+config = { version = "0.15.22", features = ["toml"] }
 clokwerk = "0.4.0"
 sha2.workspace = true
 diffy.workspace = true
@@ -36,10 +36,11 @@ log.workspace = true
 activitypub_federation.workspace = true
 reqwest.workspace = true
 doku.workspace = true
-lettre = { version = "0.11.16", default-features = false, features = [
+lettre = { version = "0.11.21", default-features = false, features = [
   "builder",
   "smtp-transport",
   "tokio1-rustls-tls",
   "pool",
 ] }
-html2text = "0.15.0"
+html2text = "0.16.7"
+rustls.workspace = true

@@ -19,7 +19,6 @@ hydrate = [
   "leptos/hydrate",
   "ibis_api_client/hydrate",
   "ibis_frontend_components/hydrate",
-  "leptos-fluent/hydrate",
 ]
 
 [lints]

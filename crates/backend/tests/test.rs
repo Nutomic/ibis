@@ -436,6 +436,7 @@ async fn api_test_local_edit_conflict(TestData(alpha, _, _): &mut TestData) -> R
 #[test_context(TestData)]
 #[tokio::test]
 #[ignore]
+#[allow(unused)]
 async fn api_test_federated_edit_conflict(
     TestData(alpha, beta, gamma): &mut TestData,
 ) -> Result<()> {

@@ -18,7 +18,7 @@ use ibis_database::{
 };
 use log::{info, warn};
 use objects::{instance::InstanceWrapper, user::PersonWrapper};
-use rand::{Rng, distr::Alphanumeric, rng};
+use rand::{RngExt, distr::Alphanumeric, rng};
 use routes::AnnouncableActivities;
 use serde::Serialize;
 use std::fmt::Debug;

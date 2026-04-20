@@ -19,7 +19,6 @@ hydrate = [
   "leptos/hydrate",
   "ibis_api_client/hydrate",
   "uuid/js",
-  "leptos-fluent/hydrate",
 ]
 
 [lints]
@@ -42,7 +41,7 @@ leptos-use.workspace = true
 codee.workspace = true
 leptos-fluent.workspace = true
 axum = { workspace = true, optional = true }
-timeago = "0.4.2"
+timeago = "0.6.0"
 
 [package.metadata.cargo-shear]
 ignored = ["axum"]
