@@ -39,23 +39,33 @@ pub fn Notifications() -> impl IntoView {
                     notifications
                         .await
                         .map(|n| {
-                            n.iter()
-                                .map(|notif| {
-                                    use ApiNotificationData::*;
-                                    use EitherOf4::*;
-                                    let refresh_res = notifications;
-                                    match &notif.data {
-                                        EditConflict { conflict_id, summary } => {
-                                            A(
-                                                edit_conflict_view(notif, conflict_id, summary, refresh_res),
-                                            )
+                            if !n.is_empty() {
+                                n.iter()
+                                    .map(|notif| {
+                                        use ApiNotificationData::*;
+                                        use EitherOf4::*;
+                                        let refresh_res = notifications;
+                                        match &notif.data {
+                                            EditConflict { conflict_id, summary } => {
+                                                A(
+                                                    edit_conflict_view(notif, conflict_id, summary, refresh_res),
+                                                )
+                                            }
+                                            ArticleCreated => B(article_view(notif, refresh_res)),
+                                            Comment(c) => C(comment_view(notif, c, refresh_res)),
+                                            Edit(e) => D(edit_view(notif, e, refresh_res)),
                                         }
-                                        ArticleCreated => B(article_view(notif, refresh_res)),
-                                        Comment(c) => C(comment_view(notif, c, refresh_res)),
-                                        Edit(e) => D(edit_view(notif, e, refresh_res)),
-                                    }
-                                })
-                                .collect::<Vec<_>>()
+                                    })
+                                    .collect::<Vec<_>>()
+                                    .into_any()
+                            } else {
+                                view! {
+                                    <div class="grid place-content-center">
+                                        <span>"No unread notifications"</span>
+                                    </div>
+                                }
+                                    .into_any()
+                            }
                         })
                 })}
 
