@@ -16,7 +16,7 @@ module.exports = {
         emerald: {
           ...require("daisyui/src/theming/themes")["emerald"],
           "nav, .menu": {
-            "background-color": "theme(colors.sky.50)",
+            "background-color": "theme(colors.blue.100)",
           },
         },
         dim: {
