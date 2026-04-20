@@ -44,6 +44,10 @@ impl IbisConfig {
         }
         Ok(config)
     }
+
+    pub fn federation_domain(&self) -> &str {
+        self.federation.domain.as_ref().unwrap_or(&self.domain)
+    }
 }
 
 #[derive(Debug, Deserialize, PartialEq, Eq, Clone, Document, SmartDefault)]
@@ -98,10 +102,9 @@ pub struct IbisConfigSetup {
 #[serde(default)]
 #[serde(deny_unknown_fields)]
 pub struct IbisConfigFederation {
-    /// Domain used for federation
-    #[default("example.com")]
+    /// Domain used for federation. Only set this if it is different from config.domain (eg for debugging).
     #[doku(example = "example.com")]
-    pub domain: String,
+    pub domain: Option<String>,
     /// Comma separated list of instances which are allowed for federation. If set, federation
     /// with other domains is blocked
     #[default(None)]

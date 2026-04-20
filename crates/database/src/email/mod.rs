@@ -32,14 +32,14 @@ async fn send_email(
     let mailer = MAILER.get_or_init(|| {
         AsyncSmtpTransport::<Tokio1Executor>::from_url(&email_conf.connection_url)
             .expect("init email transport")
-            .hello_name(ClientId::Domain(conf.federation.domain.clone()))
+            .hello_name(ClientId::Domain(conf.domain.clone()))
             .build()
     });
 
     // use usize::MAX as the line wrap length, since lettre handles the wrapping for us
     let plain_text = html2text::from_read(html.as_bytes(), usize::MAX)?;
 
-    let message_id = format!("<{}@{}>", Uuid::new_v4(), conf.federation.domain);
+    let message_id = format!("<{}@{}>", Uuid::new_v4(), conf.domain);
     let email = Message::builder()
         .from(email_conf.from_address.parse()?)
         .to(Mailbox::new(None, Address::from_str(to_email)?))

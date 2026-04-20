@@ -47,7 +47,7 @@ impl PasswordResetRequest {
             .values(form)
             .get_result::<PasswordResetRequest>(&mut conn)?;
 
-        let domain = &context.conf.federation.domain;
+        let domain = &context.conf.domain;
         let reset_link = format!(
             "{}://{}/account/reset_password?token={}",
             http_protocol_str(),

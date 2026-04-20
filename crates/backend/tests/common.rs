@@ -132,7 +132,7 @@ impl IbisInstance {
                 ..Default::default()
             },
             federation: IbisConfigFederation {
-                domain: hostname.clone(),
+                domain: Some(hostname.clone()),
                 ..Default::default()
             },
             options: Options {

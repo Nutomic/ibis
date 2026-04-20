@@ -2,7 +2,9 @@ use crate::api::api_routes;
 use activitypub_federation::config::{FederationConfig, FederationMiddleware};
 use assets::file_and_error_handler;
 use axum::{
-    Extension, Router, ServiceExt,
+    Extension,
+    Router,
+    ServiceExt,
     body::Body,
     extract::State,
     http::Request,

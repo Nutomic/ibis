@@ -57,7 +57,7 @@ impl Collection for ArticleCollection {
         .await?;
         let collection = ApubArticleCollection {
             r#type: Default::default(),
-            id: local_articles_url(&context.conf.federation.domain)?.into(),
+            id: local_articles_url(&context.conf.federation_domain())?.into(),
             total_items: articles.len() as i32,
             items: articles,
         };

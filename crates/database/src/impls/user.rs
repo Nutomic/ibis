@@ -201,7 +201,7 @@ impl Person {
         if read.is_ok() {
             read
         } else {
-            let domain = &context.conf.federation.domain;
+            let domain = &context.conf.federation_domain();
             let ap_id = Url::parse(&format!(
                 "{}://{domain}/user/{username}",
                 http_protocol_str()
@@ -256,7 +256,7 @@ impl LocalUserView {
         context: &IbisContext,
     ) -> BackendResult<Self> {
         let mut conn = context.db_pool.get()?;
-        let domain = &context.conf.federation.domain;
+        let domain = &context.conf.federation_domain();
         let ap_id = Url::parse(&format!(
             "{}://{domain}/user/{username}",
             http_protocol_str()

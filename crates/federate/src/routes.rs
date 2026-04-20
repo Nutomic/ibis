@@ -90,7 +90,7 @@ async fn http_get_activity(
     Path(id): Path<String>,
     context: Data<IbisContext>,
 ) -> BackendResult<impl IntoResponse> {
-    let domain = &context.conf.federation.domain;
+    let domain = &context.conf.federation_domain();
     let url = Url::parse(&format!(
         "{}://{}/activity/{}",
         http_protocol_str(),

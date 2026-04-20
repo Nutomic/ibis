@@ -195,7 +195,7 @@ pub(crate) async fn edit_article(
     if !params.new_text.ends_with('\n') {
         params.new_text.push('\n');
     }
-    let local_link = format!("](https://{}", context.conf.federation.domain);
+    let local_link = format!("](https://{}", context.conf.federation_domain());
     if params.new_text.contains(&local_link) {
         return Err(anyhow!("Links to local instance don't work over federation").into());
     }

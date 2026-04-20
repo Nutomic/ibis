@@ -40,7 +40,7 @@ async fn get_webfinger_response(
         let url = Url::parse(&format!(
             "{}://{}",
             http_protocol_str(),
-            context.conf.federation.domain
+            context.conf.federation_domain()
         ))?;
         webfinger_link_for_actor(url)?
     } else {

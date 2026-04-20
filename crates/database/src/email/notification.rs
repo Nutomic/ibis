@@ -19,7 +19,7 @@ pub(crate) async fn send_notification_email(
             let notifications_link = format!(
                 "{}://{}/notifications",
                 http_protocol_str(),
-                &context.conf.federation.domain
+                &context.conf.domain
             );
 
             let (subject, html) = if let Some(comment) = data.comment {

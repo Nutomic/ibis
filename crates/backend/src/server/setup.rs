@@ -29,7 +29,7 @@ and to list interesting articles.
 ";
 
 pub async fn setup(context: &Data<IbisContext>) -> Result<(), BackendError> {
-    let domain = &context.conf.federation.domain;
+    let domain = &context.conf.federation_domain();
     let ap_id = Url::parse(&format!("{}://{domain}", http_protocol_str()))?.into();
     let inbox_url = format!("{}://{domain}/inbox", http_protocol_str());
     let keypair = generate_keypair()?;

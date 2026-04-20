@@ -23,7 +23,7 @@ pub async fn start(
 ) -> BackendResult<()> {
     let context = IbisContext::init(config, override_hostname.is_some())?;
     let data = FederationConfig::builder()
-        .domain(context.conf.federation.domain.clone())
+        .domain(context.conf.federation_domain())
         .url_verifier(Box::new(VerifyUrlData(context.conf.clone())))
         .app_data(context.clone())
         .client(context.client.clone().into())

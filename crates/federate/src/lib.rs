@@ -112,7 +112,7 @@ impl UrlVerifier for VerifyUrlData {
 }
 
 pub(crate) fn generate_activity_id(context: &Data<IbisContext>) -> BackendResult<Url> {
-    let domain = &context.conf.federation.domain;
+    let domain = &context.conf.federation_domain();
     let id: String = rng()
         .sample_iter(&Alphanumeric)
         .take(20)
