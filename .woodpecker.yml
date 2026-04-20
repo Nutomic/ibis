@@ -1,5 +1,5 @@
 variables:
-  - &rust_image "rust:1.93"
+  - &rust_image "rust:1.88"
   - &install_binstall "wget https://github.com/cargo-bins/cargo-binstall/releases/latest/download/cargo-binstall-x86_64-unknown-linux-musl.tgz && tar -xvf cargo-binstall-x86_64-unknown-linux-musl.tgz && cp cargo-binstall /usr/local/cargo/bin"
   - &install_cargo_leptos "cargo-binstall -y cargo-leptos@0.2.35"
 
@@ -12,6 +12,8 @@ steps:
     commands:
       - rustup component add rustfmt --toolchain nightly
       - cargo +nightly fmt -- --check
+    when:
+      - event: pull_request
 
   leptos_fmt:
     image: *rust_image
@@ -19,11 +21,15 @@ steps:
       - *install_binstall
       - cargo binstall -y leptosfmt
       - leptosfmt -c .leptosfmt.toml --check src
+    when:
+      - event: pull_request
 
   toml_fmt:
     image: tamasfe/taplo:0.9.3
     commands:
       - taplo format --check
+    when:
+      - event: pull_request
 
   ignored_files:
     image: alpine:3
@@ -31,6 +37,8 @@ steps:
       - apk add git
       - IGNORED=$(git ls-files --cached -i --exclude-standard)
       - if [[ "$IGNORED" ]]; then echo "Ignored files present:\n$IGNORED\n"; exit 1; fi
+    when:
+      - event: pull_request
 
   cargo_shear:
     image: *rust_image
@@ -38,6 +46,8 @@ steps:
       - *install_binstall
       - cargo binstall -y cargo-shear
       - cargo shear
+    when:
+      - event: pull_request
 
   check_diesel_schema:
     image: willsquire/diesel-cli
@@ -47,6 +57,8 @@ steps:
       - diesel migration run
       - diesel print-schema --config-file=diesel.toml > tmp.schema
       - diff tmp.schema crates/database_schema/src/lib.rs
+    when:
+      - event: pull_request
 
   cargo_clippy:
     image: *rust_image
@@ -55,6 +67,8 @@ steps:
     commands:
       - rustup component add clippy
       - cargo clippy --tests --all-targets --all-features
+    when:
+      - event: pull_request
 
   check_config_defaults_updated:
     image: *rust_image
@@ -63,7 +77,8 @@ steps:
     commands:
       - cargo run -- --print-config > config/defaults_current.toml
       - diff config/defaults.toml config/defaults_current.toml
-
+    when:
+      - event: pull_request
   cargo_test:
     image: *rust_image
     environment:
@@ -79,9 +94,11 @@ steps:
       - sudo -u testuser env 
           "PATH=/usr/lib/postgresql/15/bin:/usr/local/cargo/bin:$PATH" 
           "DATABASE_URL=postgres://ibis:password@database:5432/ibis" 
-          "IBIS_TEST_PARALLELISM=5" 
+          "IBIS_TEST_PARALLELISM=5"
           "CARGO_HOME=$CARGO_HOME" 
-          cargo test --no-fail-fast
+          cargo test -- --nocapture
+    when:
+      - event: pull_request
 
   build_release:
     image: *rust_image
@@ -131,3 +148,6 @@ services:
     environment:
       POSTGRES_USER: ibis
       POSTGRES_PASSWORD: password
+    # Woodpecker's services ending is now causing pipeline failures:
+    # https://github.com/woodpecker-ci/woodpecker/issues/6372
+    failure: ignore

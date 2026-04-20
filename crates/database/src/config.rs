@@ -36,6 +36,9 @@ impl IbisConfig {
             .build()?
             .try_deserialize()?;
 
+        if config.domain.is_empty() {
+            return Err(anyhow!("No domain set in config file").into());
+        }
         if config.options.email_required && config.email.is_none() {
             return Err(anyhow!("Email is required but no email send config provided").into());
         }
