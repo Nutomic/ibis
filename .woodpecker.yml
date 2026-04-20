@@ -1,5 +1,5 @@
 variables:
-  - &rust_image "rust:1.88"
+  - &rust_image "rust:1.95"
   - &install_binstall "wget https://github.com/cargo-bins/cargo-binstall/releases/latest/download/cargo-binstall-x86_64-unknown-linux-musl.tgz && tar -xvf cargo-binstall-x86_64-unknown-linux-musl.tgz && cp cargo-binstall /usr/local/cargo/bin"
   - &install_cargo_leptos "cargo-binstall -y cargo-leptos@0.3.6"
 
@@ -79,6 +79,7 @@ steps:
       - diff config/defaults.toml config/defaults_current.toml
     when:
       - event: pull_request
+
   cargo_test:
     image: *rust_image
     environment:
@@ -91,11 +92,11 @@ steps:
       - cp /usr/local/rustup /home/testuser/.rustup -r
       - chown testuser:testuser . -R
       - chown testuser:testuser /home/testuser -R
-      - sudo -u testuser env 
-          "PATH=/usr/lib/postgresql/15/bin:/usr/local/cargo/bin:$PATH" 
-          "DATABASE_URL=postgres://ibis:password@database:5432/ibis" 
+      - sudo -u testuser env
+          "PATH=/usr/lib/postgresql/17/bin:/usr/local/cargo/bin:$PATH"
+          "DATABASE_URL=postgres://ibis:password@database:5432/ibis"
           "IBIS_TEST_PARALLELISM=5"
-          "CARGO_HOME=$CARGO_HOME" 
+          "CARGO_HOME=$CARGO_HOME"
           cargo test -- --nocapture
     when:
       - event: pull_request
