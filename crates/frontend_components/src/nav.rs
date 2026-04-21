@@ -9,14 +9,7 @@ use leptos::{IntoView, component, prelude::*, view, *};
 use leptos_fluent::tr;
 use leptos_router::hooks::use_navigate;
 use phosphor_leptos::{
-    BELL_RINGING,
-    CARDS,
-    EXCLAMATION_MARK,
-    GEAR,
-    HOUSE,
-    Icon,
-    MAGNIFYING_GLASS,
-    PLUS,
+    BELL_RINGING, CARDS, EXCLAMATION_MARK, GEAR, HOUSE, Icon, MAGNIFYING_GLASS, PLUS,
 };
 
 #[component]
@@ -53,7 +46,7 @@ pub fn Nav() -> impl IntoView {
                     <Transition>
                         <a href="/" class="max-sm:hidden">
                             <img src="/logo.png" class="m-auto" />
-                            <h2 class="m-4 font-serif text-xl font-bold">
+                            <h2 class="m-4 font-serif text-xl font-bold text-center">
                                 {move || Suspend::new(async move {
                                     site().await.map(|s| instance_title(&s.instance))
                                 })}
