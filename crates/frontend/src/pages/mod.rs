@@ -30,15 +30,14 @@ fn article_resource() -> Resource<FrontendResult<ArticleView>> {
     })
 }
 
-async fn article_edits_resource(
+fn article_edits_resource(
     article: Resource<FrontendResult<ArticleView>>,
 ) -> Resource<FrontendResult<Vec<EditView>>> {
-    let id = article.await.map(|a| a.article.id);
     Resource::new(
         move || article.get(),
-        move |_| {
-            let id = id.clone();
-            async move { CLIENT.get_article_edits(id?).await }
+        move |_| async move {
+            let id = article.await.map(|a| a.article.id);
+            CLIENT.get_article_edits(id?).await
         },
     )
 }

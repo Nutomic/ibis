@@ -14,8 +14,17 @@ use leptos::prelude::*;
 use leptos_meta::Title;
 use leptos_router::components::A;
 use phosphor_leptos::{
-    BELL, BELL_SLASH, BOOK, CHATS_CIRCLE, FEDIVERSE_LOGO, GEAR_SIX, Icon, LIST, LOCK_SIMPLE,
-    PENCIL, TRASH,
+    BELL,
+    BELL_SLASH,
+    BOOK,
+    CHATS_CIRCLE,
+    FEDIVERSE_LOGO,
+    GEAR_SIX,
+    Icon,
+    LIST,
+    LOCK_SIMPLE,
+    PENCIL,
+    TRASH,
 };
 
 #[derive(Clone, Copy)]

@@ -9,7 +9,14 @@ use leptos::{IntoView, component, prelude::*, view, *};
 use leptos_fluent::tr;
 use leptos_router::hooks::use_navigate;
 use phosphor_leptos::{
-    BELL_RINGING, CARDS, EXCLAMATION_MARK, GEAR, HOUSE, Icon, MAGNIFYING_GLASS, PLUS,
+    BELL_RINGING,
+    CARDS,
+    EXCLAMATION_MARK,
+    GEAR,
+    HOUSE,
+    Icon,
+    MAGNIFYING_GLASS,
+    PLUS,
 };
 
 #[component]
