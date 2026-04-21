@@ -31,6 +31,7 @@ Contributions are more than welcome, especially for the frontend.
 - Fast user interface with server-side rendering based on Webassembly
 - Notification system to get notified about new articles, edits and comment
 - OAuth and email support
+- Import articles from Wikipedia
 
 
 ## Useful links
