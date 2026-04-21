@@ -27,7 +27,7 @@ use phosphor_leptos::{
     TRASH,
 };
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub enum ActiveTab {
     Read,
     Discussion,
@@ -41,8 +41,6 @@ pub fn ArticleNav(
     article: Resource<FrontendResult<ArticleView>>,
     active_tab: ActiveTab,
 ) -> impl IntoView {
-    let tab_classes = tab_classes(active_tab);
-
     view! {
         <Suspense>
             {move || Suspend::new(async move {
@@ -69,15 +67,22 @@ pub fn ArticleNav(
                         };
                         view! {
                             <Title text=page_title(active_tab, &title) />
-                            <div role="tablist" class="tabs tabs-lifted">
-                                <A href=article_link.clone() {..} class=tab_classes.read>
+                            <div class="tabs tabs-lift md:flex">
+                                <A
+                                    href=article_link.clone()
+                                    exact=true
+                                    {..}
+                                    role="tab"
+                                    class="tab md:flex-auto"
+                                >
                                     <Icon icon=BOOK />
                                     "Read"
                                 </A>
                                 <A
                                     href=format!("{article_link}/discussion")
                                     {..}
-                                    class=tab_classes.discussion
+                                    role="tab"
+                                    class="tab md:flex-auto"
                                 >
                                     <Icon icon=CHATS_CIRCLE />
                                     "Discussion"
@@ -85,7 +90,8 @@ pub fn ArticleNav(
                                 <A
                                     href=format!("{article_link}/history")
                                     {..}
-                                    class=tab_classes.history
+                                    role="tab"
+                                    class="tab md:flex-auto"
                                 >
                                     <Icon icon=LIST />
                                     "History"
@@ -97,7 +103,8 @@ pub fn ArticleNav(
                                     <A
                                         href=format!("{article_link}/edit")
                                         {..}
-                                        class=tab_classes.edit
+                                        role="tab"
+                                        class="tab md:flex-auto"
                                     >
                                         <Icon icon=PENCIL />
                                         "Edit"
@@ -108,7 +115,8 @@ pub fn ArticleNav(
                                         <A
                                             href=format!("{article_link_}/actions")
                                             {..}
-                                            class=tab_classes.actions
+                                            role="tab"
+                                            class="tab md:flex-auto"
                                         >
                                             <Icon icon=GEAR_SIX />
                                             "Actions"
@@ -157,34 +165,6 @@ pub fn ArticleNav(
 
         </Suspense>
     }
-}
-
-struct ActiveTab2Classes {
-    read: &'static str,
-    discussion: &'static str,
-    history: &'static str,
-    edit: &'static str,
-    actions: &'static str,
-}
-
-fn tab_classes(active_tab: ActiveTab) -> ActiveTab2Classes {
-    const TAB_INACTIVE: &str = "tab max-sm:h-10";
-    const TAB_ACTIVE: &str = "tab tab-active max-sm:h-10";
-    let mut classes = ActiveTab2Classes {
-        read: TAB_INACTIVE,
-        discussion: TAB_INACTIVE,
-        history: TAB_INACTIVE,
-        edit: TAB_INACTIVE,
-        actions: TAB_INACTIVE,
-    };
-    match active_tab {
-        ActiveTab::Read => classes.read = TAB_ACTIVE,
-        ActiveTab::Discussion => classes.discussion = TAB_ACTIVE,
-        ActiveTab::History => classes.history = TAB_ACTIVE,
-        ActiveTab::Edit => classes.edit = TAB_ACTIVE,
-        ActiveTab::Actions => classes.actions = TAB_ACTIVE,
-    }
-    classes
 }
 
 fn page_title(active_tab: ActiveTab, article_title: &str) -> String {

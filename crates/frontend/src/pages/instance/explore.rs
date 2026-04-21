@@ -47,7 +47,7 @@ pub fn Explore() -> impl IntoView {
 pub fn instance_card(i: InstanceView) -> impl IntoView {
     view! {
         <li>
-            <div class="my-4 shadow card bg-base-100">
+            <div class="my-4 shadow-sm card bg-base-100">
                 <div class="p-4 card-body">
                     <div class="flex">
                         <a class="card-title grow" href=format!("/instance/{}", i.instance.domain)>

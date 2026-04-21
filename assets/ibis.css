@@ -1,6 +1,28 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@plugin '@tailwindcss/typography';
+@plugin "daisyui" {
+  themes:
+    emerald --default,
+    dim;
+}
+
+[data-theme="emerald"] {
+  nav,
+  .menu {
+    background-color: oklch(93.2% 0.032 255.585);
+  }
+  --radius-field: 0.2rem;
+}
+
+[data-theme="dim"] {
+  nav,
+  .menu {
+    background-color: oklch(39.1% 0.09 240.876);
+  }
+  --radius-field: 0.2rem;
+}
+
+@custom-variant dark (&:where([data-theme=night], [data-theme=dim] *));
 
 /* anchor links in markdown headings */
 .anchor svg {

@@ -33,7 +33,7 @@ pub fn Nav() -> impl IntoView {
     let mut dark_mode = expect_context::<DarkMode>();
     view! {
         <nav class="p-2.5 border-b border-solid md:overflow-scroll md:fixed md:w-64 md:h-full max-sm:navbar md:border-slate-500 md:border-e">
-            <a href="/" class="w-full md:hidden">
+            <a href="/" class="w-full flex flex-row md:hidden">
                 <img src="/logo.png" class="m-auto size-8" />
                 <h2 class="m-2 font-serif text-xl font-bold">
                     {move || Suspend::new(async move {
@@ -45,11 +45,11 @@ pub fn Nav() -> impl IntoView {
                 id="navbar-start"
                 class="md:min-h-full max-sm:navbar-start md:flex md:flex-row max-sm:dropdown max-sm:dropdown-bottom max-sm:dropdown-end max-sm:w-full"
             >
+                <div class="grow md:hidden min-h-2"></div>
                 <div class="flex flex-row">
-                    <div class="flex-grow md:hidden min-h-2"></div>
                     <button class="lg:hidden btn btn-outline">Menu</button>
                 </div>
-                <div class="menu dropdown-content max-sm:rounded-box max-sm:z-[1] max-sm:shadow">
+                <div class="menu dropdown-content max-sm:rounded-box max-sm:z-1 max-sm:shadow-sm">
                     <Transition>
                         <a href="/" class="max-sm:hidden">
                             <img src="/logo.png" class="m-auto" />
@@ -120,7 +120,7 @@ pub fn Nav() -> impl IntoView {
                                 >
                                     <input
                                         type="text"
-                                        class="w-full rounded input input-bordered input-sm"
+                                        class="w-full rounded-sm input input-bordered input-sm"
                                         placeholder="Search"
                                         prop:value=search_query
                                         on:keyup=move |ev: ev::KeyboardEvent| {

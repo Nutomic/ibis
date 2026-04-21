@@ -29,7 +29,7 @@ fn prevent_navigation(signal: Signal<String>) {
 pub fn Pending(pending: bool) -> impl IntoView {
     view! {
         <Show when=move || pending>
-            <span class="p-1 w-min rounded border-2 border-rose-300 h-min">Pending</span>
+            <span class="p-1 w-min rounded-sm border-2 border-rose-300 h-min">Pending</span>
         </Show>
     }
 }
