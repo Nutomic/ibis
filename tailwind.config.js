@@ -18,12 +18,16 @@ module.exports = {
           "nav, .menu": {
             "background-color": "theme(colors.blue.100)",
           },
+          "--rounded-btn": "0.25rem",
+          "--tab-radius": "0.25rem",
         },
         dim: {
           ...require("daisyui/src/theming/themes")["dim"],
           "nav, .menu": {
             "background-color": "theme(colors.sky.900)",
           },
+          "--rounded-btn": "0.25rem",
+          "--tab-radius": "0.25rem",
         },
       },
     ],

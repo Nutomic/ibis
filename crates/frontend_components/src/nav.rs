@@ -9,14 +9,7 @@ use leptos::{IntoView, component, prelude::*, view, *};
 use leptos_fluent::tr;
 use leptos_router::hooks::use_navigate;
 use phosphor_leptos::{
-    BELL_RINGING,
-    CARDS,
-    EXCLAMATION_MARK,
-    GEAR,
-    HOUSE,
-    Icon,
-    MAGNIFYING_GLASS,
-    PLUS,
+    BELL_RINGING, CARDS, EXCLAMATION_MARK, GEAR, HOUSE, Icon, MAGNIFYING_GLASS, PLUS,
 };
 
 #[component]
@@ -32,22 +25,24 @@ pub fn Nav() -> impl IntoView {
     let (search_query, set_search_query) = signal(String::new());
     let mut dark_mode = expect_context::<DarkMode>();
     view! {
-        <nav class="p-2.5 border-b border-solid md:fixed md:w-64 md:h-full max-sm:navbar max-sm: border-slate-400 md:border-e">
+        <nav class="p-2.5 border-b border-solid md:overflow-scroll md:fixed md:w-64 md:h-full max-sm:navbar md:border-slate-500 md:border-e">
+            <a href="/" class="w-full md:hidden">
+                <img src="/logo.png" class="m-auto size-8" />
+                <h2 class="m-2 font-serif text-xl font-bold">
+                    {move || Suspend::new(async move {
+                        site().await.map(|s| instance_title(&s.instance))
+                    })}
+                </h2>
+            </a>
             <div
                 id="navbar-start"
-                class="md:h-full max-sm:navbar-start max-sm:flex max-sm:dropdown max-sm:dropdown-bottom max-sm:dropdown-end max-sm:w-full"
+                class="md:min-h-full max-sm:navbar-start md:flex md:flex-row max-sm:dropdown max-sm:dropdown-bottom max-sm:dropdown-end max-sm:w-full"
             >
-                <a href="/" class="flex flex-row md:hidden">
-                    <img src="/logo.png" class="m-auto size-8" />
-                    <h2 class="m-2 font-serif text-xl font-bold">
-                        {move || Suspend::new(async move {
-                            site().await.map(|s| instance_title(&s.instance))
-                        })}
-                    </h2>
-                </a>
-                <div class="flex-grow md:hidden"></div>
-                <button class="lg:hidden btn btn-outline">Menu</button>
-                <div class="md:h-full menu dropdown-content max-sm:rounded-box max-sm:z-[1] max-sm:shadow">
+                <div class="flex flex-row">
+                    <div class="flex-grow md:hidden min-h-2"></div>
+                    <button class="lg:hidden btn btn-outline">Menu</button>
+                </div>
+                <div class="menu dropdown-content max-sm:rounded-box max-sm:z-[1] max-sm:shadow">
                     <Transition>
                         <a href="/" class="max-sm:hidden">
                             <img src="/logo.png" class="m-auto" />
@@ -118,7 +113,7 @@ pub fn Nav() -> impl IntoView {
                                 >
                                     <input
                                         type="text"
-                                        class="w-full rounded input input-secondary input-bordered input-xs"
+                                        class="w-full rounded input input-bordered input-sm"
                                         placeholder="Search"
                                         prop:value=search_query
                                         on:keyup=move |ev: ev::KeyboardEvent| {
@@ -127,7 +122,7 @@ pub fn Nav() -> impl IntoView {
                                         }
                                     />
 
-                                    <button class="btn btn-xs btn-secondary">
+                                    <button class="btn btn-sm btn-primary">
                                         <Icon icon=MAGNIFYING_GLASS size="18px" />
                                     </button>
                                 </form>

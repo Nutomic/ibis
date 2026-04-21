@@ -14,17 +14,8 @@ use leptos::prelude::*;
 use leptos_meta::Title;
 use leptos_router::components::A;
 use phosphor_leptos::{
-    BELL,
-    BELL_SLASH,
-    BOOK,
-    CHATS_CIRCLE,
-    FEDIVERSE_LOGO,
-    GEAR_SIX,
-    Icon,
-    LIST,
-    LOCK_SIMPLE,
-    PENCIL,
-    TRASH,
+    BELL, BELL_SLASH, BOOK, CHATS_CIRCLE, FEDIVERSE_LOGO, GEAR_SIX, Icon, LIST, LOCK_SIMPLE,
+    PENCIL, TRASH,
 };
 
 #[derive(Clone, Copy)]
@@ -168,8 +159,8 @@ struct ActiveTab2Classes {
 }
 
 fn tab_classes(active_tab: ActiveTab) -> ActiveTab2Classes {
-    const TAB_INACTIVE: &str = "tab";
-    const TAB_ACTIVE: &str = "tab tab-active";
+    const TAB_INACTIVE: &str = "tab max-sm:h-10";
+    const TAB_ACTIVE: &str = "tab tab-active max-sm:h-10";
     let mut classes = ActiveTab2Classes {
         read: TAB_INACTIVE,
         discussion: TAB_INACTIVE,
