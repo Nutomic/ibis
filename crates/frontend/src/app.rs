@@ -1,30 +1,17 @@
 use crate::pages::{
     article::{
-        actions::ArticleActions,
-        comment_redirect::CommentRedirect,
-        create::CreateArticle,
-        diff::EditDiff,
-        discussion::ArticleDiscussion,
-        edit::EditArticle,
-        history::ArticleHistory,
+        actions::ArticleActions, comment_redirect::CommentRedirect, create::CreateArticle,
+        diff::EditDiff, discussion::ArticleDiscussion, edit::EditArticle, history::ArticleHistory,
         read::ReadArticle,
     },
     instance::{
-        about::About,
-        details::InstanceDetails,
-        explore::Explore,
-        search::Search,
+        about::About, details::InstanceDetails, explore::Explore, search::Search,
         settings::AdminSettings,
     },
     user::{
-        edit_profile::UserEditProfile,
-        login::Login,
-        notifications::Notifications,
-        oauth_callback::OauthCallback,
-        profile::UserProfile,
-        register::Register,
-        request_password_reset::RequestPasswordReset,
-        reset_password::ResetPassword,
+        edit_profile::UserEditProfile, login::Login, notifications::Notifications,
+        oauth_callback::OauthCallback, profile::UserProfile, register::Register,
+        request_password_reset::RequestPasswordReset, reset_password::ResetPassword,
         verify_email::VerifyEmail,
     },
 };
@@ -37,6 +24,7 @@ use ibis_frontend_components::{
 use leptos::prelude::*;
 use leptos_meta::{provide_meta_context, *};
 use leptos_router::{
+    Lazy,
     components::{Route, Router, Routes},
     path,
 };
@@ -101,8 +89,8 @@ pub fn App() -> impl IntoView {
                             </div>
                         </Show>
                         <Routes fallback=|| "Page not found.".into_view()>
-                            <Route path=path!("/") view=ReadArticle />
-                            <Route path=path!("/article/:title") view=ReadArticle />
+                            <Route path=path!("/") view={Lazy::<ReadArticle>::new()} />
+                            <Route path=path!("/article/:title") view={Lazy::<ReadArticle>::new()} />
                             <Route
                                 path=path!("/article/:title/discussion")
                                 view=ArticleDiscussion
