@@ -5965,9 +5965,9 @@ dependencies = [
 
 [[package]]
 name = "test-context"
-version = "0.4.1"
+version = "0.5.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cb69cce03e432993e2dc1f93f7899b952300fcb6dc44191a1b830b60b8c3c8aa"
+checksum = "d3c85fe78076e2c55ed2dbeffd7a093effc1f906f8f55d17eb07736c2babcc95"
 dependencies = [
  "futures",
  "test-context-macros",
@@ -5975,9 +5975,9 @@ dependencies = [
 
 [[package]]
 name = "test-context-macros"
-version = "0.4.1"
+version = "0.5.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "97e0639209021e54dbe19cafabfc0b5574b078c37358945e6d473eabe39bb974"
+checksum = "d0279b838142e2c96bf194427ec2af755fb6a86ff2ae0fa99ac7da287d0066f9"
 dependencies = [
  "proc-macro2",
  "quote",
