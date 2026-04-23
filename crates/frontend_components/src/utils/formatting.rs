@@ -1,4 +1,4 @@
-use chrono::{DateTime, Local, Utc};
+use chrono::{DateTime, Local, TimeDelta, Utc};
 use ibis_database::common::{
     article::{Article, Edit},
     comment::Comment,
@@ -90,7 +90,12 @@ pub fn instance_updated(instance: &InstanceView) -> String {
             .map(|a| a.updated)
             .max()
             .unwrap_or(instance.instance.last_refreshed_at);
-        format!("Edited {}", time_ago(edited))
+        let dead = if Utc::now() - edited > TimeDelta::days(7) {
+            " 💀"
+        } else {
+            ""
+        };
+        format!("Edited {}{dead}", time_ago(edited))
     }
 }
 

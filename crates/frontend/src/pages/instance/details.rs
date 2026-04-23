@@ -46,7 +46,7 @@ pub fn InstanceDetails() -> impl IntoView {
                             },
                         );
                         let title = instance_title_with_domain(&instance_.instance);
-                        let local = !instance_.instance.local;
+                        let not_local = !instance_.instance.local;
                         let ap_id = instance_.instance.ap_id.to_string();
                         view! {
                             <Title text=title.clone() />
@@ -55,7 +55,7 @@ pub fn InstanceDetails() -> impl IntoView {
                                     <h1 class="font-serif text-4xl font-bold shrink mr-2">
                                         {title}
                                     </h1>
-                                    <Show when=move || local>
+                                    <Show when=move || not_local>
                                         <a href=ap_id.clone()>
                                             <Icon
                                                 icon=ARROW_SQUARE_OUT
@@ -64,9 +64,7 @@ pub fn InstanceDetails() -> impl IntoView {
                                                 class="p-1"
                                             />
                                         </a>
-                                    </Show>
-                                    <div class="grow"></div>
-                                    {instance_updated(&instance_)}
+                                    </Show> <div class="grow"></div> {instance_updated(&instance_)}
                                     <InstanceFollowButton instance=instance />
                                 </div>
 
