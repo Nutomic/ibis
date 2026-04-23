@@ -197,6 +197,15 @@ diesel::table! {
 }
 
 diesel::table! {
+    registration_application (id) {
+        id -> Int4,
+        local_user_id -> Int4,
+        answer -> Text,
+        published_at -> Timestamptz,
+    }
+}
+
+diesel::table! {
     sent_activity (id) {
         #[max_length = 255]
         id -> Varchar,
@@ -226,6 +235,7 @@ diesel::joinable!(notification -> local_user (local_user_id));
 diesel::joinable!(notification -> person (creator_id));
 diesel::joinable!(oauth_account -> local_user (local_user_id));
 diesel::joinable!(password_reset_request -> local_user (local_user_id));
+diesel::joinable!(registration_application -> local_user (local_user_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     article,
@@ -244,5 +254,6 @@ diesel::allow_tables_to_appear_in_same_query!(
     password_reset_request,
     person,
     person_follow,
+    registration_application,
     sent_activity,
 );

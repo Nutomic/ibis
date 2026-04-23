@@ -23,7 +23,7 @@ pub fn article_path(article: &Article) -> String {
     }
 }
 
-pub fn article_link(article: &Article) -> impl IntoView {
+pub fn article_link(article: &Article) -> impl IntoView + use<> {
     let article_path = article_path(article);
     view! {
         <a class="link" href=article_path>
@@ -32,7 +32,7 @@ pub fn article_link(article: &Article) -> impl IntoView {
     }
 }
 
-pub fn user_link(person: &Person) -> impl IntoView {
+pub fn user_link(person: &Person) -> impl IntoView + use<> {
     let creator_path = if person.local {
         format!("/user/{}", person.username)
     } else {

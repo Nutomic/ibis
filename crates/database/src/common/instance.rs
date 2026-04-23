@@ -68,6 +68,13 @@ pub struct Options {
     #[default = true]
     #[cfg_attr(feature = "ssr", doku(example = "true"))]
     pub registration_open: bool,
+    /// Shown on the registration page, must be answered by users when creating a new account.
+    /// Admins see the answer and need to manually confirm or deny the new user.
+    #[cfg_attr(
+        feature = "ssr",
+        doku(example = "Which article on the Explore page do you find interesting?")
+    )]
+    pub registration_question: Option<String>,
     /// Whether new users have to provide an email address to register
     #[default = false]
     #[cfg_attr(feature = "ssr", doku(example = "false"))]

@@ -39,6 +39,11 @@ blocklist = "evil.com,bad.org"
 # Whether users can create new accounts
 registration_open = true
 
+# Shown on the registration page, must be answered by users when creating a new account.
+# Admins see the answer and need to manually confirm or deny the new user.
+# Optional
+registration_question = "Which article on the Explore page do you find interesting?"
+
 # Whether new users have to provide an email address to register
 email_required = false
 # Optional
