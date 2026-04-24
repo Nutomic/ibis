@@ -64,7 +64,9 @@ pub fn InstanceDetails() -> impl IntoView {
                                                 class="p-1"
                                             />
                                         </a>
-                                    </Show> <div class="grow"></div> {instance_updated(&instance_)}
+                                    </Show>
+                                    <div class="grow"></div>
+                                    {instance_updated(&instance_)}
                                     <InstanceFollowButton instance=instance />
                                 </div>
 
