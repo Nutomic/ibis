@@ -88,7 +88,7 @@ pub fn ArticleActions() -> impl IntoView {
                                 </Show>
                                 <input
                                     class="input"
-                                    placeholder="New Title"
+                                    placeholder={tr!("new-title")}
                                     on:keyup=move |ev: KeyboardEvent| {
                                         let val = event_target_value(&ev);
                                         set_new_title.update(|v| *v = val);

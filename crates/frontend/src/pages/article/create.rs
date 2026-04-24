@@ -104,7 +104,7 @@ pub fn CreateArticle() -> impl IntoView {
                                         class="w-full input input-primary"
                                         type="text"
                                         required
-                                        placeholder="Title"
+                                        placeholder={tr!("title")}
                                         bind:value=title
                                         prop:disabled=move || wait_for_response.get()
                                     />
@@ -147,7 +147,7 @@ pub fn CreateArticle() -> impl IntoView {
                                         <input
                                             class="mr-4 input input-primary grow"
                                             type="text"
-                                            placeholder="Edit summary"
+                                            placeholder={tr!("edit-summary")}
                                             bind:value=summary
                                             required
                                         />

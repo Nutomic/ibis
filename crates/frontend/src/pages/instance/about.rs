@@ -19,7 +19,7 @@ pub fn About() -> impl IntoView {
                     .map(|site| {
                         view! {
                             <div>{tr!("topic", {"topic" => site.instance.topic})}</div>
-                            <div>{tr!("administrated-by")}: {user_link(&site.admin)}</div>
+                            <div>"Administrated by:" {user_link(&site.admin)}</div>
                         }
                     })
             })}

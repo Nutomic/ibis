@@ -5,18 +5,11 @@ use crate::utils::{
     resources::{config, is_admin, is_logged_in, my_profile, site},
 };
 use ibis_api_client::{CLIENT, errors::FrontendResultExt};
-use leptos::{IntoView, component, prelude::*, view, *};
+use leptos::{IntoView, component, ev, prelude::*, view};
 use leptos_fluent::tr;
 use leptos_router::hooks::use_navigate;
 use phosphor_leptos::{
-    BELL_RINGING,
-    CARDS,
-    EXCLAMATION_MARK,
-    GEAR,
-    HOUSE,
-    Icon,
-    MAGNIFYING_GLASS,
-    PLUS,
+    BELL_RINGING, CARDS, EXCLAMATION_MARK, GEAR, HOUSE, Icon, MAGNIFYING_GLASS, PLUS,
 };
 
 #[component]
@@ -121,7 +114,7 @@ pub fn Nav() -> impl IntoView {
                                     <input
                                         type="text"
                                         class="w-full rounded-sm input input-bordered input-sm"
-                                        placeholder="Search"
+                                        placeholder=tr!("search")
                                         prop:value=search_query
                                         on:keyup=move |ev: ev::KeyboardEvent| {
                                             let val = event_target_value(&ev);

@@ -6,6 +6,7 @@ use ibis_frontend_components::{
     utils::formatting::{edit_time, user_link},
 };
 use leptos::{either::Either, prelude::*};
+use leptos_fluent::tr;
 use leptos_meta::Title;
 use leptos_router::hooks::use_params_map;
 
@@ -54,7 +55,7 @@ pub fn EditDiff() -> impl IntoView {
                             Either::Right(
                                 view! {
                                     <div class="grid place-items-center h-screen">
-                                        <div class="alert alert-error w-fit">Invalid edit</div>
+                                        <div class="alert alert-error w-fit">{tr!("invalid-edit")}</div>
                                     </div>
                                 },
                             )

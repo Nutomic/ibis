@@ -34,7 +34,7 @@ pub fn Login() -> impl IntoView {
     });
 
     view! {
-        <IbisTitle key="Login" />
+        <IbisTitle key="login" />
         <Show
             when=move || !login_response.get()
             fallback=move || {

@@ -6,6 +6,7 @@ use ibis_api_client::{
 };
 use ibis_database::common::{article::ArticleView, comment::Comment, newtypes::CommentId};
 use leptos::{html::Textarea, prelude::*};
+use leptos_fluent::tr;
 use leptos_use::{UseTextareaAutosizeReturn, use_textarea_autosize};
 
 #[derive(Clone)]
@@ -109,9 +110,8 @@ pub fn CommentEditorView(
                         href="https://ibis.wiki/article/Markdown_Guide"
                         target="blank_"
                     >
-                        Markdown
+                        {tr!("markdown-formatting-supported")}
                     </a>
-                    " formatting is supported"
                 </p>
             </div>
         </div>
