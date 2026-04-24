@@ -70,3 +70,12 @@ title = Title
 edit-summary = Edit Summary
 invalid-edit = Invalid edit
 new-title = New title
+delete = Delete
+
+# Notifications
+notification-new-edit = New edit: { $text }
+notification-new-comment = New comment: { $text }
+notification-new-article = New article: { $text }
+notification-edit-conflict = New article: { $text }
+mark-as-read = Mark as read
+no-unread-notifications = No unread notifications
