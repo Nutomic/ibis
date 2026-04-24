@@ -18,7 +18,7 @@ COPY . .
 RUN cargo leptos build --release
 
 # We do not need the Rust toolchain to run the binary!
-FROM debian:bookworm-slim AS runtime
+FROM debian:trixie-slim AS runtime
 
 LABEL org.opencontainers.image.source="https://github.com/Nutomic/ibis"
 LABEL org.opencontainers.image.licenses="AGPL-3.0"
