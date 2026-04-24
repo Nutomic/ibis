@@ -1,5 +1,6 @@
 use ibis_api_client::{CLIENT, errors::FrontendResultExt, user::ChangePasswordAfterReset};
 use leptos::prelude::*;
+use leptos_fluent::tr;
 use leptos_router::hooks::use_query_map;
 use ibis_frontend_components::utils:: i18n::IbisTitle;
 
@@ -51,7 +52,7 @@ pub fn ResetPassword() -> impl IntoView {
                         type="password"
                         class="input input-primary input-bordered my-1"
                         required
-                        placeholder="Password"
+                        placeholder={tr!("password")}
                         bind:value=password
                         prop:disabled=move || loading.get()
                     />
@@ -59,7 +60,7 @@ pub fn ResetPassword() -> impl IntoView {
                         type="password"
                         class="input input-primary input-bordered my-1"
                         required
-                        placeholder="Confirm password"
+                        placeholder={tr!("confirm-new-password")}
                         bind:value=confirm_password
                         prop:disabled=move || loading.get()
                     />

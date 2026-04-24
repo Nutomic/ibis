@@ -7,6 +7,7 @@ use ibis_frontend_components::{
     suspense_error::SuspenseError, utils::i18n::IbisTitle, utils::resources::site,
 };
 use leptos::prelude::*;
+use leptos_fluent::tr;
 use log::info;
 
 #[component]
@@ -48,7 +49,9 @@ pub fn Register() -> impl IntoView {
                     .await
                     .map(|s| s.config.email_required)
                     .unwrap_or_default();
-                let email_placeholder = if email_required { "Email" } else { "Email (optional)" };
+                let email_placeholder = move || {
+                    if email_required { { tr!("email") } } else { { tr!("email-optional") } }
+                };
                 let button_is_disabled = Signal::derive(move || {
                     let disabled = loading.get() || username.0.get().is_empty()
                         || password.0.get().is_empty() || confirm_password.0.get().is_empty();
@@ -89,7 +92,7 @@ pub fn Register() -> impl IntoView {
                                 type="text"
                                 class="input input-primary input-bordered my-1"
                                 required
-                                placeholder="Username"
+                                placeholder=tr!("username")
                                 bind:value=username
                                 prop:disabled=move || loading.get()
                             />
@@ -105,7 +108,7 @@ pub fn Register() -> impl IntoView {
                                 type="password"
                                 class="input input-primary input-bordered my-1"
                                 required
-                                placeholder="Password"
+                                placeholder=tr!("password")
                                 prop:disabled=move || loading.get()
                                 bind:value=password
                             />
@@ -113,7 +116,7 @@ pub fn Register() -> impl IntoView {
                                 type="password"
                                 class="input input-primary input-bordered my-1"
                                 required
-                                placeholder="Confirm password"
+                                placeholder=tr!("confirm-new-password")
                                 prop:disabled=move || loading.get()
                                 bind:value=confirm_password
                             />
