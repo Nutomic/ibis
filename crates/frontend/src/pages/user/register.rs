@@ -4,7 +4,8 @@ use ibis_api_client::{
     user::{RegisterUserParams, RegistrationResponse},
 };
 use ibis_frontend_components::{
-    suspense_error::SuspenseError, utils::i18n::IbisTitle, utils::resources::site,
+    suspense_error::SuspenseError,
+    utils::{i18n::IbisTitle, resources::site},
 };
 use leptos::prelude::*;
 use leptos_fluent::tr;

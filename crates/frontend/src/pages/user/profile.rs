@@ -1,6 +1,8 @@
 use ibis_api_client::{CLIENT, user::GetUserParams};
 use ibis_frontend_components::{
-    edit_list::EditList, suspense_error::SuspenseError, utils::i18n::IbisTitle,
+    edit_list::EditList,
+    suspense_error::SuspenseError,
+    utils::i18n::IbisTitle,
 };
 use ibis_markdown::render_article_markdown;
 use leptos::prelude::*;
