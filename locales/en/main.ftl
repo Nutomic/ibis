@@ -34,6 +34,7 @@ edit-profile = Edit Profile
 logout = Logout
 light = Light
 dark = Dark
+search = Search
 
 # OAuth login
 or-register-sso = Or Register with SSO Provider

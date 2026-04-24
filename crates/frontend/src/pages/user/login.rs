@@ -1,8 +1,7 @@
 use ibis_api_client::{CLIENT, errors::FrontendResultExt, user::LoginUserParams};
-use ibis_frontend_components::{oauth_login_button::OauthLoginButtons, utils::resources::site};
+use ibis_frontend_components::{oauth_login_button::OauthLoginButtons, utils::{i18n::IbisTitle, resources::site}};
 use leptos::prelude::*;
 use leptos_fluent::tr;
-use leptos_meta::Title;
 use leptos_router::components::Redirect;
 
 #[component]
@@ -35,7 +34,7 @@ pub fn Login() -> impl IntoView {
     });
 
     view! {
-        <Title text="Login" />
+        <IbisTitle key="Login" />
         <Show
             when=move || !login_response.get()
             fallback=move || {

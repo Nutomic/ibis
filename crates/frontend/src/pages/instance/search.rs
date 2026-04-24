@@ -54,7 +54,9 @@ pub fn Search() -> impl IntoView {
     );
 
     view! {
-        <Title text=move || format!("Search - {}", params.get().get("query").unwrap_or_default()) />
+        <Title text=move || {
+            format!("{} - {}", tr!("search"), params.get().get("query").unwrap_or_default())
+        } />
         <h1 class="flex-auto my-6 font-serif text-4xl font-bold grow">
             "Search results for " {move || params.get().get("query").unwrap_or_default()}
         </h1>
