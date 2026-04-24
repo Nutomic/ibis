@@ -16,6 +16,7 @@ pub struct RegisterUserParams {
     pub email: Option<String>,
     pub password: String,
     pub confirm_password: String,
+    pub registration_application: Option<String>,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -62,6 +63,7 @@ pub struct OAuthTokenResponse {
 pub struct RegistrationResponse {
     pub user: LocalUserView,
     pub email_verification_required: bool,
+    pub admin_review_required: bool,
 }
 
 #[derive(Deserialize, Serialize, Debug, Clone)]

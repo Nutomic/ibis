@@ -5,19 +5,18 @@ use axum::{Form, Json};
 use axum_extra::extract::CookieJar;
 use axum_macros::debug_handler;
 use ibis_api_client::user::{
-    AuthenticateWithOauth,
-    OAuthTokenResponse,
-    RegisterUserParams,
-    RegistrationResponse,
+    AuthenticateWithOauth, OAuthTokenResponse, RegisterUserParams, RegistrationResponse,
 };
 use ibis_database::{
-    common::user::{LocalUser, LocalUserView},
+    common::{user::{LocalUser, LocalUserView, RegistrationApplication}},
     config::OAuthProvider,
     email::verification::send_verification_email,
     error::{BackendError, BackendResult},
     impls::{
         IbisContext,
-        user::{LocalUserViewQuery, OAuthAccount, OAuthAccountInsertForm},
+        user::{
+            LocalUserViewQuery, OAuthAccount, OAuthAccountInsertForm, RegistrationApplicationForm,
+        },
     },
 };
 use ibis_federate::validate::{validate_email, validate_user_name};
@@ -29,7 +28,7 @@ type RegisterReturnType = BackendResult<(CookieJar, Json<RegistrationResponse>)>
 #[debug_handler]
 pub async fn register_user(
     context: Data<IbisContext>,
-    jar: CookieJar,
+  mut  jar: CookieJar,
     Form(mut params): Form<RegisterUserParams>,
 ) -> RegisterReturnType {
     empty_to_none(&mut params.email);
@@ -39,8 +38,12 @@ pub async fn register_user(
 
     validate_new_password(&params.password, &params.confirm_password)?;
 
-    if context.conf.options.email_required && params.email.is_none() {
+    let options = &context.conf.options;
+    if options.email_required && params.email.is_none() {
         return Err(anyhow!("Email required").into());
+    }
+    if options.registration_question.is_some() && params.registration_application.is_none() {
+        return Err(anyhow!("Registration application required").into());
     }
 
     check_new_user(&params.username, params.email.as_deref(), &context)?;
@@ -52,17 +55,37 @@ pub async fn register_user(
         params.email.clone(),
         &context,
     )?;
+
+    if let Some(answer) = params.registration_application && options.registration_question.is_some() {
+        let form = RegistrationApplicationForm {
+            local_user_id: user.local_user.id,
+            answer,
+        };
+        RegistrationApplication::create(&form, &context)?;
+    }
+
     if let Some(email) = &params.email {
         send_verification_email(&user.local_user, email, &context).await?;
     }
 
-    register_return(user, jar, context.conf.options.email_required, &context)
+    if !options.email_required && options.registration_question.is_none() {
+        jar = add_login_cookie(&user.person, jar, &context)?;
+    }
+
+    Ok((
+        jar,
+        Json(RegistrationResponse {
+            user,
+            email_verification_required: options.email_required,
+            admin_review_required: options.registration_question.is_some(),
+        }),
+    ))
 }
 
 #[debug_handler]
 pub async fn authenticate_with_oauth(
     context: Data<IbisContext>,
-    jar: CookieJar,
+    mut jar: CookieJar,
     Form(params): Form<AuthenticateWithOauth>,
 ) -> RegisterReturnType {
     let oauth_invalid_err: BackendError = anyhow!("Oauth Authorization is invalid").into();
@@ -155,8 +178,16 @@ pub async fn authenticate_with_oauth(
         }
     };
 
-    // dont require any email validation for oauth
-    register_return(user, jar, false, &context)
+    // dont require any email validation nor registration application for oauth
+       jar = add_login_cookie(&user.person, jar, &context)?;
+    Ok((
+        jar,
+        Json(RegistrationResponse {
+            user,
+            email_verification_required: false,
+            admin_review_required: false,
+        }),
+    ))
 }
 
 /// Request an Access Token from the OAUTH provider
@@ -222,25 +253,6 @@ fn check_new_user(username: &str, email: Option<&str>, context: &IbisContext) ->
         LocalUser::check_email_taken(email, context)?;
     }
     Ok(())
-}
-
-fn register_return(
-    user: LocalUserView,
-    mut jar: CookieJar,
-    email_verification_required: bool,
-    context: &Data<IbisContext>,
-) -> RegisterReturnType {
-    if !email_verification_required {
-        jar = add_login_cookie(&user.person, jar, context)?;
-    }
-
-    Ok((
-        jar,
-        Json(RegistrationResponse {
-            user,
-            email_verification_required,
-        }),
-    ))
 }
 
 pub(super) fn validate_new_password(password: &str, confirm_password: &str) -> BackendResult<()> {

@@ -3,7 +3,7 @@ use crate::{
     common::{
         instance::InstanceFollow,
         newtypes::{LocalUserId, PersonId},
-        user::{LocalUser, LocalUserView, Person},
+        user::{LocalUser, LocalUserView, Person, RegistrationApplication},
         utils::http_protocol_str,
     },
     error::BackendResult,
@@ -14,26 +14,12 @@ use anyhow::anyhow;
 use bcrypt::{DEFAULT_COST, hash};
 use chrono::{DateTime, Utc};
 use diesel::{
-    AsChangeset,
-    BoolExpressionMethods,
-    ExpressionMethods,
-    Insertable,
-    JoinOnDsl,
-    PgTextExpressionMethods,
-    QueryDsl,
-    Queryable,
-    RunQueryDsl,
-    Selectable,
-    dsl::not,
-    insert_into,
+    AsChangeset, BoolExpressionMethods, ExpressionMethods, Insertable, JoinOnDsl,
+    PgTextExpressionMethods, QueryDsl, Queryable, RunQueryDsl, Selectable, dsl::not, insert_into,
 };
 use ibis_database_schema::{
-    instance,
-    instance_follow,
-    local_user,
-    oauth_account,
-    person,
-    person_follow,
+    instance, instance_follow, local_user, oauth_account, person, person_follow,
+    registration_application,
 };
 use std::ops::DerefMut;
 use url::Url;
@@ -373,6 +359,25 @@ impl OAuthAccount {
     pub fn create(form: &OAuthAccountInsertForm, context: &IbisContext) -> BackendResult<Self> {
         let mut conn = context.db_pool.get()?;
         Ok(insert_into(oauth_account::table)
+            .values(form)
+            .get_result(conn.deref_mut())?)
+    }
+}
+
+#[derive(Debug, Clone, Insertable)]
+#[diesel(table_name = registration_application, check_for_backend(diesel::pg::Pg))]
+pub struct RegistrationApplicationForm {
+    pub local_user_id: LocalUserId,
+    pub answer: String,
+}
+
+impl RegistrationApplication {
+    pub fn create(
+        form: &RegistrationApplicationForm,
+        context: &IbisContext,
+    ) -> BackendResult<Self> {
+        let mut conn = context.db_pool.get()?;
+        Ok(insert_into(registration_application::table)
             .values(form)
             .get_result(conn.deref_mut())?)
     }

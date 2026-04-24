@@ -6,7 +6,7 @@ use url::Url;
 #[cfg(feature = "ssr")]
 use {
     diesel::{Identifiable, Queryable, Selectable},
-    ibis_database_schema::{local_user, person},
+    ibis_database_schema::{local_user, person, registration_application},
 };
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
@@ -65,4 +65,14 @@ impl Person {
             format!("@{}@{}", name, extract_domain(self.ap_id.inner()))
         }
     }
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[cfg_attr(feature = "ssr", derive(Queryable, Selectable, Identifiable))]
+#[cfg_attr(feature = "ssr", diesel(table_name = registration_application, check_for_backend(diesel::pg::Pg)))]
+pub struct RegistrationApplication {
+    pub id: i32,
+    pub local_user_id: LocalUserId,
+    pub answer: String,
+    pub published_at: DateTime<Utc>,
 }
