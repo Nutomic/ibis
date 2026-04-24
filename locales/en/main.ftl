@@ -23,7 +23,6 @@ restore = Restore
 
 # Editor
 preview = Preview
-markdown = Markdown
 
 # Navigation
 login = Login
@@ -36,3 +35,6 @@ dark = Dark
 
 # OAuth login
 or-register-sso = Or Register with SSO Provider
+
+# Instance list
+instance-edited = Edited { $time_ago }{ $dead }

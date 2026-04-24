@@ -52,7 +52,7 @@ pub fn EditorView(
                         href="https://ibis.wiki/article/Markdown_Guide"
                         target="blank_"
                     >
-                        {tr!("markdown")}
+                        "Markdown"
                     </a>
                     " formatting is supported"
                 </p>

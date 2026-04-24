@@ -7,6 +7,7 @@ use ibis_database::common::{
     utils::extract_domain,
 };
 use leptos::prelude::*;
+use leptos_fluent::tr;
 use std::sync::OnceLock;
 use timeago::Formatter;
 
@@ -95,7 +96,7 @@ pub fn instance_updated(instance: &InstanceView) -> String {
         } else {
             ""
         };
-        format!("Edited {}{dead}", time_ago(edited))
+        tr!("instance-edited", {"time_ago" => time_ago(edited), "dead" => dead})
     }
 }
 
