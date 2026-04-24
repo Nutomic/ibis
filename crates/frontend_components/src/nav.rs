@@ -5,7 +5,7 @@ use crate::utils::{
     resources::{config, is_admin, is_logged_in, my_profile, site},
 };
 use ibis_api_client::{CLIENT, errors::FrontendResultExt};
-use leptos::{IntoView, component, prelude::*, view, *};
+use leptos::{IntoView, component, ev, prelude::*, view};
 use leptos_fluent::tr;
 use leptos_router::hooks::use_navigate;
 use phosphor_leptos::{
@@ -121,7 +121,7 @@ pub fn Nav() -> impl IntoView {
                                     <input
                                         type="text"
                                         class="w-full rounded-sm input input-bordered input-sm"
-                                        placeholder="Search"
+                                        placeholder=tr!("search")
                                         prop:value=search_query
                                         on:keyup=move |ev: ev::KeyboardEvent| {
                                             let val = event_target_value(&ev);
@@ -141,11 +141,11 @@ pub fn Nav() -> impl IntoView {
                             fallback=move || {
                                 view! {
                                     <li>
-                                        <a href="/login">"Login"</a>
+                                        <a href="/login">{tr!("login")}</a>
                                     </li>
                                     <Show when=move || config().registration_open>
                                         <li>
-                                            <a href="/register">"Register"</a>
+                                            <a href="/register">{tr!("register")}</a>
                                         </li>
                                     </Show>
                                 }
@@ -160,7 +160,7 @@ pub fn Nav() -> impl IntoView {
                                     );
                                     view! {
                                         <p class="self-center">
-                                            "Logged in as " <a class="link" href=profile_link>
+                                            {tr!("logged-in-as")} <a class="link" href=profile_link>
                                                 {my_profile.person.username}
                                             </a>
                                         </p>
@@ -168,7 +168,7 @@ pub fn Nav() -> impl IntoView {
                                             class="self-center py-2 link"
                                             href="/account/edit_profile"
                                         >
-                                            Edit Profile
+                                            {tr!("edit-profile")}
                                         </a>
                                         <button
                                             class="self-center w-min btn btn-outline btn-xs"
@@ -176,7 +176,7 @@ pub fn Nav() -> impl IntoView {
                                                 logout_action.dispatch(());
                                             }
                                         >
-                                            Logout
+                                            {tr!("logout")}
                                         </button>
                                     }
                                 })}
@@ -185,14 +185,14 @@ pub fn Nav() -> impl IntoView {
                         <div class="grow min-h-2"></div>
                         <div class="grid gap-2 m-1">
                             <label class="flex gap-2 cursor-pointer">
-                                <span class="label-text">Light</span>
+                                <span class="label-text">{tr!("light")}</span>
                                 <input
                                     type="checkbox"
                                     class="toggle"
                                     prop:checked=dark_mode.is_dark
                                     on:click=move |_| { dark_mode.toggle() }
                                 />
-                                <span class="label-text">Dark</span>
+                                <span class="label-text">{tr!("dark")}</span>
                             </label>
                             <LanguageSelector />
                             <p>"Version "{env!("CARGO_PKG_VERSION")}</p>

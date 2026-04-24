@@ -1,6 +1,7 @@
 use crate::utils::resources::is_logged_in;
 use ibis_api_client::errors::FrontendResult;
 use leptos::{either::Either, prelude::*};
+use leptos_fluent::tr;
 use leptos_router::hooks::use_params_map;
 
 pub fn article_title_param() -> Option<String> {
@@ -15,7 +16,7 @@ where
 {
     view! {
         <Suspense fallback=|| {
-            view! { "Loading..." }
+            view! { {tr!("loading")} }
         }>
             {move || {
                 if let Some(Err(e)) = result.get() {
@@ -31,7 +32,7 @@ where
                                     <div class="alert alert-error w-fit">{e.message()}</div>
                                     <Show when=move || article_title.is_some() && is_logged_in()>
                                         <a class="mt-4 btn" href=href.clone()>
-                                            Create Article
+                                            {tr!("create-article")}
                                         </a>
                                     </Show>
                                 </div>

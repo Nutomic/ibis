@@ -3,9 +3,12 @@ use ibis_api_client::{
     errors::FrontendResultExt,
     user::{ChangePasswordParams, UpdateUserParams},
 };
-use ibis_frontend_components::{suspense_error::SuspenseError, utils::resources::site};
+use ibis_frontend_components::{
+    suspense_error::SuspenseError,
+    utils::{i18n::IbisTitle, resources::site},
+};
 use leptos::prelude::*;
-use leptos_meta::Title;
+use leptos_fluent::tr;
 
 #[component]
 pub fn UserEditProfile() -> impl IntoView {
@@ -34,7 +37,7 @@ pub fn UserEditProfile() -> impl IntoView {
     // TODO: It would make sense to use a table for the labels and inputs, but for some reason
     //       that completely breaks reactivity.
     view! {
-        <Title text="Edit Profile" />
+        <IbisTitle key="edit-profile" />
         <SuspenseError result=site>
             {Suspend::new(async move {
                 site.await
@@ -52,11 +55,11 @@ pub fn UserEditProfile() -> impl IntoView {
                         let old_password = signal(String::new());
                         view! {
                             <h1 class="flex-auto my-6 font-serif text-4xl font-bold grow">
-                                Edit Profile
+                                {tr!("edit-profile-title")}
                             </h1>
                             <div class="flex flex-row mb-2">
                                 <label class="block w-40" for="displayname">
-                                    Displayname
+                                    {tr!("displayname")}
                                 </label>
                                 <input
                                     type="text"
@@ -67,7 +70,7 @@ pub fn UserEditProfile() -> impl IntoView {
                             </div>
                             <div class="flex flex-row mb-2">
                                 <label class="block w-40" for="bio">
-                                    "Bio (Markdown supported)"
+                                    {tr!("bio-markdown-supported")}
                                 </label>
                                 <textarea
                                     id="bio"
@@ -79,7 +82,7 @@ pub fn UserEditProfile() -> impl IntoView {
                             </div>
                             <div class="flex flex-row mb-2">
                                 <label class="block w-40" for="email">
-                                    Email
+                                    {tr!("email")}
                                 </label>
                                 <input
                                     type="text"
@@ -90,7 +93,7 @@ pub fn UserEditProfile() -> impl IntoView {
                             </div>
                             <div class="flex flex-row mb-2">
                                 <label class="block w-40" for="email_notifications">
-                                    Send email notifications
+                                    {tr!("send-email-notifications")}
                                 </label>
                                 <input
                                     type="checkbox"
@@ -111,17 +114,17 @@ pub fn UserEditProfile() -> impl IntoView {
                                     submit_action.dispatch(form);
                                 }
                             >
-                                Submit
+                                {tr!("submit")}
                             </button>
 
                             <div class="divider"></div>
 
                             <h2 class="flex-auto my-6 font-serif text-2xl font-bold grow">
-                                Change Password
+                                {tr!("change-password")}
                             </h2>
                             <div class="flex flex-row mb-2">
                                 <label class="block w-40" for="new_password">
-                                    New password
+                                    {tr!("new-password")}
                                 </label>
                                 <input
                                     type="password"
@@ -132,7 +135,7 @@ pub fn UserEditProfile() -> impl IntoView {
                             </div>
                             <div class="flex flex-row mb-2">
                                 <label class="block w-40" for="confirm_new_password">
-                                    Confirm new password
+                                    {tr!("confirm-new-password")}
                                 </label>
                                 <input
                                     type="password"
@@ -163,13 +166,13 @@ pub fn UserEditProfile() -> impl IntoView {
                                     change_password_action.dispatch(form);
                                 }
                             >
-                                Save
+                                {tr!("save")}
                             </button>
 
                             <Show when=move || saved.get()>
                                 <div class="toast">
                                     <div class="alert alert-info">
-                                        <span>Saved!</span>
+                                        <span>{tr!("toast-saved")}</span>
                                     </div>
                                 </div>
                             </Show>

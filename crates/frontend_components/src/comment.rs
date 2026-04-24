@@ -17,6 +17,7 @@ use ibis_database::common::{
 };
 use ibis_markdown::render_comment_markdown;
 use leptos::prelude::*;
+use leptos_fluent::tr;
 use phosphor_leptos::{ARROW_BEND_UP_LEFT, FEDIVERSE_LOGO, Icon, LINK, PENCIL, TRASH};
 
 #[component]
@@ -107,7 +108,7 @@ pub fn CommentView(
                         <Show when=move || is_creator && !comment_change_signal.0.get().deleted>
                             <a
                                 class="link"
-                                title="Edit"
+                                title=tr!("edit")
                                 on:click=move |_| {
                                     is_editing.1.set(true);
                                 }
@@ -143,13 +144,17 @@ pub fn CommentView(
 
 fn render_content(comment: Comment) -> String {
     let content = if comment.deleted {
-        "*deleted*"
+        &tr!("comment-deleted-placeholder")
     } else {
         &comment.content
     };
     render_comment_markdown(content)
 }
 
-fn delete_restore_label(comment: Comment) -> &'static str {
-    if comment.deleted { "Restore" } else { "Delete" }
+fn delete_restore_label(comment: Comment) -> String {
+    if comment.deleted {
+        tr!("restore")
+    } else {
+        tr!("delete")
+    }
 }

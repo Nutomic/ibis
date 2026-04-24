@@ -2,6 +2,7 @@ use ibis_api_client::{CLIENT, instance::SearchArticleParams};
 use ibis_database::common::{article::Article, instance::Instance};
 use ibis_frontend_components::utils::formatting::article_path;
 use leptos::prelude::*;
+use leptos_fluent::tr;
 use leptos_meta::Title;
 use leptos_router::hooks::use_query_map;
 use serde::{Deserialize, Serialize};
@@ -53,12 +54,14 @@ pub fn Search() -> impl IntoView {
     );
 
     view! {
-        <Title text=move || format!("Search - {}", params.get().get("query").unwrap_or_default()) />
+        <Title text=move || {
+            format!("{} - {}", tr!("search"), params.get().get("query").unwrap_or_default())
+        } />
         <h1 class="flex-auto my-6 font-serif text-4xl font-bold grow">
             "Search results for " {move || params.get().get("query").unwrap_or_default()}
         </h1>
         <Suspense fallback=|| {
-            view! { "Loading..." }
+            view! { {tr!("loading")} }
         }>
             {move || {
                 search_results
@@ -78,7 +81,7 @@ pub fn Search() -> impl IntoView {
                                     };
                                     view! {
                                         {error_view}
-                                        <p>No results found</p>
+                                        <p>{tr!("search-no-results")}</p>
                                     }
                                 }
                             >

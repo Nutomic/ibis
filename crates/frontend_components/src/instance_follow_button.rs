@@ -5,6 +5,7 @@ use ibis_api_client::{
 };
 use ibis_database::common::instance::InstanceView;
 use leptos::prelude::*;
+use leptos_fluent::tr;
 
 #[component]
 pub fn InstanceFollowButton(instance: Resource<FrontendResult<InstanceView>>) -> impl IntoView {
@@ -24,7 +25,11 @@ pub fn InstanceFollowButton(instance: Resource<FrontendResult<InstanceView>>) ->
                 instance
                     .await
                     .map(|instance_| {
-                        let follow_text = if instance_.following { "Unfollow" } else { "Follow" };
+                        let follow_text = if instance_.following {
+                            tr!("unfollow")
+                        } else {
+                            tr!("follow")
+                        };
                         view! {
                             <button
                                 class="btn btn-sm ml-2"

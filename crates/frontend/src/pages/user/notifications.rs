@@ -61,7 +61,7 @@ pub fn Notifications() -> impl IntoView {
                             } else {
                                 view! {
                                     <div class="grid place-content-center">
-                                        <span>"No unread notifications"</span>
+                                        <span>{tr!("no-unread-notifications")}</span>
                                     </div>
                                 }
                                     .into_any()
@@ -88,12 +88,12 @@ fn edit_conflict_view(
     view! {
         <li class="py-2">
             <CardTitle notif=notif.clone() />
-            <div>"Edit conflict: "{summary.to_string()}</div>
+            <div>{tr!("notification-edit-conflict", {"text" => summary.to_string()})}</div>
             <CardActions
                 href=href
                 notif=notif.clone()
                 refresh_res=refresh_res
-                dismiss_button=("Delete", TRASH)
+                dismiss_button=(tr!("delete"), TRASH)
             />
         </li>
     }
@@ -103,7 +103,7 @@ fn article_view(notif: &ApiNotification, refresh_res: NotificationsResource) -> 
     view! {
         <li class="py-2">
             <CardTitle notif=notif.clone() />
-            <div>"New Article: "{notif.article.title()}</div>
+            <div>{tr!("notification-new-article", {"text" => notif.article.title()})}</div>
             <CardActions
                 href=article_path(&notif.article)
                 notif=notif.clone()
@@ -121,7 +121,7 @@ fn comment_view(
     view! {
         <li class="py-2">
             <CardTitle notif=notif.clone() />
-            <div>"New comment: "{comment.content.clone()}</div>
+            <div>{tr!("notification-new-comment", {"text" => comment.content.clone()})}</div>
             <CardActions
                 href=comment_path(comment, &notif.article)
                 notif=notif.clone()
@@ -139,7 +139,7 @@ fn edit_view(
     view! {
         <li class="py-2">
             <CardTitle notif=notif.clone() />
-            <div>"New edit: "{edit.summary.clone()}</div>
+            <div>{tr!("notification-new-edit", {"text" => edit.summary.clone()})}</div>
             <CardActions
                 href=edit_path(edit, &notif.article)
                 notif=notif.clone()
@@ -164,7 +164,7 @@ fn CardActions(
     href: String,
     notif: ApiNotification,
     refresh_res: NotificationsResource,
-    #[prop(optional)] dismiss_button: Option<(&'static str, IconData)>,
+    #[prop(optional)] dismiss_button: Option<(String, IconData)>,
 ) -> impl IntoView {
     let id = notif.id;
     let dismiss_action = move || {
@@ -176,7 +176,10 @@ fn CardActions(
         })
         .dispatch(());
     };
-    let dismiss_label = dismiss_button.map(|d| d.0).unwrap_or("Mark as read");
+    let dismiss_label = dismiss_button
+        .as_ref()
+        .map(|d| d.0.clone())
+        .unwrap_or(tr!("mark-as-aread"));
     let dismiss_icon = dismiss_button.map(|d| d.1).unwrap_or(CHECK);
     view! {
         <div class="mt-2 card-actions">

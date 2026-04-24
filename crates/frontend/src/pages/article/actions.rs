@@ -11,6 +11,7 @@ use ibis_frontend_components::{
     utils::{formatting::article_path, resources::is_admin},
 };
 use leptos::{ev::KeyboardEvent, prelude::*};
+use leptos_fluent::tr;
 use leptos_router::components::Redirect;
 
 #[component]
@@ -64,13 +65,13 @@ pub fn ArticleActions() -> impl IntoView {
                                     <div class="m-4">
                                         <button
                                             class="btn btn-secondary"
-                                            title="Protect a local article so that only admins can edit it"
+                                            title=tr!("toggle-article-protection-title")
                                             on:click=move |_| {
                                                 protect_action
                                                     .dispatch((article.article.id, article.article.protected));
                                             }
                                         >
-                                            Toggle Article Protection
+                                            {tr!("toggle-article-protection")}
                                         </button>
                                     </div>
                                     <div class="m-4">
@@ -87,7 +88,7 @@ pub fn ArticleActions() -> impl IntoView {
                                 </Show>
                                 <input
                                     class="input"
-                                    placeholder="New Title"
+                                    placeholder={tr!("new-title")}
                                     on:keyup=move |ev: KeyboardEvent| {
                                         let val = event_target_value(&ev);
                                         set_new_title.update(|v| *v = val);
@@ -101,13 +102,9 @@ pub fn ArticleActions() -> impl IntoView {
                                         fork_action.dispatch((article.article.id, new_title.get()));
                                     }
                                 >
-
-                                    Fork Article
+                                    {tr!("fork-article")}
                                 </button>
-                                <p>
-                                    "You can fork a remote article to the local instance. This is useful if the original
-                                    instance is dead, or if there are disagreements how the article should be written."
-                                </p>
+                                <p>{tr!("fork-article-description")}</p>
                             </div>
                         }
                     })

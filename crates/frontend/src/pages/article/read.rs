@@ -7,6 +7,7 @@ use ibis_frontend_components::{
 };
 use ibis_markdown::render_article_markdown;
 use leptos::{either::Either, prelude::*};
+use leptos_fluent::tr;
 use leptos_router::{LazyRoute, hooks::use_query_map};
 
 pub struct ReadArticle {
@@ -45,7 +46,7 @@ impl LazyRoute for ReadArticle {
                     }
                 })} <Show when=move || edit_successful>
                     <div class="toast toast-center">
-                        <div class="alert alert-success">Edit successful</div>
+                        <div class="alert alert-success">{tr!("edit-successful")}</div>
                     </div>
                 </Show>
             </SuspenseError>
