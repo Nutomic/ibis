@@ -102,8 +102,8 @@ pub fn App() -> impl IntoView {
                             </div>
                         </Show>
                         <Routes fallback=|| "Page not found.".into_view()>
-                            <Route path=path!("/") view={Lazy::<ReadArticle>::new()} />
-                            <Route path=path!("/article/:title") view={Lazy::<ReadArticle>::new()} />
+                            <Route path=path!("/") view=Lazy::<ReadArticle>::new() />
+                            <Route path=path!("/article/:title") view=Lazy::<ReadArticle>::new() />
                             <Route
                                 path=path!("/article/:title/discussion")
                                 view=ArticleDiscussion

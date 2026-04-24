@@ -16,3 +16,23 @@ edit-tab = Edit
 actions-tab = Actions
 article-removed = Article was removed
 article-protected = Article can only be edited by local admins
+
+# Comment navigation
+delete = Delete
+restore = Restore
+
+# Editor
+preview = Preview
+markdown = Markdown
+
+# Navigation
+login = Login
+register = Register
+logged-in-as = Logged in as
+edit-profile = Edit Profile
+logout = Logout
+light = Light
+dark = Dark
+
+# OAuth login
+or-register-sso = Or Register with SSO Provider

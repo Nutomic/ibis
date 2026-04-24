@@ -17,6 +17,7 @@ use ibis_database::common::{
 };
 use ibis_markdown::render_comment_markdown;
 use leptos::prelude::*;
+use leptos_fluent::tr;
 use phosphor_leptos::{ARROW_BEND_UP_LEFT, FEDIVERSE_LOGO, Icon, LINK, PENCIL, TRASH};
 
 #[component]
@@ -150,6 +151,10 @@ fn render_content(comment: Comment) -> String {
     render_comment_markdown(content)
 }
 
-fn delete_restore_label(comment: Comment) -> &'static str {
-    if comment.deleted { "Restore" } else { "Delete" }
+fn delete_restore_label(comment: Comment) -> String {
+    if comment.deleted {
+        tr!("restore")
+    } else {
+        tr!("delete")
+    }
 }

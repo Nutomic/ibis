@@ -4,6 +4,7 @@ use crate::{
 };
 use ibis_database::common::instance::OAuthProviderPublic;
 use leptos::{ev::MouseEvent, prelude::*};
+use leptos_fluent::tr;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use url::Url;
@@ -49,7 +50,7 @@ pub fn OauthLoginButtons(username: ReadSignal<String>) -> impl IntoView {
                 view! {
                     <Show when=move || { has_oauth_providers }>
                         <h2 class="my-4 font-serif text-xl font-bold grow max-w-fit">
-                            Or Register with SSO Provider
+                            {tr!("or-register-sso")}
                         </h2>
                         {providers
                             .iter()

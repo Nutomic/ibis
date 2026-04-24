@@ -1,6 +1,7 @@
 use crate::{prevent_navigation, utils::use_cookie};
 use ibis_markdown::render_article_markdown;
 use leptos::{html::Textarea, prelude::*};
+use leptos_fluent::tr;
 
 #[component]
 pub fn EditorView(
@@ -43,7 +44,7 @@ pub fn EditorView(
                         cookie.1.set(Some(!show_preview.get_untracked()));
                     }
                 >
-                    Preview
+                    {tr!("preview")}
                 </button>
                 <p class="mx-4">
                     <a
@@ -51,7 +52,7 @@ pub fn EditorView(
                         href="https://ibis.wiki/article/Markdown_Guide"
                         target="blank_"
                     >
-                        Markdown
+                        {tr!("markdown")}
                     </a>
                     " formatting is supported"
                 </p>
