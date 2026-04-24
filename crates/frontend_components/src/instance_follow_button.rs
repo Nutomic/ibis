@@ -20,29 +20,29 @@ pub fn InstanceFollowButton(instance: Resource<FrontendResult<InstanceView>>) ->
     });
 
     view! {
-            <SuspenseError result=instance>
-                {move || Suspend::new(async move {
-                    instance
-                        .await
-                        .map(|instance_| {
-                            let follow_text = if instance_.following {
-        tr!("unfollow")
-    } else {
-        tr!("follow")
-    };
-                            view! {
-                                <button
-                                    class="btn btn-sm ml-2"
-                                    on:click=move |_| {
-                                        follow_action.dispatch(instance_.clone());
-                                    }
-                                    title="Follow the instance so that new edits are synchronized to your instance."
-                                >
-                                    {follow_text}
-                                </button>
-                            }
-                        })
-                })}
-            </SuspenseError>
-        }
+        <SuspenseError result=instance>
+            {move || Suspend::new(async move {
+                instance
+                    .await
+                    .map(|instance_| {
+                        let follow_text = if instance_.following {
+                            tr!("unfollow")
+                        } else {
+                            tr!("follow")
+                        };
+                        view! {
+                            <button
+                                class="btn btn-sm ml-2"
+                                on:click=move |_| {
+                                    follow_action.dispatch(instance_.clone());
+                                }
+                                title="Follow the instance so that new edits are synchronized to your instance."
+                            >
+                                {follow_text}
+                            </button>
+                        }
+                    })
+            })}
+        </SuspenseError>
+    }
 }

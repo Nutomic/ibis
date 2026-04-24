@@ -48,10 +48,14 @@ instance-edited = Edited { $time_ago }{ $dead }
 # Miscellaneous
 loading = Loading...
 edit-successful = Edit successful
-topic = Topic { $topic }
+topic = Topic
 administrated-by = Administrated by
-article-federation-warning-1 = This article is hosted on { $instance } which hasnt been federated in { $time_ago} days. Edits will most likely fail. Instead consider forking the article to your local instance (under Actions), or edit a different article.
+article-federation-warning-1 = This article is hosted on { $instance } which hasnt been federated in { $time_ago } days. Edits will most likely fail. Instead consider forking the article to your local instance (under Actions), or edit a different article.
 toggle-article-protection = Toggle Article Protection
 toggle-article-protection-title = Protect a local article so that only admins can edit it
 fork-article = Fork Article
 fork-article-description = You can fork a remote article to the local instance. This is useful if the original instance is dead, or if there are disagreements how the article should be written.
+login = Login
+username-or-email = Username or email
+password = Password
+reset-password = Reset password

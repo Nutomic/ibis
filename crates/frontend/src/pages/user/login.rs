@@ -1,6 +1,7 @@
 use ibis_api_client::{CLIENT, errors::FrontendResultExt, user::LoginUserParams};
 use ibis_frontend_components::{oauth_login_button::OauthLoginButtons, utils::resources::site};
 use leptos::prelude::*;
+use leptos_fluent::tr;
 use leptos_meta::Title;
 use leptos_router::components::Redirect;
 
@@ -42,13 +43,13 @@ pub fn Login() -> impl IntoView {
             }
         >
             <form class="form-control max-w-80" on:submit=|ev| ev.prevent_default()>
-                <h1 class="my-4 font-serif text-4xl font-bold grow max-w-fit">Login</h1>
+                <h1 class="my-4 font-serif text-4xl font-bold grow max-w-fit">{tr!("login")}</h1>
 
                 <input
                     type="text"
                     class="input input-primary input-bordered my-1"
                     required
-                    placeholder="Username or email"
+                    placeholder=tr!("username-or-email")
                     bind:value=username_or_email
                     prop:disabled=move || loading.get()
                 />
@@ -56,12 +57,12 @@ pub fn Login() -> impl IntoView {
                     type="password"
                     class="input input-primary input-bordered my-1"
                     required
-                    placeholder="Password"
+                    placeholder=tr!("password")
                     prop:disabled=move || loading.get()
                     bind:value=password
                 />
                 <a href="/account/request_password_reset" class="link text-sm">
-                    Reset password
+                    {tr!("reset-password")}
                 </a>
 
                 <div>
@@ -72,7 +73,7 @@ pub fn Login() -> impl IntoView {
                             dispatch_action();
                         }
                     >
-                        Login
+                        {tr!("login")}
                     </button>
                 </div>
             </form>
