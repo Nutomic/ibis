@@ -52,9 +52,8 @@ pub fn EditorView(
                         href="https://ibis.wiki/article/Markdown_Guide"
                         target="blank_"
                     >
-                        "Markdown"
+                        {tr!("markdown-formatting-supported")}
                     </a>
-                    " formatting is supported"
                 </p>
             </div>
         </div>

@@ -20,9 +20,11 @@ article-protected = Article can only be edited by local admins
 # Comment navigation
 delete = Delete
 restore = Restore
+comment-deleted = *deleted*
 
 # Editor
 preview = Preview
+markdown-formatting-supported = <1>Markdown</1> formatting is supported
 
 # Navigation
 login = Login
@@ -35,6 +37,10 @@ dark = Dark
 
 # OAuth login
 or-register-sso = Or Register with SSO Provider
+
+# Instance Follow Button
+unfollow = Unfollow
+follow = Follow
 
 # Instance list
 instance-edited = Edited { $time_ago }{ $dead }
