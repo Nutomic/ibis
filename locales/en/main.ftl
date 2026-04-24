@@ -18,7 +18,6 @@ article-removed = Article was removed
 article-protected = Article can only be edited by local admins
 
 # Comment navigation
-delete = Delete
 restore = Restore
 comment-deleted-placeholder = *deleted*
 
@@ -71,6 +70,21 @@ edit-summary = Edit Summary
 invalid-edit = Invalid edit
 new-title = New title
 delete = Delete
+you-have-successfully-registered = You have successfully registered
+registration-successful-verify-email = "Registration successful, now verify the email address to login"
+check-email-for-reset-link = Check your email inbox for the reset link
+request-password-reset = Request password reset
+toast-saved = Saved!
+submit = Submit
+bio-markdown-supported = Bio (Markdown supported)
+displayname = Displayname
+send-email-notifications = Send email notifications
+password-changed-success = Password changed, you can login now
+name = Name
+search-no-results = No results found
+instance = Instance
+import-from-wikipedia = Import from Wikipedia
+import = Import
 
 # Notifications
 notification-new-edit = New edit: { $text }

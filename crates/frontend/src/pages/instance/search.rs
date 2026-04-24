@@ -81,7 +81,7 @@ pub fn Search() -> impl IntoView {
                                     };
                                     view! {
                                         {error_view}
-                                        <p>No results found</p>
+                                        <p>{tr!("search-no-results")}</p>
                                     }
                                 }
                             >

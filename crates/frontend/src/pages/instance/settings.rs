@@ -4,6 +4,7 @@ use ibis_frontend_components::{
     utils::{i18n::IbisTitle, resources::site},
 };
 use leptos::prelude::*;
+use leptos_fluent::tr;
 
 #[component]
 pub fn AdminSettings() -> impl IntoView {
@@ -35,11 +36,11 @@ pub fn AdminSettings() -> impl IntoView {
                         let (topic, set_topic) = signal(site.instance.topic.unwrap_or_default());
                         view! {
                             <h1 class="flex-auto my-6 font-serif text-4xl font-bold grow">
-                                "Admin Settings"
+                                {tr!("admin-settings")}
                             </h1>
                             <div class="flex flex-row mb-2">
                                 <label class="block w-20" for="name">
-                                    Name
+                                    {tr!("name")}
                                 </label>
                                 <input
                                     type="text"
@@ -50,7 +51,7 @@ pub fn AdminSettings() -> impl IntoView {
                             </div>
                             <div class="flex flex-row mb-2">
                                 <label class="block w-20" for="topic">
-                                    "Topic"
+                                    {tr!("topic")}
                                 </label>
                                 <input
                                     type="text"
@@ -75,7 +76,7 @@ pub fn AdminSettings() -> impl IntoView {
                             <Show when=move || saved.get()>
                                 <div class="toast">
                                     <div class="alert alert-info">
-                                        <span>Saved!</span>
+                                        <span>{tr!("toast-saved")}</span>
                                     </div>
                                 </div>
                             </Show>

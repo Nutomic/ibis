@@ -1,6 +1,7 @@
 use ibis_api_client::{CLIENT, errors::FrontendResultExt, user::PasswordReset};
 use ibis_frontend_components::utils::i18n::IbisTitle;
 use leptos::prelude::*;
+use leptos_fluent::tr;
 
 #[component]
 pub fn RequestPasswordReset() -> impl IntoView {
@@ -32,7 +33,7 @@ pub fn RequestPasswordReset() -> impl IntoView {
         <Show
             when=move || !response_received.get()
             fallback=move || {
-                view! { "Check your email inbox for the reset link" }
+                view! { {tr!("check-email-for-reset-link")} }
             }
         >
             <form class="form-control max-w-80" on:submit=|ev| ev.prevent_default()>
@@ -41,7 +42,7 @@ pub fn RequestPasswordReset() -> impl IntoView {
                     type="text"
                     class="input input-primary input-bordered my-1"
                     required
-                    placeholder="Username or email"
+                    placeholder=tr!("username-or-email")
                     bind:value=email
                     prop:disabled=move || loading.get()
                 />
@@ -54,7 +55,7 @@ pub fn RequestPasswordReset() -> impl IntoView {
                             dispatch();
                         }
                     >
-                        Request password reset
+                        {tr!("request-password-reset")}
                     </button>
                 </div>
             </form>

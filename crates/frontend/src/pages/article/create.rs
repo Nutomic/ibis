@@ -104,12 +104,12 @@ pub fn CreateArticle() -> impl IntoView {
                                         class="w-full input input-primary"
                                         type="text"
                                         required
-                                        placeholder={tr!("title")}
+                                        placeholder=tr!("title")
                                         bind:value=title
                                         prop:disabled=move || wait_for_response.get()
                                     />
 
-                                    <label for="instance">"Instance: "</label>
+                                    <label for="instance">{tr!("instance")}</label>
                                     <select
                                         id="instance"
                                         class="select select-primary select-sm mt-4"
@@ -147,7 +147,7 @@ pub fn CreateArticle() -> impl IntoView {
                                         <input
                                             class="mr-4 input input-primary grow"
                                             type="text"
-                                            placeholder={tr!("edit-summary")}
+                                            placeholder=tr!("edit-summary")
                                             bind:value=summary
                                             required
                                         />
@@ -165,14 +165,14 @@ pub fn CreateArticle() -> impl IntoView {
                                                     ));
                                             }
                                         >
-                                            Submit
+                                            {tr!("submit")}
                                         </button>
                                     </div>
                                 </div>
                                 <div class="divider"></div>
                                 <div class="item-view">
                                     <h2 class="my-4 font-serif text-xl font-bold">
-                                        Import from Wikipedia
+                                        {tr!("import-from-wikipedia")}
                                     </h2>
                                     <div class=" flex flex-row">
                                         <input
@@ -189,7 +189,7 @@ pub fn CreateArticle() -> impl IntoView {
                                                 import_action.dispatch(import_url.0.get());
                                             }
                                         >
-                                            Import
+                                            {tr!("import")}
                                         </button>
                                     </div>
                                 </div>

@@ -1,8 +1,8 @@
 use ibis_api_client::{CLIENT, errors::FrontendResultExt, user::ChangePasswordAfterReset};
+use ibis_frontend_components::utils::i18n::IbisTitle;
 use leptos::prelude::*;
 use leptos_fluent::tr;
 use leptos_router::hooks::use_query_map;
-use ibis_frontend_components::utils:: i18n::IbisTitle;
 
 #[component]
 pub fn ResetPassword() -> impl IntoView {
@@ -44,7 +44,7 @@ pub fn ResetPassword() -> impl IntoView {
         <Show when=move || token.get().is_some() fallback=move || view! { Missing token }>
             <Show
                 when=move || !response_received.get()
-                fallback=move || view! { "Password changed, you can login now" }
+                fallback=move || view! { {tr!("password-changed-success")} }
             >
                 <form class="form-control max-w-80" on:submit=|ev| ev.prevent_default()>
 
@@ -52,7 +52,7 @@ pub fn ResetPassword() -> impl IntoView {
                         type="password"
                         class="input input-primary input-bordered my-1"
                         required
-                        placeholder={tr!("password")}
+                        placeholder=tr!("password")
                         bind:value=password
                         prop:disabled=move || loading.get()
                     />
@@ -60,7 +60,7 @@ pub fn ResetPassword() -> impl IntoView {
                         type="password"
                         class="input input-primary input-bordered my-1"
                         required
-                        placeholder={tr!("confirm-new-password")}
+                        placeholder=tr!("confirm-new-password")
                         bind:value=confirm_password
                         prop:disabled=move || loading.get()
                     />
@@ -73,7 +73,7 @@ pub fn ResetPassword() -> impl IntoView {
                                 dispatch_action();
                             }
                         >
-                            Set new password
+                            {tr!("submit")}
                         </button>
                     </div>
                 </form>

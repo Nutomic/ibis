@@ -73,12 +73,10 @@ pub fn Register() -> impl IntoView {
                                             .unwrap_or_default()
                                     }
                                     fallback=|| {
-                                        view! { <p>"You have successfully registered."</p> }
+                                        view! { <p>{tr!("you-have-successfully-registered")}</p> }
                                     }
                                 >
-                                    <p>
-                                        "Registration successful, now verify the email address to login"
-                                    </p>
+                                    <p>{tr!("registration-successful-verify-email")}</p>
                                 </Show>
                             }
                         }
