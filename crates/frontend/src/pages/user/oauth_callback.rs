@@ -5,6 +5,7 @@ use ibis_api_client::{
 };
 use ibis_frontend_components::{oauth_login_button::OauthCookie, utils::use_cookie};
 use leptos::{prelude::*, task::spawn};
+use leptos_fluent::tr;
 use leptos_router::hooks::use_query_map;
 
 #[component]
@@ -36,5 +37,5 @@ pub fn OauthCallback() -> impl IntoView {
             });
         });
 
-    view! { Loading... }
+    view! { {tr!("loading")} }
 }

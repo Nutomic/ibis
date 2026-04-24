@@ -1,5 +1,6 @@
 use ibis_api_client::{CLIENT, errors::FrontendResultExt};
 use leptos::prelude::*;
+use leptos_fluent::tr;
 use leptos_router::hooks::use_query_map;
 
 #[component]
@@ -20,7 +21,7 @@ pub fn VerifyEmail() -> impl IntoView {
         }
     });
     view! {
-        <Show when=move || verify_email_action.pending().get()>Loading...</Show>
+        <Show when=move || verify_email_action.pending().get()>{tr!("loading")}</Show>
         <Show when=move || success.0.get()>"Email successfully verified. You can login now."</Show>
     }
 }

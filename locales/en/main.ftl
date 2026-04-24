@@ -44,3 +44,6 @@ follow = Follow
 
 # Instance list
 instance-edited = Edited { $time_ago }{ $dead }
+
+# Miscellaneous
+loading = Loading...
