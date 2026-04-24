@@ -1,6 +1,6 @@
 use ibis_api_client::{CLIENT, errors::FrontendResultExt, user::PasswordReset};
+use ibis_frontend_components::utils::i18n::IbisTitle;
 use leptos::prelude::*;
-use leptos_meta::Title;
 
 #[component]
 pub fn RequestPasswordReset() -> impl IntoView {
@@ -27,7 +27,7 @@ pub fn RequestPasswordReset() -> impl IntoView {
     let button_is_disabled = Signal::derive(move || loading.get() || email.0.get().is_empty());
 
     view! {
-        <Title text="Reset password" />
+        <IbisTitle key="reset-password" />
         <h1 class="my-4 font-serif text-4xl font-bold grow max-w-fit">Reset password</h1>
         <Show
             when=move || !response_received.get()

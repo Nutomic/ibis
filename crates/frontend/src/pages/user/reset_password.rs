@@ -1,7 +1,7 @@
 use ibis_api_client::{CLIENT, errors::FrontendResultExt, user::ChangePasswordAfterReset};
 use leptos::prelude::*;
-use leptos_meta::Title;
 use leptos_router::hooks::use_query_map;
+use ibis_frontend_components::utils:: i18n::IbisTitle;
 
 #[component]
 pub fn ResetPassword() -> impl IntoView {
@@ -38,7 +38,7 @@ pub fn ResetPassword() -> impl IntoView {
     });
 
     view! {
-        <Title text="Set new password" />
+        <IbisTitle key="set-new-password" />
         <h1 class="my-4 font-serif text-4xl font-bold grow max-w-fit">Reset password</h1>
         <Show when=move || token.get().is_some() fallback=move || view! { Missing token }>
             <Show

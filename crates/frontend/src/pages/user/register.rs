@@ -3,9 +3,10 @@ use ibis_api_client::{
     errors::FrontendResultExt,
     user::{RegisterUserParams, RegistrationResponse},
 };
-use ibis_frontend_components::{suspense_error::SuspenseError, utils::resources::site};
+use ibis_frontend_components::{
+    suspense_error::SuspenseError, utils::i18n::IbisTitle, utils::resources::site,
+};
 use leptos::prelude::*;
-use leptos_meta::Title;
 use log::info;
 
 #[component]
@@ -40,7 +41,7 @@ pub fn Register() -> impl IntoView {
     let site = site();
 
     view! {
-        <Title text="Register" />
+        <IbisTitle key="register" />
         <SuspenseError result=site>
             {move || Suspend::new(async move {
                 let email_required = site

@@ -1,8 +1,9 @@
 use ibis_api_client::{CLIENT, user::GetUserParams};
-use ibis_frontend_components::{edit_list::EditList, suspense_error::SuspenseError};
+use ibis_frontend_components::{
+    edit_list::EditList, suspense_error::SuspenseError, utils::i18n::IbisTitle,
+};
 use ibis_markdown::render_article_markdown;
 use leptos::prelude::*;
-use leptos_meta::Title;
 use leptos_router::hooks::use_params_map;
 
 #[component]
@@ -30,7 +31,7 @@ pub fn UserProfile() -> impl IntoView {
                     .await
                     .map(|person| {
                         view! {
-                            <Title text=person.title() />
+                            <IbisTitle key="profile" />
                             <h1 class="flex-auto my-6 font-serif text-4xl font-bold grow">
                                 {person.title()}
                             </h1>

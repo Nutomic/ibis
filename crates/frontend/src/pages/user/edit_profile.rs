@@ -3,9 +3,10 @@ use ibis_api_client::{
     errors::FrontendResultExt,
     user::{ChangePasswordParams, UpdateUserParams},
 };
-use ibis_frontend_components::{suspense_error::SuspenseError, utils::resources::site};
+use ibis_frontend_components::{
+    suspense_error::SuspenseError, utils::i18n::IbisTitle, utils::resources::site,
+};
 use leptos::prelude::*;
-use leptos_meta::Title;
 
 #[component]
 pub fn UserEditProfile() -> impl IntoView {
@@ -34,7 +35,7 @@ pub fn UserEditProfile() -> impl IntoView {
     // TODO: It would make sense to use a table for the labels and inputs, but for some reason
     //       that completely breaks reactivity.
     view! {
-        <Title text="Edit Profile" />
+        <IbisTitle key="edit-profile" />
         <SuspenseError result=site>
             {Suspend::new(async move {
                 site.await
