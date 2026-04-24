@@ -11,6 +11,7 @@ use ibis_frontend_components::{
     utils::{formatting::article_path, resources::is_admin},
 };
 use leptos::{ev::KeyboardEvent, prelude::*};
+use leptos_fluent::tr;
 use leptos_router::components::Redirect;
 
 #[component]
@@ -52,67 +53,65 @@ pub fn ArticleActions() -> impl IntoView {
         }
     });
     view! {
-        <ArticleNav article=article active_tab=ActiveTab::Actions />
-        <SuspenseError result=article>
-            {move || Suspend::new(async move {
-                article
-                    .await
-                    .map(|article| {
-                        view! {
-                            <div>
-                                <Show when=move || { is_admin() && article.article.local }>
-                                    <div class="m-4">
-                                        <button
-                                            class="btn btn-secondary"
-                                            title="Protect a local article so that only admins can edit it"
-                                            on:click=move |_| {
-                                                protect_action
-                                                    .dispatch((article.article.id, article.article.protected));
+                <ArticleNav article=article active_tab=ActiveTab::Actions />
+                <SuspenseError result=article>
+                    {move || Suspend::new(async move {
+                        article
+                            .await
+                            .map(|article| {
+                                view! {
+                                    <div>
+                                        <Show when=move || { is_admin() && article.article.local }>
+                                            <div class="m-4">
+        <button
+            class="btn btn-secondary"
+            title={tr!("toggle-article-protection-title")}
+            on:click=move |_| {
+                protect_action
+                    .dispatch((article.article.id, article.article.protected));
+            }
+        >
+        {tr!("toggle-article-protection")}
+        </button>
+                                            </div>
+                                            <div class="m-4">
+                                                <button
+                                                    class="btn btn-secondary"
+                                                    on:click=move |_| {
+                                                        remove_action
+                                                            .dispatch((article.article.id, article.article.removed));
+                                                    }
+                                                >
+                                                    Toggle Article Removal
+                                                </button>
+                                            </div>
+                                        </Show>
+                                        <input
+                                            class="input"
+                                            placeholder="New Title"
+                                            on:keyup=move |ev: KeyboardEvent| {
+                                                let val = event_target_value(&ev);
+                                                set_new_title.update(|v| *v = val);
                                             }
-                                        >
-                                            Toggle Article Protection
-                                        </button>
-                                    </div>
-                                    <div class="m-4">
-                                        <button
-                                            class="btn btn-secondary"
-                                            on:click=move |_| {
-                                                remove_action
-                                                    .dispatch((article.article.id, article.article.removed));
-                                            }
-                                        >
-                                            Toggle Article Removal
-                                        </button>
-                                    </div>
-                                </Show>
-                                <input
-                                    class="input"
-                                    placeholder="New Title"
-                                    on:keyup=move |ev: KeyboardEvent| {
-                                        let val = event_target_value(&ev);
-                                        set_new_title.update(|v| *v = val);
-                                    }
-                                />
+                                        />
 
-                                <button
-                                    class="btn"
-                                    disabled=move || new_title.get().is_empty()
-                                    on:click=move |_| {
-                                        fork_action.dispatch((article.article.id, new_title.get()));
-                                    }
-                                >
-
-                                    Fork Article
-                                </button>
-                                <p>
-                                    "You can fork a remote article to the local instance. This is useful if the original
-                                    instance is dead, or if there are disagreements how the article should be written."
-                                </p>
-                            </div>
-                        }
-                    })
-            })}
-            {fork_response.get().map(|article| view! { <Redirect path=article_path(&article) /> })}
-        </SuspenseError>
-    }
+    <button
+        class="btn"
+        disabled=move || new_title.get().is_empty()
+        on:click=move |_| {
+            fork_action.dispatch((article.article.id, new_title.get()));
+        }
+    >
+    {tr!("fork-article")}
+    </button>
+    <p>
+    {tr!("fork-article-description")}
+    </p>
+                                    </div>
+                                }
+                            })
+                    })}
+                    {fork_response.get().map(|article| view! { <Redirect path=article_path(&article) /> })}
+                </SuspenseError>
+            }
 }

@@ -144,7 +144,7 @@ pub fn CommentView(
 
 fn render_content(comment: Comment) -> String {
     let content = if comment.deleted {
-        &tr!("comment-deleted")
+        &tr!("comment-deleted-placeholder")
     } else {
         &comment.content
     };
