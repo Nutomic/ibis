@@ -5,7 +5,7 @@ use markdown_it::{
     plugins::cmark::block::{heading::ATXHeading, lheading::SetextHeader},
 };
 use math_equation::MathEquationScanner;
-use std::{borrow::Cow, sync::OnceLock};
+use std::sync::OnceLock;
 use table_of_contents::{TocMarkerScanner, TocScanner};
 
 mod article_link;
