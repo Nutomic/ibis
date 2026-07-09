@@ -12,6 +12,10 @@ use server::{setup::setup, start_server};
 use std::{net::SocketAddr, thread};
 use tokio::sync::oneshot;
 
+#[cfg_attr(target_arch = "x86_64", global_allocator)]
+#[cfg(target_arch = "x86_64")]
+static GLOBAL: tikv_jemallocator::Jemalloc = tikv_jemallocator::Jemalloc;
+
 pub mod api;
 mod server;
 pub mod utils;
