@@ -2861,6 +2861,7 @@ dependencies = [
  "html2text",
  "ibis_database_schema",
  "ibis_markdown",
+ "idna 1.1.0",
  "lettre",
  "log",
  "reqwest",

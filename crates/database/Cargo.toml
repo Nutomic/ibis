@@ -17,6 +17,7 @@ chrono.workspace = true
 uuid.workspace = true
 anyhow.workspace = true
 smart-default = "0.7.1"
+idna = "1.1.0"
 
 # backend-only deps
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
