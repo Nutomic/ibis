@@ -30,7 +30,7 @@ pub fn EditDiff() -> impl IntoView {
                             let pending = edit.edit.pending;
                             let title = format!(
                                 "Diff {} — {}",
-                                &edit.edit.summary,
+                                edit.edit.summary,
                                 article_title,
                             );
                             Either::Left(

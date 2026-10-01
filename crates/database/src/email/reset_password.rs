@@ -52,7 +52,7 @@ impl PasswordResetRequest {
             "{}://{}/account/reset_password?token={}",
             http_protocol_str(),
             domain,
-            &token.token
+            token.token
         );
         let body = format!(
             r#"<h1>Password Reset Request for {}</h1><br><a href=\"{reset_link}\">Click here to reset your password</a>"#,

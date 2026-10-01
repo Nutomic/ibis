@@ -45,7 +45,7 @@ pub async fn send_verification_email(
         "{}://{}/account/verify_email?token={}",
         http_protocol_str(),
         domain,
-        &form.verification_token
+        form.verification_token
     );
     insert_into(email_verification::table)
         .values(form)

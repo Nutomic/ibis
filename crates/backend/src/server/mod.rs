@@ -61,7 +61,7 @@ pub(super) async fn start_server(
     let middleware = axum::middleware::from_fn(federation_routes_middleware);
     let app_with_middleware = middleware.layer(app);
 
-    info!("Listening on {}", &addr);
+    info!("Listening on {}", addr);
     let listener = TcpListener::bind(&addr).await?;
     if let Some(notify_start) = notify_start {
         notify_start.send(()).expect("send oneshot");
