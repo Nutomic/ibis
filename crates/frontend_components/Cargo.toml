@@ -41,7 +41,7 @@ leptos-use.workspace = true
 codee.workspace = true
 leptos-fluent.workspace = true
 axum = { workspace = true, optional = true }
-timeago = "0.6.0"
+timeago = "0.6.1"
 
 [package.metadata.cargo-shear]
 ignored = ["axum"]
