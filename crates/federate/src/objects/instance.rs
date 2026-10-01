@@ -69,7 +69,7 @@ impl InstanceWrapper {
     }
 
     pub fn followers_url(&self) -> BackendResult<Url> {
-        let followers_url = format!("{}followers", &self.ap_id);
+        let followers_url = format!("{}followers", self.ap_id);
         Ok(followers_url.parse()?)
     }
 }

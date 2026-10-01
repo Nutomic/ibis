@@ -93,7 +93,7 @@ impl Object for PersonWrapper {
             public_key: self.public_key(),
             name: self.display_name.clone(),
             summary: self.bio.as_ref().map(|b| render_article_markdown(b)),
-            outbox: format!("{}/outbox", &self.ap_id),
+            outbox: format!("{}/outbox", self.ap_id),
             media_type: Some(MediaTypeMarkdownOrHtml::Html),
             source: self.bio.clone().map(Source::new),
             endpoints: None,

@@ -178,7 +178,7 @@ async fn api_test_synchronize_articles(TestData(alpha, beta, _): &mut TestData) 
 
     // fetch alpha instance on beta, articles are also fetched automatically
     let instance = beta
-        .resolve_instance(Url::parse(&format!("http://{}", &alpha.hostname))?)
+        .resolve_instance(Url::parse(&format!("http://{}", alpha.hostname))?)
         .await
         .unwrap();
 
@@ -792,7 +792,7 @@ async fn api_test_lock_article(TestData(alpha, _, gamma): &mut TestData) -> Resu
 #[tokio::test]
 async fn api_test_synchronize_instances(TestData(alpha, beta, gamma): &mut TestData) -> Result<()> {
     // fetch alpha instance on beta
-    beta.resolve_instance(Url::parse(&format!("http://{}", &alpha.hostname))?)
+    beta.resolve_instance(Url::parse(&format!("http://{}", alpha.hostname))?)
         .await
         .unwrap();
     let beta_instances = beta.list_instances().await.unwrap();
@@ -800,7 +800,7 @@ async fn api_test_synchronize_instances(TestData(alpha, beta, gamma): &mut TestD
 
     // fetch beta instance on gamma
     gamma
-        .resolve_instance(Url::parse(&format!("http://{}", &beta.hostname))?)
+        .resolve_instance(Url::parse(&format!("http://{}", beta.hostname))?)
         .await
         .unwrap();
 
