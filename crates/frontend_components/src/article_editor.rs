@@ -49,7 +49,7 @@ pub fn EditorView(
                 <p class="mx-4">
                     <a
                         class="link link-secondary"
-                        href="https://ibis.wiki/article/Markdown_Guide"
+                        href="https://github.com/Nutomic/ibis/blob/master/docs/markdown_guide.md"
                         target="blank_"
                     >
                         {tr!("markdown-formatting-supported")}

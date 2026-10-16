@@ -8,7 +8,7 @@ About Ibis
 
 ![](assets/logo.png)
 
-Ibis is a federated encyclopedia which uses the ActivityPub protocol, just like Mastodon or Lemmy.  Users can create, browse, edit articles and use [many other features](https://github.com/Nutomic/ibis?tab=readme-ov-file#features). If you want to start a wiki for a TV series, a videogame, or an open source project then Ibis is for you! You can register on an [existing instance](https://ibis.wiki/explore) or [install it on your own server](https://ibis.wiki/article/Setup_Instructions). Then you can start editing on the topic of your choice, and connect to other Ibis instances for different topics. Federation ensures that articles get mirrored across many servers, and can be read even if the original instance goes down. Ibis is fully open source to make future enshittification impossible.
+Ibis is a federated encyclopedia which uses the ActivityPub protocol, just like Mastodon or Lemmy.  Users can create, browse, edit articles and use [many other features](https://github.com/Nutomic/ibis?tab=readme-ov-file#features). If you want to start a wiki for a TV series, a videogame, or an open source project then Ibis is for you! You can register on an [existing instance](https://ibis.wiki/explore) or [install it on your own server](docs/setup_instructions.md). Then you can start editing on the topic of your choice, and connect to other Ibis instances for different topics. Federation ensures that articles get mirrored across many servers, and can be read even if the original instance goes down. Ibis is fully open source to make future enshittification impossible.
 
 | Desktop (Light Theme) | Mobile (Dark Theme) |
 |-|-|
@@ -36,8 +36,9 @@ Contributions are more than welcome, especially for the frontend.
 
 ## Useful links
 
-- [Usage Instructions](https://ibis.wiki/article/Usage_Instructions)
-- [Setup Instructions](https://ibis.wiki/article/Setup_Instructions)
+- [Usage Instructions](docs/usage_instructions.md)
+- [Setup Instructions](docs/setup_instructions.md)
+- [Changelog](docs/changelog.md)
 
 ## Community
 
